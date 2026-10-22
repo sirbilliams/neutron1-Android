@@ -1,10 +1,10 @@
-/*  C3DSkateBoard - see C3DSkateBoard.h. Reconstructed from Neutron.exe N2:0x46ff50..0x440530. */
+/*  C3DSkateBoard - see C3DSkateBoard.h. Reconstructed from Neutron.exe 0x4402a0..0x440530. */
 #include "C3DSkateBoard.h"
 #include "../Game.h"
 
 using namespace neg;
 
-C3DSkateBoard::C3DSkateBoard()								// N2:0x46ff50
+C3DSkateBoard::C3DSkateBoard()								// 0x4402a0
 {
 	SetName((char *)"C3DSKATEBOARD");
 	Log("C3DSkateBoard()");
@@ -26,7 +26,7 @@ C3DSkateBoard::~C3DSkateBoard()								// 0x4403f0
 void C3DSkateBoard::InitObject(void)						// 0x440440
 {
 	Log("InitObject()");
-	C3DAnimated::InitObject();								// N2:0x41b0a0
+	C3DAnimated::InitObject();								// 0x40d3c0
 	InitAnim();												// element +0x110
 	CreateAnim((char *)"HIBOARD", (char *)"board.ase");		// +0xe0
 	CreateTexture((char *)"skate.png", 0);					// +0xfc

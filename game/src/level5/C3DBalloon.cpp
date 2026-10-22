@@ -1,4 +1,4 @@
-/*  C3DBalloon - see C3DBalloon.h. Reconstructed from Neutron.exe 0x41fd70..0x414db0. */
+/*  C3DBalloon - see C3DBalloon.h. Reconstructed from Neutron.exe 0x40f710..0x40fb10. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DBalloon.h"
@@ -15,14 +15,14 @@
 
 using namespace neg;
 
-C3DBalloon::C3DBalloon()									// 0x41fd70
+C3DBalloon::C3DBalloon()									// 0x40f710
 {
 	SetName((char *)"C3DBALLOON");
 	C3DSprite::InitObject();								// 0x464130 (it has no InitObject of its own)
-	SetObjectID('3BAL');									// 0x462d80
+	SetObjectID('3BAL');									// 0x462d80 (C3DPolygon's)
 	strcpy(m_sprite_db, "sprites.omt");
-	m_sprite_index = 298;
-	m_sprite_size = 100;
+	m_sprite_index = 50;
+	m_sprite_size = 200;
 	CGameObject::v42(0);									// 0x470fd0 (direct calls)
 	CGameObject::v40(0);
 	CGameObject::v52(1);
@@ -31,8 +31,8 @@ C3DBalloon::C3DBalloon()									// 0x41fd70
 	CGameObject::v67(100.0f);								// radius
 	m_tied = 1;
 	m_red = 1.0f;
-	m_green = 1.0f;
-	m_blue = 1.0f;
+	m_green = 0.1f;
+	m_blue = 0.1f;
 	m_popped = 0;
 	RegisterProperty("Red", &m_red, PROP_FLOAT, 0);			// 0x473fa0
 	RegisterProperty("Green", &m_green, PROP_FLOAT, 0);
@@ -83,8 +83,8 @@ void C3DBalloon::AddTouching(CGameObject *other)			// 0x40f9b0
 		if (dist > 1000.0f)									// 0x48e5ac
 			bonus = (int)(dist * 0.033333335f - 33.0f);		// 0x491400, 0x4913fc; _ftol
 	}
-	AddScore(bonus + (m_tied ? 10 : 200));					// g_gametype N2:0x482b50
-	PlayGameSound(-1, std::string("balloon pop"), false);	// 0x40acc0, 0x458b40
+	AddScore(bonus + (m_tied ? 10 : 200));					// 0x42adc0
+	PlayGameSoundIndex(-1, 0xad, false);					// 0x458980 ("balloon pop")
 	m_popped = 1;
 }
 

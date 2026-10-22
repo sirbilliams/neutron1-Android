@@ -7,7 +7,10 @@
 #pragma GCC diagnostic pop
 #include "OMedia3DShape.h"
 #include "OMedia3DMaterial.h"
+#include "OMediaCanvas.h"
 #include "OMediaDataBase.h"
+#include "OMediaFilePath.h"
+#include "OMediaFileStream.h"
 
 using namespace neg;
 
@@ -21,6 +24,36 @@ static OMedia3DMaterial *Load3DMaterial(OMediaDataBase *db, int id)
 		if (g_509a12) NEG_TODO(0x477b40, "debug database call (db vtable +0x4c)");
 		if (m) m->db_unlock();
 	}
+	return m;
+}
+
+static std::string port_path(const std::string &dos)
+{
+	std::string s(dos);
+	if (s.compare(0, 2, ".\\") == 0) s.erase(0, 2);
+	for (size_t i = 0; i < s.size(); i++) if (s[i] == '\\') s[i] = '/';
+	return s;
+}
+
+// 0x477630: a canvas stored in a file of its own (as C3DSphere.cpp's copy). Errors (no file)
+// are not caught: OMT's exception goes to the caller, as in the original.
+static OMediaCanvas *LoadCanvasFile(std::string name)
+{
+	OMediaFilePath path(port_path(name));
+	OMediaFileStream fs;
+	fs.setpath(&path);
+	fs.open(omcfp_Read, false, false);
+	OMediaCanvas *canvas = new OMediaCanvas;
+	fs >> (OMediaClassStreamer *)canvas;
+	return canvas;
+}
+
+// 0x4779c0 "Load3DMaterial(\"%s\")": a new material textured with the canvas file <name>.
+static OMedia3DMaterial *Load3DMaterial(std::string name)
+{
+	OMediaCanvas *canvas = LoadCanvasFile(name);
+	OMedia3DMaterial *m = new OMedia3DMaterial;
+	m->set_texture(canvas);									// material vtable +0x20
 	return m;
 }
 
@@ -43,7 +76,7 @@ CGameObject *New_C3DCube(void) { return new C3DCube; }		// '3CUB' (0x598 bytes)
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DCube::ev56(OMediaDataBase *db, int id, float size)	// 0x4618e0
+void C3DCube::ev54(OMediaDataBase *db, int id, float size)	// 0x4618e0
 {
 	get_shape()->make_cube(size, false);					// shape vtable +0xa8
 	get_shape()->set_material(Load3DMaterial(db, id));		// shape vtable +0x70
@@ -64,36 +97,22 @@ void C3DCube::InitCube(OMedia3DVector argb, float size)		// 0x4617f0
 	FitToShape();											// element +200
 }
 
-void C3DCube::InitCube(std::string file, float size)		// N2:0x4999a0
+void C3DCube::InitCube(std::string file, float size)		// 0x461600
 {
 	Log("InitCube(\"%s\",%f)", file.c_str(), (double)size);
-	// The original builds the 8 corners (+-size/2) and the 6 textured quads itself, with a
-	// material textured from <file> ("" when none is given). Nothing in the shipped game calls it.
-	NEG_TODO(/*N2*/0x4999a0, "C3DCube::InitCube(file, size): the textured cube");
-}
-
-void C3DCube::ev59(float alpha)								// N2:0x49a0f0
-{
-	OMedia3DShape *sh = get_shape();						// element +0xb0
-	if (!sh) return;
-	omt_PolygonList *polys = sh->get_polygons();
-	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); p++)
+	get_shape()->make_cube(size, false);					// shape vtable +0xa8
+	OMedia3DMaterial *m;
+	if (file.length() == 0)
 	{
-		OMedia3DMaterial *m = (*p).get_material();
-		if (!m) continue;
-		if (alpha <= 0)
-		{
-			m->set_flags(m->get_flags() & ~ommatf_SecondPass);
-			m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));
-			m->set_blend(omblendfc_Src_Alpha, omblendfc_One);
-		}
-		else
-		{
-			m->set_diffuse(OMediaFARGBColor(alpha, 1.0f, 1.0f, 1.0f));
-			m->set_flags(m->get_flags() | ommatf_SecondPass);
-			m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		}
+		m = new OMedia3DMaterial;
+		f_58c = m;
+		f_58c->set_shade_mode(omshademc_Gouraud);			// +0x28 = 1
+		f_58c->set_light_mode(ommlmc_Light);				// +0x2c = 2
+		m = f_58c;
 	}
+	else m = Load3DMaterial(file);							// 0x4779c0 (not kept in f_58c: never freed)
+	get_shape()->set_material(m);							// shape vtable +0x70
+	FitToShape();											// element +200
 }
 
 // --------------------------------------------------------------------------- CGameObject family

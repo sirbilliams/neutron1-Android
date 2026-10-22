@@ -9,7 +9,7 @@
 
     Original layout: as C3DAI (element vtable 0x48eab4, 144 slots, all C3DAI's; CLocalGameObject
     vtable 0x48e614 at +0xc0), own members 0x1b50..0x1b6c, vtordisp 0x1b6c, streamer 0x1b70.
-    Slot 260 (N2:0x46e3c0) is a jump to C3DAI's, so it is not overridden.                         */
+                             */
 #pragma once
 #include "../C3DAI.h"
 
@@ -23,11 +23,12 @@ class C3DAICar : public C3DAI
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x40aad0 honk and stop; throw off what is on top
 	virtual void RemoveTouching(CGameObject *other);						// SLOT 17  0x40ac10 no longer held
 	virtual void Process(float dt);											// SLOT 240 0x40aa50 held in place; drive on when the time is up
-	virtual void v277(void);												// SLOT 277 N2:0x415d50 PauseAnim(1)
-	virtual void v278(void);												// SLOT 278 N2:0x415d60 PauseAnim(0)
+	virtual void v260(void);												// SLOT 259 0x40ac30 C3DAI's, then the engine sound (3D index 6, looped)
+	virtual void v277(void);												// SLOT 277 0x40ac60 C3DAnimated's, then stop the engine sound
+	virtual void v278(void);												// SLOT 278 0x40ac80 C3DAnimated's, then the engine sound again
 
 	float				m_stop_time;	// 0x1b50 time left standing after a hit (= 0)
 	OMedia3DVector		m_hold_pos;		// 0x1b54 where it was hit (0, 0, 0, 1)
 	unsigned char		m_held;			// 0x1b64 touched: kept at m_hold_pos (= 0)
-	int					f_1b68;			// 0x1b68 (= -1, not used)
+	int					m_sound;		// 0x1b68 channel of the engine sound (-1: none)
 };
