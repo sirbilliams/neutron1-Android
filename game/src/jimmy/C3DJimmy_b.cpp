@@ -151,7 +151,7 @@ void C3DJimmy::ActivateGadget(short g)						// 0x428d50
 			{
 				v261();										// +0x410
 				g_gametype->SetCamera(GO(f_a1c));
-				f_a1c->ev147(1);							// his element +0x188
+				f_a1c->ev98(1);							// his element +0x188
 				MenuGoddardMode(f_a18, true);				// +0x4bc
 			}
 			if (ItemType(0, 9) == 2) LoadVR(this, "vr06.gam");
@@ -257,7 +257,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 			f_55d = 1;
 			f_1e20 = 0;
 			MenuGadgetBarHide(f_a18);						// +0x488
-			if (f_a1c && !f_a1c->f_1bb4)					// BG +0x9e8
+			if (f_a1c && !f_a1c->f_1ba4)					// BG +0x9e8
 			{
 				f_a1c->ShowAgain();
 				f_a1c->v52(1);
@@ -316,7 +316,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 			if (f_a1c)
 			{
 				MenuGoddardMode(f_a18, false);				// +0x4bc
-				f_a1c->ev147(0);							// his element +0x188
+				f_a1c->ev98(0);							// his element +0x188
 				g_4f0588 = -1;
 				return;
 			}
@@ -334,7 +334,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 			Hide(MenuShotSprite(f_a18));					// menu +0x4e4
 			break;
 		case 7:												// the hook away
-			if (f_a1c && !f_a1c->f_1bb4)
+			if (f_a1c && !f_a1c->f_1ba4)
 			{
 				f_a1c->ShowAgain();
 				f_a1c->v52(1);
