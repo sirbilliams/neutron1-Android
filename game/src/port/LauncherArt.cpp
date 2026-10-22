@@ -76,14 +76,11 @@ void Save(int id, const std::string &name)
 	}
 }
 
+// The background of the PDA's main page (Boy Genius: page 3, canvas 0xd9 of screens.omt; it
+// has no dat\menu.dat).
 int MainMenuBackground()
 {
-	int id = -1;
-	for (std::list<C2DInGameMenu::MenuObject *>::iterator i = C2DInGameMenu::s_objects.begin();
-		 i != C2DInGameMenu::s_objects.end(); ++i)
-		if (*i && (*i)->type == C2DInGameMenu::MOBJ_BACKGROUND && strcasecmp((*i)->name, "MAINMENU") == 0)
-			id = (*i)->canvas_hi;
-	return id;
+	return 0xd9;
 }
 
 // The loading picture of every exit in the loaded level, as level-<gam>.png. port: Boy Genius's
@@ -106,7 +103,7 @@ void neg::LauncherArtTick(void)
 			mkdir(s_dir.c_str(), 0755);
 		}
 	}
-	if (s_dir.empty() || !g_screens_db || C2DInGameMenu::s_objects.empty()) return;
+	if (s_dir.empty() || !g_screens_db || !g_menu) return;
 	if (!s_fixed_done)
 	{
 		s_fixed_done = true;

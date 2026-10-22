@@ -1,9 +1,11 @@
-/*  port: NEG_START and save\slots.txt - see StartMode.h. Not in the original.             */
+/*  port: NEG_START, slots.txt and the menu test hooks - see StartMode.h. Not in the original.  */
 #include "StartMode.h"
 #include "AssetView.h"
 #include "Companion.h"
 #include "../C2DInGameMenu.h"
+#include "../C3DJimmy.h"
 #include "../CGameType.h"
+#include "../SaveGame.h"
 #include "../Globals.h"
 #include "../gen/globals.h"
 #include "OMediaFilePath.h"
@@ -19,132 +21,147 @@
 std::string omf_SDLResolvePath(const std::string &in);		// engine/sdl: DOS path -> real file
 
 namespace {
-enum Mode { MODE_MENU, MODE_ORIGINAL, MODE_NEW, MODE_CONTINUE, MODE_LOAD };
-Mode		s_mode = MODE_MENU;
-bool		s_menu_pending = false;		// open the Main Menu once Jimmy plays
-int			s_loads = 0;				// levels loaded since start-up
-char		s_task[32] = "autosave.tsk";
 
-// The header of save\<name> (the fields ReadTaskFile 0x460210 reads), without touching the
-// game's globals. False for a missing file or a DUMMY placeholder.
-bool ReadHeader(const char *name, int &level, char *gam, int &score)
+char	s_task[32] = "";			// the save to request once its level has loaded
+int		s_loads = 0;				// levels loaded since start-up
+int		s_test_frames = 0;
+
+// The header of a .tsk (the fields ReadTaskFile 0x460210 reads), without touching the game's
+// globals. False for a missing file.
+bool ReadHeader(const char *name, int &level, int &score, int &story)
 {
-	char path[64];
-	snprintf(path, sizeof path, "save\\%s", name);
-	OMediaFilePath fp(path, 'null', 'null');
+	OMediaFilePath fp(name, 'null', 'null');
 	OMediaFileStream fs;
 	fs.setpath(&fp);
 	if (!fs.fileexists()) { fs.close(); return false; }
 	fs.open(omcfp_Read, false, false);
 	if (!fs.isopen()) return false;
-	char version[256], task[256];
 	float health;
 	short lives;
-	fs >> version;
-	if (strcasecmp(version, "DUMMY   ") == 0) { fs.close(); return false; }
 	fs >> level;
-	fs >> gam;
-	fs >> task;
 	fs >> health;
 	fs >> lives;
 	fs >> score;
+	fs >> story;
 	fs.close();
 	return true;
 }
+
+long MTime(const char *name)
+{
+	struct stat st;
+	return stat(omf_SDLResolvePath(name).c_str(), &st) == 0 ? (long)st.st_mtime : 0;
+}
+
+// The level file of a level id (as TaskGameLoad 0x4603f0 maps them).
+const char *LevelFile(int id)
+{
+	static char buf[16];
+	const char c[5] = { (char)(id >> 24), (char)(id >> 16), (char)(id >> 8), (char)id, 0 };
+	if (c[0] == 'V' && c[1] == 'R') { snprintf(buf, sizeof buf, "VR%c%c.gam", c[2], c[3]); return buf; }
+	if (c[0] == 'L' && c[1] == 'E' && c[2] == 'V') { snprintf(buf, sizeof buf, "level%c.gam", c[3]); return buf; }
+	if (c[0] == 'L' && c[1] == 'V') { snprintf(buf, sizeof buf, "level%c%c.gam", c[2], (char)(c[3] | 0x20)); return buf; }
+	return NULL;
+}
+
 }
 
 const char *neg::StartModeChoose(char *level_name)
 {
 	const char *s = getenv("NEG_START");
-	s_mode = MODE_MENU;
-	strcpy(s_task, "autosave.tsk");
-	if (s && *s)
+	s_task[0] = 0;
+	strcpy(level_name, "level1d.gam");						// the original start
+	int slot = 0;
+	if (s && !strcasecmp(s, "continue"))
 	{
-		if (!strcasecmp(s, "original")) s_mode = MODE_ORIGINAL;
-		else if (!strcasecmp(s, "new")) s_mode = MODE_NEW;
-		else if (!strcasecmp(s, "continue")) s_mode = MODE_CONTINUE;
-		else if (!strncasecmp(s, "load:", 5))
+		long best = -1;
+		for (int n = 1; n <= 10; n++)
 		{
-			int n = atoi(s + 5);
-			if (n >= 1 && n <= 10)
-			{
-				s_mode = MODE_LOAD;
-				snprintf(s_task, sizeof s_task, "JimmyGame%d.tsk", n);
-			}
+			char name[32];
+			snprintf(name, sizeof name, "JimmyGame%d.tsk", n);
+			int level, score, story;
+			if (!ReadHeader(name, level, score, story)) continue;
+			const long t = MTime(name);
+			if (t > best) { best = t; slot = n; }
+		}
+	}
+	else if (s && !strncasecmp(s, "load:", 5))
+		slot = atoi(s + 5);
+	if (slot >= 1 && slot <= 10)
+	{
+		char name[32];
+		snprintf(name, sizeof name, "JimmyGame%d.tsk", slot);
+		int level, score, story;
+		const char *file;
+		if (ReadHeader(name, level, score, story) && (file = LevelFile(level)) != NULL)
+		{
+			strcpy(level_name, file);
+			strcpy(s_task, name);
 		}
 	}
 	WriteSaveSlotList();
-	WriteLevelList();									// save\levels.txt (AssetView.h)
-	switch (s_mode)
-	{
-		case MODE_NEW:		strcpy(level_name, "level1d.gam"); break;
-		case MODE_CONTINUE:	strcpy(level_name, "autosave"); break;
-		case MODE_LOAD:
-		{
-			int level, score;
-			char gam[256];
-			if (ReadHeader(s_task, level, gam, score)) strcpy(level_name, "autosave");
-			else strcpy(s_task, "autosave.tsk");		// an empty slot: the original start
-			break;
-		}
-		default:			break;						// menu / original: StartLevel.txt's choice
-	}
-	// The Main Menu only over a continued game (a new game opens with the title / logos).
-	int level, score;
-	char gam[256];
-	// NEG_TEST_PLAY (the level picker) replaces the level later in CEditor: no menu then.
-	const char *test = getenv("NEG_TEST_PLAY");
-	s_menu_pending = s_mode == MODE_MENU && !(test && *test) && !AssetViewLevel() && strcasecmp(level_name, "autosave") == 0
-					 && ReadHeader(s_task, level, gam, score);
-	SDL_Log("NEG_START: %s -> %s%s%s", s && *s ? s : "(menu)", level_name,
-			strcasecmp(level_name, "autosave") == 0 ? " " : "",
-			strcasecmp(level_name, "autosave") == 0 ? s_task : "");
-	return s_task;
+	WriteLevelList();										// levels.txt (AssetView.h)
+	SDL_Log("NEG_START: %s -> %s%s%s", s && *s ? s : "(original)", level_name, s_task[0] ? " + " : "", s_task);
+	return NULL;
 }
 
 void neg::StartModeLevelLoaded(void)
 {
-	// The first load is the start-up level; a later one (the autosave's level, when the editor's
-	// default level ran first) still belongs to the start. Give up after a few.
-	if (++s_loads > 3) s_menu_pending = false;
+	++s_loads;
+	if (s_task[0] && s_loads == 1 && !AssetViewLevel())
+	{
+		RequestTask(s_task);								// 0x460e70: CTaskList loads it next frame
+		SDL_Log("NEG_START: loading %s", s_task);
+	}
+	s_task[0] = 0;
 }
 
 void neg::StartModeFrame(void)
 {
-	if (!s_menu_pending || !s_loads) return;
-	if (!g_menu || !g_gametype || g_game_mode != 5 || g_N2_5324f8 != 3) return;
-	// What ESC does in HandleEscape (N2:0x407240): pause, the PDA zooms in, and after a second
-	// the Main Menu (page 3) is activated.
-	s_menu_pending = false;
-	g_gametype->PauseGame(true);
-	g_menu->v345(1);
-	g_menu->f_4e0 = 1.0f;
-	g_N2_5324f8 = 0;
-	SDL_Log("NEG_START: Main Menu opened");
+	// port, test-only: open a page / a box, or save a slot, a while after Jimmy plays
+	static const char *menu = getenv("NEG_TEST_MENU");
+	static const char *confirm = getenv("NEG_TEST_CONFIRM");
+	static const char *save = getenv("NEG_TEST_SAVE");
+	if (!(menu && *menu) && !(confirm && *confirm) && !(save && *save)) return;
+	if (!s_loads || !g_hud_on || !g_menu) return;
+	if (++s_test_frames != 30) return;
+	C3DJimmy *j = Jimmy();
+	if (save && *save)
+	{
+		g_save_slot = atoi(save) + 5;
+		SaveSlot();
+		SDL_Log("NEG_TEST_SAVE: slot %d", atoi(save));
+	}
+	if (menu && *menu && j)
+	{
+		const int page = atoi(menu);
+		if (page == C2DInGameMenu::MENU_SAVE) ReadSaveSlots();
+		j->ActivateActiveMenu(page);
+		if (page == C2DInGameMenu::MENU_MAIN || page == C2DInGameMenu::MENU_SAVE) j->f_1e4c = 3;
+		SDL_Log("NEG_TEST_MENU: page %d", page);
+	}
+	if (confirm && *confirm)
+	{
+		OpenConfirm(atoi(confirm));
+		SDL_Log("NEG_TEST_CONFIRM: box %d", atoi(confirm));
+	}
 }
 
 void neg::WriteSaveSlotList(void)
 {
-	FILE *f = fopen(omf_SDLResolvePath("save\\slots.txt").c_str(), "w");
+	FILE *f = fopen(omf_SDLResolvePath("slots.txt").c_str(), "w");
 	if (!f) return;
-	fputs("# slot\tlevel id\tlevel name\tgam file\tscore\tmtime (written by the game, see game/src/port/StartMode.h)\n", f);
-	for (int k = 0; k <= 10; k++)
+	fputs("# slot\tlevel id\tlevel name\tgam file\tscore\tmtime\tstory (written by the game, see game/src/port/StartMode.h)\n", f);
+	for (int k = 1; k <= 10; k++)
 	{
 		char name[32];
-		if (k == 0) strcpy(name, "autosave.tsk");
-		else snprintf(name, sizeof name, "JimmyGame%d.tsk", k);
-		int level = 0, score = 0;
-		char gam[256];
-		if (!ReadHeader(name, level, gam, score)) continue;
-		char path[64];
-		snprintf(path, sizeof path, "save\\%s", name);
-		struct stat st;
-		long mtime = stat(omf_SDLResolvePath(path).c_str(), &st) == 0 ? (long)st.st_mtime : 0;
-		char id[5] = { (char)(level >> 24), (char)(level >> 16), (char)(level >> 8), (char)level, 0 };
-		const char *lname = CompanionLevelName(gam);		// port: no names in BG yet (Companion.cpp)
-		if (k == 0) fprintf(f, "autosave");
-		else fprintf(f, "%d", k);
-		fprintf(f, "\t%s\t%s\t%s\t%d\t%ld\n", id, lname ? lname : "", gam, score, mtime);
+		snprintf(name, sizeof name, "JimmyGame%d.tsk", k);
+		int level = 0, score = 0, story = 0;
+		if (!ReadHeader(name, level, score, story)) continue;
+		const char id[5] = { (char)(level >> 24), (char)(level >> 16), (char)(level >> 8), (char)level, 0 };
+		const char *gam = LevelFile(level);
+		const char *lname = gam ? CompanionLevelName(gam) : NULL;
+		fprintf(f, "%d\t%s\t%s\t%s\t%d\t%ld\t%d\n", k, id, lname ? lname : "", gam ? gam : "", score, MTime(name), story);
 	}
 	fclose(f);
 }

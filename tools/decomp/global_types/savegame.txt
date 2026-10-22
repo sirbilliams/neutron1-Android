@@ -15,7 +15,7 @@
 0x4fc684 val float g_save_health
 0x4fc688 val short g_save_lives
 0x4fc68c val int g_save_score
-0x4fc690 val int g_save_cam_x                        # the camera x, read as an int (a float's bits)
+0x4fc690 val int g_save_scene                         # the story message number (g_story_scene)
 
 # saved game state
 # unresolved (Neutron2 address): N2:0x54a44c val short g_lives                           # +1 by C3DRedNeutron and every 5 of N2:0x54a454; 0 for a new game
@@ -33,3 +33,7 @@
 # unresolved (Neutron2 address): N2:0x54e834 val float g_demo_cutscene_time              # mode 2: seconds until a cut scene is skipped
 # unresolved (Neutron2 address): N2:0x54e838 val float g_demo_key_time                   # modes 3/4: seconds until the next random keys
 # unresolved (Neutron2 address): N2:0x54a3d4 val bool g_cutscene_skip                    # set: the running cut scene ends
+
+# the task file request (RequestTask 0x460e70; CTaskList::Process loads it)
+0x4fc604 array char g_task_request
+0x4fc67c val char g_task_requested

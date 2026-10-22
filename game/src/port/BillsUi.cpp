@@ -550,7 +550,7 @@ static int EnergyDesign(void)
 static bool s_orig_hidden;
 static void ShowOriginalBar(bool show)
 {
-	OMediaCanvasElementWrapper *const kPieces[3] = { g_4f80fc, g_4f8028, g_4f7cb0 };	// atom picture, frame, fill
+	OMediaCanvasElement *const kPieces[3] = { g_4f80fc, g_4f8028, g_4f7cb0 };	// atom picture, frame, fill
 	if (!show)						// (every frame: the game shows them again on entering play)
 	{
 		for (int i = 0; i < 3; i++)

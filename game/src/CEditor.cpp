@@ -723,7 +723,7 @@ void CEditor::LoadGame(char *name, int level_id)
 			"save\\autosave13.tsk", "save\\autosave14.tsk", "save\\autosave15.tsk", "save\\autosave16.tsk",
 			"save\\autosave17.tsk" };
 		for (unsigned i = 0; i < sizeof(autosaves) / sizeof(autosaves[0]); i++) DeleteFile(autosaves[i]);
-		neg::WriteSaveSlotList();							// port: save\slots.txt (StartMode.h)
+		neg::WriteSaveSlotList();							// port: slots.txt (StartMode.h)
 	}
 	else if (strcasecmp(m_level_name, "level1_c.gam") == 0)
 		SetLevel1cLoaded(1);

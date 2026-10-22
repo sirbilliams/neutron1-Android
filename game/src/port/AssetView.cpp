@@ -581,7 +581,7 @@ void neg::WriteLevelList(void)
 	}
 	closedir(d);
 	std::sort(files.begin(), files.end());
-	FILE *f = fopen(omf_SDLResolvePath("save\\levels.txt").c_str(), "w");
+	FILE *f = fopen(omf_SDLResolvePath("levels.txt").c_str(), "w");
 	if (!f) return;
 	fputs("# gam file\tdisplay name (written by the game, see game/src/port/AssetView.h)\n", f);
 	for (size_t i = 0; i < files.size(); i++)
