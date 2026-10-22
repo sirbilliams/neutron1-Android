@@ -220,7 +220,7 @@ void C3DJimmy::ev60(void)									// N2:0x4369f0
 	ev58((char *)"IDLE", 1);
 }
 
-void C3DJimmy::ev132(void)									// N2:0x446b40
+void C3DJimmy::n2_ev132(void)									// N2:0x446b40
 {
 	if (f_a68 == 1)
 	{
@@ -238,7 +238,7 @@ void C3DJimmy::ev132(void)									// N2:0x446b40
 	}
 }
 
-void C3DJimmy::ev146(float dt, OMedia3DVector pos)			// N2:0x446100
+void C3DJimmy::n2_ev146(float dt, OMedia3DVector pos)			// N2:0x446100
 {
 	if (!f_d44) return;
 	if (CountDown(&f_4da4, dt))								// N2:0x48fd30
@@ -257,7 +257,7 @@ void C3DJimmy::ev146(float dt, OMedia3DVector pos)			// N2:0x446100
 	f_d44->HideAgain();										// element +0xdc
 }
 
-void C3DJimmy::ev147(float time)							// N2:0x446010
+void C3DJimmy::n2_ev147(float time)							// N2:0x446010
 {
 	// (the original calls through a NULL f_d44 when there is no bubble)
 	if (f_d44)
@@ -272,12 +272,12 @@ void C3DJimmy::ev147(float time)							// N2:0x446010
 	if (f_d44) f_d44->ShowAgain();							// element +0xd8
 }
 
-void C3DJimmy::ev154(void)									// N2:0x447c50
+void C3DJimmy::n2_ev154(void)									// N2:0x447c50
 {
 	if (++f_4d54 > 19) f_4d54 = 0;
 }
 
-void C3DJimmy::ev155(void)									// N2:0x447c70
+void C3DJimmy::n2_ev155(void)									// N2:0x447c70
 {
 	if (++f_4d60 > 0) f_4d60 = 0;
 }
@@ -288,7 +288,7 @@ static void SetParticleColour(C3DObject *p, float r, float g, float b)
 	(void)p; (void)r; (void)g; (void)b;					// TODO(BG): N2 C3DMagicParticle (Negatron only)
 }
 
-void C3DJimmy::ev156(float t, float r, float g, float b)	// N2:0x447950
+void C3DJimmy::n2_ev156(float t, float r, float g, float b)	// N2:0x447950
 {
 	f_4d58 = t + f_4d58;
 	for (int i = 0; i < 20; i++)
@@ -299,7 +299,7 @@ void C3DJimmy::ev156(float t, float r, float g, float b)	// N2:0x447950
 		}
 }
 
-void C3DJimmy::ev157(float t, float r, float g, float b, OMedia3DVector pos)	// N2:0x4478d0
+void C3DJimmy::n2_ev157(float t, float r, float g, float b, OMedia3DVector pos)	// N2:0x4478d0
 {
 	f_4d6c.x = pos.x;
 	f_4d6c.y = pos.y;
@@ -313,7 +313,7 @@ void C3DJimmy::ev157(float t, float r, float g, float b, OMedia3DVector pos)	// 
 	}
 }
 
-void C3DJimmy::ev165(CGameObject *start)					// N2:0x445d20
+void C3DJimmy::n2_ev165(CGameObject *start)					// N2:0x445d20
 {
 	f_4d7c = 0;
 	InitPhysics();											// +0x2c
@@ -353,7 +353,7 @@ void C3DJimmy::ev165(CGameObject *start)					// N2:0x445d20
 	{
 		// port: v260 falls back to the "PHONEBOOTH" object, which is no start point; the original
 		// reads the same offsets of it.
-		NEG_TODO(/*N2*/0x445f77, "C3DJimmy::ev165 on an object that is not a C3DStartPoint");
+		NEG_TODO(/*N2*/0x445f77, "C3DJimmy::n2_ev165 on an object that is not a C3DStartPoint");
 	}
 }
 
@@ -474,7 +474,7 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	if (LevelID() == 'LV5A') g_sound_falloff = 0.09f;
 	if (LevelID() == 'LV3D') g_sound_falloff = 0.09f;
 	if (LevelID() == 'LV3A') SetTaskState("SCENE", 200);	// 0x45f990
-	if (strcasecmp(f_a18, "none") != 0) ev125(f_a18);		// element +0x1f4
+	if (strcasecmp(f_a18, "none") != 0) n2_ev125(f_a18);		// element +0x1f4
 
 	// the start point named by "StartPoint" (the last one of that tag)
 	CGameObject *start = NULL;
@@ -491,12 +491,12 @@ void C3DJimmy::v260(void)									// N2:0x445740
 			}
 		}
 	}
-	if (found) ev165(start);								// element +0x294
+	if (found) n2_ev165(start);								// element +0x294
 	else
 	{
 		ErrorLog("ERROR: Startpoint not found, SP=%s", f_9c8);
 		CGameObject *booth = FindObjectByTag("PHONEBOOTH");	// 0x474070
-		if (booth) ev165(booth);
+		if (booth) n2_ev165(booth);
 		else ErrorLog("ERROR: Startpoint not found and PHONEBOOTH not found");
 	}
 
@@ -508,11 +508,11 @@ void C3DJimmy::v260(void)									// N2:0x445740
 		f_d4c->HideAgain();
 		f_d4c->n2_ev91(1);										// element +0x16c
 	}
-	ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228: nothing in hand
+	n2_ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228: nothing in hand
 	g_N2_537634 = -1.0f;
 	g_4eefd0 = -1.0f;
-	if (LevelID() == 'LV5C') ev152(1);						// element +0x260
-	else if (LevelID() == 'LV5F') ev152(0);
+	if (LevelID() == 'LV5C') n2_ev152(1);						// element +0x260
+	else if (LevelID() == 'LV5F') n2_ev152(0);
 	v261();													// +0x414
 	if (f_d5c)
 	{
@@ -528,11 +528,11 @@ void C3DJimmy::v266(void)									// N2:0x4455a0
 	f_4d94 = 0;
 	switch (LevelID())
 	{
-		case 'LV5F': ev152(0); f_4d94 = 0; break;			// element +0x260
+		case 'LV5F': n2_ev152(0); f_4d94 = 0; break;			// element +0x260
 		case 'LV4B': break;
-		case 'LV5C': ev152(1); f_4d94 = 15; break;
-		case 'VR01': ev152(2); break;
-		default: ev152(0); break;
+		case 'LV5C': n2_ev152(1); f_4d94 = 15; break;
+		case 'VR01': n2_ev152(2); break;
+		default: n2_ev152(0); break;
 	}
 	if (LevelID() >= 'L1_A' && LevelID() <= 'L1_C') LoadSound(std::string("water stream"));	// N2:0x4b82f0
 }
@@ -572,14 +572,14 @@ void C3DJimmy::v278(void)									// N2:0x447780
 	if (f_4c20 != -1)
 	{
 		CJimmyGame *g = JimmyGame();
-		if (g) ev153(g->m_surface_sound_next);				// element +0x264 (g_gametype +0x560)
+		if (g) n2_ev153(g->m_surface_sound_next);				// element +0x264 (g_gametype +0x560)
 	}
 	if (f_cc8) NEG_TODO(/*N2*/0x447898, "C3DRocketShip +0x123c: restart its engine sound (element +0x1b0)(2)");
 }
 
 // --------------------------------------------------------------------------- the per-frame slots
 
-void C3DJimmy::ev133(float dt)								// N2:0x4473f0
+void C3DJimmy::n2_ev133(float dt)								// N2:0x4473f0
 {
 	if (f_4ca5)
 	{
@@ -633,7 +633,7 @@ void C3DJimmy::ev133(float dt)								// N2:0x4473f0
 	}
 }
 
-void C3DJimmy::ev135(float dt)								// N2:0x446bc0
+void C3DJimmy::n2_ev135(float dt)								// N2:0x446bc0
 {
 	(void)dt;
 	OMedia3DVector p = Position(this);
@@ -646,10 +646,10 @@ void C3DJimmy::ev135(float dt)								// N2:0x446bc0
 	v176(Velocity(this).x, vy, Velocity(this).z);			// +0x2c0
 	if (f_4ce4 > 5.0f) PlayGameSound(-1, std::string("HitHead"), false);
 	f_4ce4 = 0;
-	ev132();												// +0x210
+	n2_ev132();												// +0x210
 }
 
-void C3DJimmy::ev136(float dt)								// N2:0x446d40
+void C3DJimmy::n2_ev136(float dt)								// N2:0x446d40
 {
 	if (f_4db8) return;
 	OMedia3DVector p = Position(this);
@@ -746,7 +746,7 @@ void C3DJimmy::ev136(float dt)								// N2:0x446d40
 	f_c04 = (float)((double)d * 5.5);
 }
 
-void C3DJimmy::ev145(float dt)								// N2:0x4468f0
+void C3DJimmy::n2_ev145(float dt)								// N2:0x4468f0
 {
 	if (!g_menu) return;
 	if (!g_camera)
@@ -799,7 +799,7 @@ void C3DJimmy::ev145(float dt)								// N2:0x4468f0
 	}
 }
 
-void C3DJimmy::ev163(void)									// N2:0x447c90
+void C3DJimmy::n2_ev163(void)									// N2:0x447c90
 {
 	if (f_ae8 > 35.0f) f_ae8 = 35.0f;
 	if (f_ae8 < -15.0f) f_ae8 = -15.0f;
@@ -817,11 +817,11 @@ void C3DJimmy::ev163(void)									// N2:0x447c90
 	f_4cd8 = f_ae8;
 }
 
-void C3DJimmy::ev164(float dt)								// N2:0x4488e0
+void C3DJimmy::n2_ev164(float dt)								// N2:0x4488e0
 {
 	if (f_4ef0)
 	{
-		ev149(dt, f_4ef0, GoddardPointer(f_d5c));			// element +0x254
+		n2_ev149(dt, f_4ef0, GoddardPointer(f_d5c));			// element +0x254
 	}
 	CGameObject *o = FindNearest(static_cast<CGameObject *>(this), '3PIC', '3GRO');	// 0x458e40
 	if (!o)
@@ -881,7 +881,7 @@ void C3DJimmy::Slide(float dt)								// N2:0x4479b0
 		v178(0, -5500.0f, 0);
 		if (f_4d98 == -1)
 		{
-			ev116();										// +0x1d0
+			n2_ev116();										// +0x1d0
 			ev58((char *)"SLIDE", 1);
 			f_4d98 = PlayGameSound(-1, std::string("slide"), true);
 		}
@@ -915,7 +915,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 	{
 		const int l = LevelID();
 		if (l == 'L1_A' || l == 'L1_B' || l == 'L1_C') return;
-		ev134(-10.0f, -10, 5.0f, 1);						// element +0x218
+		n2_ev134(-10.0f, -10, 5.0f, 1);						// element +0x218
 		return;
 	}
 	if (other->NameContains((char *)"C3DWATERBALLOON"))
@@ -929,9 +929,9 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 	if (other->NameContains((char *)"C3DMISSILE"))
 	{
 		if (f_4cb8) return;
-		ev134(-10.0f, -10, 5.0f, 1);
+		n2_ev134(-10.0f, -10, 5.0f, 1);
 		v261();												// +0x414
-		ev116();											// +0x1d0
+		n2_ev116();											// +0x1d0
 		PlayGameSound(-1, std::string("YokianBump"), false);	// 0x458b40
 		return;
 	}
@@ -942,10 +942,10 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 		NEG_TODO(0x42348a, "C3DJimmy::AddTouching: plant / Darwin members (+0xc40, +0xc10, +0xc3c, element slot 107)");
 		if (f_4cb8) return;
 		if (strcasecmp(other->m_tag, "LIBBYPLANT") == 0) return;
-		ev134(-10.0f, -10, 5.0f, 1);
-		ev114((char *)"HIT");								// +0x1c8
+		n2_ev134(-10.0f, -10, 5.0f, 1);
+		n2_ev114((char *)"HIT");								// +0x1c8
 		v261();
-		ev116();
+		n2_ev116();
 		PlayGameSound(-1, std::string("YokianBump"), false);
 		return;
 	}
@@ -970,10 +970,10 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 		bot->m_flee_dist = 1500.0f;
 		bot->m_flee_time = 10.0f;
 		if (f_8a7) return;
-		ev134(-2.0f, -1, 3.0f, 1);
-		ev114((char *)"HIT");
+		n2_ev134(-2.0f, -1, 3.0f, 1);
+		n2_ev114((char *)"HIT");
 		v261();
-		ev116();
+		n2_ev116();
 		PlayGameSound(-1, std::string("YokianBump"), false);
 #endif
 		return;
@@ -994,7 +994,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 	{
 		// (the original compares Jimmy's own tag, not the trigger's)
 		if (strcasecmp(m_tag, "DEACTIVATE") != 0) return;
-		ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228
+		n2_ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228
 		return;
 	}
 	if (other->NameContains((char *)"C3DLOADLEVEL"))
@@ -1024,7 +1024,7 @@ void C3DJimmy::Process(float dt)							// N2:0x446260
 		if (f_4d64 <= 0) f_4d64 = 0;
 		else
 		{
-			ev155();										// element +0x26c
+			n2_ev155();										// element +0x26c
 			if (f_4d50[f_4d60])
 			{
 				const int r1 = Random1001(), r2 = Random1001();
@@ -1047,7 +1047,7 @@ void C3DJimmy::Process(float dt)							// N2:0x446260
 		if (f_4d58 < 0) f_4d58 = 0;
 		else
 		{
-			ev154();										// element +0x268
+			n2_ev154();										// element +0x268
 			if (f_4d00[f_4d54])
 			{
 				const int r1 = Random1001(), r2 = Random1001();
@@ -1100,17 +1100,17 @@ void C3DJimmy::Process(float dt)							// N2:0x446260
 		f_4cf0 = f_4cf0 - dt;
 		if (f_4cf0 <= 0) f_4cf0 = 0;
 	}
-	if (Velocity(this).y > 0) ev135(dt);					// element +0x21c
-	if (!f_4cfd) ev136(dt);									// element +0x220
-	if (!v133() && f_4ca6) ev129();							// element +0x204
+	if (Velocity(this).y > 0) n2_ev135(dt);					// element +0x21c
+	if (!f_4cfd) n2_ev136(dt);									// element +0x220
+	if (!v133() && f_4ca6) n2_ev129();							// element +0x204
 	C3DPlayer::Process(dt);									// N2:0x460510
-	ev145(dt);												// element +0x244
+	n2_ev145(dt);												// element +0x244
 	if (v133())
 	{
 		OMedia3DVector p = Position(this);
 		f_4cbc.x = p.x; f_4cbc.y = p.y; f_4cbc.z = p.z; f_4cbc.w = p.w;
 	}
-	ev133(dt);												// element +0x214
+	n2_ev133(dt);												// element +0x214
 	if (f_d5c && f_d5c->f_1b5c == 4 && f_d5c->m_time > 9.0f)	// Goddard in front for 9 s: back beside us
 	{
 		f_d5c->m_time = 0;
@@ -1139,8 +1139,8 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 	if (f_4ca5) return;
 	Slide(dt);												// N2:0x4479b0
 	C3DPlayer::v243(dt);									// N2:0x4618d0
-	ev146(dt, Position(this));								// element +0x248
-	if (ev140(dt)) return;									// element +0x230
+	n2_ev146(dt, Position(this));								// element +0x248
+	if (n2_ev140(dt)) return;									// element +0x230
 	if (!v133())
 	{
 		// in the air
@@ -1153,7 +1153,7 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 				{
 					// falling fast with the jet pack: it starts by itself
 					JimmyJetpackFlame(static_cast<CGameObject *>(this), 3.0f);	// f_ccc +0x9f0 -> +0x928
-					ev114((char *)"FLY");							// +0x1c8
+					n2_ev114((char *)"FLY");							// +0x1c8
 					JimmyJetpackSound(static_cast<CGameObject *>(this), 1);		// "jetpack" on f_ccc +0x9f4
 					f_4cec = 1;
 					f_4cf0 = 5.0f;
@@ -1199,8 +1199,8 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 			f_4db4 = 0;
 			g_N2_5461cc = 0;
 			PlayGameSound(-1, std::string("pain ahhouch"), false);
-			if (f_4dac) ev134(-300.0f, -10, 5.0f, 1);
-			else ev134(-10.0f, -10, 5.0f, 1);
+			if (f_4dac) n2_ev134(-300.0f, -10, 5.0f, 1);
+			else n2_ev134(-10.0f, -10, 5.0f, 1);
 		}
 	}
 	if (f_a68 == 2)
@@ -1218,8 +1218,8 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 			f_cc0->v197(p.x - d.x * 80.0f, p.y + 50.0f - d.y * 80.0f, p.z - d.z * 80.0f);	// +0x314
 		}
 	}
-	ev159(dt);												// element +0x27c
-	ev164(dt);												// element +0x290
+	n2_ev159(dt);												// element +0x27c
+	n2_ev164(dt);												// element +0x290
 	if (g_menu->IsCurrentGadget(10))
 	{
 		// gadget 10 recharges by the skill setting
@@ -1238,33 +1238,33 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 		if (g_4f83e0) return;
 		if (f_4ee8) return;
 		if (g_menu->IsCurrentGadget(6) || g_menu->IsCurrentGadget(10)) f_96c = 0;
-		if (ev158(dt)) return;								// element +0x278
+		if (n2_ev158(dt)) return;								// element +0x278
 		if (g_menu->IsCurrentGadget(4)) return;
 		if (v133())
 		{
 			f_4e7c = 3.0f;
 			if (g_N2_54a438 > 0)
 			{
-				ev163();									// element +0x28c
+				n2_ev163();									// element +0x28c
 				bool again = true;
 				if (f_4ee4 > 0)
 				{
 					f_4ee4 = f_4ee4 - dt;
 					if (f_4ee4 > 0) again = false;
-					else ev144();							// element +0x240
+					else n2_ev144();							// element +0x240
 				}
 				if (again) f_4ee4 = 0.15f;
 			}
 			if (n2_ev77((char *)"SHOOT")) return;				// element +0x134
 			if (!g_menu->IsCurrentGadget(6) && !g_menu->IsCurrentGadget(10)) return;
-			ev116();
+			n2_ev116();
 			if (!f_4cd4)
 			{
 				f_4cd4 = 1;
-				ev116();
+				n2_ev116();
 				return;
 			}
-			ev163();
+			n2_ev163();
 			ev58((char *)"POINT", 1);
 			return;
 		}
@@ -1275,7 +1275,7 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 			{
 				if (strcasecmp(ev66(), "FALL") == 0) return;	// element +0x108
 				f_4c10 = PlayGameSound(-1, std::string("shrinkray"), true);
-				ev116();
+				n2_ev116();
 				return;
 			}
 			if (strcasecmp(ev66(), "FALL") != 0) return;
@@ -1304,9 +1304,9 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 			if (f_ae8 >= 0) f_ae8 = 0;
 		}
 	}
-	if (f_4cd4) ev144();
+	if (f_4cd4) n2_ev144();
 	StopSound(&f_4c10);
 	StopSound(&f_4c24);
-	if (f_96c < 10.0f && n2_ev77((char *)"SHOOT")) ev116();
+	if (f_96c < 10.0f && n2_ev77((char *)"SHOOT")) n2_ev116();
 	if (f_cbc) f_cbc->HideAgain();
 }

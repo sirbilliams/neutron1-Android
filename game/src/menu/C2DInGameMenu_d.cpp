@@ -67,7 +67,7 @@ static void JimmyLoadLevel(CGameObject *jimmy, const char *file, const char *sta
 						   const char *file2, const char *start2, int picture)
 {
 	if (C3DPlayer *p = jimmy ? dynamic_cast<C3DPlayer *>(jimmy) : NULL)
-		p->ev121((char *)file, (char *)start, (char *)file2, (char *)start2, picture);
+		p->n2_ev121((char *)file, (char *)start, (char *)file2, (char *)start2, picture);
 }
 // C3DJimmy element slot 138 (+0x228, ActivateMenuItem N2:0x449df0)(menu, NULL, 3, 13.0) before
 // level1_C.gam: the original pushes a zeroed register as the second object.

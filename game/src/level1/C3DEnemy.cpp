@@ -339,7 +339,7 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 			ev72(m_anim_walk, (char *)"SWING");
 			if (!other->NameContains((char *)"C3DJIMMY")) return;
 			C3DJimmy *j = dynamic_cast<C3DJimmy *>(other);	// (other - 0xc0)
-			if (j) j->ev134(-10.0f, -10, 5.0f, 1);			// element +0x218
+			if (j) j->n2_ev134(-10.0f, -10, 5.0f, 1);			// element +0x218
 			return;
 		}
 		case 4:

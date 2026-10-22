@@ -146,18 +146,18 @@ static void GrannyDetach(CGameObject *holder, CGameObject *o)				// +0x188 (slot
 static C3DJimmy *AsJimmy(CGameObject *o)	{ return o ? dynamic_cast<C3DJimmy *>(o) : NULL; }
 static void JimmyUseItem(CGameObject *jimmy, CGameObject *caller, CGameObject *other, int item, float t)
 {
-	if (C3DJimmy *j = AsJimmy(jimmy)) j->ev138(caller, other, item, t);	// (the original calls through a NULL jimmy)
+	if (C3DJimmy *j = AsJimmy(jimmy)) j->n2_ev138(caller, other, item, t);	// (the original calls through a NULL jimmy)
 }
 static void JimmySlot105(CGameObject *jimmy)								// +0x1a4: back to the checkpoint
 {
 	C3DPlayer *p = jimmy ? dynamic_cast<C3DPlayer *>(jimmy) : NULL;
-	if (p) p->ev105();
+	if (p) p->n2_ev105();
 }
 static void JimmySlot116(CGameObject *o)									// +0x1d0 of the camera
 {
 	// (the original calls element slot 116 of whatever the camera is; only C3DPlayers have one)
 	C3DPlayer *p = o ? dynamic_cast<C3DPlayer *>(o) : NULL;
-	if (p) p->ev116();
+	if (p) p->n2_ev116();
 }
 static CGameObject *JimmyJetpack(CGameObject *jimmy)						// +0xccc (element pointer)
 {

@@ -81,7 +81,7 @@ void C3DTesla::AddTouching(CGameObject *other)				// 0x445ba0
 	{
 		const float k = 1.0f / d.quick_magnitude();
 		C3DPlayer *p = dynamic_cast<C3DPlayer *>(other);	// port: the original calls element slot 119 of whatever is named C3DJIMMY
-		if (p) p->ev119(OMedia3DVector(k * d.x, d.y * k, d.z * k, 0));	// element +0x1dc: pushed away
+		if (p) p->n2_ev119(OMedia3DVector(k * d.x, d.y * k, d.z * k, 0));	// element +0x1dc: pushed away
 	}
 }
 

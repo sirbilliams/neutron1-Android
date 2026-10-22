@@ -124,7 +124,7 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	strcpy(start, ll->m_start_point);
 	strcpy(ret_level, p->f_c25);
 	strcpy(ret_start, p->f_b24);
-	p->ev121(level, start, ret_level, ret_start, ll->m_load_screen);	// element +0x1e4
+	p->n2_ev121(level, start, ret_level, ret_start, ll->m_load_screen);	// element +0x1e4
 	if (ll->m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends

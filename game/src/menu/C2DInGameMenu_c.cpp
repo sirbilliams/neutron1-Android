@@ -193,7 +193,7 @@ static bool PlayerActionPressed(void)
 {
 	if (!g_N2_545fd0) return false;		// port: the original calls through NULL here
 	C3DPlayer *p = dynamic_cast<C3DPlayer *>(g_N2_545fd0);
-	return p && p->ev104();
+	return p && p->ev87();
 }
 
 // The two sprites of a main-menu item's info: its wire frame fades in, then its picture, then

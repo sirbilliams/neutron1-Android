@@ -230,7 +230,7 @@ void neg::GivePendingInvention(void)
 		AnnouncePickup(1, 0);
 		if (j)
 		{
-			j->ev138(g_N2_545e78, g_N2_545e78, 6, 13.0f);		// element +0x228: the water gun in hand
+			j->n2_ev138(g_N2_545e78, g_N2_545e78, 6, 13.0f);		// element +0x228: the water gun in hand
 			j->ev58((char *)"INVENT", 0);				// element +0xe8
 		}
 		CGameObject *t = FindObjectByTag("BOT1GO");
@@ -248,7 +248,7 @@ void neg::GivePendingInvention(void)
 		AnnouncePickup(0x13, 0);
 		if (j)
 		{
-			j->ev138(g_N2_545e78, g_N2_545e78, 10, 13.0f);	// the burp gun
+			j->n2_ev138(g_N2_545e78, g_N2_545e78, 10, 13.0f);	// the burp gun
 			j->ev58((char *)"INVENT", 0);
 		}
 		g_N2_545e64 = 0;

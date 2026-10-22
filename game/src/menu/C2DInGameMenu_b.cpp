@@ -70,9 +70,9 @@ static void HudHide(void *hud)			{ (void)hud; }	// N2:0x468aa0
 // port: the original calls through (NULL - 0xc0) when there is no player; these do nothing then.
 static C3DPlayer *PlayerObj(void)	{ return g_N2_545fd0 ? dynamic_cast<C3DPlayer *>(g_N2_545fd0) : NULL; }
 static void PlayerAnimEvents(void)		{ if (C3DPlayer *p = PlayerObj()) p->ev67(); }		// slot 67 (C3DJimmy N2:0x44e0b0)
-static void PlayerStopSound(void)		{ if (C3DPlayer *p = dynamic_cast<C3DPlayer *>(PlayerObj())) p->ev116(); }	// slot 116 (C3DJimmy 0x42aac0)
-static bool PlayerAltButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev103(); }	// slot 103 0x4378d0
-static bool PlayerFireButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev104(); }	// slot 104 0x42a7a0
+static void PlayerStopSound(void)		{ if (C3DPlayer *p = dynamic_cast<C3DPlayer *>(PlayerObj())) p->n2_ev116(); }	// slot 116 (C3DJimmy 0x42aac0)
+static bool PlayerAltButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev86(); }	// slot 103 0x4378d0
+static bool PlayerFireButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev87(); }	// slot 104 0x42a7a0
 
 // (g_5099e4 - 0xc0)->slot 121("VR01.gam", "PHONEBOOTH", +0xb89, +0x9c8, 0x21b): go to the phone booth
 // (C3DPlayer::ev121 N2:0x4648a0 "PlayerLoadLevel"), coming back to the player's next level / start point.
@@ -80,7 +80,7 @@ static bool PlayerFireButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p-
 static void PhoneBoothTeleport(void)
 {
 	if (C3DPlayer *p = dynamic_cast<C3DPlayer *>(g_camera))
-		p->ev121((char *)"VR01.gam", (char *)"PHONEBOOTH", p->f_b89, p->f_9c8, 0x21b);
+		p->n2_ev121((char *)"VR01.gam", (char *)"PHONEBOOTH", p->f_b89, p->f_9c8, 0x21b);
 }
 
 static void SetMousePos(int x, int y)		{ neg::SetMousePos((short)x, (short)y); }	// 0x476d90

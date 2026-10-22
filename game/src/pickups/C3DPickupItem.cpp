@@ -472,32 +472,32 @@ void C3DPickupItem::Powerup(void)
 	if (strcasecmp(tag, "SPEEDUP") == 0)
 	{
 		g_power_timers[PT_SPEED] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(m_powerup_time, 1.0f, 1.0f, 0);	// element +0x270
+		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->n2_ev156(m_powerup_time, 1.0f, 1.0f, 0);	// element +0x270
 	}
 	if (strcasecmp(tag, "SODA") == 0)
 	{
 		g_power_timers[PT_SPEED] = 5.0f;
 		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
 		{
-			j->ev156(5.0f, 1.0f, 1.0f, 0);
+			j->n2_ev156(5.0f, 1.0f, 1.0f, 0);
 			j->f_4cd0 = j->f_4cd0 + 8.0f;					// 0x4b1428
 		}
 	}
 	if (strcasecmp(tag, "TRACTION") == 0)
 	{
 		g_power_timers[PT_TRACTION] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(g_power_timers[PT_TRACTION], 1.0f, 0, 1.0f);
+		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->n2_ev156(g_power_timers[PT_TRACTION], 1.0f, 0, 1.0f);
 	}
 	CGameObject *o;
 	if (strcasecmp(tag, "OXYGEN") == 0 && (o = FindObjectByTag("C3DWATERPLANE")) != NULL)
 	{
 		WaterPlaneOxygen(o);								// +0x87c = 3.0
 		PlayGameSound(-1, std::string("waterbutton1"), false);
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(10.0f, 0, 0, 1.0f);
+		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->n2_ev156(10.0f, 0, 0, 1.0f);
 	}
 	if (strcasecmp(tag, "SPORKOS") == 0 && (j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
 	{
-		j->ev156(10.0f, 0, 1.0f, 0);
+		j->n2_ev156(10.0f, 0, 1.0f, 0);
 		j->f_4d94 += 10;
 		if (j->f_4d94 > 100) j->f_4d94 = 100;
 	}
@@ -507,27 +507,27 @@ void C3DPickupItem::Powerup(void)
 		g_power_timers[PT_SONAR] = m_powerup_time;
 		if (j)
 		{
-			j->ev156(15.0f, 0, 1.0f, 0);
+			j->n2_ev156(15.0f, 0, 1.0f, 0);
 			// TODO(BG): Negatron opened Jimmy's C3DRadar here (N2:0x4689d0); no such class in Neutron.exe
 		}
 	}
 	if (strcasecmp(tag, "RAPIDFIRE") == 0)
 	{
 		g_power_timers[PT_RAPIDFIRE] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(15.0f, 0.3f, 0.227f, 0.945f);
+		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->n2_ev156(15.0f, 0.3f, 0.227f, 0.945f);
 	}
 	if (strcasecmp(tag, "SPREADFIRE") == 0)
 	{
 		g_power_timers[PT_SPREADFIRE] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(15.0f, 0.3f, 0.3f, 1.0f);
+		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->n2_ev156(15.0f, 0.3f, 0.3f, 1.0f);
 	}
 	if (strcasecmp(tag, "SHIELDS") == 0)
 	{
 		g_power_timers[PT_SHIELDS] = m_powerup_time;
 		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
 		{
-			j->ev156(15.0f, 0, 0.87f, 1.0f);
-			j->ev147(g_power_timers[PT_SHIELDS]);			// element +0x24c: the bubble
+			j->n2_ev156(15.0f, 0, 0.87f, 1.0f);
+			j->n2_ev147(g_power_timers[PT_SHIELDS]);			// element +0x24c: the bubble
 		}
 	}
 	if (strcasecmp(tag, "FREEZETIME") == 0)
@@ -544,7 +544,7 @@ void C3DPickupItem::Powerup(void)
 		g_power_timers[PT_FREEZE] = m_powerup_time;
 		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
 		{
-			j->ev156(15.0f, 0.96f, 0.55f, 0.33f);
+			j->n2_ev156(15.0f, 0.96f, 0.55f, 0.33f);
 			j->f_430 = 1.0f;								// (element +0x4f0) he is not
 		}
 	}
@@ -553,7 +553,7 @@ void C3DPickupItem::Powerup(void)
 		j = JimmyOf(FindObjectByTag("JIM1"));
 		g_power_timers[PT_XRAY] = m_powerup_time;
 		static_cast<CJimmyGame *>(g_gametype)->StartGadgetEffect("XRAY");
-		if (j) j->ev156(15.0f, 0.9f, 0, 1.0f);
+		if (j) j->n2_ev156(15.0f, 0.9f, 0, 1.0f);
 	}
 	if (strcasecmp(tag, "EARTHQUAKE") == 0)
 	{
@@ -561,7 +561,7 @@ void C3DPickupItem::Powerup(void)
 		g_power_timers[PT_EARTHQUAKE] = m_powerup_time;
 		if (j)
 		{
-			j->ev156(m_powerup_time, 1.0f, 0.2f, 0);
+			j->n2_ev156(m_powerup_time, 1.0f, 0.2f, 0);
 			j->f_bf8 = m_powerup_time;						// camera shake time
 			j->f_c00 = 0.03f;								// and strength
 		}
@@ -570,7 +570,7 @@ void C3DPickupItem::Powerup(void)
 	{
 		j = JimmyOf(FindObjectByTag("JIM1"));
 		g_power_timers[PT_SPRINGSHOES] = m_powerup_time;
-		if (j) j->ev156(m_powerup_time - 2.0f, 1.0f, 1.0f, 1.0f);	// 0x48d954
+		if (j) j->n2_ev156(m_powerup_time - 2.0f, 1.0f, 1.0f, 1.0f);	// 0x48d954
 	}
 }
 

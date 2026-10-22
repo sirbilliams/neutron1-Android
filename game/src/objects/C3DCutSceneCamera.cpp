@@ -88,7 +88,7 @@ static void AISetAnimationsDisabled(CGameObject *ai, int off)
 static void JimmyDeactivateInventory(CGameObject *jimmy, CGameObject *caller)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev138(caller, jimmy, 0, 0.0f);
+	if (j) j->n2_ev138(caller, jimmy, 0, 0.0f);
 }
 
 // --------------------------------------------------------------------------- construction

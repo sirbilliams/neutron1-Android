@@ -311,14 +311,14 @@ void neg::JimmyJetpackFlame(CGameObject *jimmy, float size)
 void neg::JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev138(o, who, item, value);
+	if (j) j->n2_ev138(o, who, item, value);
 }
 
 // C3DFish.h: Jimmy's element slot 134 (+0x218), hurt.
 void neg::JimmyHurt(CGameObject *jimmy, float damage, int points, float time, unsigned char a)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev134(damage, points, time, a);
+	if (j) j->n2_ev134(damage, points, time, a);
 }
 
 // C3DRocketShip.h: Jimmy's +0x4cb8, the hit flag (the mini sub and the rocket ship clear it before a hit).
@@ -339,14 +339,14 @@ void neg::JimmySetHurtFlag(CGameObject *jimmy, unsigned char v)
 void neg::JimmyPain(CGameObject *jimmy)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev130();
+	if (j) j->n2_ev130();
 }
 
 // Jimmy's element slot 146 (+0x248): his bubble follows the vehicle (pos) while its time lasts.
 void neg::JimmyRocketAim(CGameObject *jimmy, float dt, OMedia3DVector pos)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev146(dt, pos);
+	if (j) j->n2_ev146(dt, pos);
 }
 
 // Jimmy's +0x4d94, the rocket ship's shots left.
@@ -365,7 +365,7 @@ void neg::JimmySetAmmo(CGameObject *jimmy, int n)
 void neg::JimmyRocketShoot(CGameObject *jimmy, float x, float y, float z, float side, float speed,
 						   CGameObject *target, int a7, float a8)
 {
-	dynamic_cast<C3DJimmy *>(jimmy)->ev148(x, y, z, side, speed, target, (float)a7, a8);
+	dynamic_cast<C3DJimmy *>(jimmy)->n2_ev148(x, y, z, side, speed, target, (float)a7, a8);
 }
 
 // C3DRocketShip N2:0x46bf95 inline: the next water balloon of g_jimmy aims 1300 above and 550 in

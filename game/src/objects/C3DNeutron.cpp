@@ -134,7 +134,7 @@ void C3DNeutron::AddTouching(CGameObject *other)			// 0x432ef0
 	AddScore(10);											// N2:0x482b50
 	CGameObject *jim = FindObjectByTag("JIM1");
 	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// (JIM1 - 0xc0)
-	if (j) j->ev156(1.0f, 0.3f, 0.3f, 1.0f);				// element +0x270: a red flash
+	if (j) j->n2_ev156(1.0f, 0.3f, 0.3f, 1.0f);				// element +0x270: a red flash
 	if (g_health < 100.0f) SetItemState(2, 45, 1);			// 0x48d96c
 	m_channel = PlayGameSound(-1, std::string("neutron"), false);	// 0x458b40
 	m_collected = 1;

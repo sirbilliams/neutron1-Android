@@ -226,7 +226,7 @@ void C3DRedNeutron::Collect(void)							// N2:0x469710
 	AddScore(500);											// N2:0x482b50
 	AddEnergy(25.0f);										// 0x42a920
 	C3DJimmy *j = Jimmy();									// (g_jimmy - 0xc0)
-	if (j) j->ev156(12.0f, 1.0f, 0.4f, 0.4f);				// element +0x270: a red flash
+	if (j) j->n2_ev156(12.0f, 1.0f, 0.4f, 0.4f);				// element +0x270: a red flash
 	SetItemState(2, 46, 1);									// N2:0x404dd0
 	v124(0);												// +0x1f0
 	m_channel = PlayGameSound(-1, std::string("red neutron"), false);	// 0x458b40

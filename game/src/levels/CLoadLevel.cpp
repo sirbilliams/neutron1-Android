@@ -54,7 +54,7 @@ static void JimmyLoadLevel(CGameObject *jim, const char *level, const char *star
 	if (!p) return;
 	char l[100], s[100], rl[100], rs[100];
 	strcpy(l, level); strcpy(s, start); strcpy(rl, ret_level); strcpy(rs, ret_start);
-	p->ev121(l, s, rl, rs, screen);
+	p->n2_ev121(l, s, rl, rs, screen);
 }
 // C3DJimmy element slot 79 (+0x13c)(1), when the exit has a FadeType: pause the morph animation.
 static void JimmySlot79(CGameObject *jim, int a)
