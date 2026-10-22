@@ -11,9 +11,9 @@
                                and story sequence run, as in a new game).
     NEG_TEST_POSLOG=<seconds>  Every <seconds> of game time, log Jimmy's position, rotation and
                                velocity ("POS x y z rot ... vel ...").
-    NEG_TEST_GOTO=<s>:<tag>[@dx/dz],...  At <s> seconds of game time put Jimmy where the object
-                               tagged <tag> is (moved by dx, dz; 60 higher), e.g. to try an
-                               exit or a phone booth without steering there.
+    NEG_TEST_GOTO=<s>:<tag>[#n][@dx/dz],...  At <s> seconds of game time put Jimmy where the
+                               (n-th) object tagged <tag> is (moved by dx, dz; 60 higher), e.g.
+                               to try an exit or a phone booth without steering there.
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.             */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
@@ -71,10 +71,13 @@ void neg::TestPlayHook(const char *level)
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
 }
 
-static CGameObject *TestFindTag(const char *tag)
+// "TAG" or "TAG#n": the first (n-th, from 1) object tagged TAG
+static CGameObject *TestFindTag(char *tag)
 {
+	int n = 1;
+	if (char *h = strchr(tag, '#')) { *h = 0; n = atoi(h + 1); }
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
+		if (*i && strcasecmp((*i)->m_tag, tag) == 0 && --n <= 0) return *i;
 	return NULL;
 }
 

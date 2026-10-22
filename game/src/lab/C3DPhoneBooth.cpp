@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DPhoneBooth.h"
+#include "../C3DJimmy.h"
 #include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../Todo.h"
@@ -56,9 +57,8 @@ void C3DPhoneBooth::AddTouching(CGameObject *other)			// 0x435800
 {
 	CGameObject::AddTouching(other);						// 0x470a90
 	if (!other->NameContains((char *)"C3DJIMMY")) return;	// +0x18
-	// Jimmy's element slot 117 (0x42abb0, +0x1d4 of his element vtable).
-	// TODO(core): call it once C3DJimmy has BG's slot 117.
-	NEG_TODO(0x42abb0, "C3DJimmy ev117: the phone booth");
+	C3DJimmy *j = dynamic_cast<C3DJimmy *>(other);
+	if (j) j->OpenPhoneMenu();								// Jimmy's element slot 117 (+0x1d4)
 }
 
 void C3DPhoneBooth::Process(float dt)						// 0x448bc0

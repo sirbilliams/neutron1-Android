@@ -37,6 +37,7 @@ class C3DMultiCutSceneCamera : public C3DTriggerType
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x430b40
+	virtual void v23(CGameObject *o) { (void)o; TriggerCamera(); }			// SLOT 23  0x416a30 activated (a friend's talk): fire
 	virtual void Process(float dt);											// SLOT 241 0x430da0 the shots run until the last clip ends
 
 	char		m_sound_db[100];				// 0x6bc  "SoundDatabase" (= "none")
