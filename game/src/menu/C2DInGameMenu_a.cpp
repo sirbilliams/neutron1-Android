@@ -55,12 +55,16 @@ static inline void Hide(OMediaCanvasElement *e)	{ e->hide(true); }
 // The delete idiom: hide, delete the canvas (it came from the database cache) and reset the
 // element, delete the element. port: the canvas is detached before its delete (OMT 2.5's
 // reset() would unlock the freed canvas).
+// port: and only while screens.omt is open (the destructor runs after UnInitObject closed it,
+// which freed the canvases).
+static bool s_db_open = false;
+
 static void FreeElt(OMediaCanvasElement *&e, bool hide_first, bool with_canvas = true)
 {
 	if (!e) return;
 	if (hide_first) e->hide(true);
 	OMediaCanvas *c = e->get_canvas();
-	if (with_canvas && c)
+	if (with_canvas && c && s_db_open)
 	{
 		e->set_canvas(NULL);
 		delete c;
@@ -142,6 +146,7 @@ C2DInGameMenu::C2DInGameMenu()
 	f_4b8 = InitFileStream("omt\\screens.omt");				// 0x476170 (through a std::string)
 	f_4b4 = InitDatabase(f_4b8);							// 0x476000
 	g_screens_db = f_4b4;									// port: Negatron's global, for callers not ported yet
+	s_db_open = true;
 	v299(0);
 	v293();													// the menu pages
 	f_4bc = 3;
@@ -358,6 +363,7 @@ void C2DInGameMenu::UnInitObject()										// 0x402b40
 	CLocalGameObject::UnInitObject();
 	if (f_4b4) UnInitDatabase(f_4b4);						// 0x476080
 	if (f_4b8) UnInitFileStream(f_4b8);						// 0x476290
+	s_db_open = false;										// port (FreeElt)
 }
 
 // --------------------------------------------------------------------------- sprites

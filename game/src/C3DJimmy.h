@@ -65,6 +65,7 @@ class C3DJimmy : public C3DPlayer
 
 #include "jimmy/C3DJimmy_a.inc"
 #include "jimmy/C3DJimmy_b.inc"
+#include "jimmy/C3DJimmy_menu.inc"
 
 	// ---- data members (object offsets). Names say what is known; "?" = not established.
 	int					f_cac;			// 0xcac  0
