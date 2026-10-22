@@ -8,6 +8,7 @@ class OMediaCanvasElement;
 class OMediaDataBase;
 class OMediaFileStream;
 class OMediaHumanInterfaceDevice;
+class OMediaMemStream;
 namespace neg {
 enum { DATA_BASE = 0x4ec000, DATA_SIZE = 0x1ab618 };
 extern unsigned char g_data[DATA_SIZE];
@@ -553,8 +554,10 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f83f4 (neg::g_ptrs[0x30fd])		// pointer
 #define g_4f83f8 (*(unsigned int *)&neg::g_data[0xc3f8])
 #define g_4f8408 (*(float *)&neg::g_data[0xc408])
-#define g_4f840c (neg::g_ptrs[0x3103])		// pointer
-#define g_4f8410 (*(int *)&neg::g_data[0xc410])
+#define g_4f840c (*(OMediaDataBase* *)&neg::g_ptrs[0x3103])
+#define g_anim_mem_db (*(OMediaDataBase* *)&neg::g_ptrs[0x3103])
+#define g_4f8410 (*(OMediaMemStream* *)&neg::g_ptrs[0x3104])
+#define g_anim_mem_stream (*(OMediaMemStream* *)&neg::g_ptrs[0x3104])
 #define g_4f8418 (*(float *)&neg::g_data[0xc418])
 #define g_view_restore_x (*(float *)&neg::g_data[0xc418])
 #define g_4f841c (*(float *)&neg::g_data[0xc41c])
