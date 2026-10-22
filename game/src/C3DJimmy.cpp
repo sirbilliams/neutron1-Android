@@ -12,6 +12,7 @@
 #include "CTaskList.h"
 // TODO(BG): #include "C3DFish.h" (Negatron-only class, deleted)
 #include "C3DRocketShip.h"
+#include "CJimmyGame.h"
 #include "Game.h"
 #include "Bridge.h"
 #include "Todo.h"
@@ -109,6 +110,7 @@ C3DJimmy::C3DJimmy()										// N2:0x443830
 	// f_4ca8, f_4d6c OMedia3DVectors: w = 0.)
 	SetName((char *)"C3DJIMMY");
 	Log("C3DJimmy()");
+	m_step_channel = -1;									// BG 0x422160: +0xa44 = -1
 	strcpy(m_tag, "JIM1");
 	// (Negatron set f_6d0 = 1 here, Granny animation; Boy Genius's Jimmy is a morph object)
 	C3DJimmy::InitObject();									// N2:0x444780, called directly
@@ -373,4 +375,21 @@ void neg::JimmyRocketShoot(CGameObject *jimmy, float x, float y, float z, float 
 void neg::JimmyGadgetShot(CGameObject *jimmy)
 {
 	(void)jimmy;	// TODO(BG): N2 C3DWaterBalloon
+}
+
+// --------------------------------------------------------------------------- Neutron.exe slots
+
+void C3DJimmy::ev81(void)									// 0x4299d0
+{
+	if (m_step_channel == -1)
+		m_step_channel = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound, true);	// 0x458980; game +0x54c
+}
+
+void C3DJimmy::ev82(void)									// 0x429a00
+{
+	if (m_step_channel != -1)
+	{
+		StopGameSound(m_step_channel, false);				// 0x458a00
+		m_step_channel = -1;
+	}
 }

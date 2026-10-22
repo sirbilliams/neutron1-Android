@@ -29,7 +29,8 @@ static inline void SkyLoad(C3DObject *sky, std::string file, bool alt)
 	static_cast<C3DSky *>(sky)->LoadSky(file, alt);
 }
 
-// 0x46a400 (as in CEditor.cpp): every InitGame ends with CaptureMouse(true).
+// 0x46a400 (as in CEditor.cpp): every InitGame ends with CaptureMouse(true). (Boy Genius has
+// no "mouse disabled" flag check here, unlike Negatron.) g_mouse_captured = 0x50993c.
 static inline void CaptureMouse(bool capture)
 {
 	if (capture)

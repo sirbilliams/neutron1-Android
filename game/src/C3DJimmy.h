@@ -63,6 +63,11 @@ class C3DJimmy : public C3DPlayer
 	C3DJimmy();																// N2:0x443830
 	virtual ~C3DJimmy();													// 0x4229e0
 
+	// ---- Neutron.exe element slots (BG numbering)
+	virtual void ev81(void);												// ESLOT 81 0x4299d0 footstep loop on (the game's surface sound)
+	virtual void ev82(void);												// ESLOT 82 0x429a00 footstep loop off
+	int					m_step_channel;	// BG 0xa44  footstep loop channel (-1: none)
+
 #include "jimmy/C3DJimmy_a.inc"
 #include "jimmy/C3DJimmy_b.inc"
 

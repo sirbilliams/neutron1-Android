@@ -1,15 +1,17 @@
 /*  C3DDoorUpDown ('3DUD') - a door that slides up: a morph object (one .ase animation RAY,
     "ASEFile", default "doorfowl.ase"; texture "PNGFile", "doorfowl.png"). NextState (v268:
     0 open, 1 close, other toggles) moves it by "OpenAmount" (500) in y over "DoorSpeed" (5 s;
-    reversed half-way if asked) with the "Door opening loop" sound, then "door closing"; open,
+    reversed half-way if asked) with the sound 0x3b, then sound 0x3a; open,
     it closes by itself after "OpenTime" (3 s). Each NextState also fires the "Next" object
     (an AI trigger, a cut-scene camera or a multi cut scene). Opened when touched by a Yokian,
     or by Jimmy while "TouchActivated" and not moving. "ItemClosed" (1) is its state on reset.
-    Reconstructed from Neutron.exe: constructor 0x4174f0 (factory '3DUD', 0xa84 bytes),
-    destructor 0x417710 (only resets the vtables, then ~C3DAnimated; deleting thunks 0x4176e0 /
-    0x417d00 / 0x417d10 / 0x417d20). Vtables 0x4993ac (game object at +0xc0: 0, 7, 10, 16,
-    231, 240, 260, 268 overridden; 231 is code shared at N2:0x47fc20) / 0x49939c (streamer).
-    Own members 0x924..0xa7c, vtordisp 0xa7c, streamer 0xa80.                                */
+    Reconstructed from Neutron.exe (verified against Boy Genius): constructor 0x4174f0 (factory
+    '3DUD', 0x81c bytes), destructor 0x417710 (only resets the vtables, then ~C3DAnimated;
+    deleting thunks 0x4176e0 / 0x417d00 / 0x417d10 / 0x417d20). Game object vtable (+0xc0): 0,
+    7, 10, 16, 241, 259, 266 overridden (Negatron's names below: Process, v260, v268). Sounds by
+    index: 0x3b the opening loop, 0x3a closing. Unlike Negatron's door it moves while paused and
+    collides with everything. Own members 0x6bc..0x814, vtordisp 0x814, streamer 0x818 (member
+    names keep Negatron's offsets).                                                           */
 #pragma once
 #include "../C3DAnimated.h"
 
@@ -23,7 +25,6 @@ class C3DDoorUpDown : public C3DAnimated
 	virtual void InitObject(void);											// SLOT 7   0x4177c0 properties
 	virtual void ResetObject(void);											// SLOT 10  0x417760 back to ItemClosed
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x4178c0 a Yokian / Jimmy: open
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 N2:0x47fc20 collides with the camera, '3JIM', '3ENE', '3GOD', '3WBL' only
 	virtual void Process(float dt);											// SLOT 240 0x417930 moving, closing by itself
 	virtual void v260(void);												// SLOT 260 0x417c50 properties loaded: animation, texture
 	virtual void v268(int state);											// SLOT 268 0x417ac0 "NextState": 0 open, 1 close, else toggle

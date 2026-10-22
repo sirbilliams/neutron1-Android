@@ -1,4 +1,4 @@
-/*  C3DFan - see C3DFan.h. Reconstructed from Neutron.exe 0x418390..0x4192e0. */
+/*  C3DFan - see C3DFan.h. Reconstructed from Neutron.exe 0x418390..0x418a20. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DFan.h"
@@ -33,21 +33,21 @@ C3DFan::~C3DFan()											// 0x4184f0
 }
 
 namespace neg {
-CGameObject *New_C3DFan(void) { return new C3DFan; }					// '3FAN' (0x940 bytes)
+CGameObject *New_C3DFan(void) { return new C3DFan; }					// '3FAN' (0x6d8 bytes)
 }
 
 void C3DFan::InitObject(void)								// 0x418540
 {
 	Log("InitObject()");
-	C3DAnimated::InitObject();								// N2:0x41b0a0
+	C3DAnimated::InitObject();								// 0x40d3c0
 	RegisterProperty("FanSpeed", &m_fan_speed, PROP_FLOAT, 0);
 	RegisterProperty("FanRange", &m_fan_range, PROP_FLOAT, 0);
 	RegisterProperty("FanOn", &m_fan_on, PROP_LONG, 0);
-	InitAnim();												// element +0x110
-	CreateAnim((char *)"DEFAULT", (char *)"fan.ase");		// +0xe0
-	CreateTexture((char *)"fan.png", 0);					// +0xfc
-	ApplyTexture(f_590, 0);									// +0x100
-	ev58((char *)"DEFAULT", 1);								// +0xe8
+	InitAnim();												// element +0x108
+	CreateAnim((char *)"HIDEFAULT", (char *)"fan.ase");	// +0xd8
+	CreateTexture((char *)"fan.png", 0);					// +0xf0
+	ApplyTexture(f_590, 0);									// +0xf4
+	ev58((char *)"DEFAULT", 1);								// +0xe0
 }
 
 void C3DFan::ResetObject(void)								// 0x418920
@@ -61,11 +61,10 @@ void C3DFan::ResetObject(void)								// 0x418920
 	m_target = 0;
 }
 
-void C3DFan::Process(float dt)								// 0x418610
+void C3DFan::Process(float dt)								// 0x418610 (no pause check, unlike Negatron's)
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DAnimated::Process(dt);								// N2:0x41c120
-	AddRotation(0, 0, (float)((double)(m_speed * dt) * 0.35));	// +0x330; 0x49b200 (double)
+	C3DAnimated::Process(dt);								// 0x40e050
+	AddRotation(0, 0, (float)((double)(m_speed * dt) * 0.35));	// +0x334; 0x49b200 (double)
 	if (m_speed < m_target)
 	{
 		m_speed += dt * 130.0f;								// 0x49b1fc
@@ -78,13 +77,13 @@ void C3DFan::Process(float dt)								// 0x418610
 	}
 	if (!g_camera) return;
 	float p[4], c[4];
-	v195(p);												// +0x30c
+	v195(p);												// +0x310
 	g_camera->v195(c);
 	OMedia3DVector d(p[0] - c[0], p[1] - c[1], p[2] - c[2], 0);
 	const float dist = sqrtf(d.y * d.y + d.z * d.z + d.x * d.x);
 	if (!(dist < m_fan_range)) return;
 	if (!(m_fan_range > 0.0f)) return;						// 0x48d914
-	OMedia3DVector n = v226(0, 0, 1.0f);					// +0x384 (0x472c10: v226 of the vector (0, 0, 1, 0))
+	OMedia3DVector n = v226(0, 0, 1.0f);					// +0x388 (v226 of the vector (0, 0, 1, 0))
 	const float id = 1.0f / d.quick_magnitude();			// 0x48d924
 	d.x *= id;
 	d.y *= id;
@@ -96,13 +95,13 @@ void C3DFan::Process(float dt)								// 0x418610
 	float f = dist / m_fan_range + (1.0f - (d.z * n.z + d.y * n.y + n.x * d.x));
 	if (f < -1.0f) f = -1.0f;								// 0x49b1f8
 	else if (f > 1.0f) f = 1.0f;
-	OMedia3DVector q = v224(0, 0, m_speed);					// +0x380: the point `speed` ahead
+	OMedia3DVector q = v224(0, 0, m_speed);					// +0x384: the point `speed` ahead
 	v195(p);
 	const float k = 1.0f - f;
-	g_camera->v178(k * (p[0] - q.x), k * (p[1] - q.y), k * (p[2] - q.z));	// +0x2c8 velocity +=
+	g_camera->v178(k * (p[0] - q.x), k * (p[1] - q.y), k * (p[2] - q.z));	// +0x2cc velocity +=
 }
 
-void C3DFan::v268(int state)								// N2:0x431ab0
+void C3DFan::v268(int state)								// 0x418960 (BG slot 266)
 {
 	if (state == 0)
 	{

@@ -63,6 +63,9 @@ class C3DPlayer : public C3DAnimated
 	void n2_ev97(OMedia3DVector pos, OMedia3DVector target) { neg::CamPlace(pos, target); }
 	void n2_ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
 			  OMedia3DVector axis) { neg::CamMove(this, a, b, mode, cur, want, target, axis); }
+	virtual void ev80(void) {}												// ESLOT 80 0x472970 (empty; C3DJimmy 0x429910)
+	virtual void ev81(void) {}												// ESLOT 81 0x472970 (empty; C3DJimmy 0x4299d0 footstep loop on)
+	virtual void ev82(void) {}												// ESLOT 82 0x472970 (empty; C3DJimmy 0x429a00 footstep loop off)
 	virtual unsigned char ev86(void);										// ESLOT 86 0x4378d0 jump/use button (N2 C3DPlayerObject ev86 ~0.81)
 	virtual unsigned char ev87(void);										// ESLOT 87 0x42a7a0 fire button
 	virtual void n2_ev105(void);												// N2:0x465360 Jimmy is out: back to the autosave (TODO(BG))
