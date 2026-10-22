@@ -323,8 +323,10 @@ static void DeleteHudPicture(void)
 {
 	if (OMediaCanvas *c = g_hud_picture->get_canvas())
 	{
-		delete c;						// through its OMediaEngineImpMaster base (+0x24), as shipped
+		// port: the original deletes the canvas, then reset() unlinks the sprite from it (a use of
+		// freed memory that Android's allocator aborts on): unlink first.
 		g_hud_picture->reset();
+		delete c;						// through its OMediaEngineImpMaster base (+0x24), as shipped
 	}
 	delete g_hud_picture;
 	g_hud_picture = NULL;

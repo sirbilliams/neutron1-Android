@@ -416,8 +416,12 @@ CEditor::~CEditor()
 	if (g_splash)
 	{
 		Trace("Deleting splash");
-		if (g_splash->get_canvas()) delete g_splash->get_canvas();
+		// port: the original deletes the canvas first, then the element, whose destructor still
+		// unlinks itself from that freed canvas (harmless on the Windows heap; Android's allocator
+		// aborts on it). Same deletions, element first.
+		OMediaCanvas *canvas = g_splash->get_canvas();
 		if (g_splash) delete g_splash;
+		if (canvas) delete canvas;
 		g_splash = NULL;
 	}
 	if (g_editor_db) UnInitDatabase(g_editor_db);
@@ -1029,8 +1033,12 @@ void CEditor::DrawSplash(int canvas_id)
 	if (g_splash)
 	{
 		Trace("Deleting splash");
-		if (g_splash->get_canvas()) delete g_splash->get_canvas();
+		// port: the original deletes the canvas first, then the element, whose destructor still
+		// unlinks itself from that freed canvas (harmless on the Windows heap; Android's allocator
+		// aborts on it). Same deletions, element first.
+		OMediaCanvas *canvas = g_splash->get_canvas();
 		if (g_splash) delete g_splash;
+		if (canvas) delete canvas;
 		g_splash = NULL;
 	}
 	Trace("after Deleting splash");
