@@ -171,6 +171,7 @@ static bool KeyPressed(int vk)
 // C2DInGameMenu N2:0x40ed30 (this unused): show or hide the sprite g_N2_5446ec (the pause picture).
 static void ShowPauseSprite(bool show)
 {
+	if (!g_N2_5446ec) return;								// port: Boy Genius never makes it
 	if (show) g_N2_5446ec->force_show();
 	else g_N2_5446ec->hide(true);
 }

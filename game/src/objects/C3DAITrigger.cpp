@@ -403,8 +403,9 @@ void C3DAITrigger::SpecialAction(void)
 	if (IS("FOWLINV") && scene == 460) SetTaskState("SCENE", 470);
 	if (IS("PUTGODDARD") && (scene == 120 || scene == 145) && (jim = FindObjectByTag("JIM1")) != NULL)
 	{
-		// Jimmy's element slots 94 (+0x178) and 93 (+0x174)(4). TODO(core): BG C3DJimmy.
-		NEG_TODO(0x40cdf9, "C3DAITrigger PUTGODDARD: Jimmy slots 94 / 93");
+		// Jimmy's element slots 94 then 93(4): he gets off his gadget and Goddard rides the jeep
+		C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim);
+		if (j) { j->DeactivateGadget(); j->ActivateGadget(4); }
 	}
 	if (IS("GOGODDARD") && GetTaskState("SCENE") == 168)
 	{
@@ -414,8 +415,8 @@ void C3DAITrigger::SpecialAction(void)
 	}
 	if (IS("JIMEND") && (jim = FindObjectByTag("JIM1")) != NULL)
 	{
-		// Jimmy's element slot 94 (+0x178). TODO(core): BG C3DJimmy.
-		NEG_TODO(0x40ce50, "C3DAITrigger JIMEND: Jimmy slot 94");
+		C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim);		// element slot 94
+		if (j) j->DeactivateGadget();
 	}
 	if (IS("RECHARGE"))
 	{
@@ -432,8 +433,8 @@ void C3DAITrigger::SpecialAction(void)
 	}
 	if (IS("BONUSSCREEN") && (jim = FindObjectByTag("JIM1")) != NULL)
 	{
-		// Jimmy +0xa18 (an object) gets +0x4f0 = 1. TODO(core): BG C3DJimmy.
-		NEG_TODO(0x40cf2c, "C3DAITrigger BONUSSCREEN: Jimmy +0xa18");
+		C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim);		// the menu's bonus count
+		if (j && j->f_a18) j->f_a18->f_4f0 = 1;
 	}
 	if (IS("GIVEKEY") && GetTaskState("SCENE") == 205)
 	{

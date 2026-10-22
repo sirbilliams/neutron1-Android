@@ -20,6 +20,8 @@
 #include "InterfaceElement.h"
 #include "Game.h"
 #include "Todo.h"
+#include "SaveGame.h"
+#include <stdlib.h>
 #include "gen/globals.h"
 #include "OMediaViewPort.h"
 #include "OMediaStringField.h"
@@ -219,6 +221,10 @@ void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
 	if (strcasecmp(name, "DEFAULT") != 0)
 	{
 		CGameObject *next = FindObjectByTag(name);
+		static int trace = -1;									// port: NEG_TRIGGER_TRACE logs the chain
+		if (trace < 0) trace = getenv("NEG_TRIGGER_TRACE") != NULL;
+		if (trace) SDL_Log("[trigger] %s -> %s (%s) SCENE=%d", m_tag, name,
+			next ? next->m_name : "?", GetTaskState("SCENE"));
 		if (!next)
 		{
 			ErrorLog("ERROR: No NextTrigger %s found", name);
