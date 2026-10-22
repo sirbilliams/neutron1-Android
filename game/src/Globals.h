@@ -57,6 +57,8 @@ extern bool					 g_cheat_keys;		// 0x50984a  (F4 quits when set)
 // --- misc
 extern unsigned int			*g_random_seed;		// 0x509a40
 
+void N2GlobalsInit(void);					// port: Negatron start values of the not yet located globals (Globals.cpp)
+
 }	// namespace neg
 
 // Windows messages / OMT 2002 messages the original code handles

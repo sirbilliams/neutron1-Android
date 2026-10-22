@@ -34,3 +34,34 @@ bool				 g_cheat_keys = false;
 unsigned int		*g_random_seed = 0;
 
 }	// namespace neg
+
+// --------------------------------------------------------------------------- port
+
+#include "gen/globals.h"
+
+// port: the Negatron globals that are not located in Neutron.exe yet live in a zero-filled block
+// (gen/n2globals.h). Those the Negatron code expects to start non-zero get Negatron's start
+// values here (they were initialised data in Neutron2.exe). TODO(BG): each goes away as it is
+// found in Neutron.exe (its value then comes from the exe) or its Negatron code is replaced.
+void neg::N2GlobalsInit(void)
+{
+	g_difficulty = 1;							// normal
+	g_game_mode = 9;							// None
+	g_prev_game_mode = 9;
+	g_mode_before_pause = 9;
+	g_has_focus = 1;
+	g_enemy_time_scale = 1.0f;
+	g_fade_done = 1;
+	g_fade_duration = 1.0f;
+	g_fade_in_time = 1.0f;
+	g_fade_setting = 1;
+	g_hud_picture_id = -1;
+	g_queued_sfx_after = (unsigned int)-1;
+	g_score_box_y = 386;
+	g_teletype_rate = 12.0f;
+	g_tex_scroll_on = 1;
+	g_N2_5324f8 = 3;
+	g_N2_532508 = 5.0f;
+	g_N2_537634 = -1.0f;
+	g_N2_53f27c = 9;
+}

@@ -1,5 +1,6 @@
 /*  C3DJimmy, part A: the slots below N2:0x448b40 (see C3DJimmy.h). */
 #include "../C3DJimmy.h"
+#include "../TestHooks.h"
 #include "../C3DPermanentSprite.h"
 #include "../C3DShadow.h"
 #include "../C3DPointCursor.h"
@@ -1006,6 +1007,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 
 void C3DJimmy::Process(float dt)							// N2:0x446260
 {
+	TestPosLog(this, dt);									// port: test hook (NEG_TEST_POSLOG)
 	if (g_gametype->IsPaused()) return;						// +0x114
 	if (f_d34 && g_game_state != 3)
 	{

@@ -245,6 +245,7 @@ void omt_main(void)
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Jimmy Neutron vs. Jimmy Negatron", why, NULL);
 			return;
 		}
+		neg::N2GlobalsInit();
 	}
 	// (Windows: refuses to start twice - FindWindow("OMT SingleWindow") titled "Jimmy Neutron 2")
 	try

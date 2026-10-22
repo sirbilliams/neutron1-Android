@@ -217,8 +217,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_menu_dialog_open (*(bool *)&neg::g_n2_data[0x13dd4])
 #define g_menu_item_sprites ((OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bd])
 #define g_mode_before_pause (*(int *)&neg::g_n2_data[0x95bc])	// initialised in Neutron2.exe: port gets 0
-#define g_phys_objects_on (*(bool *)&neg::g_n2_data[0xeb68])	// initialised in Neutron2.exe: port gets 0
-#define g_phys_on (*(bool *)&neg::g_n2_data[0xeb6b])	// initialised in Neutron2.exe: port gets 0
 #define g_player_hud (*(OMediaElement* *)&neg::g_n2_ptrs[0x611b])
 #define g_power_timers ((float *)&neg::g_n2_data[0x18424])
 #define g_prev_game_mode (*(int *)&neg::g_n2_data[0x95b8])	// initialised in Neutron2.exe: port gets 0

@@ -3,8 +3,8 @@
 0x5cfc00 val OMedia3DVector g_gravity        # (0, -5000, 0, 0) at start-up; CJimmyGame sets (0, -800, 0)
 0x5cfc40 val CPhysicsRay g_phys_ray          # last ray test: origin, dir, end (= hit point, 0x5cfc60)
 0x695d5c val float g_closest_face_t          # nearest face hit of the current sweep (-1 / 130000 = none yet)
-# unresolved (Neutron2 address): N2:0x540b68 val bool g_phys_objects_on          # 1: object-object collisions (PhysicsCollideObjects)
+0x4f69e4 val bool g_phys_objects_on          # 1: object-object collisions (PhysicsCollideObjects 0x479...)
 0x4f69e5 val bool g_phys_terrain_on          # 1: terrain collisions and ray tests
-# unresolved (Neutron2 address): N2:0x540b6b val bool g_phys_on                  # 1: PhysicsProcess moves the objects
+0x4f69e7 val bool g_phys_on                  # 1: PhysicsProcess moves the objects
 0x4f69e8 val int g_terrain_memory            # bytes counted for the terrain polygon records (+0x1c each)
 0x5099ac val bool g_terrain_poly_claimed     # the game type took a terrain polygon (CGameType ev79)
