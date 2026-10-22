@@ -246,39 +246,21 @@ void CJimmyGame::ResetObject(void)											// 0x44d4e0
 	CLocalGameObject::ResetObject();
 }
 
-void CJimmyGame::Process(float dt)											// N2:0x484260
+// C3DJimmy element slot 128 (+0x200, 0x424570): his per-frame part the game type runs. Weak:
+// C3DJimmy (agent E) defines it.
+namespace neg {
+void JimmyElementSlot128(CGameObject *jimmy, float dt) __attribute__((weak));
+void JimmyElementSlot128(CGameObject *jimmy, float dt)	{ (void)jimmy; (void)dt; }
+}
+
+void CJimmyGame::Process(float dt)											// 0x44df80
 {
-	if (m_no_texture_scroll == 0) neg::UpdateTexScrolls(dt);				// N2:0x4970e0
-	if (m_refog)
-	{
-		m_refog = 0;
-		SetFog(m_fog_color[0], m_fog_color[1], m_fog_color[2], m_fog_color[3],
-			   m_fog_restore[0], m_fog_restore[1], m_fog_restore[2], true);	// element +0x194
-	}
-	if (KeyPressed(0x13) || KeyPressed(0x03))								// VK_PAUSE, VK_CANCEL
-	{
-		if (g_game_mode == 6 || g_game_mode == 5) PauseGame(!g_game_paused);	// element +0x110
-	}
+	neg::UpdateTexScrolls(dt);												// 0x45f510
 	CGameType::Process(dt);
-	UpdateSounds();														// N2:0x4b8a30
-	ev97(dt);																// element +0x184
-	if (g_granny) GrannyAdvanceTime(g_granny, (double)dt);
-	if (g_player_hud) static_cast<CLocalGameObject *>(dynamic_cast<CGameObject *>(g_player_hud))->v269(dt);	// HUD +0xc8, vtable +0x434
-	if (m_sky && m_sky_rotates) m_sky->AddRotation(0.0f, dt, 0.0f);		// sky +0xc0, vtable +0x330
-	if (g_camera && g_health < 1.0f)
-	{
-		g_health = 1.0f;
-		CameraPlayerDead(g_camera);											// camera element +0x1a4
-	}
-	if (g_queued_sfx_pending && !IsChannelPlaying((int)g_queued_sfx_after))
-	{
-		g_queued_sfx_pending = 0;
-		PlayGameSound(-1, g_queued_sfx, 0);
-		g_queued_sfx = g_empty_string;										// 0x4f81a8 ""
-		GivePendingInvention();												// N2:0x409b20
-	}
-	if (g_voice_channel != -1 && !IsChannelPlaying(g_voice_channel)) g_voice_channel = -1;
-	UpdateTimers(dt);														// element +0x17c
+	UpdateSounds();														// 0x47d8f0
+	if (m_sky && m_sky_rotates) m_sky->AddRotation(0.0f, dt, 0.0f);		// sky +0xc0, vtable +0x334
+	UpdateInput();															// 0x478530: the joystick poll
+	if (g_jimmy) neg::JimmyElementSlot128(g_jimmy, dt);					// element +0x200
 }
 
 // N2:0x484640: per frame while the editor is editing (CGameObject::v4): no fog, grey clear colour,
@@ -293,25 +275,11 @@ void CJimmyGame::v242(float t)
 	g_layer_world->set_far_clip(200000.0f);									// 2002 +0xc0
 }
 
-// N2:0x483b50: after a level load. Quirk: power timer [9] (N2:0x54a448) is not reset.
+// 0x44df30 (BG slot 259): after a level load (CEditor ResetLevel).
 void CJimmyGame::v260(void)
 {
+	// (debug log)
 	m_pickup_index = 0;
-	g_health = 100.0f;
-	g_power_timers[0] = 0.0f;
-	g_power_timers[1] = 0.0f;
-	g_power_timers[2] = 0.0f;
-	g_power_timers[3] = 0.0f;
-	if (g_player)															// (and its element is not NULL)
-	{
-		g_player_hud = PlayerHud();
-		HudHide(g_player_hud);												// N2:0x468aa0
-	}
-	g_power_timers[4] = 0.0f;
-	g_power_timers[5] = 0.0f;
-	g_power_timers[6] = 0.0f;
-	g_power_timers[7] = 0.0f;
-	g_power_timers[8] = 0.0f;
 }
 
 void CJimmyGame::v277(void)													// N2:0x485e80
@@ -671,33 +639,21 @@ char CJimmyGame::GetSceneStage(void)
 	return (char)((319 < v) + 1);
 }
 
-// N2:0x484cc0: textures 800..879 scroll (870..879 wobble), 900..909 scroll diagonally at
-// increasing speeds. True when the polygon got a scroll.
-bool CJimmyGame::SetupTextureScroll(OMedia3DPolygon *p)
+// 0x44e470 (BG slot 88): textures 800..869 scroll, ten at a time in one of seven directions.
+bool CJimmyGame::SetupTextureScroll(OMedia3DPolygon *p)						// 0x44e470
 {
 	OMedia3DMaterial *m = p->get_material();
 	if (!m || !m->get_texture()) return false;
 	const int id = (int)m->get_texture()->get_chunk_ID();
-	if (!id) return false;
-	if (id >= 800 && id < 880)
-	{
-		if (id < 810) neg::AddTexScroll(p, 0.0f, 0.2f);
-		else if (id < 820) neg::AddTexScroll(p, 0.2f, 0.2f);
-		else if (id < 830) neg::AddTexScroll(p, 0.2f, -0.2f);
-		else if (id < 840) neg::AddTexScroll(p, 0.0f, -0.2f);
-		else if (id < 850) neg::AddTexScroll(p, -0.2f, -0.2f);
-		else if (id < 860) neg::AddTexScroll(p, -0.2f, 0.0f);
-		else if (id < 870) neg::AddTexScroll(p, -0.2f, 0.2f);
-		else neg::AddTexScroll(p, -99999.0f, -99999.0f);					// wobble
-		return true;
-	}
-	if (id >= 900 && id < 910)
-	{
-		static const float speed[10] = { 0.05f, 0.08f, 0.1f, 0.13f, 0.17f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f };
-		neg::AddTexScroll(p, speed[id - 900], speed[id - 900]);
-		return true;
-	}
-	return false;
+	if (id < 800 || id > 869) return false;
+	if (id < 810) neg::AddTexScroll(p, 0.0f, 0.2f);						// 0x45f610
+	else if (id < 820) neg::AddTexScroll(p, 0.2f, 0.2f);
+	else if (id < 830) neg::AddTexScroll(p, 0.2f, -0.2f);
+	else if (id < 840) neg::AddTexScroll(p, 0.0f, -0.2f);
+	else if (id < 850) neg::AddTexScroll(p, -0.2f, -0.2f);
+	else if (id < 860) neg::AddTexScroll(p, -0.2f, 0.0f);
+	else neg::AddTexScroll(p, -0.2f, 0.2f);
+	return true;
 }
 
 // 0x44db30: diffuse r, g, b of every material of the terrain database's shapes.

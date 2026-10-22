@@ -36,9 +36,9 @@ class CJimmyGame : public CGameType
 
 	// ---- CLocalGameObject-family overrides
 	virtual void ResetObject(void);											// SLOT 10  0x44d4e0 (jmp to CLocalGameObject's)
-	virtual void Process(float dt);											// SLOT 240 N2:0x484260
+	virtual void Process(float dt);											// SLOT 240 0x44df80
 	virtual void v242(float t);												// SLOT 242 N2:0x484640 per frame while the editor is editing
-	virtual void v260(void);												// SLOT 260 N2:0x483b50 after a level load (CEditor ResetLevel)
+	virtual void v260(void);												// SLOT 260 0x44df30 (BG 259) after a level load: pickup index 0
 	virtual void v277(void);												// SLOT 277 N2:0x485e80 PauseAll(true): stop the stopwatch tick
 	virtual void v278(void);												// SLOT 278 N2:0x485ea0 PauseAll(false): restart it
 	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x486170 savegame
@@ -61,7 +61,7 @@ class CJimmyGame : public CGameType
 	virtual bool FileIsThere(char *name, const char *dir, const char *cd_dir);	// ESLOT 89 0x44e560 +0x164
 	virtual void CreateTerrainTinted(float r, float g, float b, float a);	// ESLOT 90  0x44dbf0 +0x168
 	virtual char GetSceneStage(void);										// ESLOT 91  0x44df50 +0x16c
-	virtual bool SetupTextureScroll(OMedia3DPolygon *p);					// ESLOT 92  N2:0x484cc0 +0x170
+	virtual bool SetupTextureScroll(OMedia3DPolygon *p);					// ESLOT 92  0x44e470 +0x170 (BG slot 88)
 	virtual void SetTerrainDBColor(float r, float g, float b, float a);		// ESLOT 93  0x44db30 +0x174
 	virtual void SetTerrainGrey(float v);									// ESLOT 94  N2:0x4836a0 +0x178
 	virtual void UpdateTimers(float dt);									// ESLOT 95  N2:0x483c50 +0x17c

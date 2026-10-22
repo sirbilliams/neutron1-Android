@@ -39,13 +39,10 @@ static void SetClearLayerViewMatrix(void)
 
 // --------------------------------------------------------------------------- the per-frame passes over g_objects
 
-static void PreUpdateObjects(void)											// N2:0x4ae5b0
-{
-	unsigned int bits;						// the slot takes the frame time; its generated signature
-	memcpy(&bits, &g_frame_time, 4);		// is (unsigned int), so it gets the float's bits
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		(*i)->v241(bits);					// vtable +0x3c4
-}
+// 0x462a20: C3DParticle's per-frame update of the particles in the list 0x4fc6a4 (rise, fade,
+// hide when their time is out). Nothing in Boy Genius adds to that list (see ResetParticles in
+// CGameType.cpp), so there is nothing to update.
+static void UpdateParticles(float dt)	{ (void)dt; }
 
 static void UpdateObjects(void)												// 0x473740
 {
@@ -96,20 +93,19 @@ void CViewPort::render_viewport(OMediaRendererInterface *rdr_i)				// 0x47e4f0
 		const bool explorer = AssetViewFrame(g_frame_time);	// port: the Asset Viewer's explorer: the level stays frozen
 		if (!explorer && GameIsRunning() && g_editor && !EditorIsEditing())
 		{
-			PhysicsProcess(g_frame_time);	// N2:0x4b4c60
+			PhysicsProcess(g_frame_time);	// 0x479bc0
+			UpdateParticles(g_frame_time);	// 0x462a20
 			UpdateTextureAnims(g_frame_time);	// 0x4693a0
 		}
-		UpdateInput();						// 0x478530 joystick poll (Input.cpp)
-		UpdateSounds();						// N2:0x4b8a30
+		UpdateSounds();						// 0x47d8f0 (the joystick poll is CJimmyGame::Process's)
 		if (!explorer)						// port: (always, in the original)
 		{
-			PreUpdateObjects();				// N2:0x4ae5b0
 			UpdateObjects();				// 0x473740
 			PostUpdateObjects();			// 0x473770
 		}
 		CompanionTick(g_frame_time);		// port: the dual-screen companion snapshot (port/Companion.h; read-only)
 		if (g_layer_clear) SetClearLayerViewMatrix();
-		UpdateFrameRate(g_frame_time);		// 0x477cb0
+		UpdateFrameRate(g_frame_time);		// 0x477db0 -> 0x477cb0 (+ "MEM=" with the debug flag 0x509a12)
 	}
 	// else: "LASTDELTA=%f" (debug log, empty in the shipped build)
 	OMediaViewPort::render_viewport(rdr_i);
