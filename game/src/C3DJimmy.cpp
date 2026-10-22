@@ -382,7 +382,7 @@ void neg::JimmyGadgetShot(CGameObject *jimmy)
 void C3DJimmy::ev81(void)									// 0x4299d0
 {
 	if (m_step_channel == -1)
-		m_step_channel = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound, true);	// 0x458980; game +0x54c
+		m_step_channel = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound_next, true);	// 0x458980; game +0x54c
 }
 
 void C3DJimmy::ev82(void)									// 0x429a00

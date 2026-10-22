@@ -65,7 +65,7 @@ void CLocalGameObject::UnInitDatabases(void)				// 0x458c50
 	if (f_4bc) CloseObjectDatabase();						// vtable +0x444 (tail call)
 }
 
-unsigned char CLocalGameObject::v133(void)					// N2:0x48f010
+unsigned char CLocalGameObject::v133(void)					// 0x458960 (BG slot 134): on the floor, or +0x4a0
 {
 	if (f_4ac) return 1;
 	return f_13f;

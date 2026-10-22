@@ -430,8 +430,8 @@ void neg::PhysicsProcess(float dt)							// N2:0x4b4c60
 void neg::PhysicsMoveObject(CGameObject *o, float dt)		// 0x479d20
 {
 	s_was_on_floor = o->v133() != 0;
-	if (!o->v131()) return;									// physics off
 	if (o->v113()) o->v134(0);								// floor-snapping objects leave the floor for now
+	if (!o->v131()) return;									// physics off
 	OMedia3DVector pos = Position(o);
 	// (the original also takes the quick magnitude of previous - current position, unused)
 	if (g_phys_terrain_on)
@@ -440,22 +440,21 @@ void neg::PhysicsMoveObject(CGameObject *o, float dt)		// 0x479d20
 	{
 		o->v134(1);											// no terrain: stay at this height
 		o->v188(0, pos.y, 0);
-		if (o->f_142) o->v157(0, -g_gravity.y, 0);
+		o->v157(0, -g_gravity.y, 0);						// (Negatron only with its gravity flag f_142)
 		OMedia3DVector v = Velocity(o);
 		o->v176(v.x, 0, v.z);
 	}
 
 	OMedia3DVector spin = Spin(o);
-	o->AddRotation(spin.x * o->f_430 * dt, spin.y * o->f_430 * dt, spin.z * o->f_430 * dt);	// vtable +0x330
+	o->AddRotation(spin.x * dt, spin.y * dt, spin.z * dt);	// vtable +0x334 (Negatron scaled by its time scale)
 	OMedia3DVector imp = Impulse(o);
 	o->v178(imp.x, imp.y, imp.z);							// velocity += impulse, once
 	o->v162(0, 0, 0);
 	OMedia3DVector acc = Acceleration(o);
 	o->v178(acc.x * dt, acc.y * dt, acc.z * dt);
-	if (o->f_142)
-		o->v178(g_gravity.x * o->f_430 * dt, g_gravity.y * o->f_430 * dt, g_gravity.z * o->f_430 * dt);
+	o->v178(g_gravity.x * dt, g_gravity.y * dt, g_gravity.z * dt);		// always (Negatron: with f_142)
 	OMedia3DVector vel = Velocity(o);
-	OMedia3DVector step(vel.x * o->f_430 * dt, vel.y * o->f_430 * dt, vel.z * o->f_430 * dt, 0);
+	OMedia3DVector step(vel.x * dt, vel.y * dt, vel.z * dt, 0);
 
 	if (o->f_140)
 	{

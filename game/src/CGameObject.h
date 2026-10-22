@@ -58,7 +58,9 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 	virtual void SetName(char *tag);										// SLOT 5  0x4702d0
 	virtual bool NameContains(char *s);										// SLOT 6  0x470380
 	virtual void InitObject(void);											// SLOT 7  0x4703b0
+	virtual void UnInitObject(void);										// SLOT 8  0x470500 (log; not in the decompilation's function list)
 	virtual void ResetObject(void);											// SLOT 10 0x470540
+	virtual unsigned char v133(void);										// SLOT 134 0x471a10 on the floor (f_13f) (not in the function list)
 	// touches, from PhysicsCollideObjects: the argument is the other object
 	virtual void v3(CGameObject *other);									// SLOT 3  0x470270 (= AddTouching)
 	virtual bool IsTouching(CGameObject *other);							// SLOT 15 0x470a60
@@ -67,39 +69,39 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 	virtual void v18(CGameObject *other);									// SLOT 18 0x470bc0 still touching
 	virtual void Collide(CGameObject *other, float dist);					// SLOT 19 0x470bf0 spheres overlap (dist between centres)
 	virtual void v21(CGameObject *other);									// SLOT 21 0x470e60
-	virtual void AddRotation(float x, float y, float z);					// SLOT 204 0x472480
-	virtual void RequestEnd(void);											// SLOT 217 N2:0x4ad4c0
+	virtual void AddRotation(float x, float y, float z);					// SLOT 205 0x472480
+	virtual void RequestEnd(void);											// SLOT 218 N2:0x4ad4c0
 	// terrain contact at the end of a sweep (PhysicsMoveAgainstTerrain): the polygon's normal
-	virtual void v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly);	// SLOT 219 0x472690 ceiling
-	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 220 0x458890 wall/floor
-	virtual OMedia3DVector v224(float x, float y, float z);				// SLOT 224 0x472980 local point -> world (rotation v201, position)
-	virtual OMedia3DVector v226(float x, float y, float z);				// SLOT 226 0x472b10 local direction -> world (rotation v201 only, w 0)
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 0x472f80 may collide with other (1)
+	virtual void v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly);	// SLOT 220 0x472690 ceiling
+	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 221 0x458890 wall/floor
+	virtual OMedia3DVector v224(float x, float y, float z);				// SLOT 225 0x472980 local point -> world (rotation v201, position)
+	virtual OMedia3DVector v226(float x, float y, float z);				// SLOT 227 0x472b10 local direction -> world (rotation v201 only, w 0)
+	virtual unsigned char v231(CGameObject *other);							// SLOT 232 0x472f80 may collide with other (1)
 	// floor polygon/shape found by PhysicsSnapToGround (initial value f_10c/f_114, current f_234/f_23c)
-	virtual OMedia3DPolygon *v95(void);										// SLOT 95  0x471740
-	virtual void v96(OMedia3DPolygon *poly);								// SLOT 96  0x471750
-	virtual OMedia3DShape *v99(void);										// SLOT 99  0x4717a0
-	virtual void v100(OMedia3DShape *shape);								// SLOT 100 0x4717b0
-	virtual OMedia3DPolygon *v205(void);									// SLOT 205 0x472570
-	virtual void v206(OMedia3DPolygon *poly);								// SLOT 206 0x472580
-	virtual OMedia3DShape *v209(void);										// SLOT 209 0x4725b0
-	virtual void v210(OMedia3DShape *shape);								// SLOT 210 0x4725c0
-	virtual void Link(CGameObject *other);									// SLOT 233 0x472f90
-	virtual void Unlink(CGameObject *other);								// SLOT 235 0x473040
-	virtual void DisableCollisionID(int id);								// SLOT 236 0x4730f0
-	virtual void EnableCollisionID(int id);									// SLOT 237 0x473170
-	virtual void Process(float dt);											// SLOT 240 0x473240
+	virtual OMedia3DPolygon *v95(void);										// SLOT 96  0x471740
+	virtual void v96(OMedia3DPolygon *poly);								// SLOT 97  0x471750
+	virtual OMedia3DShape *v99(void);										// SLOT 100  0x4717a0
+	virtual void v100(OMedia3DShape *shape);								// SLOT 101 0x4717b0
+	virtual OMedia3DPolygon *v205(void);									// SLOT 206 0x472570
+	virtual void v206(OMedia3DPolygon *poly);								// SLOT 207 0x472580
+	virtual OMedia3DShape *v209(void);										// SLOT 210 0x4725b0
+	virtual void v210(OMedia3DShape *shape);								// SLOT 211 0x4725c0
+	virtual void Link(CGameObject *other);									// SLOT 234 0x472f90
+	virtual void Unlink(CGameObject *other);								// SLOT 236 0x473040
+	virtual void DisableCollisionID(int id);								// SLOT 237 0x4730f0
+	virtual void EnableCollisionID(int id);									// SLOT 238 0x473170
+	virtual void Process(float dt);											// SLOT 241 0x473240
 	virtual void CheckSounds(float dt);										// SLOT 245 0x4732b0
 	virtual void RotateToDest(float dt);									// SLOT 246 0x473320
 	virtual void Log(const char *fmt, ...);									// SLOT 254 0x473910
 	virtual void RegisterProperty(const char *name, void *data, int type, int flags);	// SLOT 255 0x473fa0
 	virtual CProperty *FindProperty(const char *name);						// SLOT 256 0x473eb0
-	virtual void CopyPropertiesTo(CGameObject *dst);						// SLOT 257 N2:0x4ae9a0
-	virtual void DeleteAllProperties(void);									// SLOT 259 0x474480
+	virtual void CopyPropertiesTo(CGameObject *dst);						// N2SLOT 257 N2:0x4ae9a0
+	virtual void DeleteAllProperties(void);									// SLOT 258 0x474480
 	virtual void v248(void);												// SLOT 248 0x473540 element angles from the rotation (v249)
-	virtual void v262(CGameObject *other, float dist);						// SLOT 262 0x4740c0 pushed by a touching object
-	virtual void v263(CGameObject *other, OMedia3DVector pos, float r_other, float dist);	// SLOT 263 0x474140 the push
-	virtual void v221(float a, float b, float c, float d);					// SLOT 221 0x472750 (TODO body)
+	virtual void v262(CGameObject *other, float dist);						// SLOT 261 0x4740c0 pushed by a touching object
+	virtual void v263(CGameObject *other, OMedia3DVector pos, float r_other, float dist);	// SLOT 262 0x474140 the push
+	virtual void v221(float a, float b, float c, float d);					// SLOT 222 0x472750 (TODO body)
 	virtual void v23(CGameObject *o) { (void)o; }							// SLOT 23 0x4732a0 (empty)
 	virtual void v24(CGameObject *o) { (void)o; }							// SLOT 24 0x4732a0 (empty)
 	virtual void v242(float t) { (void)t; }									// SLOT 242 0x4732a0 (empty)
@@ -136,6 +138,11 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 	// TYPE 0x294 float
 	// TYPE 0x298 float
 #include "gen/CGameObject_fields.inc"
+	// port: two members of Negatron's CGameObject that Neutron.exe's (0x42c bytes) has not
+	// (no FIELD tag: the generator never sees them): the time scale granny animations and
+	// SaveGame.cpp still read (1.0), and the savegame object number (SaveGame.cpp).
+	float		f_430;
+	unsigned int f_438;
 };
 
 // The global object list (0x50999c head / 0x5099a0 count).
