@@ -1365,6 +1365,6 @@ void C3DPlayer::PlayerLoadLevel(char *game, char *start, char *ret_game, char *r
 		OMedia3DVector p = Position(this);
 		f_9a8.set(p.x, p.y, p.z, p.w);
 	}
-	g_editor->RequestLevel(g);								// +0x100 (0x46df70)
+	g_editor->LoadLevelNow(g);								// +0x100 slot 64 (0x46df70): load at the next frame
 	StepSoundOff();
 }
