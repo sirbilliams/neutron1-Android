@@ -517,25 +517,17 @@ void CEditor::UnInitEditor(void)
 	Trace("Entering UnInitEditor");
 	CaptureMouse(true);
 	ResetLevel();
-	Trace("UIE 1");
 	g_viewport->set_flags(g_viewport->get_flags() & 0xfffa);
 	for (int i = 0; i < MENU_MAX; i++)
 	{
 		if (strcasecmp(Menu()[i], "") == 0) break;
 		m_menu_fields[i]->hide(true);
 	}
-	Trace("UIE 2");
 	HideList(true);
 	ShowWinCursor(false);
 	HighlightSelection(false);
 	CGfx::UnInitCaptions();
-	Trace("UIE 3");
-	ClearSelection();
-	g_editor_menu_panel->hide(true);
-	g_editor_list_panel->hide(true);
-	Trace("UIE 4");
-	ResetLevelObjects();
-	Trace("UIE 5");
+	ClearSelection();										// (Negatron also hid the panels and ran slot 264 on every object)
 }
 
 void CEditor::ClearSelection(void)
@@ -997,13 +989,6 @@ void CEditor::ResetLevel(void)
 	ResetFrameTimer();										// 0x47e470
 }
 
-// 0x473680
-void CEditor::ResetLevelObjects(void)
-{
-	Trace("RESETLEVEL 1");
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i) (*i)->v264();
-}
 
 // --------------------------------------------------------------------------- splash / sprites
 

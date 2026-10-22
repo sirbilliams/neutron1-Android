@@ -91,7 +91,6 @@ class CEditor : public OMediaElement
 	virtual int  CountObjects(void);										// SLOT 81 N2:0x4a9c80
 	virtual int  CountCollisionObjects(void);								// SLOT 82 N2:0x4a9ce0
 	virtual int  CountSavedObjects(void);									// SLOT 83 N2:0x4a9ca0
-	virtual void ResetLevelObjects(void);									// SLOT 84 0x473680
 	virtual void PasteObject(CGameObject *src);								// SLOT 85 N2:0x4aa6c0
 
 	// ---- helpers (inline in the original)

@@ -675,3 +675,14 @@ void CGameObject::v221(float a, float b, float c, float d)
 	}
 	v173(0, turn * speed * 0.001f, 0);						// +0x2b4: spin; 0x4d5fd8
 }
+
+// Two accessors the decompilation's function list misses (so gen_class.py cannot generate them).
+void CGameObject::UnInitObject(void)										// 0x470500
+{
+	Log("UnInitObject()");
+}
+
+unsigned char CGameObject::v133(void)										// 0x471a10
+{
+	return f_13f;
+}
