@@ -220,7 +220,7 @@ public class SetupActivity extends Activity {
 
     /** Picture key (LauncherModel.pics) -> the file the game saves for it. */
     private static final String[][] PICS = {
-        { "new", "museum.png" }, { "load", "loadsave.png" }, { "saves", "menu.png" },
+        { "new", "newgame.png" }, { "load", "loadsave.png" }, { "saves", "menu.png" },
         { "settings", "options.png" }, { "test", "inventory.png" }, { "quit", "credits.png" } };
 
     /** The game's pictures (small: the info window shows them at most 640 x 480). */
@@ -415,7 +415,7 @@ public class SetupActivity extends Activity {
         } else if (id.equals("saves")) mMenu.push(LauncherPages.saves());
         else if (id.equals("export_all")) {
             String date = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new java.util.Date());
-            createDocument("application/zip", "negatron-saves-" + date + ".zip", EXPORT_ALL);
+            createDocument("application/zip", "boygenius-saves-" + date + ".zip", EXPORT_ALL);
         } else if (id.equals("import")) {
             Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             i.addCategory(Intent.CATEGORY_OPENABLE);
@@ -852,7 +852,7 @@ public class SetupActivity extends Activity {
             }
         }
         Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
-        if (names.isEmpty()) names.add("Level5.gam");
+        if (names.isEmpty()) names.add("Level1.gam");
         return names;
     }
 
@@ -873,7 +873,7 @@ public class SetupActivity extends Activity {
         text += displayLog();
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_SUBJECT, "Negatron log");
+        i.putExtra(Intent.EXTRA_SUBJECT, "Boy Genius log");
         i.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(i, "Share log"));
     }
@@ -905,7 +905,7 @@ public class SetupActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView title = new TextView(this);
-        title.setText("Jimmy Neutron vs. Jimmy Negatron");
+        title.setText("Jimmy Neutron: Boy Genius");
         title.setTextColor(Color.rgb(255, 210, 90));
         title.setTextSize(26);
         title.setTypeface(Typeface.DEFAULT_BOLD);
@@ -917,9 +917,9 @@ public class SetupActivity extends Activity {
         message.setTextSize(17);
         message.setGravity(Gravity.CENTER);
         message.setPadding(0, dp(20), 0, dp(24));
-        message.setText("Game files needed.\n\nChoose the game's CD image (Jimmy Neutron vs. Jimmy "
-                + "Negatron.iso): the game is installed from it, about 270 MB. A zip of an installed "
-                + "game's Program_Executable_Files folder works too.");
+        message.setText("Game files needed.\n\nChoose an image of the Jimmy Neutron: Boy Genius PC CD "
+                + "(.iso): the game is installed from it, about 220 MB. A zip of an installed "
+                + "game's folder (the one with Neutron.exe) works too.");
         root.addView(message, wrap());
 
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);

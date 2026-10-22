@@ -1,5 +1,8 @@
 /*  port: a gamepad picker for Vox, the museum's world-select terminal (not in the original).
 
+    NEGATRON ONLY: disabled in this Boy Genius port (VoxPicker.cpp is empty stubs; the calls in
+    C3DAITrigger / C2DInGameMenu and the companion's cards stay, and do nothing). What it did:
+
     In the museum (Level5d) the question-mark terminal ('helpo', a C3DHelpSound) calls the trigger
     MAINMENU, which opens the PDA main menu with the world pictures (C2DInGameMenu items at y 251:
     VR tank, pyramid, King Carl ...). The original drives that page with the Windows mouse

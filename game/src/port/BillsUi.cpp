@@ -409,7 +409,7 @@ static void ScopeFrame(float dt, bool show)
 		if (app && *app) snprintf(line2, sizeof line2, "BY SIRBILLIAMS - V%s BUILD %s", app, NEG_GIT_COMMIT);
 		else snprintf(line2, sizeof line2, "BY SIRBILLIAMS - DEV BUILD %s", NEG_GIT_COMMIT);
 	}
-	const char *line1 = "JIMMY NEUTRON VS JIMMY NEGATRON RECOMP";
+	const char *line1 = "JIMMY NEUTRON BOY GENIUS RECOMP";	// (no colon: the fonts may lack one)
 	const int font = TextWidth('MED', line1) <= 440 ? 'MED' : 'SMAL';
 	const int h = FontHeight(font);
 	const int keep = g_text_center;
@@ -1092,6 +1092,9 @@ static void MirrorFrame(bool on)
 // The holograms are the game's pictures recoloured at run time (green-cyan, scan lines, a bright
 // rim), never stored. "Has": the vehicles in this level, the water gun / burp gun once collected
 // (pickups page items 1 / 19), the other gadgets once used in this level, and the current one.
+// TODO(BG): Negatron's gadget numbering (g_cur_gadget 0..13) and pickup items; BG's C3DJimmy has
+// its own gadgets / vehicles (and no burp gun / VR tank / lander as these): renumber and rename from
+// BG's C3DJimmy / C2DInGameMenu once ported. Same for Companion.cpp's gadget and inventory lists.
 static const char *const kGadgetName[14] = { "ON FOOT", "ROCKET", "INVISIBLE", "JETPACK", "SCOOTER", "VR TANK",
 	"WATER GUN", "GRAPPLE", "SWIM", "MINI SUB", "BURP GUN", "CRANE", "HOVER CYCLE", "LANDER" };
 
