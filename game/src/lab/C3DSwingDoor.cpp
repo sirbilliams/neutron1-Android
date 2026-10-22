@@ -21,18 +21,18 @@ C3DSwingDoor::C3DSwingDoor()								// 0x444450
 	v46(0);
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3SWN');							// 0x462220
-	strcpy(f_92d, "doorfowl.ase");
-	strcpy(f_991, "doorfowl.png");
+	strcpy(m_ase_file, "doorfowl.ase");
+	strcpy(m_png_file, "doorfowl.png");
 	C3DSwingDoor::InitObject();								// 0x4446a0 (called directly)
-	f_9f8 = 50.0f;											// OpenSpeed
-	f_9fc = 1.8f;											// TimeToOpen
-	f_928 = 0;
+	m_open_speed = 50.0f;											// OpenSpeed
+	m_time_to_open = 1.8f;											// TimeToOpen
+	m_time_left = 0;
 	v42(0);
 	v40(0);
 	v34(0);
-	f_a00 = 1;												// TouchActivated
-	f_924 = 0;
-	f_92c = 0;
+	m_touch_activated = 1;												// TouchActivated
+	m_turning = 0;
+	m_open = 0;
 	v52(1);
 	// (then a call to the empty 0x472970)
 }
@@ -42,68 +42,68 @@ C3DSwingDoor::~C3DSwingDoor()								// 0x444650
 }
 
 namespace neg {
-CGameObject *New_C3DSwingDoor(void) { return new C3DSwingDoor; }		// '3SWN' (0xa0c bytes)
+CGameObject *New_C3DSwingDoor(void) { return new C3DSwingDoor; }		// '3SWN' (0x7a4 bytes)
 }
 
 void C3DSwingDoor::InitObject(void)							// 0x4446a0
 {
 	Log("C3DShrinkRay::InitObject()");						// (sic)
-	C3DAnimated::InitObject();								// N2:0x41b0a0
-	RegisterProperty("ASEFile", f_92d, PROP_ALPHA, 0);
-	RegisterProperty("PNGFile", f_991, PROP_ALPHA, 0);
-	RegisterProperty("TimeToOpen", &f_9fc, PROP_FLOAT, 0);
-	RegisterProperty("OpenSpeed", &f_9f8, PROP_FLOAT, 0);
-	RegisterProperty("TouchActivated", &f_a00, PROP_LONG, 0);
+	C3DAnimated::InitObject();								// 0x40d3c0
+	RegisterProperty("ASEFile", m_ase_file, PROP_ALPHA, 0);
+	RegisterProperty("PNGFile", m_png_file, PROP_ALPHA, 0);
+	RegisterProperty("TimeToOpen", &m_time_to_open, PROP_FLOAT, 0);
+	RegisterProperty("OpenSpeed", &m_open_speed, PROP_FLOAT, 0);
+	RegisterProperty("TouchActivated", &m_touch_activated, PROP_LONG, 0);
 	// (then a call to the empty 0x472970)
 }
 
 void C3DSwingDoor::AddTouching(CGameObject *other)			// 0x444750
 {
 	CGameObject::AddTouching(other);						// 0x470a90
-	if (other->NameContains((char *)"C3DJIMMY") && f_a00 != 0) v268(1);	// +0x18, +0x428
+	if (other->NameContains((char *)"C3DJIMMY") && m_touch_activated != 0) v268(1);	// +0x18, +0x428
 }
 
 void C3DSwingDoor::v268(int state)							// 0x444790
 {
 	(void)state;
-	if (f_924) return;
-	f_924 = 1;
-	f_928 = f_9fc;											// TimeToOpen
+	if (m_turning) return;
+	m_turning = 1;
+	m_time_left = m_time_to_open;											// TimeToOpen
 	PlayGameSound(-1, std::string("squeak"), false);		// 0x458b40
 }
 
 void C3DSwingDoor::Process(float dt)						// 0x4447e0
 {
-	if (!f_924) return;										// (no pause check)
-	f_928 -= dt;
-	if (!f_92c)
+	if (!m_turning) return;										// (no pause check)
+	m_time_left -= dt;
+	if (!m_open)
 	{
-		AddRotation(0, dt * f_9f8, 0);						// +0x330
-		if (f_928 <= 0)
+		AddRotation(0, dt * m_open_speed, 0);						// +0x330
+		if (m_time_left <= 0)
 		{
-			f_924 = 0;
-			f_92c = 1;
-			f_928 = 0;
+			m_turning = 0;
+			m_open = 1;
+			m_time_left = 0;
 		}
 	}
 	else
 	{
-		AddRotation(0, -(dt * f_9f8), 0);
-		if (f_928 <= 0)
+		AddRotation(0, -(dt * m_open_speed), 0);
+		if (m_time_left <= 0)
 		{
-			f_924 = 0;
-			f_92c = 0;
-			f_928 = 0;
+			m_turning = 0;
+			m_open = 0;
+			m_time_left = 0;
 		}
 	}
 }
 
 void C3DSwingDoor::v260(void)								// 0x4448a0
 {
-	C3DAnimated::v260();									// N2:0x41cec0
+	C3DAnimated::v260();									// 0x40e7b0
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"HIRAY", f_92d);						// +0xd8 (sic: played as "RAY")
-	CreateTexture(f_991, 0);								// +0xfc
+	CreateAnim((char *)"HIRAY", m_ase_file);						// +0xd8 (sic: played as "RAY")
+	CreateTexture(m_png_file, 0);								// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	v67(40.0f);												// CGameObject +0x10c: radius
 	ev58((char *)"RAY", 1);									// +0xe8

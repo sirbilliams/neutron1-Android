@@ -8,14 +8,14 @@
     0x4586b0 / 0x457d30 / 0x4586c0); C3DSprite's 0x5e8 bytes, own members 0x5e8..0x6ec,
     vtordisp 0x6ec, streamer 0x6f0. The CGameObject-family part is at +0xc8.
 
-    Members are named after their 2002 offset in the element view.                          */
+    The member comments give the Neutron.exe offsets in the element view.                  */
 #pragma once
 #include "../C3DSprite.h"
 
 class CLoadLevel : public C3DSprite
 {
 	public:
-	CLoadLevel();															// N2:0x48e370
+	CLoadLevel();															// 0x457b10
 	virtual ~CLoadLevel();													// 0x457d60
 
 	// ---- element-family slots it adds
@@ -26,8 +26,8 @@ class CLoadLevel : public C3DSprite
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x457da0
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x457ec0 touch starts
-	virtual void v258(void);												// SLOT 258 0x4583f0 (BG 257; jump to C3DSprite's)
-	virtual void v260(void);												// SLOT 260 0x4583b0 (BG 259) (re)load the sprite canvas
+	virtual void v258(void);												// SLOT 257 0x4583f0 (jump to C3DSprite's)
+	virtual void v260(void);												// SLOT 259 0x4583b0 (re)load the sprite canvas
 
 	char		m_level_name[80];		// 0x5e8  "LevelName": the .gam to load, "RETURN", or "none"
 	char		m_start_point[80];		// 0x638  "StartPoint": the C3DStartPoint tag in that level

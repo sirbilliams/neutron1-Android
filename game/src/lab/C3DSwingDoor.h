@@ -11,7 +11,8 @@
 
     Original layout: as C3DAnimated (element vtable 0x4b91f8, 72 slots; OMediaAnim vtable
     0x4b91a8 at +0x90; listener 0x4b91e4 at +0x30; CLocalGameObject vtable 0x4b8d58 at +0xc0),
-    own members 0x5fc..0x79c (named by their Negatron offsets), vtordisp 0x79c, streamer 0x7a0. */
+    own members 0x6bc..0x79c, vtordisp 0x79c, streamer 0x7a0 (the member comments give the
+    offsets from the object start). */
 #pragma once
 #include "../C3DAnimated.h"
 
@@ -29,12 +30,12 @@ class C3DSwingDoor : public C3DAnimated
 	virtual void v268(int state);											// SLOT 266 0x444790 "NextState": start turning (state unused)
 
 	// ---- data members (object offsets)
-	unsigned char		f_924;			// 0x924  turning
-	float				f_928;			// 0x928  turning time left
-	unsigned char		f_92c;			// 0x92c  open (the next turn closes it)
-	char				f_92d[100];		// 0x92d  "ASEFile" ("doorcloset.ase")
-	char				f_991[100];		// 0x991  "PNGFile" ("doorcloset.png")
-	float				f_9f8;			// 0x9f8  "OpenSpeed" (50, degrees / s)
-	float				f_9fc;			// 0x9fc  "TimeToOpen" (1.8 s)
-	int					f_a00;			// 0xa00  "TouchActivated" (1)
+	unsigned char		m_turning;			// 0x6bc  turning
+	float				m_time_left;			// 0x6c0  turning time left
+	unsigned char		m_open;			// 0x6c4  open (the next turn closes it)
+	char				m_ase_file[100];		// 0x6c5  "ASEFile" ("doorfowl.ase")
+	char				m_png_file[100];		// 0x729  "PNGFile" ("doorfowl.png")
+	float				m_open_speed;			// 0x790  "OpenSpeed" (50, degrees / s)
+	float				m_time_to_open;			// 0x794  "TimeToOpen" (1.8 s)
+	int					m_touch_activated;			// 0x798  "TouchActivated" (1)
 };
