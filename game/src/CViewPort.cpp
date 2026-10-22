@@ -91,6 +91,14 @@ float CViewPort::GetFrameTime(void)											// 0x47e490
 void CViewPort::render_viewport(OMediaRendererInterface *rdr_i)				// 0x47e4f0
 {
 	g_frame_time = GetFrameTime();			// vtable +0xd4
+	{	// port: start-up trace for device logs (omt-log.txt): the first frames' times, then any
+		// frame that skips the update (time out of range) once a second.
+		static int s_n = 0, s_skipped = 0;
+		const bool skip = !(g_frame_time > 0.0f && g_frame_time < 1.0f);
+		if (s_n < 5 || (skip && (s_skipped++ % 60) == 0))
+			SDL_Log("frame %d: dt %f%s", s_n, (double)g_frame_time, skip ? " (no update)" : "");
+		s_n++;
+	}
 	if (g_frame_time > 0.0f && g_frame_time < 1.0f)
 	{
 		const bool explorer = AssetViewFrame(g_frame_time);	// port: the Asset Viewer's explorer: the level stays frozen
