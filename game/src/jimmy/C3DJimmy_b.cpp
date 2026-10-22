@@ -233,7 +233,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 				f_a1c->f_1b60 = 0;
 				f_a1c->v136(1);
 				f_a1c->v132(1);
-				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();	// his shadow
+				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->force_show();	// his shadow
 				if (f_a30) GO(f_a30)->v120(0);
 			}
 			if (f_ab0 && f_ab0->f_9f4)
@@ -272,7 +272,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 		case 4:												// Goddard off the scooter
 			if (f_a1c)
 			{
-				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();
+				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->force_show();
 				if (!f_a1c->v51())							// +0xcc
 				{
 					MenuShowHud(f_a18, false);				// +0x4b4
@@ -331,7 +331,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 				f_a1c->ShowAgain();
 				f_a1c->v52(1);
 				f_a1c->v132(1);
-				if (f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();
+				if (f_a1c->f_1b50) f_a1c->f_1b50->force_show();
 			}
 			ResetCamera();									// element +0x170
 			Hide(MenuShotSprite(f_a18));					// menu +0x4e4

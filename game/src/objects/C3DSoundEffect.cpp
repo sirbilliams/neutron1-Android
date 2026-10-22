@@ -92,5 +92,5 @@ void C3DSoundEffect::Process(float dt)						// 0x441130
 
 void C3DSoundEffect::v260(void)								// 0x4411e0 (jmp 0x441ac0)
 {
-	C3DSpriteType::v260();
+	C3DSprite::v260();
 }

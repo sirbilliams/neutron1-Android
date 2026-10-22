@@ -81,7 +81,7 @@ void C3DAnimatedSprite::InitObject(void)					// 0x40eb20
 
 void C3DAnimatedSprite::Process(float dt)					// 0x40ed40
 {
-	C3DSpriteType::Process(dt);								// 0x463090 (C3DSprite's; no pause check)
+	C3DSprite::Process(dt);								// 0x463090 (no pause check)
 	f_7c4 += dt;
 	f_7d4 += dt;
 	if (!f_80c || f_7c0 == 0) return;

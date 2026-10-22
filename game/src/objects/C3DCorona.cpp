@@ -72,7 +72,7 @@ void C3DCorona::v260(void)									// N2:0x428440
 	C3DSprite::v260();										// N2:0x49cfd0 (not C3DSpriteType's)
 	if (g_windowed)											// 0x509a13
 	{
-		HideAgain();										// element +0xd8
+		hide(true);											// element +0x58
 		return;
 	}
 	set_blend(omblendfc_Src_Alpha, omblendfc_One);			// +0xb4 = 6, +0xb8 = 1

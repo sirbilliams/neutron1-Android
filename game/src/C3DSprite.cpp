@@ -66,7 +66,6 @@ C3DSprite::C3DSprite()										// 0x463f10
 {
 	SetName((char *)"C3DSPRITE");
 	Log("C3DSprite()");
-	m_visible = 1;
 	C3DSprite::InitObject();								// inlined in the original: properties
 															// are registered here and again by the
 															// loader's InitObject (as shipped)
@@ -89,12 +88,12 @@ void C3DSprite::update_logic(float millisecs_elapsed)		// 0x464120
 	OMediaCanvasElement::update_logic(millisecs_elapsed);
 }
 
-void C3DSprite::read_class(OMediaStreamOperators &stream)	// N2:0x45d880
+void C3DSprite::read_class(OMediaStreamOperators &stream)	// 0x410320
 {
 	OMediaCanvasElement::read_class(stream);
 }
 
-void C3DSprite::write_class(OMediaStreamOperators &stream)	// N2:0x45d890
+void C3DSprite::write_class(OMediaStreamOperators &stream)	// 0x410330
 {
 	OMediaCanvasElement::write_class(stream);
 }
@@ -140,21 +139,6 @@ void C3DSprite::InitSpriteProperties(float size)			// 0x4645f0
 	if (g_windowed) set_diffuse(OMediaFARGBColor(1.0f, 0.9f, 0.9f, 0.9f));	// 0x509a13: sic, dimmer in a window
 }
 
-void C3DSprite::ShowAgain(void)								// N2:0x49d060
-{
-	m_visible = 1;
-	force_show();											// hide_count = 1; hide(false)
-}
-
-void C3DSprite::HideAgain(void)								// N2:0x49d080
-{
-	if (m_visible)
-	{
-		m_visible = 0;
-		OMediaElement::hide(true);
-	}
-}
-
 // --------------------------------------------------------------------------- CGameObject-family slots
 
 void C3DSprite::InitObject(void)							// 0x464130
@@ -184,7 +168,7 @@ void C3DSprite::InitPhysics(void)							// 0x464210
 	PhysicsAddObject(this);
 }
 
-void C3DSprite::Process(float dt)							// 0x463090
+void C3DSprite::Process(float dt)							// 0x463090 (BG slot 241; the log call is empty)
 {
 	CLocalGameObject::Process(dt);
 }
@@ -207,13 +191,13 @@ void C3DSprite::v248(void)									// 0x464700
 	anglez = (short)((int)(a[2] * k) & 0x3fff);
 }
 
-void C3DSprite::v258(void)									// 0x464780
+void C3DSprite::v258(void)									// 0x464780 (BG slot 257)
 {
 	CLocalGameObject::v258();
 	LoadSprite(false);										// (inlined)
 }
 
-void C3DSprite::v260(void)									// N2:0x49cfd0
+void C3DSprite::v260(void)									// 0x464810 (BG slot 259)
 {
 	LoadSprite(false);										// (inlined)
 }

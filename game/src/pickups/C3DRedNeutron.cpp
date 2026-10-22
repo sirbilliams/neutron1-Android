@@ -154,7 +154,7 @@ void C3DRedNeutron::AddTouching(CGameObject *other)			// 0x43c9b0
 	Collect();												// element +0xd8
 	AnnouncePickupBG(1, 0);									// 0x4061d0
 	if (strcasecmp(m_next_trigger, "none") != 0)
-		CallNextTrigger(m_next_trigger, 0);					// element +0xd4
+		CallNextTrigger(m_next_trigger);					// element +0xd4
 }
 
 // 0x43c760: the pulse (size and blue channel), then every 0.05 s (scaled) the next frame:

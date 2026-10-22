@@ -89,13 +89,13 @@ void C3DMovingTarget::AddTouching(CGameObject *other)		// N2:0x456670
 {
 	CGameObject::AddTouching(other);						// 0x470a90
 	if (!other->NameContains((char *)"C3DWATERBALLOON") && !other->NameContains((char *)"C3DENERGYPROJECTILE")) return;
-	HideAgain();											// element +0xd8
+	hide(true);												// element +0x58
 	v136(0);												// +0x220
 	other->v136(0);
 	// port: the original calls element +0xd8 of the object 0xc8 before `other` (a sprite's
 	// HideAgain); both projectiles are sprites.
 	C3DSprite *shot = dynamic_cast<C3DSprite *>(other);
-	if (shot) shot->HideAgain();
+	if (shot) shot->hide(true);
 	other->NameContains((char *)"C3DENERGYPROJECTILE");	// (both branches play the same sound)
 	PlayGameSound(-1, std::string("vrzap"), false);		// 0x458b40
 	AddScore(f_6fc);										// N2:0x482b50
@@ -109,7 +109,7 @@ void C3DMovingTarget::AddTouching(CGameObject *other)		// N2:0x456670
 	if (!act) return;
 	if (act->NameContains((char *)"C3DAITRIGGER"))
 	{
-		static_cast<C3DTriggerType *>(act)->CallNextTrigger(f_694, 0);	// element +0xdc
+		static_cast<C3DTriggerType *>(act)->CallNextTrigger(f_694);	// element +0xdc
 		return;
 	}
 	float p[4];
@@ -152,7 +152,7 @@ void C3DMovingTarget::v260(void)							// N2:0x4568f0
 	if (o) o->v195(f_66c);									// +0x30c
 	o = FindObjectByTag(f_768);
 	if (o) o->v195(f_67c);
-	ShowAgain();											// element +0xd4
+	force_show();											// hide count 1, show
 	g_N2_545fdc = 0;
 	g_N2_545fe0 = 0;
 	g_N2_545fe4 = 0;
@@ -197,6 +197,6 @@ void C3DMovingTarget::ReadState(OMediaStreamOperators &s)	// N2:0x456c30
 	bool active;
 	s >> active;
 	v136(active);											// +0x220
-	if (v135()) ShowAgain();								// element +0xd4
-	else HideAgain();										// element +0xd8
+	if (v135()) force_show();
+	else hide(true);
 }

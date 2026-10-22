@@ -350,12 +350,12 @@ void C3DAITrigger::Trigger(CGameObject *caller)
 	SpecialAction();										// 0x40caa0
 	if (f_c00)
 	{
-		CallNextTrigger("default", 0);						// element +0xd4
+		CallNextTrigger("default");						// element +0xd4
 		f_c00 = 0;
 		return;
 	}
-	if (n) { CallNextTrigger(n->m_tag, 0); return; }		// (debug logs "16.5", "\tCalling Next Trigger %s for %s")
-	CallNextTrigger(m_next_trigger, 0);
+	if (n) { CallNextTrigger(n->m_tag); return; }		// (debug logs "16.5", "\tCalling Next Trigger %s for %s")
+	CallNextTrigger(m_next_trigger);
 }
 
 // 0x40caa0: the built-in actions of the special tags (most advance the SCENE task one step when

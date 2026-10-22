@@ -143,7 +143,7 @@ void C3DCutSceneCamera::InitObject(void)					// 0x415d70
 // button 0, unless the menu took the press), stop the clip and fire it at once.
 void C3DCutSceneCamera::Process(float dt)
 {
-	C3DSpriteType::Process(dt);
+	C3DSprite::Process(dt);
 	if (!m_active) return;
 	m_time += dt;
 	if (!IsChannelPlaying(m_channel))						// 0x47d890
@@ -161,7 +161,7 @@ void C3DCutSceneCamera::Process(float dt)
 		m_active = 0;
 		if (strcasecmp(m_next_trigger, "none") == 0) return;
 		CloseDatabase(m_sound_db);							// 0x46aef0
-		CallNextTrigger(m_next_trigger, 0);					// element +0xd4
+		CallNextTrigger(m_next_trigger);					// element +0xd4
 		return;
 	}
 
@@ -178,7 +178,7 @@ void C3DCutSceneCamera::Process(float dt)
 	StopChannel(m_channel, true);
 	m_active = 0;
 	CloseDatabase(m_sound_db);
-	CallNextTrigger(m_next_trigger, 0);						// (also for "none": CallNextTrigger ignores it)
+	CallNextTrigger(m_next_trigger);						// (also for "none": CallNextTrigger ignores it)
 	if (m_target && m_target->NameContains((char *)"C3DAI")) AISetAnimationsDisabled(m_target, 0);
 }
 

@@ -142,7 +142,7 @@ void C3DMultiCutSceneCamera::InitObject(void)				// 0x430b40
 // joystick button 0 (unless the menu took this press) skip: the clip stops and the scene ends.
 void C3DMultiCutSceneCamera::Process(float dt)
 {
-	C3DSpriteType::Process(dt);
+	C3DSprite::Process(dt);
 	if (!m_active) return;
 	m_time += dt;
 	if (!IsChannelPlaying(m_channel))						// 0x47d890
@@ -386,7 +386,7 @@ void C3DMultiCutSceneCamera::EndCutScene(void)
 	}
 	if (m_held_ai && m_held_ai->NameContains((char *)"C3DAI")) AIRelease(m_held_ai);	// element +0x168
 	CloseDatabase(m_sound_db);								// 0x46aef0
-	CallNextTrigger(m_next_trigger, 0);						// element +0xd4
+	CallNextTrigger(m_next_trigger);						// element +0xd4
 }
 
 namespace neg {

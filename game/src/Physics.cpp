@@ -397,21 +397,19 @@ void neg::PhysicsAddObject(CGameObject *o)					// 0x479a40 "Add3DObject(%s)"
 
 // --------------------------------------------------------------------------- one frame
 
+// 0x47cc10 / 0x47cdb0: every marker still shown from the last frame is hidden (the element's own
+// hide, slot 22) and the pool's cursor goes back to its first object.
 static void HideMarkers(ObjectList &pool, ObjectList::iterator &next)
 {
 	for (ObjectList::iterator i = pool.begin(); i != pool.end(); i++)
 	{
 		OMediaElement *e = *i ? dynamic_cast<OMediaElement *>(*i) : NULL;
-		if (e && e->getvisible())							// element +0x70 hide count == 0
-		{
-			C3DObject *c = dynamic_cast<C3DObject *>(*i);
-			if (c) c->HideAgain();							// element vtable +0xdc
-		}
+		if (e && e->getvisible()) e->hide(true);			// element +0x70 hide count == 0
 	}
-	next = pool.begin();									// N2:0x4af480
+	next = pool.begin();
 }
 
-void neg::PhysicsProcess(float dt)							// N2:0x4b4c60
+void neg::PhysicsProcess(float dt)							// 0x479bc0
 {
 	if (FEq(dt, 0)) return;
 	s_frame_dt = dt;

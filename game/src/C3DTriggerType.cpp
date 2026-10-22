@@ -46,77 +46,46 @@ static CGameObject *FindObjectByTag(const char *tag)
 // 0x46a910: the level's database cache (DatabaseCache.cpp).
 using neg::GetDatabase;
 
-// --------------------------------------------------------------------------- not reconstructed yet
+// --------------------------------------------------------------------------- helpers for CallNextTrigger
 
-// C2DInGameMenu N2:0x40c0f0 (on g_menu): cut-scene letterbox in/out.
-using neg::CutsceneLetterbox;
-
-// CGameObject slot 224 (+0x380, 0x472980): a point relative to the object (struct return).
-static float *ObjectRelativePoint(CGameObject *o, float *out, float a, float b, float c)
-{
-	if (!o) return NULL;								// port: the original calls through NULL
-	const OMedia3DVector v = o->v224(a, b, c);
-	out[0] = v.x; out[1] = v.y; out[2] = v.z; out[3] = v.w;
-	return out;
-}
-
-// The next trigger's own entry points. Each is a virtual its class introduces (the element
-// vtable of the next object); they are called once its type is known from NameContains.
-namespace neg { void TextTriggerTrigger(CGameObject *o); }
-static void TextTriggerFire(CGameObject *next)		{ neg::TextTriggerTrigger(next); }	// objects/C3DTextTrigger.cpp
+// The next trigger's own entry points (Neutron.exe calls them through the element vtable of the
+// next object, slot 54 +0xd8, or directly).
 namespace neg { void MusicTriggerTrigger(CGameObject *o); }
-static void MusicTriggerFire(CGameObject *next)		{ neg::MusicTriggerTrigger(next); }	// objects/C3DMusicTrigger.cpp
-namespace neg { void FadeObjectTrigger(CGameObject *o); }
-static void FadeObjectFire(CGameObject *next)		{ neg::FadeObjectTrigger(next); }	// objects/C3DFadeObject.cpp
-static void AITriggerFire(CGameObject *next, CGameObject *caller, unsigned char flag)
+static void MusicTriggerFire(CGameObject *next)		{ neg::MusicTriggerTrigger(next); }	// objects/C3DMusicTrigger.cpp (BG: element slot 54)
+static void AITriggerFire(CGameObject *next, CGameObject *caller)
 {
-	(void)flag;
 	static_cast<C3DAITrigger *>(next)->Trigger(caller);				// BG: the direct call 0x40c300(caller)
 }
-static void MultiCutSceneFire(CGameObject *next, CGameObject *caller, unsigned char flag)
+static void MultiCutSceneFire(CGameObject *next, CGameObject *caller)
 {
-	static_cast<C3DMultiCutSceneCamera *>(next)->TriggerCallback(caller, flag);	// element +0xe4 (N2:0x457be0)
+	next->v23(caller);												// game slot 23 (+0x5c): TriggerCallback
 }
-static void CutSceneCameraFire(CGameObject *next, unsigned char flag)
+static void CutSceneCameraFire(CGameObject *next)
 {
 	static_cast<C3DCutSceneCamera *>(next)->TriggerCamera();			// element +0xd8 (BG slot 54)
-	(void)flag;
 }
-// C3DFlyingCamera is a C3DObject (CGameObject at +0xc0): element slot 144 (+0x240).
-namespace neg { void FlyingCameraTrigger(CGameObject *o); }
-static void FlyingCameraFire(CGameObject *next)	{ neg::FlyingCameraTrigger(next); }	// objects/C3DFlyingCamera.cpp
-// TODO(BG): C3DTextTrigger, C3DFadeObject and C3DFlyingCamera are Negatron classes (deleted): weak
-// stubs until it is known what Neutron.exe's CallNextTrigger does instead.
-void __attribute__((weak)) neg::TextTriggerTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DTextTrigger (Negatron only)"); }
-void __attribute__((weak)) neg::FadeObjectTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFadeObject (Negatron only)"); }
-void __attribute__((weak)) neg::FlyingCameraTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFlyingCamera (Negatron only)"); }
 // CLoadLevel (a C3DSprite): element slot 54 (+0xd8), its story steps.
 static void LoadLevelFire(CGameObject *next)		{ static_cast<CLoadLevel *>(next)->ev54(); }
 
 // The player (Jimmy: a C3DPlayer) behind a JIM1 tag.
 static C3DPlayer *PlayerOf(CGameObject *jim)		{ return jim ? dynamic_cast<C3DPlayer *>(jim) : NULL; }
 
-// N2:0x4795cf: element byte +0xa99 = 0 (Neutron.exe's C3DPlayer +0x7fc).
+// Game byte +0x73c = 0 (C3DPlayer f_7fc).
 static void JimmyClearA99(CGameObject *jim)
 {
 	if (C3DPlayer *p = PlayerOf(jim)) p->f_7fc = 0;
 }
 
-
-// 0x447cf0 (element slot 53, its C3DLOADLEVEL case): the LoadLevel trigger hands its level over to Jimmy: PlayerLoadLevel (element slot
-// 90) with copies of the four strings; with a FadeType the load waits for the fade (and Jimmy's
-// morph animation is paused, element slot 71).
+// 0x447cf0 (its C3DLOADLEVEL case): the LoadLevel trigger hands its level over to Jimmy:
+// PlayerLoadLevel (element slot 90) with the level, its start point and Jimmy's own return
+// level and start point; with a FadeType the load waits for the fade (and Jimmy's morph
+// animation is paused, element slot 71).
 static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 {
 	CLoadLevel *ll = static_cast<CLoadLevel *>(loadlevel);
 	C3DPlayer *p = PlayerOf(jim);
 	if (!p) return;										// port: a JIM1 that is no player (the original has no check)
-	char level[80], start[80], ret_level[100], ret_start[100];	// (stack copies, as in the original)
-	strcpy(level, ll->m_level_name);
-	strcpy(start, ll->m_start_point);
-	strcpy(ret_level, p->f_88c);
-	strcpy(ret_start, p->f_8f0);
-	p->PlayerLoadLevel(level, start, ret_level, ret_start);	// element +0x168 (slot 90)
+	p->PlayerLoadLevel(ll->m_level_name, ll->m_start_point, p->f_88c, p->f_8f0);	// element +0x168 (slot 90)
 	if (ll->m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
@@ -128,21 +97,22 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	}
 }
 
-// C3DJeep +0x9c4 (CGameObject-relative): the jeep can take the camera when it has a driver.
+// 0x472980 (CGameObject slot 224, +0x380): a point relative to the object (struct return).
+static float *ObjectRelativePoint(CGameObject *o, float *out, float a, float b, float c)
+{
+	if (!o) return NULL;								// port: the original calls through NULL
+	const OMedia3DVector v = o->v224(a, b, c);
+	out[0] = v.x; out[1] = v.y; out[2] = v.z; out[3] = v.w;
+	return out;
+}
+
+// C3DJeep: the jeep can take the camera when it has a driver. TODO(BG): Neutron.exe reads the
+// driver at the jeep's CGameObject +0x5dc (C3DJeep.c param_1[0x177]); f_a84 is C3DJeep's field
+// until its port names that one.: the jeep can take the camera when it has a driver.
 static int JeepField9c4(CGameObject *jeep)
 {
 	C3DJeep *j = jeep ? dynamic_cast<C3DJeep *>(jeep) : NULL;
 	return j && j->f_a84;										// the driver (object 0xa84)
-}
-
-// CJimmyGame element slot 102 (+0x198): PlayLevelMusic(Jimmy's music database name, 0).
-// TODO(BG): check the arguments against Neutron.exe (Negatron passed +0x4c28, *(+0x4c18)).
-// (The original reads those even when there is no JIM1: a crash.)
-static void JimmyGameRestore(CGameObject *jim)
-{
-	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;
-	CJimmyGame *g = g_gametype ? dynamic_cast<CJimmyGame *>(g_gametype) : NULL;
-	if (j && g) g->PlayLevelMusic(j->f_a4c, 0);	// port: no call without them
 }
 
 // --------------------------------------------------------------------------- construction
@@ -153,10 +123,9 @@ C3DTriggerType::C3DTriggerType()							// 0x4478c0
 	m_toggle = -1;
 	strcpy(m_toggle_object, "none");
 	strcpy(m_next_trigger, "none");
-	g_cutscene_skipped = 0;
+	g_cutscene_skipped = 0;									// 0x4f83e4
 	m_fade_type = -1;
 	m_fade_time = 1.0f;
-	strcpy(m_default_to, "none");
 }
 
 C3DTriggerType::~C3DTriggerType() {}						// 0x447a30
@@ -169,7 +138,6 @@ void C3DTriggerType::InitObject(void)						// 0x447c60
 	RegisterProperty("NextTrigger",  m_next_trigger,  PROP_ALPHA, 0);
 	RegisterProperty("FadeType",     &m_fade_type,    PROP_LONG,  0);
 	RegisterProperty("FadeTime",     &m_fade_time,    PROP_FLOAT, 0);
-	RegisterProperty("DefaultTo",    m_default_to,    PROP_ALPHA, 0);
 }
 
 // --------------------------------------------------------------------------- v242
@@ -179,8 +147,9 @@ void C3DTriggerType::InitObject(void)						// 0x447c60
 // (taken to degrees and back, as shipped).
 void C3DTriggerType::v242(float t)
 {
-	C3DSpriteType::v242(t);
+	CGameObject::v242(t);									// 0x4732a0 (empty; not C3DSpriteType's)
 	if (!g_keys[0x22] || g_editor->m_sel_object != static_cast<CGameObject *>(this)) return;	// VK_NEXT (0x50985a)
+	g_4f8182 = 1;
 	if (strcasecmp(m_next_trigger, "none") == 0) return;
 	CGameObject *next = FindObjectByTag(m_next_trigger);
 	if (!next) return;
@@ -209,14 +178,15 @@ void C3DTriggerType::v242(float t)
 
 // --------------------------------------------------------------------------- CallNextTrigger
 
-// N2:0x4790b0: fire the trigger called `name`: "none" does nothing, "DEFAULT" ends the scripted
-// sequence (camera back to Jimmy or the vehicle he is in, or to DefaultTo), anything else is
-// an object tag whose class decides what firing means.
-void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
+// 0x447cf0 (element slot 53): fire the trigger called `name`: "none" does nothing, "DEFAULT"
+// ends the scripted sequence (camera back to Jimmy or the vehicle he is in), anything else is an
+// object tag whose class decides what firing means.
+void C3DTriggerType::CallNextTrigger(const char *name)
 {
+	Log("CallNextTrigger %s", name);
 	if (strcasecmp(name, "none") == 0)
 	{
-		// (debug log "NextTrigger is none for %s", m_tag)
+		Log("NextTrigger is none for %s", m_tag);
 		return;
 	}
 
@@ -233,28 +203,24 @@ void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
 			return;
 		}
 		// (each case also writes a debug log "Calling <type> %s, NextTrigger=%s")
-		if (next->NameContains((char *)"C3DTEXTTRIGGER"))			{ TextTriggerFire(next); return; }
 		if (next->NameContains((char *)"C3DMUSICTRIGGER"))		{ MusicTriggerFire(next); return; }
-		if (next->NameContains((char *)"C3DAITRIGGER"))			{ AITriggerFire(next, this, flag); return; }
-		if (next->NameContains((char *)"C3DCUTSCENECAMERA"))		{ CutSceneCameraFire(next, flag); return; }
-		if (next->NameContains((char *)"C3DMULTICUTSCENE"))		{ MultiCutSceneFire(next, this, flag); return; }
-		if (next->NameContains((char *)"C3DFLYINGCAMERA"))		{ FlyingCameraFire(next); return; }
-		if (next->NameContains((char *)"C3DFADEOBJECT"))			{ FadeObjectFire(next); return; }
+		if (next->NameContains((char *)"C3DAITRIGGER"))			{ AITriggerFire(next, this); return; }
+		if (next->NameContains((char *)"C3DCUTSCENECAMERA"))		{ CutSceneCameraFire(next); return; }
+		if (next->NameContains((char *)"C3DMULTICUTSCENE"))		{ MultiCutSceneFire(next, this); return; }
 		if (next->NameContains((char *)"C3DLOADLEVEL"))
 		{
-			g_elt_545c80.Hide();
 			CGameObject *jim = FindObjectByTag("JIM1");
 			if (!jim)
 			{
 				ErrorLog("ERROR: Unable to find JIM1 in level");
 				return;
 			}
-			// (debug log "Loading LoadLevel trigger %s for %s", name, m_tag)
+			Log("Loading LoadLevel trigger %s for %s", name, m_tag);
 			JimmyClearA99(jim);
 			g_editor->f_7f8 = 1;
 			g_gametype->SetCamera(jim);
 			LoadLevelFire(next);
-			LoadLevelHandOver(next, jim);					// (debug logs "Callnexttrig 1" / "2" around)
+			LoadLevelHandOver(next, jim);
 			g_active_sound_db = GetDatabase("SoundEffects.omt");
 			if (g_active_sound_db) g_4f8434 = true;
 			return;
@@ -264,31 +230,24 @@ void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
 	}
 
 	// "DEFAULT"
-	// (debug logs "Reseting to DEFAULT in C3DTriggerType", "\tReseting to DEFAULT (Good job ;)")
-	CutsceneLetterbox(false);
-	g_N2_545ef8 = 0;
+	Log("Reseting to default");
+	Log("\tReseting to DEFAULT (Good job ;)");
 	CGameObject *jim = FindObjectByTag("JIM1");
-	g_music_volume = g_N2_6f7518;
-	if (g_cutscene_element)
-	{
-		g_elt_545c80.Hide();
-		if (g_cutscene_element) delete g_cutscene_element;	// listener vtable +8: deleting destructor
-		g_cutscene_element = NULL;
-	}
 	if (g_camera == jim)
 	{
 		g_active_sound_db = GetDatabase("SoundEffects.omt");
 		if (g_active_sound_db) g_4f8434 = true;
 		CLocalGameObject *l = static_cast<CLocalGameObject *>(jim);	// sic: NULL without a JIM1
-		if (l->f_4ab) l->f_4ab = 0;
-		g_cutscene_skipped = 0;
+		if (l && l->f_4ab) l->f_4ab = 0;					// port: the original has no NULL test
+		g_cutscene_skipped = 0;								// 0x4f83e4
 		return;
 	}
 
 	CGameObject *o = jim;
+	CGameObject *jim2 = NULL;								// the original's iVar6
 	if (jim)
 	{
-		if (g_menu->IsCurrentGadget(4))
+		if (g_menu->IsCurrentGadget(4))						// 0x4f0588
 		{
 			o = FindObjectByTag("C3DJEEP");
 			if (o)
@@ -302,7 +261,6 @@ void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
 			o = FindObjectByTag("C3DROCKETSHIP");
 			if (o) g_gametype->SetCamera(o);
 		}
-		if (strcasecmp(m_default_to, "none") != 0) o = FindObjectByTag(m_default_to);
 		g_gametype->SetCamera(o);
 
 		float buf[4];
@@ -315,52 +273,21 @@ void C3DTriggerType::CallNextTrigger(const char *name, unsigned char flag)
 			if (sqrtf(dx * dx + dz * dz + dy * dy) > 1000.0f)	// 0x48e5ac
 				g_viewport->place(p[0], p[1], p[2]);
 		}
-		o = FindObjectByTag("JIM1");
-		g_music_volume = g_N2_6f7518;
-		JimmyGameRestore(o);
+		g_4f8182 = 1;
+		jim2 = FindObjectByTag("JIM1");
+		C3DJimmy *j = jim2 ? dynamic_cast<C3DJimmy *>(jim2) : NULL;
+		if (j && strcasecmp(j->f_a4c, "none") != 0)			// the start point's music database
+		{
+			g_696004 = GetDatabase(j->f_a4c);
+			if (g_696004) j->f_a38 = PlayMusic(g_696004, -1, 0, true);	// 0x47d710
+		}
 	}
-	g_music_volume = g_N2_6f7518;
+	g_music_volume = g_695f80;								// 0x4f6b34 = 0x695f80
 	g_active_sound_db = GetDatabase("SoundEffects.omt");
 	if (g_active_sound_db) g_4f8434 = true;
-	CLocalGameObject *l = static_cast<CLocalGameObject *>(o);	// sic: NULL without a JIM1
-	if (l->f_4ab) l->f_4ab = 0;
-	if (g_cutscene_skipped)
-	{
-		g_N2_545e57 = 1;
-		g_cutscene_skipped = 0;
-		return;
-	}
-	g_N2_545e57 = 0;
-	g_N2_545ef8 = 0;
-	g_cutscene_skipped = 0;
-}
-
-// --------------------------------------------------------------------------- v280
-
-// N2:0x479800: the editor's list shows this trigger and the chain of NextTriggers after it (at most
-// 100 names; a chain of more than 200 links is reported as a loop).
-void C3DTriggerType::v280(void)
-{
-	if (!g_editor) return;
-	CGameObject *o = this;
-	int shown = 0;
-	for (int n = 1; ; n++)
-	{
-		if (n > 200)
-		{
-			DrawText(300, 200, 'SMAL', "WARNING: ENDLESS LOOP FOR %s", m_tag);	// 0x468660 (a copy of DrawText)
-			return;
-		}
-		if (shown < 100)									// g_editor +0x28c .. +0x41c
-		{
-			OMediaStringField *f = g_editor->m_list_fields[shown++];
-			f->set_string(std::string(o->m_tag));			// element +0xc8
-			f->force_show();
-		}
-		if (!o->NameContains((char *)"C3DTRIGGERTYPE")) return;
-		C3DTriggerType *t = static_cast<C3DTriggerType *>(o);
-		if (strcasecmp(t->m_next_trigger, "none") == 0) return;
-		o = FindObjectByTag(t->m_next_trigger);
-		if (!o) return;
-	}
+	CLocalGameObject *l = static_cast<CLocalGameObject *>(jim2);	// sic: NULL without a JIM1
+	if (l && l->f_4ab) l->f_4ab = 0;						// port: the original has no NULL test
+	g_cutscene_skipped = 0;									// 0x4f83e4
+	if (GetTaskState("SCENE") == 0x1e && jim2)
+		if (C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim2)) j->ToggleMainMenu();	// element slot 124 (+0x1f0)
 }
