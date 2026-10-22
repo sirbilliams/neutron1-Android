@@ -18,7 +18,7 @@
         rest of the game asks for a level change (C3DPlayer's PlayerLoadLevel, CLoadLevel, the
         fades of C2DInGameMenu set m_load_pending directly).
       * OpenEditorDatabase / DrawSplash (slots 70/75, vtable +0x118 / +0x12c) are called by the
-        game-type factory N2:0x480230 after it creates a new game type: open omt\Editor.omt and
+        game-type factory N2:0x480230 after it creates a new game type: open omt\splash.omt and
         show splash canvas 3.
 
     Element-family layout: offsets < 0x8c are OMediaElement (use the OMT accessors); own members
@@ -144,7 +144,7 @@ extern OMediaCanvas				*g_editor_font_canvas;	// 0x509978 png\fontsmall.png
 extern OMediaCanvasFont			*g_editor_font;			// 0x50997c
 extern unsigned char			 g_new_game;			// N2:0x56af08 set when level1d.gam (a new game) is loaded
 extern OMediaCanvasElement		*g_splash;				// 0x509984
-extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\Editor.omt
+extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\splash.omt
 extern OMediaFileStream			*g_editor_stream;		// 0x50998c
 extern OMediaCanvasElement		*g_editor_menu_panel;	// N2:0x56af1c canvas 5
 extern OMediaCanvasElement		*g_editor_list_panel;	// N2:0x56af20 canvas 6

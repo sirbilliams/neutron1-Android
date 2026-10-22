@@ -62,23 +62,23 @@ void CAweReal::listen_to_message(omt_Message msg, void *param)
 {
 	switch (msg)
 	{
+		// WM_ACTIVATEAPP (0x469f90): losing the focus pauses the game once, getting it back (after
+		// restoring the display mode; port: SDL keeps it) un-pauses it.
 		case omsg_neg_DeActivate:
-			SDL_Log("omsg_DeActivate (game state %d)", (int)g_N2_53b5b4);
-			if (g_gametype)
+			SDL_Log("omsg_DeActivate");
+			if (!g_minimized)
 			{
-				g_N2_53f27c = g_N2_53b5b4;			// remember the game state (N2:0x53b5b4, CJimmyGame)
-				if (g_N2_53b5b4 == 5 && !g_N2_56aed0) g_gametype->PauseGame(true);	// vtable +0x110
-				g_gametype->OnDeactivate();		// vtable +0x120
+				if (g_gametype) g_gametype->PauseGame(true);	// vtable +0x110
+				g_minimized = 1;
 			}
 			break;
 
 		case omsg_neg_Activate:
 			SDL_Log("omsg_Activate");
-			if (g_gametype)
+			if (g_minimized)
 			{
-				if (g_N2_53f27c == 5) g_gametype->PauseGame(false);	// vtable +0x110
-				g_N2_53f27c = 9;
-				g_gametype->OnActivate();		// vtable +0x11c
+				if (g_gametype) g_gametype->PauseGame(false);
+				g_minimized = 0;
 			}
 			break;
 

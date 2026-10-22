@@ -27,7 +27,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_537634 (*(float *)&neg::g_n2_data[0x5634])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_537638 (*(unsigned int *)&neg::g_n2_data[0x5638])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53b5b0 (*(int *)&neg::g_n2_data[0x95b0])	// initialised in Neutron2.exe: port gets 0
-#define g_N2_53b5b4 (*(int *)&neg::g_n2_data[0x95b4])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53f27c (*(int *)&neg::g_n2_data[0xd27c])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_5444bc (*(OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x492f])
 #define g_N2_5444c4 (*(OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x4931])
@@ -63,7 +62,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_545dc4 (*(bool *)&neg::g_n2_data[0x13dc4])
 #define g_N2_545dc5 (*(char *)&neg::g_n2_data[0x13dc5])
 #define g_N2_545dcc (*(float *)&neg::g_n2_data[0x13dcc])
-#define g_N2_545dd0 (*(int *)&neg::g_n2_data[0x13dd0])
 #define g_N2_545dd4 (*(bool *)&neg::g_n2_data[0x13dd4])
 #define g_N2_545de4 ((char *)&neg::g_n2_data[0x13de4])
 #define g_N2_545e48 (*(int *)&neg::g_n2_data[0x13e48])
@@ -112,13 +110,13 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_54a454 (*(int *)&neg::g_n2_data[0x18454])
 #define g_N2_54a468 (*(char *)&neg::g_n2_data[0x18468])
 #define g_N2_54a469 (*(char *)&neg::g_n2_data[0x18469])
-#define g_N2_54a480 (*(float *)&neg::g_n2_data[0x18480])
-#define g_N2_54a484 (*(float *)&neg::g_n2_data[0x18484])
-#define g_N2_54a488 (*(float *)&neg::g_n2_data[0x18488])
-#define g_N2_54a48c (*(unsigned int *)&neg::g_n2_data[0x1848c])
-#define g_N2_54a490 (*(float *)&neg::g_n2_data[0x18490])
-#define g_N2_54a494 (*(float *)&neg::g_n2_data[0x18494])
-#define g_N2_54a498 (*(bool *)&neg::g_n2_data[0x18498])
+#define g_N2_54a480 g_view_restore_x	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a484 g_view_restore_y	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a488 g_view_restore_z	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a48c g_view_restore_w	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a490 g_view_restore_ax	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a494 g_view_restore_ay	// Neutron.exe global (n2_aliases.txt)
+#define g_N2_54a498 g_view_restore	// Neutron.exe global (n2_aliases.txt)
 #define g_N2_54e794 ((char *)&neg::g_n2_data[0x1c794])
 #define g_N2_54e80c (*(unsigned char *)&neg::g_n2_data[0x1c80c])
 #define g_N2_54e825 (*(unsigned char *)&neg::g_n2_data[0x1c825])
@@ -235,9 +233,3 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_trig_text_len (*(int *)&neg::g_n2_data[0x13e4c])
 #define g_trig_text_line (*(int *)&neg::g_n2_data[0x13e48])
 #define g_trig_text_stop (*(bool *)&neg::g_n2_data[0x13e5b])
-#define g_view_restore (*(bool *)&neg::g_n2_data[0x18498])
-#define g_view_restore_ax (*(float *)&neg::g_n2_data[0x18490])
-#define g_view_restore_ay (*(float *)&neg::g_n2_data[0x18494])
-#define g_view_restore_x (*(float *)&neg::g_n2_data[0x18480])
-#define g_view_restore_y (*(float *)&neg::g_n2_data[0x18484])
-#define g_view_restore_z (*(float *)&neg::g_n2_data[0x18488])

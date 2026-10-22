@@ -12,6 +12,7 @@
 #include "DatabaseCache.h"
 #include "Mouse.h"
 #include "CEditor.h"
+#include "Fade.h"
 #include "CMainMenu.h"
 #include "CViewPort.h"
 #include "InterfaceElement.h"
@@ -206,18 +207,6 @@ static void SetGameState(int state)
 		if (*i) static_cast<CLocalGameObject *>(*i)->v270(g_prev_game_state, state);
 }
 
-// N2:0x406a40: start the in-game menu's fade (mode, seconds)
-static void StartFade(int mode, float t)
-{
-	if (g_N2_5324fc == 0) { g_N2_5324ec = 1; return; }
-	if (mode == 6) mode = 4;
-	if (t < 0.1f) t = 0.1f;				// 0x48d920
-	g_N2_5324e8 = t;
-	g_N2_545dcc = t;
-	g_N2_545dd0 = mode;
-	g_N2_5324ec = 0;
-	g_N2_545e5c = 1;
-}
 
 // N2:0x482b40
 static void SetLevel1cLoaded(unsigned char v)	{ neg::SetFlag545e54(v != 0); }	// N2:0x482b40 (InterfaceElement.cpp)
@@ -563,7 +552,7 @@ void CEditor::ClearSelection(void)
 
 // --------------------------------------------------------------------------- 0x46bec0 (slot 49)
 
-// Every frame: the RequestLevel countdown, the start-up splashes (Editor.omt canvases 0 and 1,
+// Every frame: the RequestLevel countdown, the start-up splashes (splash.omt canvases 0 and 1,
 // 3 s each or until Escape), then level1d.gam; a pending load runs CheckLoadLevel.
 void CEditor::UpdateGame(float dt)
 {
@@ -641,7 +630,11 @@ void CEditor::UpdateGame(float dt)
 				if (g_editor_db)
 				{
 					Trace("SPL 7");
-					if (g_splash) g_splash->hide(true);			// element +0x58
+					if (g_splash)
+					{
+						g_splash->hide(true);					// element +0x58
+						g_splash->set_canvas(NULL);				// port: its canvas goes with the database (the original leaves it dangling)
+					}
 					Trace("SPL 8");
 					UnInitDatabase(g_editor_db);				// (its deleting destructor, +8)
 					Trace("SPL 9");
@@ -650,6 +643,7 @@ void CEditor::UpdateGame(float dt)
 			}
 		}
 	}
+	neg::FadeTick(dt);										// port: see Fade.h (agent F's menu runs it in the original)
 	if (m_load_pending) CheckLoadLevel();					// vtable +0x104
 	neg::StartModeFrame();									// port: NEG_START=menu opens the Main Menu
 }
@@ -913,7 +907,7 @@ void CEditor::RequestLevelDelayed(char *name, float delay)
 
 void CEditor::OpenEditorDatabase(void)
 {
-	std::string name("omt\\Editor.omt");
+	std::string name("omt\\splash.omt");					// (Negatron: omt\\Editor.omt)
 	g_editor_stream = InitFileStream(name.c_str());
 	g_editor_db = InitDatabase(g_editor_stream);
 }
@@ -1027,7 +1021,7 @@ void CEditor::ResetLevelObjects(void)
 
 // --------------------------------------------------------------------------- splash / sprites
 
-// 0x46f830 (vtable +0x12c): replace the full-screen splash with canvas id of omt\Editor.omt
+// 0x46f830 (vtable +0x12c): replace the full-screen splash with canvas id of omt\splash.omt
 void CEditor::DrawSplash(int canvas_id)
 {
 	Trace("EDS");
@@ -1059,7 +1053,7 @@ void CEditor::DrawSplash(int canvas_id)
 					c->set_filtering(omtfc_Linear, omtfc_Linear);
 					g_splash->set_size(c->get_width() * sx, c->get_height() * sy);
 				}
-				g_splash->set_canvas(c);
+				if (c) g_splash->set_canvas(c);				// port: the original sets a missing canvas too (NULL)
 			}
 		}
 		g_splash->set_canvas_flags(omcanef_FreeWorldSize);
