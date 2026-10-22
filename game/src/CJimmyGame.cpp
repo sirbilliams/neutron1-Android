@@ -8,6 +8,7 @@
 #include "SaveGame.h"
 #include "Physics.h"
 #include "CJimmyGame.h"
+#include "JimmySlots.h"
 #include "C3DObject.h"
 #include "C3DJimmy.h"
 // TODO(BG): #include "C3DRadar.h" (Negatron-only class, deleted)
@@ -246,13 +247,6 @@ void CJimmyGame::ResetObject(void)											// 0x44d4e0
 	CLocalGameObject::ResetObject();
 }
 
-// C3DJimmy element slot 128 (+0x200, 0x424570): his per-frame part the game type runs. Weak:
-// C3DJimmy (agent E) defines it.
-namespace neg {
-void JimmyElementSlot128(CGameObject *jimmy, float dt) __attribute__((weak));
-void JimmyElementSlot128(CGameObject *jimmy, float dt)	{ (void)jimmy; (void)dt; }
-}
-
 void CJimmyGame::Process(float dt)											// 0x44df80
 {
 	neg::UpdateTexScrolls(dt);												// 0x45f510
@@ -345,35 +339,24 @@ void CJimmyGame::ReadState(OMediaStreamOperators &s)						// N2:0x485ef0
 void CJimmyGame::InitGame(void)												// 0x44d3d0
 {
 	Log("InitGame()");
-	f_564 = 0;
+	f_564 = 0;																// +0x550
 	CGameType::InitGame();
 	neg::ClearTexScrolls();													// 0x45f4c0
-	g_gravity.x = 0.0f;											// 0x5cfc00 (Physics.cpp)
+	g_gravity.x = 0.0f;														// 0x5cfc00 (Physics.cpp)
 	g_gravity.y = -800.0f;
 	g_gravity.z = 0.0f;
-	f_554 = 1.0f;
-	f_558 = 1.0f;
-	g_layer_world->add_flags(omlayerf_SortElementBack2Front);				// 0x476930(layer, 0x20)
-	v107(0);																// vtable +0x1ac
-	m_surface_sound_next = 5;
-	m_surface_sound = 5;
-	m_pickup_index_base = 100;
-	v128(0);																// vtable +0x200
-	m_sky = NULL;
-	m_sky_rotates = 1;
-	f_5c8 = 0;
-	m_refog = 0;
-	f_4c4 = 1;																// CLocalGameObject +0x4c4
-	m_xray_time = 0.0f;
-	m_xray_flash = 0.0f;
-	m_stopwatch_channel = -1;
-	v52(0);																	// vtable +0xd0
-	f_66c = 5.0f;
-	f_670 = 20000.0f;
-	f_674 = 20000.0f;
-	f_678 = 15.0f;
-	m_no_texture_scroll = 0;
-	f_680 = 0.7f;
+	f_554 = 1.0f;															// +0x540
+	f_558 = 1.0f;															// +0x544
+	g_layer_world->add_flags(omlayerf_SortElementBack2Front);				// 0x476930(layer 0x509a3c, 0x20)
+	v107(0);																// vtable +0x1b0
+	m_surface_sound_next = 5;												// +0x54c
+	m_surface_sound = 5;													// +0x548
+	m_pickup_index_base = 100;												// +0x5a8
+	v128(0);																// vtable +0x204
+	m_sky = NULL;															// +0x5b0
+	m_sky_rotates = 1;														// +0x5b4
+	m_stopwatch_channel = -1;												// port: Negatron's stopwatch member (no such sound in Boy Genius)
+	// (debug log)
 }
 
 void CJimmyGame::UnInitGame(void)											// 0x44d4a0
@@ -516,88 +499,61 @@ void CJimmyGame::OnDeactivate(void)
 	m_fog_restore[0] = g_layer_world->get_near_clip();						// 2002 +0xc4
 }
 
-// N2:0x484740: an object stands on a polygon with material `mat` (texture `tex`). The material's
-// chunk ID picks the effect. Only Jimmy ('3JIM') and the rocket ship ('3ROC') reacts.
+// 0x44e030 (BG slot 76): an object stands on a polygon with material `mat` (texture `tex`). The
+// material's chunk ID picks the effect. Only Jimmy ('3JIM') and the rocket ship ('3ROC') react:
+// 100..109 and 110..119 are two kinds of surface Jimmy is told about (entering, each frame,
+// leaving), 120..129 push him (element slot 88), 185..189 hurt him (or the rocket's pilot), and
+// the ID picks the footstep sound set he is given.
 void CJimmyGame::TouchSurface(CGameObject *o, OMedia3DMaterial *mat, OMediaCanvas *tex, float dt)
 {
 	(void)dt;
 	if (!o || !tex) return;
-	const int id = (int)mat->get_chunk_ID();								// (no NULL test of mat)
-	if (o->m_object_id != '3JIM')
+	const int id = (int)mat->get_chunk_ID();								// (material +0xc -> +8; no NULL test of mat)
+	if (o->m_object_id == '3JIM')
 	{
-		if (o->m_object_id != '3ROC') return;
-		if (id < 185 || id > 189) return;
-		if (!o->v133()) return;												// vtable +0x214
-		OMediaElement *c = CorCarried(o);									// +0x934
-		if (!c || PlayerFlag(c, 0x4cb8)) return;
-		PlayerHurt(c, -5.0f, -5, 5.0f, true);								// its vtable +0x218
-		CorStartHit(o);														// +0x1178 = 5.0, +0x1138 = 1, +0x1188 = 0, +0x113c = 0
-		PlayGameSound(-1, RandomHalf() ? "pain ah agh aww" : "pain agh agh", 0);
+		if (id >= 110 && id <= 119)
+		{
+			if (!JimmyByte(o, 0x1e02)) { JimmyElementSlot102(o); JimmyByte(o, 0x1e02) = 1; }	// element +0x198
+			JimmyElementSlot89(o);											// +0x164
+		}
+		else if (JimmyByte(o, 0x1e02)) { JimmyElementSlot103(o); JimmyByte(o, 0x1e02) = 0; }	// +0x19c
+		if (id > 184 && id < 190 && o->v133() && !JimmyByte(o, 0x1e03))		// vtable +0x218: on the floor
+		{
+			JimmyElementSlot104(o, -5.0f, -5, 5.0f);						// +0x1a0
+			PlayGameSoundIndex(-1, RandomHalf() ? 0xbf : 0xbd, false);		// 0x458980
+		}
+		if (id >= 100 && id <= 109)
+		{
+			if (!JimmyByte(o, 0x1e01)) { JimmyElementSlot100(o); JimmyByte(o, 0x1e01) = 1; }	// +0x190
+			JimmyElementSlot99(o);											// +0x18c
+		}
+		else if (JimmyByte(o, 0x1e01)) { JimmyElementSlot101(o); JimmyByte(o, 0x1e01) = 0; }	// +0x194
+		if (id > 119 && id < 130 && o->v133()) JimmyElementSlot88(o, 0.0f, 1.0f, 0.0f, 0.0f);	// +0x160
+
+		int set;
+		if (id >= 185 && id <= 189) set = 0x23;
+		else if (id >= 110 && id <= 119) set = 0x23;
+		else if (id >= 50 && id <= 55) set = 0x7c;
+		else if (id >= 56 && id <= 59) set = 0x7e;
+		else if (id >= 130 && id <= 135) set = 0x7b;
+		else if (id >= 136 && id <= 139) set = 0x80;
+		else if (id >= 140 && id <= 149) set = 0x80;
+		else if (id >= 150 && id <= 159) set = 0x7f;
+		else if (id >= 70 && id <= 79) set = 0x81;
+		else if (id == 90) set = 0x7d;
+		else set = 5;
+		m_surface_sound_next = set;
+		if (m_surface_sound != m_surface_sound_next) JimmyElementSlot121(o, m_surface_sound_next);	// +0x1e4
+		m_surface_sound = m_surface_sound_next;
 		return;
 	}
-	OMediaElement *p = dynamic_cast<OMediaElement *>(o);						// Jimmy's element (o - 0xc0)
-
-	if (id >= 110 && id <= 119)
-	{
-		if (!PlayerFlag(p, 0x4ca7)) { PlayerSlot(p, 130); SetPlayerFlag(p, 0x4ca7, true); }	// +0x208
-		PlayerSlot(p, 120);													// +0x1e0
-	}
-	else if (PlayerFlag(p, 0x4ca7)) { PlayerSlot(p, 131); SetPlayerFlag(p, 0x4ca7, false); }	// +0x20c
-
-	if (id >= 220 && id <= 229) SetPlayerFloat(p, 0xc08, 0.5f);
-
-	if (id >= 185 && id <= 189 && o->v133() && !PlayerFlag(p, 0x4cb8))
-	{
-		LoadTask("autosave.tsk", 0);										// N2:0x498af0
-		o->v261();															// vtable +0x414
-		PlayerHurt(p, -5.0f, -5, 5.0f, true);								// element +0x218
-		PlayGameSound(-1, RandomHalf() ? "pain ah agh aww" : "pain agh agh", 0);
-	}
-
-	if (id >= 100 && id <= 109)
-	{
-		if (!PlayerFlag(p, 0x4ca6)) { PlayerSlot(p, 128); SetPlayerFlag(p, 0x4ca6, true); }	// +0x200
-		PlayerSlot(p, 127);													// +0x1fc
-	}
-	else if (PlayerFlag(p, 0x4ca6)) { PlayerSlot(p, 129); SetPlayerFlag(p, 0x4ca6, false); }	// +0x204
-
-	if (id >= 120 && id <= 129 && o->v133()) PlayerSlot119(p, 0.0f, 1.0f, 0.0f, 0.0f);	// +0x1dc
-
-	int set;
-	if (id == 250)
-	{
-		if (o->v133())
-		{
-			SetPlayerFlag(p, 0x4db4, false);
-			PlayerHurt(p, -300.0f, -1, -1.0f, true);
-			PlayGameSound(-1, "SPLASH", 0);
-		}
-		set = 5;
-	}
-	else if (id == 251)
-	{
-		if (o->v133())
-		{
-			SetPlayerFlag(p, 0x4db4, false);
-			PlayerHurt(p, -300.0f, -10, 5.0f, true);
-			PlayGameSound(-1, "pain ahhouch", 0);
-		}
-		set = 5;
-	}
-	else if (id >= 185 && id <= 189) set = 0x23;
-	else if (id >= 110 && id <= 119) set = 0x23;
-	else if (id >= 50 && id <= 55) set = 0x7c;
-	else if (id >= 56 && id <= 59) set = 0x7e;
-	else if (id >= 130 && id <= 135) set = 0x7b;
-	else if (id >= 136 && id <= 139) set = 0x80;
-	else if (id >= 140 && id <= 149) set = 0x80;
-	else if (id >= 150 && id <= 159) set = 0x7f;
-	else if (id >= 70 && id <= 79) set = 0x81;
-	else if (id == 90) set = 0x7d;
-	else set = 5;
-	m_surface_sound_next = set;
-	if (m_surface_sound != m_surface_sound_next) SetPlayerSurfaceSound(p, m_surface_sound_next);	// element +0x264
-	m_surface_sound = m_surface_sound_next;
+	if (o->m_object_id != '3ROC') return;
+	if (id < 185 || id > 189 || !o->v133()) return;
+	CGameObject *pilot = CorCarried(o) ? dynamic_cast<CGameObject *>(CorCarried(o)) : NULL;	// rocket +0x740
+	if (!pilot || JimmyByte(pilot, 0x1e03)) return;
+	JimmyElementSlot104(pilot, -5.0f, -5, 5.0f);							// its element +0x1a0
+	CorStartHit(o);															// +0xf84 = 5, +0xf44 = 1, +0xf90 = 0, +0xf48 = 0
+	PlayGameSoundIndex(-1, RandomHalf() ? 0xbf : 0xbd, false);
 }
 
 // --------------------------------------------------------------------------- CJimmyGame's own slots
@@ -629,6 +585,13 @@ bool CJimmyGame::FileIsThere(char *name, const char *dir, const char *cd_dir)
 	}
 	else strcpy(name, local);
 	return true;
+}
+
+// 0x44e450 (BG slot 90): stop (or let go on) the game: GameIsRunning() is false while set.
+void CJimmyGame::StopGame(char stop)
+{
+	g_5099ab = stop;
+	g_4f641c = 0;
 }
 
 // 0x44df50: the stage of the level's story from task "SCENE": 0 below 250, 1 below 320, else 2.

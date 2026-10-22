@@ -53,7 +53,7 @@ class CJimmyGame : public CGameType
 	virtual void PauseGame(bool pause);										// ESLOT 68 N2:0x485410
 	virtual void OnActivate(void);											// ESLOT 71 N2:0x482a80 "GetFocus()"
 	virtual void OnDeactivate(void);										// ESLOT 72 N2:0x482ad0 "LoseFocus()"
-	virtual void TouchSurface(CGameObject *o, OMedia3DMaterial *mat, OMediaCanvas *tex, float dt);	// ESLOT 78 N2:0x484740
+	virtual void TouchSurface(CGameObject *o, OMedia3DMaterial *mat, OMediaCanvas *tex, float dt);	// ESLOT 78 0x44e030 (BG slot 76)
 
 	// ---- element-family slots CJimmyGame adds (vtable offset = slot * 4)
 	virtual void ev87(void) {}												// ESLOT 87  0x472970 +0x15c (empty)
@@ -61,6 +61,7 @@ class CJimmyGame : public CGameType
 	virtual bool FileIsThere(char *name, const char *dir, const char *cd_dir);	// ESLOT 89 0x44e560 +0x164
 	virtual void CreateTerrainTinted(float r, float g, float b, float a);	// ESLOT 90  0x44dbf0 +0x168
 	virtual char GetSceneStage(void);										// ESLOT 91  0x44df50 +0x16c
+	virtual void StopGame(char stop);										// ESLOT     0x44e450 (BG slot 90) GameIsRunning() false while set
 	virtual bool SetupTextureScroll(OMedia3DPolygon *p);					// ESLOT 92  0x44e470 +0x170 (BG slot 88)
 	virtual void SetTerrainDBColor(float r, float g, float b, float a);		// ESLOT 93  0x44db30 +0x174
 	virtual void SetTerrainGrey(float v);									// ESLOT 94  N2:0x4836a0 +0x178
@@ -80,15 +81,16 @@ class CJimmyGame : public CGameType
 	virtual void RestoreTimerEffects(void);									// ESLOT 108 N2:0x484110 +0x1b0
 
 	// ---- members (not initialised by the constructor; InitGame sets them)
+	// (Neutron.exe offsets: Negatron's - 0x10)
 	// FIELD 0x554 4
-	float		f_554;					// 0x554  1.0 (InitGame; not read here)
+	float		f_554;					// BG 0x540  1.0 (InitGame; not read here)
 	// FIELD 0x558 4
-	float		f_558;					// 0x558  1.0 (InitGame; not read here)
+	float		f_558;					// BG 0x544  1.0 (InitGame; not read here)
 	// FIELD 0x55c 8
-	int			m_surface_sound;		// 0x55c  surface (footstep) sound set given to Jimmy (slot 153)
-	int			m_surface_sound_next;	// 0x560  set from the texture under Jimmy by TouchSurface
+	int			m_surface_sound;		// BG 0x548  footstep sound set last given to Jimmy (his element slot 121)
+	int			m_surface_sound_next;	// BG 0x54c  set from the texture under Jimmy by TouchSurface
 	// FIELD 0x564 4
-	int			f_564;					// 0x564  0 (InitGame)
+	int			f_564;					// BG 0x550  0 (InitGame)
 	// (0x568..0x5b8 is not used by CJimmyGame)
 	// FIELD 0x5b8 8
 	int			m_pickup_index_base;	// 0x5b8  100
