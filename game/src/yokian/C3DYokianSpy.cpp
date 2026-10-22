@@ -20,10 +20,10 @@ C3DYokianSpy::C3DYokianSpy()								// 0x44c2b0
 	C3DYokianSpy::InitObject();								// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	m_helmet = new C3DYokHelmet;							// 0x6c4 bytes, 0x44a440
-	strcpy(f_ac4, "STOP");									// 0x407fa0
-	strcpy(f_aec, "WALK");
-	strcpy(f_b3c, "STOP");
-	strcpy(f_b64, "ATTACK");
+	strcpy(m_anim_wag, "STOP");									// 0x407fa0
+	strcpy(m_anim_run, "WALK");
+	strcpy(m_anim_sit, "STOP");
+	strcpy(m_anim_walk, "ATTACK");
 	m_mouth = 0;
 	m_mouth_time = 0;
 	C3DObject::SetObjectID('3SPY');							// 0x462220

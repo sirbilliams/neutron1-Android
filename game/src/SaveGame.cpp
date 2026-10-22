@@ -325,7 +325,7 @@ bool neg::TaskGameLoad(const char *name)
 			char g[STR_MAX], st[STR_MAX];
 			strcpy(g, g_editor->m_level_name);
 			strcpy(st, p->f_9c8);
-			p->ev121(g, st, g_editor->m_level_name, p->f_9c8, 0);	// element slot 90 (+0x168) TODO(BG): no picture arg
+			p->n2_ev121(g, st, g_editor->m_level_name, p->f_9c8, 0);	// element slot 90 (+0x168) TODO(BG): no picture arg
 		}
 	}
 	for (int i = 0; i < 9; i++)

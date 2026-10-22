@@ -223,7 +223,7 @@ extern InterfaceElt		g_elt_545b78;			// N2:0x545b78  (no other use found)
 extern InterfaceElt		g_elt_545c80;			// N2:0x545c80
 
 // Score (shown with "%6.0d"; CJimmyGame N2:0x4854e0 ranks it in steps of 3000..35000).
-extern int		g_score;				// N2:0x54a458
+extern int		g_score;				// 0x4f83c0
 extern int		g_score_popup;			// 0x4f83c4  points of the "+N" pop-up (0x424d10 draws it)
 extern float	g_score_popup_time;		// 0x4f83c8  pop-up timer, 1.2 when points are added
 
@@ -232,7 +232,7 @@ extern float	g_score_popup_time;		// 0x4f83c8  pop-up timer, 1.2 when points are
 extern bool		g_flag_545e54;			// N2:0x545e54
 
 void SetFlag545e54(bool on);			// N2:0x482b40
-// Add (or, negative, remove) points. Positive amounts are scaled by the skill setting
-// N2:0x53b5b0 (0: x0.5, 2: x1.5, else x1) and start the pop-up; the score never goes below 0.
-void AddScore(int points);				// N2:0x482b50
+// Add (or, negative, remove) points. Positive amounts start the "+N" pop-up; the score never
+// goes below 0. (Negatron's also scaled them by the skill setting.)
+void AddScore(int points);				// 0x42adc0
 }

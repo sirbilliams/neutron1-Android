@@ -3,7 +3,7 @@
     ground shadow (a C3DShadow 140 x 50 kept on the terrain under it, unless g_windowed), a hit
     bubble (C3DYokianShield, shown between it and the camera while it flashes) and, for the
     spy, a helmet that follows its position and rotation.
-    Hit by a baseball (one that has not hit yet): sound 0x2f, AI state 5 (flee 2200 for 5 s), 10 points. Touched by Jimmy: f_934 = 2 s. While "hit" (state locked: C3DAI f_c40): one
+    Hit by a baseball (one that has not hit yet): sound 0x2f, AI state 5 (flee 2200 for 5 s), 10 points. Touched by Jimmy: f_934 = 2 s. While "hit" (state locked: C3DAI m_state_locked): one
     of the sounds 0xf3..0xf6 (random) if its loop sound was playing, the shadow shrinks to
     40 x 15, the helmet hides; from AI state 0 it goes to state 5 (flee distance 1500, speed 400). The
     hit time running out restores it: its AIState, WALK, speed 200, shadow 140 x 50,
@@ -16,8 +16,8 @@
     members 0x9a0..0x9b8, vtordisp 0x9b8, streamer 0x9bc.
 
     Slot numbers in the comments are Boy Genius's; the code uses the Negatron names of the
-    C3DAI members and slots (BG offset + 0x2a4 / 0x2cc / 0x2d0: speed f_968, state f_96c,
-    target f_964, hover f_bd4, flee distance f_c10, flee time f_c3c, state lock f_c40...).    */
+    C3DAI members and slots (BG offset + 0x2a4 / 0x2cc / 0x2d0: speed m_speed, state m_state,
+    target m_target, hover m_hover, flee distance m_flee_dist, flee time m_flee_time, state lock m_state_locked...).    */
 #pragma once
 #include "../level1/C3DEnemy.h"
 
@@ -33,7 +33,7 @@ class C3DYokian : public C3DEnemy
 
 	// ---- element-family slots
 	virtual void ev70(unsigned char show);									// ESLOT 68 0x44afa0 show/hide with collision, shadow and helmet
-	virtual void ev127(void);												// ESLOT 91 0x44b100 (C3DAI's: not arrived) attack: ATTACK, the loop sound
+	virtual void ev91(void);												// ESLOT 91 0x44b100 (C3DAI's: not arrived) attack: ATTACK, the loop sound
 	virtual void ev95_bg(void) {}											// ESLOT 95 0x472970 (empty)
 
 	// ---- CGameObject-family overrides
@@ -43,7 +43,7 @@ class C3DYokian : public C3DEnemy
 	virtual void v278(void);												// SLOT 273 0x44b160 unpaused: the loop sound again
 
 	// port: BG's C3DAI keeps a float "hit time" at 0x974 (Negatron's 0xc44 is an int, unused here).
-	float &HitTime(void) { return *reinterpret_cast<float *>(&f_c44); }
+	float &HitTime(void) { return *reinterpret_cast<float *>(&m_974); }
 
 	// ---- data members (object offsets)
 	C3DYokianShield		*m_shield;		// 0x9a0  the hit bubble (the original keeps its CGameObject part)

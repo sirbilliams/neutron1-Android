@@ -10,20 +10,20 @@
 
     Control state f_a68 (Process / v243 pick the slots by it):
       state   Process (movement)        v243 (control + camera)
-      0       ev108 walk                ev109 keyboard/mouse + chase camera
-      1       ev112 jump / jetpack      ev110 vehicle-like steering + camera
-      2       ev107 bounce              ev110
-      3       (nothing)                 ev111 turn on the spot + camera
-      4       ev108 (swimming)          ev109
-      5       ev106 (glide)             ev109
+      0       n2_ev108 walk                n2_ev109 keyboard/mouse + chase camera
+      1       n2_ev112 jump / jetpack      n2_ev110 vehicle-like steering + camera
+      2       n2_ev107 bounce              n2_ev110
+      3       (nothing)                 n2_ev111 turn on the spot + camera
+      4       n2_ev108 (swimming)          n2_ev109
+      5       n2_ev106 (glide)             n2_ev109
     States 0, 1, 4 and 5 also pick RUN / STOP / LEFT / RIGHT / JUMP from the speed and keys.
-    While f_b20 > 0 (climbing a fence or ladder: v220 -> ev114 "FENCE"/"LADDER") v243 runs the
+    While f_b20 > 0 (climbing a fence or ladder: v220 -> n2_ev114 "FENCE"/"LADDER") v243 runs the
     climb camera instead and ends the climb (ev67 "AnimEnded" ends the animation side).
 
     Speeds: f_96c forward speed (clamped to f_968), f_960 acceleration and f_964 braking per
-    frame, f_978 turn rate (degrees / s). The camera wants to sit at v224(f_a6c) (ev113 for
-    states 1-3) looking at v224(f_a7c), pulled in front of walls (ev95), kept within reach
-    (ev96) and moved there smoothly (ev98, C3DPlayerObject).
+    frame, f_978 turn rate (degrees / s). The camera wants to sit at v224(f_a6c) (n2_ev113 for
+    states 1-3) looking at v224(f_a7c), pulled in front of walls (n2_ev95), kept within reach
+    (n2_ev96) and moved there smoothly (n2_ev98, C3DPlayerObject).
 
     Element-family slots are `ev<n>` (`// ESLOT n`) unless a log string names them; members are
     f_<offset in the original object> (CGameObject-family code sees them at offset - 0xc0).
@@ -58,40 +58,43 @@ class C3DPlayer : public C3DAnimated
 	virtual ~C3DPlayer();													// 0x437790
 
 	// ---- from Negatron's C3DPlayerObject (port: TODO(BG) - see neg::CamWallPull)
-	float ev95(OMedia3DVector unused, OMedia3DVector *cam) { (void)unused; return neg::CamWallPull(this, cam); }
-	float ev96(OMedia3DVector target, OMedia3DVector *out, float max) { return neg::CamReach(target, out, max); }
-	void ev97(OMedia3DVector pos, OMedia3DVector target) { neg::CamPlace(pos, target); }
-	void ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
+	float n2_ev95(OMedia3DVector unused, OMedia3DVector *cam) { (void)unused; return neg::CamWallPull(this, cam); }
+	float n2_ev96(OMedia3DVector target, OMedia3DVector *out, float max) { return neg::CamReach(target, out, max); }
+	void n2_ev97(OMedia3DVector pos, OMedia3DVector target) { neg::CamPlace(pos, target); }
+	void n2_ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
 			  OMedia3DVector axis) { neg::CamMove(this, a, b, mode, cur, want, target, axis); }
-	virtual unsigned char ev103(void);										// ESLOT 86 0x4378d0 jump/use button (N2 C3DPlayerObject ev103 ~0.81)
-	virtual unsigned char ev104(void);										// ESLOT 87 0x42a7a0 fire button
-	virtual void ev105(void);												// N2:0x465360 Jimmy is out: back to the autosave (TODO(BG))
+	virtual void ev80(void) {}												// ESLOT 80 0x472970 (empty; C3DJimmy 0x429910)
+	virtual void ev81(void) {}												// ESLOT 81 0x472970 (empty; C3DJimmy 0x4299d0 footstep loop on)
+	virtual void ev82(void) {}												// ESLOT 82 0x472970 (empty; C3DJimmy 0x429a00 footstep loop off)
+	virtual unsigned char ev86(void);										// ESLOT 86 0x4378d0 jump/use button (N2 C3DPlayerObject ev86 ~0.81)
+	virtual unsigned char ev87(void);										// ESLOT 87 0x42a7a0 fire button
+	virtual void n2_ev105(void);												// N2:0x465360 Jimmy is out: back to the autosave (TODO(BG))
 	virtual void WriteState(OMediaStreamOperators &s);						// (N2 C3DPlayerObject's: CLocalGameObject's)
 	virtual void ReadState(OMediaStreamOperators &s);
 
 	// ---- element-family slots
 	virtual void ev67(void);												// ESLOT 67  N2:0x4639b0 "AnimEnded": FENCE / LADDER / FULLSTOP / SPLAT / HIT done
-	virtual void ev106(float dt);											// ESLOT 106 N2:0x460940 state 5 movement (turns twice as fast; jumps through Jimmy)
-	virtual void ev107(float dt);											// ESLOT 107 N2:0x461640 state 2 movement: bounce ("bubble boing")
-	virtual void ev108(float dt);											// ESLOT 108 0x437c40 state 0/4 movement: walk, side step f_b0c, held to the floor
-	virtual void ev109(float dt);											// ESLOT 109 N2:0x461b50 state 0/4/5 control (speed, turn, BACK) + chase camera
-	virtual void ev110(float dt);											// ESLOT 110 N2:0x463140 state 1/2 control (steer, mouse y = throttle) + camera
-	virtual void ev111(float dt);											// ESLOT 111 N2:0x462b70 state 3: turn only + camera
-	virtual void ev112(float dt);											// ESLOT 112 N2:0x461010 state 1 movement: jump, or fly (jetpack: gadget 3 or g_flag_545e54)
-	virtual OMedia3DVector ev113(float x, float y, float z);				// ESLOT 113 0x43a5d0 position + (x,y,z) turned by (0, heading + f_978, roll), w = 1
-	virtual void ev114(char *name);											// ESLOT 114 0x43aff0 play player animation <name> (rules: locks, FENCE/LADDER start a climb)
-	virtual void ev115(void) {}												// ESLOT 115 0x472970 (empty) before RUN starts
-	virtual void ev116(void) {}												// ESLOT 116 0x472970 (empty) an animation change / stop
-	virtual unsigned char ev117(void);										// ESLOT 117 0x43a7f0 state 0 and the floor more than 70 below v224(0,0,70)
-	virtual void ev118(void) {}												// ESLOT 118 0x472970 (empty) bounced on the floor (ev107)
-	virtual void ev119(OMedia3DVector plane) { (void)plane; }				// ESLOT 119 0x475cc0 (empty) touched a wall of material 120..129
-	virtual void ev120(void) {}												// ESLOT 120 0x472970 (empty) touched a wall of material 110..119
-	virtual void ev121(char *game, char *start, char *ret_game, char *ret_start, int picture);	// ESLOT 121 N2:0x4648a0 "PlayerLoadLevel"
-	virtual void ev122(void);												// ESLOT 122 N2:0x460380 reset the camera offsets
-	virtual void ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt);	// ESLOT 123 N2:0x462de0 scripted camera: towards ev113(off), looking at v224(look)
-	virtual void ev124(float dt);											// ESLOT 124 N2:0x4629c0 camera shake (f_bf8 seconds, f_c00 strength)
-	virtual void ev125(char *start);										// ESLOT 125 N2:0x464840 f_9c8 = start point
-	virtual void ev126(char *game);											// ESLOT 126 N2:0x464870 f_c25 = game file to return to
+	virtual void n2_ev106(float dt);											// ESLOT 106 N2:0x460940 state 5 movement (turns twice as fast; jumps through Jimmy)
+	virtual void n2_ev107(float dt);											// ESLOT 107 N2:0x461640 state 2 movement: bounce ("bubble boing")
+	virtual void n2_ev108(float dt);											// ESLOT 108 0x437c40 state 0/4 movement: walk, side step f_b0c, held to the floor
+	virtual void n2_ev109(float dt);											// ESLOT 109 N2:0x461b50 state 0/4/5 control (speed, turn, BACK) + chase camera
+	virtual void n2_ev110(float dt);											// ESLOT 110 N2:0x463140 state 1/2 control (steer, mouse y = throttle) + camera
+	virtual void n2_ev111(float dt);											// ESLOT 111 N2:0x462b70 state 3: turn only + camera
+	virtual void n2_ev112(float dt);											// ESLOT 112 N2:0x461010 state 1 movement: jump, or fly (jetpack: gadget 3 or g_flag_545e54)
+	virtual OMedia3DVector n2_ev113(float x, float y, float z);				// ESLOT 113 0x43a5d0 position + (x,y,z) turned by (0, heading + f_978, roll), w = 1
+	virtual void n2_ev114(char *name);											// ESLOT 114 0x43aff0 play player animation <name> (rules: locks, FENCE/LADDER start a climb)
+	virtual void n2_ev115(void) {}												// ESLOT 115 0x472970 (empty) before RUN starts
+	virtual void n2_ev116(void) {}												// ESLOT 116 0x472970 (empty) an animation change / stop
+	virtual unsigned char n2_ev117(void);										// ESLOT 117 0x43a7f0 state 0 and the floor more than 70 below v224(0,0,70)
+	virtual void n2_ev118(void) {}												// ESLOT 118 0x472970 (empty) bounced on the floor (n2_ev107)
+	virtual void n2_ev119(OMedia3DVector plane) { (void)plane; }				// ESLOT 119 0x475cc0 (empty) touched a wall of material 120..129
+	virtual void n2_ev120(void) {}												// ESLOT 120 0x472970 (empty) touched a wall of material 110..119
+	virtual void n2_ev121(char *game, char *start, char *ret_game, char *ret_start, int picture);	// ESLOT 121 N2:0x4648a0 "PlayerLoadLevel"
+	virtual void n2_ev122(void);												// ESLOT 122 N2:0x460380 reset the camera offsets
+	virtual void n2_ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt);	// ESLOT 123 N2:0x462de0 scripted camera: towards n2_ev113(off), looking at v224(look)
+	virtual void n2_ev124(float dt);											// ESLOT 124 N2:0x4629c0 camera shake (f_bf8 seconds, f_c00 strength)
+	virtual void n2_ev125(char *start);										// ESLOT 125 N2:0x464840 f_9c8 = start point
+	virtual void n2_ev126(char *game);											// ESLOT 126 N2:0x464870 f_c25 = game file to return to
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x437830 "StartPoint", ObjectID '3PLA', InitPhysics
@@ -102,7 +105,7 @@ class C3DPlayer : public C3DAnimated
 	virtual void RotateToDest(float dt);									// SLOT 246 0x43a420 rates 4.5 / 3.7 / 4.5
 	virtual void v258(void);												// SLOT 258 0x41afb0 (CLocalGameObject's)
 	virtual void v260(void);												// SLOT 260 0x43a750 + f_c20 = "C3DHERMAN"
-	virtual void v261(void);												// SLOT 261 N2:0x4637f0 stop (speed 0, velocity 0, ev116)
+	virtual void v261(void);												// SLOT 261 N2:0x4637f0 stop (speed 0, velocity 0, n2_ev116)
 	virtual void v262(CGameObject *other, float dist);						// SLOT 262 0x43a790 C3DGODDARD stops us instead of pushing
 	virtual void v271(void);												// SLOT 271 N2:0x461b20 power-up over: f_968 = 600
 
@@ -121,18 +124,18 @@ class C3DPlayer : public C3DAnimated
 	float				f_980;			// 0x980  heading at ResetObject
 	int					f_984;			// 0x984  1
 	unsigned char		f_988;			// 0x988  driving forward this frame
-	unsigned char		f_989;			// 0x989  braking this frame (ev110)
+	unsigned char		f_989;			// 0x989  braking this frame (n2_ev110)
 	unsigned char		f_98a;			// 0x98a  turning by keys (f_978 eases back to 0 after)
 	unsigned char		f_98b;			// 0x98b  0
 	int					f_9b4;			// 0x9b4  0
-	OMedia3DPoint		f_9b8;			// 0x9b8  camera position this frame (ev109 cur)
+	OMedia3DPoint		f_9b8;			// 0x9b8  camera position this frame (n2_ev109 cur)
 	char				f_9c8[80];		// 0x9c8  "StartPoint" ("none")
 	char				f_a18[80];		// 0xa18  start point to return to ("none")
 	short				f_a68;			// 0xa68  control state (see above)
-	OMedia3DPoint		f_a6c;			// 0xa6c  camera offset (0, 200, -300) (ev122)
+	OMedia3DPoint		f_a6c;			// 0xa6c  camera offset (0, 200, -300) (n2_ev122)
 	OMedia3DPoint		f_a7c;			// 0xa7c  camera look offset (0, 80, 0)
 	short				f_a8c;			// 0xa8c  jump: 1 in the air after a jump (5: C3DJimmy), 0 landed
-	float				f_a90;			// 0xa90  pitch when accelerating (ev110: -2; -10 in state 2)
+	float				f_a90;			// 0xa90  pitch when accelerating (n2_ev110: -2; -10 in state 2)
 	float				f_a94;			// 0xa94  pitch when braking (2; 10)
 	unsigned char		f_a98;			// 0xa98  0
 	unsigned char		f_a99;			// 0xa99  1; 0 once PlayerLoadLevel ran
@@ -148,13 +151,13 @@ class C3DPlayer : public C3DAnimated
 	OMedia3DPoint		f_ad4;			// 0xad4  where a climb ends (v224(0, 260, 70) fence, (0, 630, 75) ladder)
 	float				f_ae4;			// 0xae4  mouse x, summed
 	float				f_ae8;			// 0xae8  camera height / pitch adjust (10; Action + Go/Back or mouse y with gadget 6/10)
-	unsigned char		f_aec;			// 0xaec  going backwards this frame (ev109)
+	unsigned char		f_aec;			// 0xaec  going backwards this frame (n2_ev109)
 	unsigned char		f_aed;			// 0xaed  camera frozen (no FALL, no shake / scripted moves)
-	OMedia3DVector		f_af0;			// 0xaf0  (1.4, 1, 1.4) (ev122); its w (0xafc) is the camera axis w
+	OMedia3DVector		f_af0;			// 0xaf0  (1.4, 1, 1.4) (n2_ev122); its w (0xafc) is the camera axis w
 	unsigned char		f_b00;			// 0xb00  Back does not reverse
 	float				f_b04;			// 0xb04  climb animation time (1.55 fence, 2 ladder)
-	float				f_b08;			// 0xb08  0; C3DJimmy ev136: distance from Jimmy to his shadow
-	float				f_b0c;			// 0xb0c  side slip of ev108 (-250 left, 250 right, 0)
+	float				f_b08;			// 0xb08  0; C3DJimmy n2_ev136: distance from Jimmy to his shadow
+	float				f_b0c;			// 0xb0c  side slip of n2_ev108 (-250 left, 250 right, 0)
 	float				f_b10;			// 0xb10  0 (jetpack start)
 	float				f_b14;			// 0xb14  LEFT turn animation time left
 	float				f_b18;			// 0xb18  RIGHT turn animation time left
@@ -175,7 +178,7 @@ class C3DPlayer : public C3DAnimated
 	float				f_c08;			// 0xc08  mouse turns slowed to a third (> 0)
 	unsigned char		f_c0c;			// 0xc0c  0
 	float				f_c10;			// 0xc10  climb camera rise speed (120; 150 fence, 350 ladder)
-	float				f_c14;			// 0xc14  mouse y / dt (ev110 throttle)
+	float				f_c14;			// 0xc14  mouse y / dt (n2_ev110 throttle)
 	int					f_c18;			// 0xc18  PlayerLoadLevel: 0 plain, 1 check promotion, 2 back from it
 	int					f_c1c;			// 0xc1c  camera mode 0..3 (2, 3: 100 higher; 0: reach limit; 1: wider axis)
 	CGameObject			*f_c20;			// 0xc20  the "C3DHERMAN" object (raises the camera within 900)

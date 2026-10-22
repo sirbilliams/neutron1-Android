@@ -15,17 +15,17 @@ C3DSheen::C3DSheen()										// 0x43f920
 	f_649 = 0;												// ev69 loads the animations later
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3SHE');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 160.0f;											// speed
-	f_96c = 2;												// patrolling
-	f_c08 = 2;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 300.0f;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 160.0f;											// speed
+	m_state = 2;												// patrolling
+	m_ai_state = 2;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 300.0f;
 	C3DSheen::InitPhysics();								// 0x42ab50 (called directly)
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// he walks where the others run
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// he walks where the others run
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 }
 
 C3DSheen::~C3DSheen()										// 0x43fac0
@@ -52,9 +52,9 @@ void C3DSheen::v267(int level)								// 0x43fbf0
 	ev70(show);												// element +0x110
 }
 
-void C3DSheen::ev145(void)									// 0x43fca0
+void C3DSheen::ev96(void)									// 0x43fca0
 {
-	C3DFriends::ev145();									// 0x41b810
+	C3DFriends::ev96();									// 0x41b810
 	const int scene = GetTaskState("SCENE");
 	if (scene == 280) SetTaskState("SCENE", 290);
 	else if (scene == 310)
@@ -80,7 +80,7 @@ void C3DSheen::ResetObject(void)							// 0x43fd10
 	z = qz;
 	InitPhysics();											// +0x2c (slot 11)
 	C3DFriends::ResetObject();								// 0x41b790
-	f_b8c = NULL;											// no destination
+	m_dest = NULL;											// no destination
 }
 
 void C3DSheen::ev69(void)									// 0x43fb10

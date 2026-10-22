@@ -13,17 +13,17 @@ C3DFowl::C3DFowl()											// N2:0x436540
 	f_6d0 = 1;												// Granny
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3FOW');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 160.0f;											// speed
-	f_96c = 2;												// patrolling
-	f_c08 = 2;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 0;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 160.0f;											// speed
+	m_state = 2;												// patrolling
+	m_ai_state = 2;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 0;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// running is walking
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// running is walking
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	f_1d60.y = 0;											// the shadow at our origin
 	// (then a call to the empty 0x472970)
 }

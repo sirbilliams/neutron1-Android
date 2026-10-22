@@ -1,6 +1,6 @@
 /*  C3DDarwinFish ('3FIS') - Darwin, Jimmy's robot dog: a morph creature (.ase animations WALK,
     SHRINK, STOP; texture "darwin.png") walking at its patrol points, VisibleRange 2000, FOV
-    90. Once shrunk (f_c40, set by Jimmy's shrink ray) the camera touching it picks it up:
+    90. Once shrunk (m_state_locked, set by Jimmy's shrink ray) the camera touching it picks it up:
     hidden, 50 points, pickup item 12 (PIC_NUMBER) with the pop-up, its object state set.
     Reconstructed from Neutron.exe: constructor 0x416ac0 (factory '3FIS', 0x9a8 bytes),
     destructor 0x416c70 ("Deleting DarwinFish" (debug log), then ~C3DEnemy; deleting thunks

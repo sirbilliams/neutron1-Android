@@ -12,6 +12,7 @@
 #include "CTaskList.h"
 // TODO(BG): #include "C3DFish.h" (Negatron-only class, deleted)
 #include "C3DRocketShip.h"
+#include "CJimmyGame.h"
 #include "Game.h"
 #include "Bridge.h"
 #include "Todo.h"
@@ -109,6 +110,7 @@ C3DJimmy::C3DJimmy()										// N2:0x443830
 	// f_4ca8, f_4d6c OMedia3DVectors: w = 0.)
 	SetName((char *)"C3DJIMMY");
 	Log("C3DJimmy()");
+	m_step_channel = -1;									// BG 0x422160: +0xa44 = -1
 	strcpy(m_tag, "JIM1");
 	// (Negatron set f_6d0 = 1 here, Granny animation; Boy Genius's Jimmy is a morph object)
 	C3DJimmy::InitObject();									// N2:0x444780, called directly
@@ -311,14 +313,14 @@ void neg::JimmyJetpackFlame(CGameObject *jimmy, float size)
 void neg::JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev138(o, who, item, value);
+	if (j) j->n2_ev138(o, who, item, value);
 }
 
 // C3DFish.h: Jimmy's element slot 134 (+0x218), hurt.
 void neg::JimmyHurt(CGameObject *jimmy, float damage, int points, float time, unsigned char a)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev134(damage, points, time, a);
+	if (j) j->n2_ev134(damage, points, time, a);
 }
 
 // C3DRocketShip.h: Jimmy's +0x4cb8, the hit flag (the mini sub and the rocket ship clear it before a hit).
@@ -339,14 +341,14 @@ void neg::JimmySetHurtFlag(CGameObject *jimmy, unsigned char v)
 void neg::JimmyPain(CGameObject *jimmy)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev130();
+	if (j) j->n2_ev130();
 }
 
 // Jimmy's element slot 146 (+0x248): his bubble follows the vehicle (pos) while its time lasts.
 void neg::JimmyRocketAim(CGameObject *jimmy, float dt, OMedia3DVector pos)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev146(dt, pos);
+	if (j) j->n2_ev146(dt, pos);
 }
 
 // Jimmy's +0x4d94, the rocket ship's shots left.
@@ -365,7 +367,7 @@ void neg::JimmySetAmmo(CGameObject *jimmy, int n)
 void neg::JimmyRocketShoot(CGameObject *jimmy, float x, float y, float z, float side, float speed,
 						   CGameObject *target, int a7, float a8)
 {
-	dynamic_cast<C3DJimmy *>(jimmy)->ev148(x, y, z, side, speed, target, (float)a7, a8);
+	dynamic_cast<C3DJimmy *>(jimmy)->n2_ev148(x, y, z, side, speed, target, (float)a7, a8);
 }
 
 // C3DRocketShip N2:0x46bf95 inline: the next water balloon of g_jimmy aims 1300 above and 550 in
@@ -373,4 +375,21 @@ void neg::JimmyRocketShoot(CGameObject *jimmy, float x, float y, float z, float 
 void neg::JimmyGadgetShot(CGameObject *jimmy)
 {
 	(void)jimmy;	// TODO(BG): N2 C3DWaterBalloon
+}
+
+// --------------------------------------------------------------------------- Neutron.exe slots
+
+void C3DJimmy::ev81(void)									// 0x4299d0
+{
+	if (m_step_channel == -1)
+		m_step_channel = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound, true);	// 0x458980; game +0x54c
+}
+
+void C3DJimmy::ev82(void)									// 0x429a00
+{
+	if (m_step_channel != -1)
+	{
+		StopGameSound(m_step_channel, false);				// 0x458a00
+		m_step_channel = -1;
+	}
 }

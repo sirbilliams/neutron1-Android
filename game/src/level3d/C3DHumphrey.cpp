@@ -30,7 +30,7 @@ static void ShowClones(int state)
 		C3DAI *c = dynamic_cast<C3DAI *>(FindObjectByTag(tag));	// (o - 0xc0; port: checked)
 		if (!c) continue;
 		c->ev70(1);
-		c->ev107(state);
+		c->ev73(state);
 	}
 }
 
@@ -41,13 +41,13 @@ C3DHumphrey::C3DHumphrey()									// 0x420730
 	C3DHumphrey::InitObject();								// 0x420950 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	v64(0.6f);												// 0x4711e0
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_ac4, (char *)"WALK");
-	C3DAI::ev106(f_b14, (char *)"STOP");
-	C3DAI::ev106(f_b3c, (char *)"ATTACK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
+	C3DAI::ev72(m_anim_walk, (char *)"ATTACK");
 	C3DObject::SetObjectID('3HUM');							// 0x462220
-	f_bd4 = 0;												// no hovering
-	f_c28 = 1;
+	m_hover = 0;												// no hovering
+	m_958 = 1;
 	f_008 = 1;
 }
 
@@ -96,7 +96,7 @@ void C3DHumphrey::v267(int level)							// 0x420a60
 	if (GetTaskState("SCENE") == 90) ShowClones(1);
 }
 
-void C3DHumphrey::ev126(void)								// 0x420bf0
+void C3DHumphrey::ev90(void)								// 0x420bf0
 {
 	if (GetTaskState("SCENE") == 90) ShowClones(0);
 }

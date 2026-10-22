@@ -91,7 +91,7 @@ C3DAIOmtObj::C3DAIOmtObj()									// 0x40ae30
 	f_648 = 0;
 	f_1bb8 = -1;
 	f_1bbc = 0;
-	f_c48 = 0;
+	m_check_stuck = 0;
 	f_1bc0 = 0;
 	f_1bc4 = 0;
 	f_1bc8 = 0;
@@ -190,7 +190,7 @@ void C3DAIOmtObj::Process(float dt)							// N2:0x417420
 				{
 					case 0:
 						force = 170.0f;
-						f_968 = f_1b3c * 0.7f;				// 0x48d974
+						m_speed = f_1b3c * 0.7f;				// 0x48d974
 						v152(70.0f);
 						break;
 					case 1:
@@ -199,7 +199,7 @@ void C3DAIOmtObj::Process(float dt)							// N2:0x417420
 						break;
 					case 2:
 						force = 400.0f;
-						f_968 = f_1b3c * 1.3f;				// N2:0x4ccef0
+						m_speed = f_1b3c * 1.3f;				// N2:0x4ccef0
 						v152(250.0f);
 						break;
 					default:
@@ -240,13 +240,13 @@ void C3DAIOmtObj::Process(float dt)							// N2:0x417420
 			if (!g->IsAnim((char *)"ROCK")) g->ev58((char *)"ROCK", 1);	// N2:0x41c6d0 / element +0xe8
 			g->f_1b60 = 1;
 			f_1bc8->v132(0);
-			g->ev121();										// element +0x1e4
+			g->n2_ev121();										// element +0x1e4
 		}
 		OMedia3DVector w = v224(0, 10.0f, -25.0f);
 		f_1bc8->v196(w.x, w.y, w.z, w.w);
 		f_1bc8->v132(0);
 	}
-	// (f_b8c: a "LAMS" "%s" log of its tag to the empty 0x472970)
+	// (m_dest: a "LAMS" "%s" log of its tag to the empty 0x472970)
 	if (f_1bcc > 0)											// barrel roll
 	{
 		f_1bcc -= dt;
@@ -270,7 +270,7 @@ void C3DAIOmtObj::v260(void)								// N2:0x417ca0
 	v67(f_034);												// the radius
 	if (f_1bb8 == 0)										// no terrain collision: hover
 	{
-		f_bd4 = 1;
+		m_hover = 1;
 		v42(0);
 		v40(0);
 	}
@@ -282,7 +282,7 @@ void C3DAIOmtObj::v260(void)								// N2:0x417ca0
 	if (f_1bbc == 1)
 	{
 		v64(0.05f);
-		f_bd4 = 1;
+		m_hover = 1;
 		v42(0);
 		v40(0);
 		v94(1);
@@ -294,8 +294,8 @@ void C3DAIOmtObj::v260(void)								// N2:0x417ca0
 		f_008 = 1;
 		v136(1);
 		HideAgain();										// element +0xdc
-		f_bd4 = 1;
-		f_c18 = 1;
+		m_hover = 1;
+		m_move_forward = 1;
 		if (f_1bc0) f_1bc0 = FindObjectByTag("C3DROCKETSHIP");
 		if (f_1bc4)
 		{
@@ -305,14 +305,14 @@ void C3DAIOmtObj::v260(void)								// N2:0x417ca0
 			if (f_1bc4) f_1bc4->v132(0);
 		}
 		if (f_1bc8) f_1bc8 = FindObjectByTag("C3DGODDARD");
-		f_b9c.x = 2.7f;										// turn rates
-		f_b9c.y = 2.3f;
-		f_b9c.z = 2.7f;
+		m_turn_rates.x = 2.7f;										// turn rates
+		m_turn_rates.y = 2.3f;
+		m_turn_rates.z = 2.7f;
 		f_c64 = 1;
 	}
 	if (f_1bbc == 3 && f_1bd0 == -1)
 		f_1bd0 = PlayGameSound3DNoDoppler(this, -1, std::string("traintracks"), true);	// 0x458a40
-	f_968 = f_1b3c;											// the speed: "InitialSpeed"
+	m_speed = f_1b3c;											// the speed: "InitialSpeed"
 }
 
 unsigned char C3DAIOmtObj::v231(CGameObject *other)			// N2:0x417f40 (C3DAIGranny's code)

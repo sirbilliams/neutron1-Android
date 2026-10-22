@@ -16,7 +16,7 @@ C3DBus::C3DBus()											// 0x411060
 	C3DAI::InitObject();									// 0x407ee0
 	InitAnim();												// +0x110
 	C3DObject::SetObjectID('3SBU');							// 0x462220
-	f_968 = 400.0f;											// speed
+	m_speed = 400.0f;											// speed
 	CGameObject::v64(0.05f);								// 0x4711e0 (direct calls)
 	CGameObject::v66(1000.0f);
 	CGameObject::v94(2);
@@ -53,10 +53,10 @@ void C3DBus::ev69(void)										// 0x411220
 
 void C3DBus::v277(void)										// N2:0x423850
 {
-	ev79(1);												// +0x13c
+	PauseAnim(1);												// +0x13c
 }
 
 void C3DBus::v278(void)										// N2:0x423860
 {
-	ev79(0);
+	PauseAnim(0);
 }

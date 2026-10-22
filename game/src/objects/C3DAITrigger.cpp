@@ -89,25 +89,25 @@ static void ObjSetAnimation(CGameObject *o, const char *name, bool loop)	// elem
 static C3DAI *AI(CGameObject *o)			{ return o ? dynamic_cast<C3DAI *>(o) : NULL; }
 static void AISetState(CGameObject *ai, int state)							// element +0x124 (BG ESLOT 73)
 {
-	if (C3DAI *a = AI(ai)) a->ev107(state);
+	if (C3DAI *a = AI(ai)) a->ev73(state);
 }
 static void AISetSpeed(CGameObject *ai, float speed)						// C3DAI +0x6c4
 {
-	if (C3DAI *a = AI(ai)) a->f_968 = speed;
+	if (C3DAI *a = AI(ai)) a->m_speed = speed;
 }
 static void AISetPatrolPoint(CGameObject *ai, const char *name)			// C3DAI +0x708 = name, +0x8c0 = 0
 {
 	if (C3DAI *a = AI(ai))
 	{
-		strcpy(a->f_9ac, name);
-		a->f_b8c = NULL;
+		strcpy(a->m_patrol_point, name);
+		a->m_dest = NULL;
 	}
 }
 // Element slot 82 (+0x148) of the camera object (a C3DPlayer: Jimmy).
 static void CameraSlot82(CGameObject *o)
 {
 	C3DPlayer *p = o ? dynamic_cast<C3DPlayer *>(o) : NULL;
-	if (p) p->ev116();										// TODO(core): BG C3DPlayer element slot 82
+	if (p) p->ev82();										// (C3DJimmy: stop the footstep loop)
 }
 
 // --------------------------------------------------------------------------- construction

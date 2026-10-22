@@ -41,11 +41,26 @@ def main():
             t = open(os.path.join(root, fn), errors='replace').read()
             for m in re.finditer(r'\bextern\s[^;(]*?\b(g_\w+)\s*(?:\[[^\]]*\])*\s*;', t): defined.add(m.group(1))
             for m in re.finditer(r'\b(g_\w+)\b', t): used.add(m.group(1))
+    alias = {}
+    for line in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'n2_aliases.txt')):
+        f = line.split('#')[0].split()
+        if len(f) == 2 and f[1] in defined: alias[int(f[0], 16)] = f[1]
+    n2addr = {}
+    for k, v in n2.items():
+        m = re.search(r'g_(data|ptrs)\[(0x[0-9a-f]+)\]', v)
+        if m: n2addr[k] = 0x4ec000 * 0 + int(m.group(2), 16) * (4 if m.group(1) == 'ptrs' else 1)
+    base = int(re.search(r'DATA_BASE = (0x[0-9a-f]+)', open(n2h).read()).group(1), 16)
     out = []
     for name in sorted(used):
+        if name not in defined and name in n2addr and base + n2addr[name] in alias:
+            out.append('#define %s %s\t// Neutron.exe global (n2_aliases.txt)' % (name, alias[base + n2addr[name]]))
+            continue
         if name in defined or re.match(r'g_[0-9a-f]{6}$', name): continue
         if name.startswith('g_N2_'):
             e = n2.get('g_' + name[5:])
+            if int(name[5:], 16) in alias:
+                out.append('#define %s %s\t// Neutron.exe global (n2_aliases.txt)' % (name, alias[int(name[5:], 16)]))
+                continue
         else:
             e = n2.get(name)
         if not e: continue

@@ -23,8 +23,8 @@ class C3DAICar : public C3DAI
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x40aad0 honk and stop; throw off what is on top
 	virtual void RemoveTouching(CGameObject *other);						// SLOT 17  0x40ac10 no longer held
 	virtual void Process(float dt);											// SLOT 240 0x40aa50 held in place; drive on when the time is up
-	virtual void v277(void);												// SLOT 277 N2:0x415d50 ev79(1)
-	virtual void v278(void);												// SLOT 278 N2:0x415d60 ev79(0)
+	virtual void v277(void);												// SLOT 277 N2:0x415d50 PauseAnim(1)
+	virtual void v278(void);												// SLOT 278 N2:0x415d60 PauseAnim(0)
 
 	float				m_stop_time;	// 0x1b50 time left standing after a hit (= 0)
 	OMedia3DVector		m_hold_pos;		// 0x1b54 where it was hit (0, 0, 0, 1)

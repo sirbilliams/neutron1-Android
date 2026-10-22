@@ -55,28 +55,28 @@ static void TargetSetAnimation(CGameObject *target, const char *name, bool loop)
 static void AIFreeze(CGameObject *ai)
 {
 	C3DAI *a = ai ? dynamic_cast<C3DAI *>(ai) : NULL;		// port: a name with "C3DAI" that is not one is left alone
-	if (a) a->f_96c = 9;
+	if (a) a->m_state = 9;
 }
 
 // C3DAI element +0xc38: its own animations are off while a cut scene animates it.
 static void AISetAnimationsDisabled(CGameObject *ai, int off)
 {
 	C3DAI *a = ai ? dynamic_cast<C3DAI *>(ai) : NULL;
-	if (a) a->f_c38 = off;
+	if (a) a->m_anims_disabled = off;
 }
 
 // C3DAI element slot 126 (+0x1f8): the cut scene lets go of it.
 static void AIRelease(CGameObject *ai)
 {
 	C3DAI *a = ai ? dynamic_cast<C3DAI *>(ai) : NULL;
-	if (a) a->ev126();
+	if (a) a->ev90();
 }
 
 // C3DJimmy element slot 138 (+0x228)(this, jimmy, 0, 0): put the gadget in hand away.
 static void JimmyDeactivateInventory(CGameObject *jimmy, CGameObject *caller)
 {
 	C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL;
-	if (j) j->ev138(caller, jimmy, 0, 0.0f);
+	if (j) j->n2_ev138(caller, jimmy, 0, 0.0f);
 }
 
 // --------------------------------------------------------------------------- the camera types' constants

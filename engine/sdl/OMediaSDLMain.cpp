@@ -146,9 +146,68 @@ static string omf_find_data_dir(void)
 	return "";
 }
 
+// port: crash report. A native crash on the device kills the app with nothing in omt-log.txt, so
+// fatal signals write the signal and a backtrace (library + offset, symbolised offline with
+// llvm-addr2line on the APK's unstripped libraries) to the log, then crash as before.
+#if defined(__ANDROID__) || defined(__linux__)
+#include <signal.h>
+#include <unwind.h>
+#include <dlfcn.h>
+#include <unistd.h>
+struct omt_bt { int n; };
+static _Unwind_Reason_Code omf_bt_step(struct _Unwind_Context *ctx, void *arg)
+{
+	omt_bt *bt = (omt_bt *)arg;
+	uintptr_t pc = _Unwind_GetIP(ctx);
+	if (!pc || bt->n >= 40) return _URC_END_OF_STACK;
+	Dl_info di;
+	char line[512];
+	if (dladdr((void *)pc, &di) && di.dli_fname)
+	{
+		const char *lib = strrchr(di.dli_fname, '/');
+		snprintf(line, sizeof line, "  #%02d pc %p %s+0x%lx (%s)", bt->n, (void *)pc, lib ? lib + 1 : di.dli_fname,
+				 (unsigned long)(pc - (uintptr_t)di.dli_fbase), di.dli_sname ? di.dli_sname : "?");
+	}
+	else snprintf(line, sizeof line, "  #%02d pc %p", bt->n, (void *)pc);
+	SDL_Log("%s", line);
+	bt->n++;
+	return _URC_NO_REASON;
+}
+static void omf_crash(int sig, siginfo_t *si, void *)
+{
+	static volatile int busy = 0;
+	if (!busy)
+	{
+		busy = 1;
+		SDL_Log("CRASH: signal %d, fault address %p - backtrace:", sig, si ? si->si_addr : NULL);
+		omt_bt bt = { 0 };
+		_Unwind_Backtrace(omf_bt_step, &bt);
+		if (omg_logfile) fflush(omg_logfile);
+	}
+	signal(sig, SIG_DFL);
+	raise(sig);
+}
+static void omf_install_crash_handler(void)
+{
+	static char altstack[65536];
+	stack_t ss;
+	ss.ss_sp = altstack; ss.ss_size = sizeof altstack; ss.ss_flags = 0;
+	sigaltstack(&ss, NULL);
+	struct sigaction sa;
+	memset(&sa, 0, sizeof sa);
+	sa.sa_sigaction = omf_crash;
+	sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+	int sigs[] = { SIGSEGV, SIGBUS, SIGABRT, SIGFPE, SIGILL };
+	for (unsigned i = 0; i < sizeof sigs / sizeof sigs[0]; i++) sigaction(sigs[i], &sa, NULL);
+}
+#else
+static void omf_install_crash_handler(void) {}
+#endif
+
 int main(int argc, char **argv)
 {
 	SDL_LogSetOutputFunction(omf_log, NULL);
+	omf_install_crash_handler();
 	string data = omf_find_data_dir();
 #ifdef __ANDROID__
 	const char *ext = SDL_AndroidGetExternalStoragePath();

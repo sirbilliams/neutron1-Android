@@ -79,10 +79,10 @@ C3DDino::C3DDino()											// N2:0x42b7a0
 	Log("InitObject()");									// 0x4173c0 inlined
 	C3DAI::InitObject();									// 0x407ee0
 	RegisterProperty("EnemyType", &f_1d68, PROP_LONG, 0);	// +0x3fc
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// 0x407fa0
-	C3DAI::ev106(f_ac4, (char *)"WALK");
-	C3DAI::ev106(f_b14, (char *)"STOP");
-	C3DAI::ev106(f_b3c, (char *)"WALK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// 0x407fa0
+	C3DAI::ev72(m_anim_run, (char *)"WALK");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
+	C3DAI::ev72(m_anim_walk, (char *)"WALK");
 	f_1b50.db = g_screens_db;								// N2:0x545e50
 	f_1b50.canvas_id = 411;
 	f_1b50.x = 0;
@@ -102,10 +102,10 @@ C3DDino::C3DDino()											// N2:0x42b7a0
 	f_1c54.home_y = 0;
 	f_1c54.f_34 = 1;
 	C3DObject::InitPhysics();								// 0x4623d0
-	f_c1c = 0.5f;
+	m_keep_fleeing = 0.5f;
 	C3DObject::SetObjectID('3DIN');							// 0x462220
-	f_bd4 = 0;
-	f_968 = 600.0f;											// speed
+	m_hover = 0;
+	m_speed = 600.0f;											// speed
 	f_1d58 = 1.0f;											// health
 	f_1d5c = 50.0f;
 	f_1d60 = 0;
@@ -113,7 +113,7 @@ C3DDino::C3DDino()											// N2:0x42b7a0
 	CGameObject::v94(2);
 	f_1d64 = 0;
 	f_1d68 = 0;
-	f_c48 = 0;
+	m_check_stuck = 0;
 	f_1d6c = -1;
 	f_1d7c = 0;
 	m_show_on_radar = 1;									// CLocalGameObject +0x4c0
@@ -231,8 +231,8 @@ void C3DDino::v260(void)									// N2:0x42cf30
 	if (f_1d70) f_1d70->HideAgain();						// element +0xdc
 	if (f_1d74)
 	{
-		f_1d74->ev92(2, 0);									// element +0x170 blend
-		f_1d74->ev91(1);									// +0x16c second pass
+		f_1d74->n2_ev92(2, 0);									// element +0x170 blend
+		f_1d74->n2_ev91(1);									// +0x16c second pass
 	}
 }
 
@@ -248,7 +248,7 @@ void C3DDino::AddTouching(CGameObject *other)				// N2:0x42c4e0 (does not call t
 	if (!other->NameContains((char *)"C3DWATERBALLOON")) return;	// +0x18
 	if (!(f_1d58 > 0))
 	{
-		f_bd4 = 1;
+		m_hover = 1;
 		v136(0);											// +0x220
 		return;
 	}
@@ -279,18 +279,18 @@ void C3DDino::AddTouching(CGameObject *other)				// N2:0x42c4e0 (does not call t
 	f_1b50.Hide();											// N2:0x4826f0
 	f_1c54.Hide();
 	AddScore(100);											// g_gametype N2:0x482b50
-	ev107(1);												// element +0x1ac: wait
+	ev73(1);												// element +0x1ac: wait
 	if (strcasecmp(m_tag, "SPORKEATER") == 0)
 	{
 		CGameObject *o = FindObjectByTag("C3DSPORKY");
 		C3DAI *ai = dynamic_cast<C3DAI *>(o);				// (o - 0xc0)
-		if (ai) ai->ev107(1);
+		if (ai) ai->ev73(1);
 	}
 	if (strcasecmp(m_tag, "DINO6") == 0)
 	{
 		CGameObject *o = FindObjectByTag("C3DCARL");
 		C3DAI *ai = dynamic_cast<C3DAI *>(o);
-		if (ai) ai->ev107(1);
+		if (ai) ai->ev73(1);
 	}
 	ev58((char *)"FALL", 0);
 	f_1d64 = 8.0f;
@@ -366,8 +366,8 @@ void C3DDino::Process(float dt)								// N2:0x42c850
 			if (!f_1d7c)
 			{
 				f_1d7c = 1;
-				f_1d74->ev92(2, 0);							// element +0x170
-				f_1d74->ev91(1);							// +0x16c
+				f_1d74->n2_ev92(2, 0);							// element +0x170
+				f_1d74->n2_ev91(1);							// +0x16c
 			}
 		}
 	}
@@ -378,8 +378,8 @@ void C3DDino::Process(float dt)								// N2:0x42c850
 		if (!f_1d7c)
 		{
 			f_1d7c = 1;
-			f_1d74->ev92(2, 0);
-			f_1d74->ev91(1);
+			f_1d74->n2_ev92(2, 0);
+			f_1d74->n2_ev91(1);
 		}
 	}
 	if (f_1d60 > 0)
@@ -392,7 +392,7 @@ void C3DDino::Process(float dt)								// N2:0x42c850
 			if (f_1d78 > 0 && f_1d70)
 			{
 				f_1d70->ShowAgain();						// element +0xd8
-				f_1d70->ev72(0.1f);							// +0x120 additive
+				f_1d70->n2_ev72(0.1f);							// +0x120 additive
 			}
 			if (f_1d70) FollowUs(f_1d70, this);
 			f_1b50.Show();									// N2:0x482520

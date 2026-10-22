@@ -44,7 +44,7 @@ void C3DOmtObj::v260(void)									// 0x434750
 	m_db = GetDatabase(f_924);								// 0x46a910
 	set_shape(Load3DShape(m_db, f_988));					// 0x477ba0, element +0xac
 	MakeShapeUnLit(get_shape());							// element +0xb0, 0x477550
-	if (f_664 == 1) ev73();									// "SecondPass": element +0x118
+	if (f_664 == 1) AlphaSecondPass();								// "SecondPass": element +0x118
 	if (f_658 == 0)											// "HasCollision" 0
 	{
 		v136(0);											// +0x224

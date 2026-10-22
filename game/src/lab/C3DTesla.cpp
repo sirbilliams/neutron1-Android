@@ -81,7 +81,7 @@ void C3DTesla::AddTouching(CGameObject *other)				// 0x445ba0
 	{
 		const float k = 1.0f / d.quick_magnitude();
 		C3DPlayer *p = dynamic_cast<C3DPlayer *>(other);	// port: the original calls element slot 119 of whatever is named C3DJIMMY
-		if (p) p->ev119(OMedia3DVector(k * d.x, d.y * k, d.z * k, 0));	// element +0x1dc: pushed away
+		if (p) p->n2_ev119(OMedia3DVector(k * d.x, d.y * k, d.z * k, 0));	// element +0x1dc: pushed away
 	}
 }
 
@@ -101,14 +101,14 @@ void C3DTesla::Process(float dt)							// N2:0x476420
 	f_924++;
 	if (f_924 > 3) f_924 = 0;
 	ApplyTexture(f_590, f_924);								// element +0x100
-	ev72(g_windowed ? 0.4f : 0.7f);							// +0x120: additive (0x509a13)
+	n2_ev72(g_windowed ? 0.4f : 0.7f);							// +0x120: additive (0x509a13)
 }
 
 void C3DTesla::v260(void)									// N2:0x476640
 {
 	C3DAnimated::v260();									// N2:0x41cec0
 	f_930 = f_92c;											// ItemActive
-	ev72(0.8f);												// +0x120
+	n2_ev72(0.8f);												// +0x120
 }
 
 void C3DTesla::v266(void)									// 0x445dd0

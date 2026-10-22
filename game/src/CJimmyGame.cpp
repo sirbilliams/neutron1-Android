@@ -71,7 +71,7 @@ static void CameraPlayerDead(CGameObject *camera)
 	if (!dynamic_cast<C3DObject *>(camera)) return;			// 0x471830
 	C3DPlayer *p = dynamic_cast<C3DPlayer *>(camera);	// port: N2 C3DPlayerObject
 	if (!p) p = Jimmy();									// port: the same code (N2:0x465360) through Jimmy
-	if (p) p->ev105();
+	if (p) p->n2_ev105();
 }
 
 // The player's level-music members ((g_player - 0xc0) +0x4c14 channel, +0x4c18 a value given to
@@ -123,23 +123,23 @@ static void PlayerSlot(OMediaElement *p, int slot)
 	if (!j) return;
 	switch (slot)
 	{
-		case 120: j->ev120(); break;										// +0x1e0 0x425120
-		case 127: j->ev127(); break;										// +0x1fc (empty)
-		case 128: j->ev128(); break;										// +0x200 N2:0x44bf20 EnterWater
-		case 129: j->ev129(); break;										// +0x204 N2:0x44bfa0 LeaveWater
-		case 130: j->ev130(); break;										// +0x208 N2:0x44bfe0
-		case 131: j->ev131(); break;										// +0x20c (empty)
+		case 120: j->n2_ev120(); break;										// +0x1e0 0x425120
+		case 127: j->n2_ev127(); break;										// +0x1fc (empty)
+		case 128: j->n2_ev128(); break;										// +0x200 N2:0x44bf20 EnterWater
+		case 129: j->n2_ev129(); break;										// +0x204 N2:0x44bfa0 LeaveWater
+		case 130: j->n2_ev130(); break;										// +0x208 N2:0x44bfe0
+		case 131: j->n2_ev131(); break;										// +0x20c (empty)
 	}
 }
 static void PlayerSlot119(OMediaElement *p, float a, float b, float c, float d)	// +0x1dc N2:0x44bc40
 {
-	if (C3DJimmy *j = AsJimmy(p)) j->ev119(OMedia3DVector(a, b, c, d));
+	if (C3DJimmy *j = AsJimmy(p)) j->n2_ev119(OMedia3DVector(a, b, c, d));
 }
 static void PlayerHurt(OMediaElement *p, float a, int b, float c, bool d)	// slot 134 (+0x218) N2:0x44bd90
 {
-	if (C3DJimmy *j = AsJimmy(p)) j->ev134(a, b, c, d);
+	if (C3DJimmy *j = AsJimmy(p)) j->n2_ev134(a, b, c, d);
 }
-static void SetPlayerSurfaceSound(OMediaElement *p, int set)	{ if (C3DJimmy *j = AsJimmy(p)) j->ev153(set); }	// +0x264 N2:0x44c080
+static void SetPlayerSurfaceSound(OMediaElement *p, int set)	{ if (C3DJimmy *j = AsJimmy(p)) j->n2_ev153(set); }	// +0x264 N2:0x44c080
 // A '3ROC' C3DRocketShip (the original's ID test is 'COR3' in memory, 0x33524f43): its rider
 // (+0x934, element 0x9f4) and its hit state (+0x1138 / +0x113c / +0x1178 / +0x1188).
 static OMediaElement *CorCarried(CGameObject *o)

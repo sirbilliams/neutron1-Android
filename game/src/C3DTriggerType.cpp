@@ -1,6 +1,7 @@
 /*  C3DTriggerType - see C3DTriggerType.h. */
 #include "DatabaseCache.h"
 #include "C3DTriggerType.h"
+#include "Fade.h"
 #include "CJimmyGame.h"
 #include "C3DJimmy.h"
 #include "objects/C3DAITrigger.h"
@@ -86,8 +87,8 @@ static void FlyingCameraFire(CGameObject *next)	{ neg::FlyingCameraTrigger(next)
 void __attribute__((weak)) neg::TextTriggerTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DTextTrigger (Negatron only)"); }
 void __attribute__((weak)) neg::FadeObjectTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFadeObject (Negatron only)"); }
 void __attribute__((weak)) neg::FlyingCameraTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFlyingCamera (Negatron only)"); }
-// CLoadLevel (a C3DSprite): element slot 55 (+0xdc).
-static void LoadLevelFire(CGameObject *next)		{ static_cast<CLoadLevel *>(next)->ev55(); }
+// CLoadLevel (a C3DSprite): element slot 54 (+0xd8), its story steps.
+static void LoadLevelFire(CGameObject *next)		{ static_cast<CLoadLevel *>(next)->ev54(); }
 
 // The player (Jimmy: a C3DPlayer) behind a JIM1 tag.
 static C3DPlayer *PlayerOf(CGameObject *jim)		{ return jim ? dynamic_cast<C3DPlayer *>(jim) : NULL; }
@@ -98,40 +99,28 @@ static void JimmyClearA99(CGameObject *jim)
 	if (C3DPlayer *p = PlayerOf(jim)) p->f_a99 = 0;
 }
 
-// N2:0x406a40: start the in-game menu's fade (mode, seconds). (A static copy, as in CEditor.cpp.)
-static void StartFade(int mode, float t)
-{
-	if (g_N2_5324fc == 0) { g_N2_5324ec = 1; return; }
-	if (mode == 6) mode = 4;
-	if (t < 0.1f) t = 0.1f;				// 0x48d920
-	g_N2_5324e8 = t;
-	g_N2_545dcc = t;
-	g_N2_545dd0 = mode;
-	g_N2_5324ec = 0;
-	g_N2_545e5c = 1;
-}
 
-// N2:0x479610..N2:0x47973d: the LoadLevel trigger hands its level over to Jimmy: his promotion, then
-// PlayerLoadLevel (element slot 121) with copies of the four strings; with a FadeType the load
-// waits for the fade (and Jimmy's morph animation is paused, element slot 79).
+// 0x447cf0 (element slot 53, its C3DLOADLEVEL case): the LoadLevel trigger hands its level over to Jimmy: PlayerLoadLevel (element slot
+// 90) with copies of the four strings; with a FadeType the load waits for the fade (and Jimmy's
+// morph animation is paused, element slot 71).
 static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 {
 	CLoadLevel *ll = static_cast<CLoadLevel *>(loadlevel);
 	C3DPlayer *p = PlayerOf(jim);
 	if (!p) return;										// port: a JIM1 that is no player (the original has no check)
-	p->f_c18 = ll->m_promotion;
 	char level[80], start[80], ret_level[100], ret_start[100];	// (stack copies, as in the original)
 	strcpy(level, ll->m_level_name);
 	strcpy(start, ll->m_start_point);
 	strcpy(ret_level, p->f_c25);
 	strcpy(ret_start, p->f_b24);
-	p->ev121(level, start, ret_level, ret_start, ll->m_load_screen);	// element +0x1e4
+	p->n2_ev121(level, start, ret_level, ret_start, 0);	// element +0x168 (TODO(E): Neutron.exe's slot 90)
 	if (ll->m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
-		g_view_restore = 1;								// N2:0x54a498
-		p->ev79(1);										// element +0x13c
-		StartFade(ll->m_fade_type, ll->m_fade_time);	// N2:0x406a40
+		g_view_restore = 1;								// 0x4f8430
+		p->PauseAnim(1);								// element +0x11c
+		// (debug log "MEBTEMP using LCP %d" with the SCENE task state)
+		neg::StartFade(ll->m_fade_type, ll->m_fade_time);	// 0x403c10
 	}
 }
 

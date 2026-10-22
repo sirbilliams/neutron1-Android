@@ -35,18 +35,18 @@ C3DCarl::C3DCarl()											// 0x413af0
 	f_649 = 0;												// ev69 loads the animations later
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3CAR');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 200.0f;											// speed
-	f_96c = 1;												// waiting
-	f_c08 = 1;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 400.0f;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 200.0f;											// speed
+	m_state = 1;												// waiting
+	m_ai_state = 1;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 400.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// running is walking
-	C3DAI::ev106(f_b3c, (char *)"WALK");
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// running is walking
+	C3DAI::ev72(m_anim_walk, (char *)"WALK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 }
 
 C3DCarl::~C3DCarl()											// 0x413ca0
@@ -99,7 +99,7 @@ void C3DCarl::v267(int level)								// 0x413f30
 			CGameObject *esc;
 			if (scene > 30 && (esc = FindObjectByTag("CARLESC3")) != NULL)
 			{
-				ev107(6);									// element +0x124
+				ev73(6);									// element +0x124
 				MoveTo(this, esc);
 			}
 			if (scene > 59) return;							// (sic: left as it is)
@@ -113,9 +113,9 @@ void C3DCarl::v267(int level)								// 0x413f30
 	ev70(1);
 }
 
-void C3DCarl::ev145(void)									// 0x413e50
+void C3DCarl::ev96(void)									// 0x413e50
 {
-	C3DFriends::ev145();									// 0x41b810
+	C3DFriends::ev96();									// 0x41b810
 	const int scene = GetTaskState("SCENE");
 	if (scene == 50) SetTaskState("SCENE", 60);
 	else if (scene == 65) SetTaskState("SCENE", 70);

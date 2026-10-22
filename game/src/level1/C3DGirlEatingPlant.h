@@ -8,7 +8,7 @@
     0x41c4a0 / ...). Element vtable: 67 (Negatron's ev69) overridden; game object vtable
     (+0xc0): 0, 7 (C3DDarwinFish's shared InitObject), 16. No members of its own (vtordisp
     0x9a0, streamer 0x9a4). Slot numbers in the comments are Boy Genius's; the code uses
-    Negatron's C3DAI names (shrunk: the state lock f_c40).                                                              */
+    Negatron's C3DAI names (shrunk: the state lock m_state_locked).                                                              */
 #pragma once
 #include "C3DEnemy.h"
 

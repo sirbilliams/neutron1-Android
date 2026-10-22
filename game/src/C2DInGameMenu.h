@@ -50,7 +50,6 @@ void MenuSetItem(short page, short item, short type);		// 0x4038c0 the type of a
 void MenuToggleItem(short page, short item, short on);		// 0x403870 type 1 <-> 4
 void MenuClearItem(short page, short item);					// 0x403910 type 0 ("Deactivating Item")
 short MenuGetItem(short page, short item);					// 0x403950
-void MenuStartFade(int mode, float time);					// 0x403c10 the screen fade (v311)
 int  MenuPickupCount(int pic);								// 0x4061b0
 void MenuAddPickupCount(int pic, int n);					// 0x4061c0
 void AnnouncePickup(int pic, unsigned int index);			// 0x4061d0 the top-right pickup pop-up

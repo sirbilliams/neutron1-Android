@@ -25,8 +25,10 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4ec484 (&neg::g_data[0x484])		// address only
 #define g_4ec48c (&neg::g_data[0x48c])		// address only
 #define g_4ec490 (*(float *)&neg::g_data[0x490])
+#define g_fade_length (*(float *)&neg::g_data[0x490])
 #define g_fade_time (*(float *)&neg::g_data[0x490])
 #define g_4ec494 (*(char *)&neg::g_data[0x494])
+#define g_fade_off (*(char *)&neg::g_data[0x494])
 #define g_hud_on (*(char *)&neg::g_data[0x494])
 #define g_4ec498 (*(int *)&neg::g_data[0x498])
 #define g_4ec794 (&neg::g_data[0x794])		// address only
@@ -233,10 +235,12 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f6630 (&neg::g_data[0xa630])		// address only
 #define g_4f6634 (&neg::g_data[0xa634])		// address only
 #define g_4f6638 (&neg::g_data[0xa638])		// address only
-#define g_4f69e4 (*(char *)&neg::g_data[0xa9e4])
+#define g_4f69e4 (*(bool *)&neg::g_data[0xa9e4])
+#define g_phys_objects_on (*(bool *)&neg::g_data[0xa9e4])
 #define g_4f69e5 (*(bool *)&neg::g_data[0xa9e5])
 #define g_phys_terrain_on (*(bool *)&neg::g_data[0xa9e5])
-#define g_4f69e7 (*(char *)&neg::g_data[0xa9e7])
+#define g_4f69e7 (*(bool *)&neg::g_data[0xa9e7])
+#define g_phys_on (*(bool *)&neg::g_data[0xa9e7])
 #define g_4f69e8 (*(int *)&neg::g_data[0xa9e8])
 #define g_terrain_memory (*(int *)&neg::g_data[0xa9e8])
 #define g_4f6b30 (*(int *)&neg::g_data[0xab30])
@@ -486,6 +490,7 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f818c (*(float *)&neg::g_data[0xc18c])
 #define g_fade_left (*(float *)&neg::g_data[0xc18c])
 #define g_4f8190 (*(int *)&neg::g_data[0xc190])
+#define g_fade_type (*(int *)&neg::g_data[0xc190])
 #define g_fade_mode (*(int *)&neg::g_data[0xc190])
 #define g_4f8194 (*(int *)&neg::g_data[0xc194])
 #define g_story_scene (*(int *)&neg::g_data[0xc194])
@@ -533,7 +538,6 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f82e4 ((int *)&neg::g_data[0xc2e4])
 #define g_save_slot_info ((int *)&neg::g_data[0xc2e4])
 #define g_4f8399 (&neg::g_data[0xc399])		// address only
-#define g_4f83c0 (*(int *)&neg::g_data[0xc3c0])
 #define g_4f83cc (*(short *)&neg::g_data[0xc3cc])
 #define g_lives (*(short *)&neg::g_data[0xc3cc])
 #define g_4f83d0 (*(float *)&neg::g_data[0xc3d0])
@@ -552,12 +556,19 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f840c (neg::g_ptrs[0x3103])		// pointer
 #define g_4f8410 (*(int *)&neg::g_data[0xc410])
 #define g_4f8418 (*(float *)&neg::g_data[0xc418])
+#define g_view_restore_x (*(float *)&neg::g_data[0xc418])
 #define g_4f841c (*(float *)&neg::g_data[0xc41c])
+#define g_view_restore_y (*(float *)&neg::g_data[0xc41c])
 #define g_4f8420 (*(float *)&neg::g_data[0xc420])
-#define g_4f8424 (*(unsigned int *)&neg::g_data[0xc424])
+#define g_view_restore_z (*(float *)&neg::g_data[0xc420])
+#define g_4f8424 (*(float *)&neg::g_data[0xc424])
+#define g_view_restore_w (*(float *)&neg::g_data[0xc424])
 #define g_4f8428 (*(float *)&neg::g_data[0xc428])
+#define g_view_restore_ax (*(float *)&neg::g_data[0xc428])
 #define g_4f842c (*(float *)&neg::g_data[0xc42c])
-#define g_4f8430 (*(char *)&neg::g_data[0xc430])
+#define g_view_restore_ay (*(float *)&neg::g_data[0xc42c])
+#define g_4f8430 (*(bool *)&neg::g_data[0xc430])
+#define g_view_restore (*(bool *)&neg::g_data[0xc430])
 #define g_4f8434 (*(bool *)&neg::g_data[0xc434])
 #define g_sfx_db_loaded (*(bool *)&neg::g_data[0xc434])
 #define g_4f8435 (*(char *)&neg::g_data[0xc435])

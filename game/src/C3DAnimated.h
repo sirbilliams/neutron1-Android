@@ -16,8 +16,8 @@
     neg::g_granny_models) and one instance of it (a "sequence", f_6e8); BindTex turns the model's
     texture into f_918/f_91c, BuildTex fills the shape with the bind pose (positions and normals
     in OMT axes: (-y, z, x)). AddAnimation(file, name) opens an animation and keeps it in f_6d4.
-    PlayAnimation (ev86) starts up to four of them by name (into the play slots f_6f4[0..3]);
-    ev80, every frame, copies the posed vertices into the shape and notices the end of the main
+    PlayAnimation (n2_ev86) starts up to four of them by name (into the play slots f_6f4[0..3]);
+    n2_ev80, every frame, copies the posed vertices into the shape and notices the end of the main
     animation (f_8a5; ev67 is the end-of-animation hook).
 
     Morph objects (f_6d0 = 0): InitAnim takes the base shape (chunk 0) of the object's private
@@ -78,42 +78,42 @@ class C3DAnimated : public C3DObject
 	// ---- element-family game slots (vtable offset = slot * 4)
 	virtual void CreateAnim(char *name, char *file);						// ESLOT 56 0x40d4a0 "Anim3D_CreateAnim"; granny: AddAnimation
 	virtual AnimList *GetSequence(char *name);								// ESLOT 57 0x40d9e0 "Anim3D_GetSequence" (morph only)
-	virtual void ev58(char *name, unsigned char loop);						// ESLOT 58 0x40dd90 play animation <name> (morph: sequence, granny: ev86(name, 0, 0, 0, loop, 0.2))
+	virtual void ev58(char *name, unsigned char loop);						// ESLOT 58 0x40dd90 play animation <name> (morph: sequence, granny: n2_ev86(name, 0, 0, 0, loop, 0.2))
 	virtual void SetSequence(int seq, unsigned char loop);					// ESLOT 59 N2:0x41b940 "Anim3D_SetSequence(long)" (morph only)
-	virtual void ev60(void) {}												// ESLOT 60 0x40db10 (empty) ev86 found no animation of that name
+	virtual void ev60(void) {}												// ESLOT 60 0x40db10 (empty) n2_ev86 found no animation of that name
 	virtual char *GetAnim(void);											// ESLOT 61 0x40dab0 "Anim3D_GetAnim": current AnimList (morph) / f_6f4[0].name (granny); "" if none
 	virtual int  ev62(void);												// ESLOT 62 N2:0x41ba90 f_5a0: number of morph animations
 	virtual void CreateTexture(char *file, short index);					// ESLOT 63 N2:0x41baa0 "Anim3D_CreateTexture": png\<file> into f_5ac/f_5d4[index]
 	virtual void ApplyTexture(OMedia3DShape *shape, short index);			// ESLOT 64 0x40dd60 "Anim3D_ApplyTexture"
 	virtual void ev65(short index, int src, int dst);						// ESLOT 65 N2:0x41bdc0 blend of material [index] (granny: of the whole shape)
 	virtual char *ev66(void);												// ESLOT 66 N2:0x41c0f0 name of the current animation
-	virtual void ev67(void) {}												// ESLOT 67 0x472970 (empty) the animation ended (ev80 / Process)
+	virtual void ev67(void) {}												// ESLOT 67 0x472970 (empty) the animation ended (n2_ev80 / Process)
 	virtual void InitAnim(void);											// ESLOT 68 0x40e270 "InitAnim": morph base shape from the object database
 	virtual void ev69(void) {}												// ESLOT 69 0x472970 (empty) after InitAnim / before ev70(true)
 	virtual void ev70(unsigned char show);									// ESLOT 70 0x40e3e0 show/hide with collision (level visibility)
 	virtual void ev71(float alpha);											// ESLOT 71 0x40e4a0 alpha blending (<= 0: opaque)
-	virtual void ev72(float alpha);											// ESLOT 72 N2:0x41ca20 additive blending (<= 0: opaque) - "Lit"
-	virtual void ev73(void);												// ESLOT 73 N2:0x41ce30 alpha blending, second pass, as is
-	virtual void ev74(float alpha, float r, float g, float b);				// ESLOT 74 N2:0x41cbc0 tint (+ alpha)
-	virtual void ev75(float time);											// ESLOT 75 N2:0x41b2e0 fade in over <time> s ("now im fading")
-	virtual void ev76(float time);											// ESLOT 76 N2:0x41b320 fade out over <time> s ("now im fading out")
-	virtual unsigned char ev77(char *state);								// ESLOT 77 N2:0x41c6b0 state f_8b1 is <state> (_stricmp)
-	virtual void ev78(char *state);											// ESLOT 78 N2:0x41c680 set state f_8b1
-	virtual void ev79(unsigned char pause);									// ESLOT 79 0x40d350 pause the morph animation
-	virtual void ev80(void);												// ESLOT 80 N2:0x41e120 granny: pose -> shape each frame, end detection
+	virtual void n2_ev72(float alpha);											// ESLOT 72 N2:0x41ca20 additive blending (<= 0: opaque) - "Lit"
+	virtual void AlphaSecondPass(void);												// ESLOT 73 N2:0x41ce30 alpha blending, second pass, as is
+	virtual void n2_ev74(float alpha, float r, float g, float b);				// ESLOT 74 N2:0x41cbc0 tint (+ alpha)
+	virtual void n2_ev75(float time);											// ESLOT 75 N2:0x41b2e0 fade in over <time> s ("now im fading")
+	virtual void n2_ev76(float time);											// ESLOT 76 N2:0x41b320 fade out over <time> s ("now im fading out")
+	virtual unsigned char n2_ev77(char *state);								// ESLOT 77 N2:0x41c6b0 state f_8b1 is <state> (_stricmp)
+	virtual void n2_ev78(char *state);											// ESLOT 78 N2:0x41c680 set state f_8b1
+	virtual void PauseAnim(unsigned char pause);									// ESLOT 79 0x40d350 pause the morph animation
+	virtual void n2_ev80(void);												// ESLOT 80 N2:0x41e120 granny: pose -> shape each frame, end detection
 	virtual void InitModel(std::string file);								// ESLOT 81 N2:0x41cff0 "InitModel": open the granny model + sequence
 	virtual void BuildTex(void);											// ESLOT 82 N2:0x41d7a0 "BuildTex": shape from the bind pose
-	virtual void ev83(OMedia3DShape *shape);								// ESLOT 83 N2:0x41dc90 empty the shape's geometry
+	virtual void n2_ev83(OMedia3DShape *shape);								// ESLOT 83 N2:0x41dc90 empty the shape's geometry
 	virtual void BindTex(void);												// ESLOT 84 N2:0x41ae10 "BindTex": granny texture -> f_918 / f_91c
 	virtual void AddAnimation(std::string file, char *name);				// ESLOT 85 N2:0x41df00 "AddAnimation": open grn\<file> as <name>
-	virtual void ev86(char *a, char *b, char *c, char *d, unsigned char loop, float blend);	// ESLOT 86 N2:0x41d470 granny: play the animations named a..d (slots 0..3)
-	virtual unsigned char ev87(char *file, char *dir, char *ext);			// ESLOT 87 N2:0x41e6a0 <dir>\<file> exists? then file = that path (returns 1)
-	virtual void ev88(char *bone, CGameObject *other);						// ESLOT 88 N2:0x41af40 attach other's granny sequence to our <bone>
-	virtual void ev89(CGameObject *other);									// ESLOT 89 N2:0x41afd0 detach other's granny sequence
-	virtual void ev90(unsigned char detach);								// ESLOT 90 N2:0x439ba0 drop the C3DGrannyObj props attached to us
-	virtual void ev91(unsigned char on);									// ESLOT 91 N2:0x41cb60 second-pass flag of all materials
-	virtual void ev92(int src, int dst);									// ESLOT 92 N2:0x41c9d0 blend of all materials
-	virtual unsigned char ev93(void);										// ESLOT 93 N2:0x41e840 culled: too far, or not in front of the viewport
+	virtual void n2_ev86(char *a, char *b, char *c, char *d, unsigned char loop, float blend);	// ESLOT 86 N2:0x41d470 granny: play the animations named a..d (slots 0..3)
+	virtual unsigned char n2_ev87(char *file, char *dir, char *ext);			// ESLOT 87 N2:0x41e6a0 <dir>\<file> exists? then file = that path (returns 1)
+	virtual void n2_ev88(char *bone, CGameObject *other);						// ESLOT 88 N2:0x41af40 attach other's granny sequence to our <bone>
+	virtual void n2_ev89(CGameObject *other);									// ESLOT 89 N2:0x41afd0 detach other's granny sequence
+	virtual void n2_ev90(unsigned char detach);								// ESLOT 90 N2:0x439ba0 drop the C3DGrannyObj props attached to us
+	virtual void n2_ev91(unsigned char on);									// ESLOT 91 N2:0x41cb60 second-pass flag of all materials
+	virtual void n2_ev92(int src, int dst);									// ESLOT 92 N2:0x41c9d0 blend of all materials
+	virtual unsigned char n2_ev93(void);										// ESLOT 93 N2:0x41e840 culled: too far, or not in front of the viewport
 
 	// ---- not virtual
 	unsigned char IsAnim(char *name);										// N2:0x41c6d0 the current animation (ev66 / GetAnim) is <name>
@@ -122,13 +122,13 @@ class C3DAnimated : public C3DObject
 	virtual void InitObject(void);											// SLOT 7   N2:0x41b0a0 properties
 	virtual void UnInitObject(void);										// SLOT 8   N2:0x41ab10 (does not call the base's)
 	virtual void Process(float dt);											// SLOT 240 N2:0x41c120
-	virtual void v242(float t);												// SLOT 242 N2:0x41b070 ShowAgain + ev80
+	virtual void v242(float t);												// SLOT 242 N2:0x41b070 ShowAgain + n2_ev80
 	virtual void v260(void);												// SLOT 260 N2:0x41cec0 properties loaded
 	virtual void v267(int level);											// SLOT 267 0x40e340 RequiredLevel/ExactLevel/RemoveLevel -> ev70
 	virtual void v268(int state);											// SLOT 268 0x40e1f0 "NextState": 1 show, 0 hide
 	virtual void v270(int a, int msg);										// SLOT 270 N2:0x41e960 msg 5: end the fades (C3DHERMAN only)
-	virtual void v277(void);												// SLOT 277 0x40e770 ev79(1)
-	virtual void v278(void);												// SLOT 278 0x40e790 ev79(0)
+	virtual void v277(void);												// SLOT 277 0x40e770 PauseAnim(1)
+	virtual void v278(void);												// SLOT 278 0x40e790 PauseAnim(0)
 	virtual void v280(void);												// SLOT 280 N2:0x41e460 editor: list the animation names
 	virtual void v282(OMediaMatrix_4x4 &m, float *w, float *h);				// SLOT 282 N2:0x41cfd0 layer projection matrix
 
@@ -156,7 +156,7 @@ class C3DAnimated : public C3DObject
 	int					f_65c;			// 0x65c  "InitiallyVisible" (-1)
 	int					f_660;			// 0x660  "CanMove" (1; 0: kept at its start position)
 	int					f_664;			// 0x664  "SecondPass" (0)
-	unsigned char		f_668;			// 0x668  morph animation paused (ev79)
+	unsigned char		f_668;			// 0x668  morph animation paused (PauseAnim)
 	char				f_669[100];		// 0x669  "PickupLink" ("none"): hidden once that pickup is taken
 	unsigned char		f_6cd;			// 0x6cd  PickupLink checked
 	int					f_6d0;			// 0x6d0  animation system: 0 OMT morph, 1 Granny
@@ -164,7 +164,7 @@ class C3DAnimated : public C3DObject
 	granny_uint32		f_6e0[2];		// 0x6e0  granny model
 	granny_uint32		f_6e8[2];		// 0x6e8  granny sequence (model instance)
 	float				f_6f0;			// 0x6f0  granny shape scale (1.0)
-	AnimInfo_t			f_6f4[4];		// 0x6f4  playing animations (ev86's a..d; [0] is the main one)
+	AnimInfo_t			f_6f4[4];		// 0x6f4  playing animations (n2_ev86's a..d; [0] is the main one)
 	int					f_884;			// 0x884  "CanRotate" (1; 0: kept at its start rotation)
 	void				*f_888;			// 0x888  morph: current frame (OMediaAnim current_frame)
 	int					f_88c;			// 0x88c  "FaceViewport" (0)
@@ -178,10 +178,10 @@ class C3DAnimated : public C3DObject
 	unsigned char		f_8a5;			// 0x8a5  granny: main animation over (or "STOP")
 	unsigned char		f_8a6;			// 0x8a6  granny: main animation just expired -> ev67
 	unsigned char		f_8a7;			// 0x8a7  no animation changes (ev58 ignored)
-	unsigned char		f_8a8;			// 0x8a8  culled this frame (ev93)
+	unsigned char		f_8a8;			// 0x8a8  culled this frame (n2_ev93)
 	int					f_8ac;			// 0x8ac  "CanClip" (1)
 	unsigned char		f_8b0;			// 0x8b0  fades allowed (1)
-	char				f_8b1[100];		// 0x8b1  state name (ev77/ev78, "none")
+	char				f_8b1[100];		// 0x8b1  state name (n2_ev77/n2_ev78, "none")
 	OMediaCanvas		*f_918;			// 0x918  granny texture
 	OMedia3DMaterial	*f_91c;			// 0x91c  granny material (also the texture cookie)
 	unsigned char		f_920;			// 0x920  granny: no blending between animations

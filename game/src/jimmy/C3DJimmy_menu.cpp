@@ -234,7 +234,7 @@ void C3DJimmy::MenuTravel(short place)
 		char g[100], s[100], rg[100], rs[100];
 		strcpy(g, kPlaces[place].file); strcpy(s, kPlaces[place].start);
 		strcpy(rg, f_b89); strcpy(rs, f_9c8);				// +0x955 / +0x724 TODO(BG): Negatron's members
-		ev121(g, s, rg, rs, 0);								// element slot 90 (+0x168) "PlayerLoadLevel"
+		n2_ev121(g, s, rg, rs, 0);								// element slot 90 (+0x168) "PlayerLoadLevel"
 	}
 	else if (place == 10 || place == 12)
 	{

@@ -51,14 +51,14 @@ C3DGirlEatingPlant::C3DGirlEatingPlant()					// 0x41c2d0
 	m_is_pickup = 1;
 	C3DGirlEatingPlant::InitObject();						// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
-	strcpy(f_ac4, "STOP");									// 0x407fa0
-	strcpy(f_aec, "WALK");
-	strcpy(f_b3c, "STOP");
-	strcpy(f_b64, "WALK");
-	f_c1c = 0.5f;
+	strcpy(m_anim_wag, "STOP");									// 0x407fa0
+	strcpy(m_anim_run, "WALK");
+	strcpy(m_anim_sit, "STOP");
+	strcpy(m_anim_walk, "WALK");
+	m_keep_fleeing = 0.5f;
 	C3DObject::SetObjectID('3GIR');							// 0x462220
-	f_bd4 = 0;
-	f_c28 = 1;
+	m_hover = 0;
+	m_958 = 1;
 	m_pic_number = 2;
 	// (then a call to the empty 0x472970)
 }
@@ -95,7 +95,7 @@ void C3DGirlEatingPlant::AddTouching(CGameObject *other)	// 0x41c550
 {
 	C3DAI::AddTouching(other);								// (BG C3DAI slot 16)
 	// ("MEBTEMP GEP, %d" and three more compiled-out logs)
-	if (!f_c40) return;										// not shrunk
+	if (!m_state_locked) return;										// not shrunk
 	if (other != g_camera) return;
 	if (g_object_states[m_pickup_index] != 0) return;		// 0x4f8438: already collected
 	hide(true);												// element +0x58

@@ -18,17 +18,17 @@ C3DJudy::C3DJudy()											// 0x42b2d0
 	f_649 = 0;												// ev69 loads the animations later
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3MOM');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 160.0f;											// speed
-	f_96c = 2;												// patrolling
-	f_c08 = 2;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 300.0f;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 160.0f;											// speed
+	m_state = 2;												// patrolling
+	m_ai_state = 2;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 300.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 }
 
 C3DJudy::~C3DJudy()											// 0x42b470
@@ -56,7 +56,7 @@ void C3DJudy::ResetObject(void)								// 0x42b630
 	z = qz;
 	C3DFriends::ResetObject();								// 0x41b790
 	// ("ResetObj for %s is %d": debug log)
-	f_b8c = NULL;											// no destination
+	m_dest = NULL;											// no destination
 }
 
 void C3DJudy::v267(int level)								// 0x42b6f0
@@ -69,10 +69,10 @@ void C3DJudy::v267(int level)								// 0x42b6f0
 	else ev70(1);
 }
 
-void C3DJudy::ev145(void)									// 0x42b590
+void C3DJudy::ev96(void)									// 0x42b590
 {
 	if (!f_016) return;										// (element +0xd6: she collides)
-	C3DFriends::ev145();									// 0x41b810
+	C3DFriends::ev96();									// 0x41b810
 	const int scene = GetTaskState("SCENE");
 	if (scene == 200)
 	{

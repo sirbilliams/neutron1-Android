@@ -12,6 +12,7 @@
 #include "DatabaseCache.h"
 #include "Mouse.h"
 #include "CEditor.h"
+#include "Fade.h"
 #include "CMainMenu.h"
 #include "CViewPort.h"
 #include "InterfaceElement.h"
@@ -206,18 +207,6 @@ static void SetGameState(int state)
 		if (*i) static_cast<CLocalGameObject *>(*i)->v270(g_prev_game_state, state);
 }
 
-// N2:0x406a40: start the in-game menu's fade (mode, seconds)
-static void StartFade(int mode, float t)
-{
-	if (g_N2_5324fc == 0) { g_N2_5324ec = 1; return; }
-	if (mode == 6) mode = 4;
-	if (t < 0.1f) t = 0.1f;				// 0x48d920
-	g_N2_5324e8 = t;
-	g_N2_545dcc = t;
-	g_N2_545dd0 = mode;
-	g_N2_5324ec = 0;
-	g_N2_545e5c = 1;
-}
 
 // N2:0x482b40
 static void SetLevel1cLoaded(unsigned char v)	{ neg::SetFlag545e54(v != 0); }	// N2:0x482b40 (InterfaceElement.cpp)
@@ -395,8 +384,9 @@ CEditor::CEditor()
 	f_7f8 = 0;
 	m_list_offset = 0;
 	m_key_latch = 0;
-	m_start_timer = 3.0f;
-	m_start_state = 1;
+	m_start_timer = 0;
+	m_start_state = 0;
+	m_splash_key = 0;
 	f_810 = 0;
 	f_811 = 0;
 	m_panel_open = 0;
@@ -426,8 +416,12 @@ CEditor::~CEditor()
 	if (g_splash)
 	{
 		Trace("Deleting splash");
-		if (g_splash->get_canvas()) delete g_splash->get_canvas();
+		// port: the original deletes the canvas first, then the element, whose destructor still
+		// unlinks itself from that freed canvas (harmless on the Windows heap; Android's allocator
+		// aborts on it). Same deletions, element first.
+		OMediaCanvas *canvas = g_splash->get_canvas();
 		if (g_splash) delete g_splash;
+		if (canvas) delete canvas;
 		g_splash = NULL;
 	}
 	if (g_editor_db) UnInitDatabase(g_editor_db);
@@ -560,76 +554,101 @@ void CEditor::ClearSelection(void)
 	m_pick = NULL;
 }
 
-// --------------------------------------------------------------------------- N2:0x4a5c70
+// --------------------------------------------------------------------------- 0x46bec0 (slot 49)
 
+// Every frame: the RequestLevel countdown, the start-up splashes (splash.omt canvases 0 and 1,
+// 3 s each or until Escape), then level1d.gam; a pending load runs CheckLoadLevel.
 void CEditor::UpdateGame(float dt)
 {
-	// RequestLevelDelayed: count the delay down, showing the countdown
+	if (m_load_countdown >= 0 && --m_load_countdown < 0) m_load_pending = 1;
+	// port: Negatron's delayed load (RequestLevelDelayed), still asked for by SaveGame.cpp
 	if (m_load_delay > 0.0f)
 	{
-		if (m_load_countdown < 0)
+		m_load_delay -= dt;
+		if (m_load_delay <= 0.0f) { m_load_delay = 0; m_load_pending = 1; }
+	}
+	const float t = m_start_timer;
+	const int state = m_start_state;
+	m_start_timer = t + dt;
+	if (state <= 2)
+	{
+		bool next;
+		if (g_keys[0x1b])									// 0x509853: Escape skips a splash
 		{
-			m_load_delay = m_load_delay - dt;
-			if (m_load_delay > 0.0f)
-			{
-				MenuDrawCountdown(1, 0x197, g_N2_532500);		// g_menu->N2:0x409d50
-				DrawText(0x12a, 0x1bd, 'BIG', "%6.0d", neg::g_score);
-				goto countdown;
-			}
-			SetGameState(1);
-			m_load_pending = 1;
+			next = !m_splash_key;
+			m_splash_key = 1;
+			if (!next) next = t + dt > 3.0f;				// 0x48e5a0
 		}
-		m_load_delay = 0;
-	}
-countdown:
-	// RequestLevel / start-up: a few frames, then load
-	if (m_load_countdown >= 0)
-	{
-		m_load_countdown--;
-		if ((double)m_load_countdown < 0.1) SetGameState(1);
-		if (m_load_countdown < 0) m_load_pending = 1;
-	}
-
-	m_start_timer += dt;
-	if (m_start_state < 3)
-	{
-		if (m_start_state == 1)
+		else
 		{
-			// First frame: splash 1, then the level to start with (save\startlevel.txt).
-			DrawSplash(1);
-			m_start_state = 3;
-			m_start_timer = 3.0f;
-			FILE *f = fopen(omf_SDLResolvePath("save\\startlevel.txt").c_str(), "r");
-			if (!f)
-				strcpy(m_level_name, "level1d.gam");
+			m_splash_key = 0;
+			next = t + dt > 3.0f;
+		}
+		if (TestPlayLevel() || neg::AssetViewLevel()) next = true;	// port: test runs skip the splashes
+		if (next)
+		{
+			if (state == 0)
+			{
+				Trace("SPL 1");
+				DrawSplash(0);									// vtable +0x12c
+				Trace("SPL 2");
+				m_start_state = 1;
+				m_start_timer = 0;
+			}
+			else if (state == 1)
+			{
+				Trace("SPL 3");
+				DrawSplash(1);
+				Trace("SPL 4");
+				m_start_state = 2;
+				m_start_timer = 0;
+				char name[0x53];
+				strcpy(name, "level1d.gam");
+				// port: the launcher's start mode (NEG_START: Continue / Load / Main Menu), the test
+				// and Asset Viewer levels choose another start; "autosave" restores a task file.
+				const char *task = neg::StartModeChoose(name);
+				if (const char *tp = TestPlayLevel()) strcpy(name, tp);
+				if (const char *a = neg::AssetViewLevel()) strcpy(name, a);
+				if (strcasecmp(name, "autosave") == 0)
+				{
+					if (!ReadTaskFile(task))
+					{
+						strcpy(name, "level1d.gam");
+						ErrorLog("ERROR: loading %s", task);
+					}
+					else
+					{
+						Trace("MEBTEMP GFN:%s", g_game_file);
+						Trace("MEBTEMP TFN:%s", g_task_file);
+						LoadTask(task, false);
+						strcpy(name, m_level_name);
+					}
+				}
+				RequestLevel(name);								// vtable +0x114
+				Trace("SPL 5");
+			}
 			else
 			{
-				if (fscanf(f, "%s", m_level_name) < 0) {}		// (an empty file leaves the name as it was)
-				if (fclose(f) != 0) SDL_Log("The file 'startlevel.txt' was not closed\n");
-			}
-			const char *task = neg::StartModeChoose(m_level_name);	// port: NEG_START (the original: "autosave.tsk")
-			if (const char *t = TestPlayLevel()) strcpy(m_level_name, t);	// port: test-only (NEG_TEST_PLAY)
-			if (const char *a = neg::AssetViewLevel()) strcpy(m_level_name, a);	// port: Asset Viewer (NEG_ASSET_VIEW)
-			if (strcasecmp(m_level_name, "autosave") == 0)
-			{
-				if (!ReadTaskFile(task))
+				m_start_state = 3;
+				Trace("SPL 6");
+				if (g_editor_db)
 				{
-					strcpy(m_level_name, "level1d.gam");
-					ErrorLog("ERROR: loading %s", task);
-				}
-				else
-				{
-					Trace("MEBTEMP GFN:%s", g_game_file);
-					Trace("MEBTEMP TFN:%s", g_task_file);
-					LoadTask(task, false);
+					Trace("SPL 7");
+					if (g_splash)
+					{
+						g_splash->hide(true);					// element +0x58
+						g_splash->set_canvas(NULL);				// port: its canvas goes with the database (the original leaves it dangling)
+					}
+					Trace("SPL 8");
+					UnInitDatabase(g_editor_db);				// (its deleting destructor, +8)
+					Trace("SPL 9");
+					g_editor_db = NULL;
 				}
 			}
-			m_load_countdown = 2;
 		}
-		else if (m_start_state == 2)
-			m_start_state = 3;
 	}
-	if (m_load_pending) CheckLoadLevel();
+	neg::FadeTick(dt);										// port: see Fade.h (agent F's menu runs it in the original)
+	if (m_load_pending) CheckLoadLevel();					// vtable +0x104
 	neg::StartModeFrame();									// port: NEG_START=menu opens the Main Menu
 }
 
@@ -658,11 +677,38 @@ void CEditor::CheckLoadLevel(void)
 	Trace("Calling CloseAllDatabases()");
 	CloseAllDatabases();									// 0x46b000
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i) static_cast<CLocalGameObject *>(*i)->f_4aa = 0;
-	LoadGame(m_level_name, -1);
+		if (*i) static_cast<CLocalGameObject *>(*i)->f_4aa = 0;	// +0x49e
+	LoadGame(m_level_name, -1);								// vtable +0xfc
+	m_load_pending = 0;
 }
 
 // --------------------------------------------------------------------------- 0x46e170
+
+// port: while the reconstruction is incomplete, an object of a class whose factory entry is still
+// a stub (it logs TODO and returns NULL) is loaded as an inert CLocalGameObject instead, so the
+// rest of the .gam loads: its properties are read (by name, as the file describes them) and
+// dropped, it does nothing, and NameContains/dynamic_cast tests never take it for the real
+// class. The original would stop loading at it ("NULL object spawned"). Set
+// NEG_NO_PLACEHOLDERS=1 to get the original behaviour.
+class CPortPlaceholder : public CLocalGameObject
+{
+	public:
+	CPortPlaceholder()	{ SetName((char *)"CPORTPLACEHOLDER"); }
+	virtual void Process(float dt)	{ (void)dt; }
+};
+
+static CGameObject *PortPlaceholder(int id)
+{
+	static int off = -1;
+	if (off < 0) { const char *e = getenv("NEG_NO_PLACEHOLDERS"); off = e && *e && *e != '0'; }
+	if (off) return NULL;
+	char ids[5];
+	IdString(ids, id);
+	SDL_Log("PORT: '%s' is not reconstructed yet: loaded as an inert placeholder", ids);
+	CGameObject *o = new CPortPlaceholder;
+	o->InitObject();
+	return o;
+}
 
 void CEditor::LoadGame(char *name, int level_id)
 {
@@ -737,6 +783,7 @@ void CEditor::LoadGame(char *name, int level_id)
 		int id;
 		fs >> id;
 		CGameObject *o = IsSingletonLoaded(id) ? FindObject(id) : neg::CreateObject(id);
+		if (!o && !IsSingletonLoaded(id)) o = PortPlaceholder(id);	// port: a class not reconstructed yet
 		if (o)
 		{
 			for (;;)
@@ -764,6 +811,7 @@ void CEditor::LoadGame(char *name, int level_id)
 				else
 				{
 					o = neg::CreateObject(id);
+					if (!o) o = PortPlaceholder(id);			// port: a class not reconstructed yet
 					if (!o) { ErrorLog("ERROR: NULL object spawned in LoadGame for %s", ids); break; }
 				}
 				Trace("Object %d Spawned in LoadGame", id);
@@ -840,35 +888,30 @@ void CEditor::MakeBackupName(char *name)
 
 // --------------------------------------------------------------------------- 0x46dfb0 / 0x46df70
 
-void CEditor::RequestLevel(char *name)
+void CEditor::LoadLevelNow(char *name)						// slot 64 0x46df70: load at the next frame
 {
-	if (g_menu)
-	{
-		g_menu->v288();
-		StartFade(0, 1.0f);									// N2:0x406a40
-	}
-	m_load_countdown = 2;
+	m_load_pending = 1;
 	strcpy(m_level_name, name);
-	g_level_requested = 1;
 }
 
+void CEditor::RequestLevel(char *name)						// slot 69 0x46dfb0: load in two frames
+{
+	m_load_countdown = 2;
+	strcpy(m_level_name, name);
+}
+
+// port: Negatron's (N2:0x4a83b0); Neutron.exe has no delayed load. Only SaveGame.cpp calls it.
 void CEditor::RequestLevelDelayed(char *name, float delay)
 {
-	if (g_menu)
-	{
-		g_menu->v288();
-		StartFade(0, 1.0f);
-	}
 	m_load_delay = delay;
 	strcpy(m_level_name, name);
-	g_level_requested = 1;
 }
 
 // --------------------------------------------------------------------------- 0x46f760 (vtable +0x118)
 
 void CEditor::OpenEditorDatabase(void)
 {
-	std::string name("omt\\Editor.omt");
+	std::string name("omt\\splash.omt");					// (Negatron: omt\\Editor.omt)
 	g_editor_stream = InitFileStream(name.c_str());
 	g_editor_db = InitDatabase(g_editor_stream);
 }
@@ -982,7 +1025,7 @@ void CEditor::ResetLevelObjects(void)
 
 // --------------------------------------------------------------------------- splash / sprites
 
-// 0x46f830 (vtable +0x12c): replace the full-screen splash with canvas id of omt\Editor.omt
+// 0x46f830 (vtable +0x12c): replace the full-screen splash with canvas id of omt\splash.omt
 void CEditor::DrawSplash(int canvas_id)
 {
 	Trace("EDS");
@@ -990,8 +1033,12 @@ void CEditor::DrawSplash(int canvas_id)
 	if (g_splash)
 	{
 		Trace("Deleting splash");
-		if (g_splash->get_canvas()) delete g_splash->get_canvas();
+		// port: the original deletes the canvas first, then the element, whose destructor still
+		// unlinks itself from that freed canvas (harmless on the Windows heap; Android's allocator
+		// aborts on it). Same deletions, element first.
+		OMediaCanvas *canvas = g_splash->get_canvas();
 		if (g_splash) delete g_splash;
+		if (canvas) delete canvas;
 		g_splash = NULL;
 	}
 	Trace("after Deleting splash");
@@ -1014,7 +1061,7 @@ void CEditor::DrawSplash(int canvas_id)
 					c->set_filtering(omtfc_Linear, omtfc_Linear);
 					g_splash->set_size(c->get_width() * sx, c->get_height() * sy);
 				}
-				g_splash->set_canvas(c);
+				if (c) g_splash->set_canvas(c);				// port: the original sets a missing canvas too (NULL)
 			}
 		}
 		g_splash->set_canvas_flags(omcanef_FreeWorldSize);

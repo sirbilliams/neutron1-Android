@@ -1,7 +1,7 @@
 /*  C3DBenny ('3BEN') - Benny (the neighbour): a morph friend (.ase animations WALK, TALK,
     PHONE, WIPE, WPHONE, STOP; texture "benny.png"), patrolling (AIState 2) at 160,
     VisibleRange 500. In Retroville he shows while SCENE is 90..109, in LEV2 at 90..168 and
-    340..350, in LV4A from 500, elsewhere always. Talking to him (ev145): SCENE 110 -> 115,
+    340..350, in LV4A from 500, elsewhere always. Talking to him (ev96): SCENE 110 -> 115,
     140 -> 141, 340 -> 350.
     Reconstructed from Neutron.exe: constructor 0x410340 (factory '3BEN', 0xbb0 bytes),
     destructor 0x4104f0 (deleting thunks 0x4104c0 / 0x4107f0 / 0x410800 / 0x410810).
@@ -9,7 +9,7 @@
     Original layout: as C3DFriends (element vtable 0x492368, 98 slots, 67 and 96 overridden;
     listener 0x492354; OMediaAnim 0x492318; CLocalGameObject vtable 0x491ec8 at +0xc0: 7, 8,
     264, 265 overridden), no members of its own. Element slots are named by their Negatron
-    numbers (67 = ev69, 96 = ev145).                                                         */
+    numbers (67 = ev69, 96 = ev96).                                                         */
 #pragma once
 #include "C3DFriends.h"
 
@@ -21,7 +21,7 @@ class C3DBenny : public C3DFriends
 
 	// ---- element-family slots
 	virtual void ev69(void);												// ESLOT 67  0x4105b0 load the animations and the texture (once)
-	virtual void ev145(void);												// ESLOT 96  0x410760 talked to: the next SCENE step
+	virtual void ev96(void);												// ESLOT 96  0x410760 talked to: the next SCENE step
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x415090

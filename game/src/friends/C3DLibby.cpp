@@ -15,17 +15,17 @@ C3DLibby::C3DLibby()										// 0x42cd40
 	f_649 = 0;												// ev69 loads the animations later (morph: f_6d0 stays 0)
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3LIB');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 200.0f;											// speed
-	f_96c = 3;												// patrolling only
-	f_c08 = 3;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 300.0f;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 200.0f;											// speed
+	m_state = 3;												// patrolling only
+	m_ai_state = 3;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 300.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"RUN");
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"RUN");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	// (then a call to the empty 0x472970)
 }
 
@@ -61,9 +61,9 @@ static void AnnouncePickupBG(int pic, unsigned int index)
 	g_pickup_counts[2 * pic]++;								// 0x4f7db8
 }
 
-void C3DLibby::ev126(void)									// 0x42d020
+void C3DLibby::ev90(void)									// 0x42d020
 {
-	C3DFriends::ev126();									// 0x41bc20
+	C3DFriends::ev90();									// 0x41bc20
 	if (GetTaskState("SCENE") == 260)
 	{
 		SetItemState(2, 7, 1);
@@ -71,9 +71,9 @@ void C3DLibby::ev126(void)									// 0x42d020
 	}
 }
 
-void C3DLibby::ev145(void)									// 0x42d060
+void C3DLibby::ev96(void)									// 0x42d060
 {
-	C3DFriends::ev145();									// 0x41b810
+	C3DFriends::ev96();									// 0x41b810
 	switch (GetTaskState("SCENE"))
 	{
 		case 255: SetTaskState("SCENE", 260); return;
@@ -90,7 +90,7 @@ void C3DLibby::v267(int level)								// 0x42d230
 	const int type = g_gametype->m_object_id;				// (+0x490 of the game type)
 	if (type > 'LV4A')
 	{
-		if (type == 'LV4D') { ev106(f_ac4, (char *)"WALK"); ev70(1); return; }	// element +0x120, +0x110
+		if (type == 'LV4D') { ev72(m_anim_run, (char *)"WALK"); ev70(1); return; }	// element +0x120, +0x110
 		ev70(1);
 		return;
 	}
@@ -102,14 +102,14 @@ void C3DLibby::v267(int level)								// 0x42d230
 	{
 		if (scene >= 250 && scene < 270)
 		{
-			if (scene == 250) ev107(3);						// element +0x124
+			if (scene == 250) ev73(3);						// element +0x124
 			ev70(1);
 			return;
 		}
 		if (scene >= 300 && scene < 370)
 		{
-			ev106(f_ac4, (char *)"WALK");
-			ev107(0);
+			ev72(m_anim_run, (char *)"WALK");
+			ev73(0);
 			ev70(1);
 			return;
 		}
@@ -117,7 +117,7 @@ void C3DLibby::v267(int level)								// 0x42d230
 	else
 	{
 		if (type != 'LV3C') { ev70(1); return; }
-		if (scene >= 400 && scene < 420) { ev106(f_ac4, (char *)"WALK"); ev70(1); return; }
+		if (scene >= 400 && scene < 420) { ev72(m_anim_run, (char *)"WALK"); ev70(1); return; }
 	}
 	ev70(0);
 }
@@ -135,7 +135,7 @@ void C3DLibby::ResetObject(void)							// 0x42d190 (as C3DSheen's, without InitP
 	y = qy;
 	z = qz;
 	C3DFriends::ResetObject();								// 0x41b790
-	f_b8c = NULL;											// no destination
+	m_dest = NULL;											// no destination
 }
 
 void C3DLibby::ev69(void)									// 0x42cf30

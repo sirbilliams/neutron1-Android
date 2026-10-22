@@ -20,16 +20,16 @@ C3DDarwinFish::C3DDarwinFish()								// 0x416ac0
 	m_is_pickup = 1;												// a pickup
 	C3DDarwinFish::InitObject();							// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_ac4, (char *)"WALK");
-	C3DAI::ev106(f_b14, (char *)"STOP");
-	C3DAI::ev106(f_b3c, (char *)"WALK");
-	f_9a8 = 2000.0f;										// VisibleRange
-	f_b98 = 90.0f;											// FOV
-	f_c1c = 0.5f;
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
+	C3DAI::ev72(m_anim_walk, (char *)"WALK");
+	m_visible_range = 2000.0f;										// VisibleRange
+	m_fov = 90.0f;											// FOV
+	m_keep_fleeing = 0.5f;
 	C3DObject::SetObjectID('3FIS');							// 0x462220
-	f_bd4 = 0;												// no hovering
-	f_c28 = 1;
+	m_hover = 0;												// no hovering
+	m_958 = 1;
 	m_pic_number = 12;												// PIC_NUMBER
 }
 
@@ -64,7 +64,7 @@ void C3DDarwinFish::ev69(void)								// 0x416d00
 void C3DDarwinFish::AddTouching(CGameObject *other)			// 0x416d90
 {
 	C3DAI::AddTouching(other);								// 0x40a3c0
-	if (!f_c40 || other != g_camera || g_object_states[m_pickup_index] != 0) return;
+	if (!m_state_locked || other != g_camera || g_object_states[m_pickup_index] != 0) return;
 	OMediaElement::hide(true);								// element +0x58
 	v232();													// +0x3a4
 	// 0x42adc0: 50 points (no difficulty scaling; the pop-up shows the award)

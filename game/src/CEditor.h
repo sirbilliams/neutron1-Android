@@ -7,17 +7,18 @@
 
     What it does in the shipped game (the editor UI is never switched on there - nothing sets
     m_editing - but every frame goes through it):
-      * update_logic (slot 15) runs UpdateGame every frame: on the first frame it shows splash 1,
-        reads save\startlevel.txt (normally "autosave": restore the autosave task) and arms
-        m_load_countdown; when the countdown or m_load_delay runs out m_load_pending is set and
-        CheckLoadLevel deletes the level's objects and calls LoadGame(m_level_name, -1).
+      * update_logic (slot 15) runs UpdateGame every frame: the start-up splashes 0 and 1 (3 s
+        each, Escape skips), then RequestLevel("level1d.gam"); when RequestLevel's countdown runs
+        out or LoadLevelNow was called, m_load_pending is set and CheckLoadLevel deletes the
+        level's objects and calls LoadGame(m_level_name, -1).
       * LoadGame reads gam\<name>: the game type's 4cc, the object count, then per object its 4cc
         and its properties (CGameObject::ReadProperties); objects come from neg::CreateObject.
         Then ResetLevel resets every object.
-      * SaveGame writes the same format. RequestLevel / RequestLevelDelayed (slots 68/69) are
-        how the rest of the game asks for a level change.
+      * SaveGame writes the same format. LoadLevelNow / RequestLevel (slots 64 / 69) are how the
+        rest of the game asks for a level change (C3DPlayer's PlayerLoadLevel, CLoadLevel, the
+        fades of C2DInGameMenu set m_load_pending directly).
       * OpenEditorDatabase / DrawSplash (slots 70/75, vtable +0x118 / +0x12c) are called by the
-        game-type factory N2:0x480230 after it creates a new game type: open omt\Editor.omt and
+        game-type factory N2:0x480230 after it creates a new game type: open omt\splash.omt and
         show splash canvas 3.
 
     Element-family layout: offsets < 0x8c are OMediaElement (use the OMT accessors); own members
@@ -73,8 +74,9 @@ class CEditor : public OMediaElement
 	virtual void MakeBackupName(char *name);								// SLOT 65 0x46e7b0
 	virtual void ListObjects(void);											// SLOT 66 N2:0x4a8c70
 	virtual CGameObject *FindObject(int id);								// SLOT 67 0x46e6e0
-	virtual void RequestLevel(char *name);									// SLOT 68 0x46dfb0
-	virtual void RequestLevelDelayed(char *name, float delay);				// SLOT 69 0x46df70
+	virtual void LoadLevelNow(char *name);									// SLOT 64 0x46df70 (BG numbering) m_load_pending + name
+	virtual void RequestLevel(char *name);									// SLOT 69 0x46dfb0 (BG numbering) m_load_countdown = 2 + name
+	void RequestLevelDelayed(char *name, float delay);						// port: Negatron's N2:0x4a83b0 (SaveGame.cpp)
 	virtual void OpenEditorDatabase(void);									// SLOT 70 0x46f760 (vtable +0x118)
 	virtual bool IsSingletonLoaded(int id);									// SLOT 71 0x46e6a0
 	virtual void ShowObjectList(void);										// SLOT 72 N2:0x4a9d20
@@ -121,11 +123,12 @@ class CEditor : public OMediaElement
 	unsigned char		f_7f8;					// 0x7f8 (set by C3DPlayer / C3DTriggerType)
 	unsigned char		f_7f9;					// 0x7f9
 	short				m_load_countdown;		// 0x7fa frames until m_load_pending (-1 = off)
-	float				m_load_delay;			// 0x7fc seconds until m_load_pending (RequestLevelDelayed)
+	float				m_load_delay;			// port: seconds until m_load_pending (Negatron's RequestLevelDelayed)
 	int					m_list_offset;			// 0x800 first list entry shown (scroll by 20)
 	unsigned char		m_key_latch;			// 0x804
-	float				m_start_timer;			// 0x808 = 3, counts up
-	int					m_start_state;			// 0x80c 1 = first frame (read startlevel.txt), 3 = running
+	float				m_start_timer;			// 0x804 time in the start-up state
+	unsigned char		m_splash_key;			// 0x80d Escape held (skips one splash per press)
+	int					m_start_state;			// 0x808 0 wait, 1 splash 0 shown, 2 splash 1 shown + level1d requested, 3 running
 	unsigned char		f_810;					// 0x810
 	unsigned char		f_811;					// 0x811
 	unsigned char		m_panel_open;			// 0x812 list panel shown (arrow keys scroll instead of fly)
@@ -141,7 +144,7 @@ extern OMediaCanvas				*g_editor_font_canvas;	// 0x509978 png\fontsmall.png
 extern OMediaCanvasFont			*g_editor_font;			// 0x50997c
 extern unsigned char			 g_new_game;			// N2:0x56af08 set when level1d.gam (a new game) is loaded
 extern OMediaCanvasElement		*g_splash;				// 0x509984
-extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\Editor.omt
+extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\splash.omt
 extern OMediaFileStream			*g_editor_stream;		// 0x50998c
 extern OMediaCanvasElement		*g_editor_menu_panel;	// N2:0x56af1c canvas 5
 extern OMediaCanvasElement		*g_editor_list_panel;	// N2:0x56af20 canvas 6

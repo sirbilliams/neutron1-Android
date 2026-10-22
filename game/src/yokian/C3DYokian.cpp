@@ -21,12 +21,12 @@ using namespace neg;
 
 C3DYokian::C3DYokian()										// 0x44a730
 {
-	f_960 = 0;
-	f_968 = 200.0f;											// speed
+	m_time = 0;
+	m_speed = 200.0f;											// speed
 	HitTime() = 0;												// hit time
 	f_9a8 = 0;
-	f_96c = 2;												// AI state: patrol
-	f_c08 = 2;												// the state to go back to
+	m_state = 2;												// AI state: patrol
+	m_ai_state = 2;												// the state to go back to
 	SetName((char *)"C3DYOKIAN");
 	m_shield = new C3DYokianShield;							// 0x5f4 bytes, 0x44b510
 	m_helmet = NULL;
@@ -40,16 +40,16 @@ C3DYokian::C3DYokian()										// 0x44a730
 		m_shadow->v36(1);									// (its game object part, +0x90)
 		m_shadow->SetSize(140, 50);							// 0x43f870
 	}
-	f_c40 = 0;												// not hit
-	strcpy(f_b64, "STOP");									// 0x407fa0 (BG C3DAI element slot 72)
-	strcpy(f_aec, "WALK");
-	strcpy(f_b3c, "STOP");
+	m_state_locked = 0;												// not hit
+	strcpy(m_anim_walk, "STOP");									// 0x407fa0 (BG C3DAI element slot 72)
+	strcpy(m_anim_run, "WALK");
+	strcpy(m_anim_sit, "STOP");
 	v50(0);
-	f_bd4 = 1;
+	m_hover = 1;
 	f_9b0 = 0;
-	f_c28 = 1;
+	m_958 = 1;
 	m_loop_sound = -1;
-	f_c60 = 900.0f;
+	m_990 = 900.0f;
 }
 
 C3DYokian::~C3DYokian()										// 0x44a9b0
@@ -74,7 +74,7 @@ void C3DYokian::ev70(unsigned char show)					// 0x44afa0 (BG ESLOT 68; C3DAI's i
 	if (m_helmet) m_helmet->force_show();
 }
 
-void C3DYokian::ev127(void)									// 0x44b100 (BG ESLOT 91)
+void C3DYokian::ev91(void)									// 0x44b100 (BG ESLOT 91)
 {
 	ev58((char *)"ATTACK", 1);								// element +0xe0
 	if (m_loop_sound == -1) m_loop_sound = PlayGameSound3DIndex(this, -1, 0x38, true);	// 0x4589c0
@@ -88,12 +88,12 @@ void C3DYokian::AddTouching(CGameObject *other)				// 0x44b070
 	if (other->NameContains((char *)"C3DBASEBALL") && !other->v133())	// +0x218 (BG slot 134): it has not hit yet
 	{
 		PlayGameSoundIndex(-1, 0x2f, false);				// 0x458980
-		ev107(5);											// element +0x124 (BG ESLOT 73): AI state 5
-		f_c10 = 2200.0f;
-		f_c3c = 5.0f;
+		ev73(5);											// element +0x124 (BG ESLOT 73): AI state 5
+		m_flee_dist = 2200.0f;
+		m_flee_time = 5.0f;
 		AddScore(10);										// BG 0x42adc0
 	}
-	if (other->NameContains((char *)"C3DJIMMY")) f_c00 = 2.0f;
+	if (other->NameContains((char *)"C3DJIMMY")) m_seen_time = 2.0f;
 }
 
 void C3DYokian::Process(float dt)							// 0x44aa00
@@ -119,7 +119,7 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 	}
 
 	// Patrolling, waiting or scanning: the attack loop sound off.
-	if ((f_96c == 2 || f_96c == 3 || f_96c == 6) && m_loop_sound != -1)
+	if ((m_state == 2 || m_state == 3 || m_state == 6) && m_loop_sound != -1)
 	{
 		StopGameSound(m_loop_sound, false);					// 0x458a00
 		m_loop_sound = -1;
@@ -136,7 +136,7 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 	}
 
 	// The bubble, while it flashes: 100 towards the camera from us, 100 up.
-	if (m_shield && m_shield->m_time > 0 && f_964 != NULL)
+	if (m_shield && m_shield->m_time > 0 && m_target != NULL)
 	{
 		float p[4];
 		v195(p);
@@ -148,7 +148,7 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 	}
 
 	// Hit.
-	if (f_c40)
+	if (m_state_locked)
 	{
 		if (m_loop_sound != -1)
 		{
@@ -165,11 +165,11 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 		}
 		if (m_shadow) m_shadow->SetSize(40, 15);			// 0x43f870
 		if (m_helmet) m_helmet->hide(true);					// element +0x58
-		if (f_96c == 0)
+		if (m_state == 0)
 		{
-			ev107(5);										// element +0x124 (BG ESLOT 73)
-			f_c10 = 1500.0f;
-			f_968 = 400.0f;									// speed
+			ev73(5);										// element +0x124 (BG ESLOT 73)
+			m_flee_dist = 1500.0f;
+			m_speed = 400.0f;									// speed
 		}
 		if (HitTime() > 0)
 		{
@@ -177,11 +177,11 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 			if (HitTime() < 0)
 			{
 				HitTime() = 0;
-				f_c40 = 0;
-				f_c1c = 0;
-				ev107(f_c08);								// back to the previous state
+				m_state_locked = 0;
+				m_keep_fleeing = 0;
+				ev73(m_ai_state);								// back to the previous state
 				ev58((char *)"WALK", 1);					// element +0xe0
-				f_968 = 200.0f;
+				m_speed = 200.0f;
 				if (m_shadow) m_shadow->SetSize(140, 50);
 				if (m_helmet) m_helmet->force_show();
 			}
@@ -196,7 +196,7 @@ void C3DYokian::Process(float dt)							// 0x44aa00
 
 	float v[4];
 	v174(v);												// +0x2bc velocity (BG slot 175)
-	if (v[1] > 0) ev130(dt, 250.0f);						// element +0x178 (BG ESLOT 94)
+	if (v[1] > 0) ev94(dt, 250.0f);						// element +0x178 (BG ESLOT 94)
 }
 
 void C3DYokian::v277(void)									// 0x44b140

@@ -83,18 +83,10 @@ int MainMenuBackground()
 	return 0xd9;
 }
 
-// The loading picture of every exit in the loaded level, as level-<gam>.png.
+// The loading picture of every exit in the loaded level, as level-<gam>.png. port: Boy Genius's
+// exits (CLoadLevel) have no "LoadScreen": nothing to save.
 void ScanExits()
 {
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-	{
-		CLoadLevel *l = dynamic_cast<CLoadLevel *>(*i);
-		if (!l || l->m_load_screen <= 0) continue;
-		std::string gam = l->m_level_name;
-		for (size_t k = 0; k < gam.size(); k++) gam[k] = (char)tolower((unsigned char)gam[k]);
-		if (gam.size() < 5 || gam.compare(gam.size() - 4, 4, ".gam") != 0) continue;
-		Save(l->m_load_screen, "level-" + gam.substr(0, gam.size() - 4) + ".png");
-	}
 }
 
 } // namespace

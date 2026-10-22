@@ -17,18 +17,18 @@ C3DRocket::C3DRocket()										// 0x43d090
 	C3DAI::InitObject();									// 0x407ee0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3RCK');							// 0x462220
-	f_96c = 3;												// state
-	f_c08 = 3;												// AIState
-	C3DAI::ev106(f_a9c, (char *)"none");
-	C3DAI::ev106(f_ac4, (char *)"none");
-	C3DAI::ev106(f_aec, (char *)"none");
-	C3DAI::ev106(f_b14, (char *)"none");
-	C3DAI::ev106(f_a74, (char *)"none");
-	C3DAI::ev106(f_b3c, (char *)"none");
+	m_state = 3;												// state
+	m_ai_state = 3;												// AIState
+	C3DAI::ev72(m_anim_wag, (char *)"none");
+	C3DAI::ev72(m_anim_run, (char *)"none");
+	C3DAI::ev72(m_anim_fly, (char *)"none");
+	C3DAI::ev72(m_anim_sit, (char *)"none");
+	C3DAI::ev72(m_anim_none, (char *)"none");
+	C3DAI::ev72(m_anim_walk, (char *)"none");
 	v67(100.0f);											// radius
 	v152(100.0f);
 	v52(1);
-	f_b9c.y = 0.3f;											// turn rate y (0x8d4)
+	m_turn_rates.y = 0.3f;											// turn rate y (0x8d4)
 	v42(1);
 	v40(1);
 	m_db = GetDatabase("objects.omt");						// 0x46a910
@@ -58,7 +58,7 @@ void C3DRocket::Process(float dt)							// 0x43d380
 {
 	C3DAI::Process(dt);										// 0x408000
 	m_puff_time = dt + m_puff_time;
-	if (f_96c != 3) return;
+	if (m_state != 3) return;
 	if (m_puff_time > 0.1)									// 0x49cfb8 (double)
 	{
 		m_puff_time = 0;

@@ -24,19 +24,19 @@ C3DYokianShip::C3DYokianShip()								// 0x44b7d0
 	C3DAI::InitObject();									// 0x407ee0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3YSH');							// 0x462220
-	f_968 = 700.0f;											// speed
-	f_96c = 3;												// AI state: patrol only
-	f_c08 = 3;
-	strcpy(f_ac4, "none");									// 0x407fa0: no animations
-	strcpy(f_aec, "none");
-	strcpy(f_b14, "none");
-	strcpy(f_b3c, "none");
-	strcpy(f_a9c, "none");
-	strcpy(f_b64, "none");
+	m_speed = 700.0f;											// speed
+	m_state = 3;												// AI state: patrol only
+	m_ai_state = 3;
+	strcpy(m_anim_wag, "none");									// 0x407fa0: no animations
+	strcpy(m_anim_run, "none");
+	strcpy(m_anim_fly, "none");
+	strcpy(m_anim_sit, "none");
+	strcpy(m_anim_none, "none");
+	strcpy(m_anim_walk, "none");
 	v67(100.0f);											// (BG slot 68) radius
 	v152(100.0f);											// (BG slot 153)
 	v52(0);
-	f_b9c.y = 0.3f;											// turn rate y
+	m_turn_rates.y = 0.3f;											// turn rate y
 	v42(0);
 	v40(0);
 	m_db = GetDatabase("yokianship.omt");					// 0x46a910

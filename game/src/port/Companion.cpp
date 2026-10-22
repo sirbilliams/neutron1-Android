@@ -685,15 +685,9 @@ int ItemIcon(int page, int item)
 	return p->items[item].active_id;
 }
 
-// CLoadLevel's own test (N2:0x48e9f0) of whether its task lets Jimmy through (GoIfActive included).
+// CLoadLevel's own test (0x457ec0) of whether its task lets Jimmy through.
 bool ExitOpen(CLoadLevel *l)
 {
-	if (l->m_go_if_active != -1)
-	{
-		C2DInGameMenu::MenuPage *p = g_menu ? C2DInGameMenu::Page(3) : NULL;
-		if (!p || l->m_go_if_active < 0 || l->m_go_if_active >= C2DInGameMenu::MENU_ITEMS
-			|| !p->items[l->m_go_if_active].type) return false;
-	}
 	if (strcasecmp(l->m_required_task, "none") == 0) return true;
 	const int state = GetTaskState(l->m_required_task);
 	if (state == -1) return true;

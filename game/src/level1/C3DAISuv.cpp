@@ -50,20 +50,20 @@ C3DAISuv::C3DAISuv()										// 0x40b1b0
 	C3DAISuv::InitObject();									// 0x40b460 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3SUV');							// 0x462220
-	f_968 = 700.0f;											// speed
-	f_96c = 2;												// patrolling
-	f_c08 = 2;												// AIState
+	m_speed = 700.0f;											// speed
+	m_state = 2;												// patrolling
+	m_ai_state = 2;												// AIState
 	m_light = new C3DLightCone;								// 0x42d410 (0x6dc bytes)
 	m_light->v107(0);										// +0x1b0
 	m_light->m_green = 0.2f;
 	m_light->m_blue = 0.2f;
 	m_light->m_rot_speed = 140.0f;
-	C3DAI::ev106(f_ac4, (char *)"none");
-	C3DAI::ev106(f_a9c, (char *)"none");
-	C3DAI::ev106(f_aec, (char *)"none");
-	C3DAI::ev106(f_b14, (char *)"none");
-	C3DAI::ev106(f_a74, (char *)"none");
-	C3DAI::ev106(f_b3c, (char *)"none");
+	C3DAI::ev72(m_anim_run, (char *)"none");
+	C3DAI::ev72(m_anim_wag, (char *)"none");
+	C3DAI::ev72(m_anim_fly, (char *)"none");
+	C3DAI::ev72(m_anim_sit, (char *)"none");
+	C3DAI::ev72(m_anim_none, (char *)"none");
+	C3DAI::ev72(m_anim_walk, (char *)"none");
 	m_go_time = 0;
 }
 
@@ -82,7 +82,7 @@ void C3DAISuv::InitObject(void)								// 0x40b460
 	f_648 = 0;												// animations off
 	set_shape(Load3DShape(m_db, 2));						// 0x477ba0, element +0xac
 	MakeShapeUnLit(get_shape());							// element +0xb0, 0x477550
-	f_bd4 = 0;												// no hovering
+	m_hover = 0;												// no hovering
 	v67(500.0f);											// CGameObject +0x110: radius
 	v64(0.2f);												// CGameObject +0x100
 }
@@ -92,10 +92,10 @@ void C3DAISuv::AddTouching(CGameObject *other)				// 0x40b4f0
 	C3DAI::AddTouching(other);								// 0x40a3c0
 	if (other->NameContains((char *)"C3DAITRIGGER") && strcasecmp(m_tag, "GOAWAY") == 0)
 	{
-		ev107(3);											// element +0x124
+		ev73(3);											// element +0x124
 		C3DAITrigger *t = dynamic_cast<C3DAITrigger *>(other);	// (other - 0xc8)
-		if (t) strcpy(f_9ac, t->m_ai_patrol);				// its +0xab8 "AIPatrol" -> "PatrolPoint" (port: checked)
-		f_b8c = NULL;										// no destination
+		if (t) strcpy(m_patrol_point, t->m_ai_patrol);				// its +0xab8 "AIPatrol" -> "PatrolPoint" (port: checked)
+		m_dest = NULL;										// no destination
 		m_go_time = 10.0f;
 	}
 	CGameObject *driver = NULL;
@@ -160,7 +160,7 @@ void C3DAISuv::Process(float dt)							// 0x40b7a0
 		m_go_time -= dt;
 		if (m_go_time <= 0)
 		{
-			ev107(2);										// back to patrolling
+			ev73(2);										// back to patrolling
 			m_go_time = 0;
 		}
 	}

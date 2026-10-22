@@ -138,7 +138,7 @@ static OMedia3DVector SideSlip(CGameObject *o, float k)
 	return v;
 }
 
-// The game's random number generator (as ev105's): 0..1000.
+// The game's random number generator (as n2_ev105's): 0..1000.
 static int Random1001(void)
 {
 	unsigned int *seed = g_random_seed;
@@ -248,26 +248,26 @@ void neg::CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVecto
 	}
 }
 
-unsigned char C3DPlayer::ev103(void)						// 0x4378d0
+unsigned char C3DPlayer::ev86(void)						// 0x4378d0
 {
 	if (!g_mouse_rdown && !g_keys[0x2d] && !g_keys[0x10] && !g_keys[0x60] && !g_joy_button1)	// VK_INSERT, VK_SHIFT, VK_NUMPAD0
 		return 0;
-	if (g_4f0588 == 6 && ev104() && v133()) return 0;		// current gadget 6
+	if (g_4f0588 == 6 && ev87() && v133()) return 0;		// current gadget 6
 	return 1;
 }
 
-unsigned char C3DPlayer::ev104(void)						// 0x42a7a0
+unsigned char C3DPlayer::ev87(void)						// 0x42a7a0
 {
 	if (g_4f83e0) return 0;									// player controls off
 	if (!g_mouse_down && !g_keys[0x0d] && !g_keys[0x11] && !g_joy_button0) return 0;	// VK_RETURN, VK_CONTROL
 	return 1;
 }
 
-void C3DPlayer::ev105(void)									// N2:0x465360
+void C3DPlayer::n2_ev105(void)									// N2:0x465360
 {
 	// port: Negatron's "Jimmy is out: back to autosave.tsk"; Boy Genius restarts the level from
 	// C3DJimmy ("RestartLevel.tsk"). TODO(BG): remove once the callers are ported.
-	NEG_TODO(0x465360, "C3DPlayerObject::ev105 (Negatron only)");
+	NEG_TODO(0x465360, "C3DPlayerObject::n2_ev105 (Negatron only)");
 }
 
 void C3DPlayer::WriteState(OMediaStreamOperators &s) { CLocalGameObject::WriteState(s); }	// N2:0x4651b0
@@ -416,7 +416,7 @@ void C3DPlayer::v261(void)									// N2:0x4637f0
 {
 	f_96c = 0;
 	v176(0, 0, 0);
-	ev116();
+	n2_ev116();
 }
 
 void C3DPlayer::v262(CGameObject *other, float dist)		// 0x43a790
@@ -469,7 +469,7 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 	if (g_4f83e0)
 	{
 		v176(0, 0, 0);
-		ev80();
+		n2_ev80();
 		return;
 	}
 	f_ad0 += dt;
@@ -492,7 +492,7 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 					if (f_96c > 10.0f)
 					{
 						if (f_a68 == 1) JimmyJetpackOff(g_jimmy);	// N2:0x443370
-						if (f_c04 <= 0 && !ev77((char *)"RUN")) ev114((char *)"RUN");
+						if (f_c04 <= 0 && !n2_ev77((char *)"RUN")) n2_ev114((char *)"RUN");
 					}
 					else
 					{
@@ -501,20 +501,20 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 						{
 							if (PlayerKeyAction() && !PlayerKeyJump())
 							{
-								if (g_menu && !g_menu->IsCurrentGadget(4)) ev116();
+								if (g_menu && !g_menu->IsCurrentGadget(4)) n2_ev116();
 							}
-							else if (!ev77((char *)"STOP")) ev114((char *)"STOP");
+							else if (!n2_ev77((char *)"STOP")) n2_ev114((char *)"STOP");
 						}
 						else if (f_ac6 == -1)
 						{
 							if (f_c04 <= 0 && !PlayerKeyAction() && !PlayerKeyBack() &&
-								!ev77((char *)"BACK") && !ev77((char *)"LEFT"))
+								!n2_ev77((char *)"BACK") && !n2_ev77((char *)"LEFT"))
 								ev58((char *)"LEFT", 1);
 						}
 						else
 						{
 							if (f_c04 <= 0 && !PlayerKeyAction() && !PlayerKeyBack() &&
-								!ev77((char *)"BACK") && !ev77((char *)"RIGHT"))
+								!n2_ev77((char *)"BACK") && !n2_ev77((char *)"RIGHT"))
 								ev58((char *)"RIGHT", 1);
 						}
 					}
@@ -524,17 +524,17 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 				f_978 = 0;
 			}
 		}
-		if (f_a68 == 1) ev112(dt);
-		else if (f_a68 == 5) ev106(dt);
+		if (f_a68 == 1) n2_ev112(dt);
+		else if (f_a68 == 5) n2_ev106(dt);
 		else
 		{
-			if (g_camera && f_96c < 10.0f && f_c04 <= 0 && ev77((char *)"RUN")) ev114((char *)"STOP");
-			ev108(dt);
+			if (g_camera && f_96c < 10.0f && f_c04 <= 0 && n2_ev77((char *)"RUN")) n2_ev114((char *)"STOP");
+			n2_ev108(dt);
 		}
 		break;
 
 		case 2:
-		ev107(dt);
+		n2_ev107(dt);
 		break;
 	}
 	v154(f_96c);											// vtable +0x268
@@ -551,7 +551,7 @@ void C3DPlayer::v243(float dt)								// N2:0x4618d0
 		f_c8c.y = dt * f_c10 + f_c8c.y;
 		OMedia3DVector cam(g_viewport->getx(), (float)(f_c10 * 0.25f * dt + g_viewport->gety()), g_viewport->getz(), 1.0f);
 		v196(f_c8c.x, f_c8c.y, f_c8c.z, f_c8c.w);			// vtable +0x310
-		ev97(cam, Vec(f_c8c));								// element +0x184
+		n2_ev97(cam, Vec(f_c8c));								// element +0x184
 		f_b20 -= dt;
 		if (f_b20 <= 0)
 		{
@@ -572,14 +572,14 @@ void C3DPlayer::v243(float dt)								// N2:0x4618d0
 	}
 	switch (f_a68)
 	{
-		case 0: case 4: case 5: ev109(dt); break;			// element +0x1b4
-		case 1: case 2: ev110(dt); break;					// +0x1b8
-		case 3: ev111(dt); break;							// +0x1bc
+		case 0: case 4: case 5: n2_ev109(dt); break;			// element +0x1b4
+		case 1: case 2: n2_ev110(dt); break;					// +0x1b8
+		case 3: n2_ev111(dt); break;							// +0x1bc
 	}
 }
 
 // Wall contact (CGameObject slot 220, the physics passes the polygon's plane). The wall's
-// material chunk ID: 120..129 -> ev119, 110..119 -> ev120; in state 0, 60..69 is a fence and
+// material chunk ID: 120..129 -> n2_ev119, 110..119 -> n2_ev120; in state 0, 60..69 is a fence and
 // 180 a ladder to climb.
 void C3DPlayer::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	// 0x43aa40
 {
@@ -588,8 +588,8 @@ void C3DPlayer::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	
 	if (poly && poly->get_material())
 	{
 		id = (int)poly->get_material()->get_chunk_ID();		// material +0xc -> +8 (0 without one)
-		if (id >= 0x78 && id <= 0x81) ev119(OMedia3DVector(a, b, c, d));	// element +0x1dc
-		if (id >= 0x6e && id <= 0x77) ev120();				// +0x1e0
+		if (id >= 0x78 && id <= 0x81) n2_ev119(OMedia3DVector(a, b, c, d));	// element +0x1dc
+		if (id >= 0x6e && id <= 0x77) n2_ev120();				// +0x1e0
 	}
 	if (f_a68 != 0) return;
 	if (!((id >= 0x3c && id <= 0x45) || id == 0xb4)) return;
@@ -611,7 +611,7 @@ void C3DPlayer::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	
 		OMedia3DVector at = Position(this);
 		f_c8c.set(at.x, at.y, at.z, at.w);
 		f_920 = 1;
-		ev114((char *)"LADDER");
+		n2_ev114((char *)"LADDER");
 		return;
 	}
 	// fence: nothing above it, both sides of us against it, on the floor
@@ -635,7 +635,7 @@ void C3DPlayer::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	
 	at = Position(this);
 	f_c8c.set(at.x, at.y, at.z, at.w);
 	f_920 = 1;
-	ev114((char *)"FENCE");
+	n2_ev114((char *)"FENCE");
 }
 
 // --------------------------------------------------------------------------- animations
@@ -644,8 +644,8 @@ void C3DPlayer::ev67(void)									// N2:0x4639b0 "AnimEnded"
 {
 	if (strcasecmp(ev66(), "FENCE") == 0)
 	{
-		ev78((char *)"STOP");
-		ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"STOP");
+		n2_ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
 		f_8a4 = 1;
 		f_8a7 = 1;
 		f_b20 = 0;
@@ -657,8 +657,8 @@ void C3DPlayer::ev67(void)									// N2:0x4639b0 "AnimEnded"
 	}
 	else if (strcasecmp(ev66(), "LADDER") == 0)
 	{
-		ev78((char *)"STOP");
-		ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"STOP");
+		n2_ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
 		f_8a5 = 1;
 		f_8a4 = 0;
 		f_8a7 = 1;
@@ -691,7 +691,7 @@ void C3DPlayer::ev67(void)									// N2:0x4639b0 "AnimEnded"
 	}
 }
 
-void C3DPlayer::ev114(char *name)							// 0x43aff0
+void C3DPlayer::n2_ev114(char *name)							// 0x43aff0
 {
 	if (g_4f83e0 || f_8a7) return;
 	if (strcasecmp(name, ev66()) == 0) return;
@@ -702,14 +702,14 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 		strcasecmp(ev66(), "SWING") == 0) return;
 	if (strcasecmp(name, "RUN") == 0)
 	{
-		ev115();
+		n2_ev115();
 		ev58((char *)"RUN", 1);
 		v157(0, 0, 0);
 		return;
 	}
 	if (strcasecmp(ev66(), "EDGE") != 0 && strcasecmp(name, "EDGE") == 0)
 	{
-		ev116();
+		n2_ev116();
 		ev58((char *)"EDGE", 1);
 		return;
 	}
@@ -720,14 +720,14 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 	}
 	if (strcasecmp(name, "SWING") == 0)
 	{
-		ev116();
+		n2_ev116();
 		ev58((char *)"SWING", 1);
 		return;
 	}
 	if (f_96c < 0) return;									// going backwards: BACK stays
 	if (strcasecmp(name, "STOP") == 0 && strcasecmp(ev66(), "SPLAT") != 0)
 	{
-		ev116();
+		n2_ev116();
 		ev58((char *)"STOP", 1);
 		v157(0, 0, 0);
 		return;
@@ -735,19 +735,19 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 	if (strcasecmp(name, "FALL") == 0)
 	{
 		ev58((char *)"FALL", 1);
-		ev116();
+		n2_ev116();
 		return;
 	}
 	if (strcasecmp(name, "LEFT") == 0)
 	{
-		ev116();
+		n2_ev116();
 		ev58((char *)"LEFT", 1);
 		v157(0, 0, 0);
 		return;
 	}
 	if (strcasecmp(name, "RIGHT") == 0)
 	{
-		ev116();
+		n2_ev116();
 		ev58((char *)"RIGHT", 1);
 		v157(0, 0, 0);
 		return;
@@ -763,15 +763,15 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 		f_ad4.set(top.x, top.y, top.z, top.w);
 		v176(0, 0, 0);
 		v42(0);
-		ev116();
+		n2_ev116();
 		g_4f83e0 = 1;
 		f_b20 = 1.5f;
 		f_b04 = 1.55f;
 		f_ad0 = 0;
 		f_c10 = 150.0f;
 		// (debug log "Playing animation FENCE! Damnit", empty)
-		ev78((char *)"FENCE");
-		ev86((char *)"FENCE", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"FENCE");
+		n2_ev86((char *)"FENCE", NULL, NULL, NULL, 0, 0.0f);
 		f_8a7 = 1;
 		PlayGameSound(-1, std::string("umph climb"), false);	// 0x458b40
 		return;
@@ -782,7 +782,7 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 		f_ad4.set(top.x, top.y, top.z, top.w);
 		v176(0, 0, 0);
 		v42(0);
-		ev116();
+		n2_ev116();
 		g_4f83e0 = 1;
 		f_b20 = 2.2f;
 		f_b04 = 2.0f;
@@ -799,7 +799,7 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 
 // --------------------------------------------------------------------------- movement
 
-void C3DPlayer::ev106(float dt)								// N2:0x460940
+void C3DPlayer::n2_ev106(float dt)								// N2:0x460940
 {
 	OMedia3DVector off(0, 0, 0);							// (y never set)
 	f_a90 = -2.0f;
@@ -828,8 +828,8 @@ void C3DPlayer::ev106(float dt)								// N2:0x460940
 				f_96c = f_968 * 0.75f;
 				bool powered;
 				const float up = JumpSpeed(&powered);
-				jim->ev114((char *)"JUMP");
-				jim->ev116();
+				jim->n2_ev114((char *)"JUMP");
+				jim->n2_ev116();
 				v162(0, up, 0);									// vtable +0x288
 				jim->f_a8c = 1;
 			}
@@ -844,7 +844,7 @@ void C3DPlayer::ev106(float dt)								// N2:0x460940
 	if (v112()) LowGravity(this);
 }
 
-void C3DPlayer::ev107(float dt)								// N2:0x461640
+void C3DPlayer::n2_ev107(float dt)								// N2:0x461640
 {
 	OMedia3DVector off(0, 0, 0);
 	f_a90 = -10.0f;
@@ -864,7 +864,7 @@ void C3DPlayer::ev107(float dt)								// N2:0x461640
 	v195(t);												// (read, not used)
 	v174(t);
 	if (!v133()) return;
-	ev118();
+	n2_ev118();
 	if (PlayerKeyJump())
 	{
 		v174(t);
@@ -877,7 +877,7 @@ void C3DPlayer::ev107(float dt)								// N2:0x461640
 	v176(t[0], 300.0f, t[2]);
 }
 
-void C3DPlayer::ev108(float dt)								// 0x437c40
+void C3DPlayer::n2_ev108(float dt)								// 0x437c40
 {
 	OMedia3DVector off(0, 0, 0);
 	float vel[4];
@@ -900,7 +900,7 @@ void C3DPlayer::ev108(float dt)								// 0x437c40
 	v176(t[0], t[1] - 250.0f, t[2]);						// pressed onto the floor
 }
 
-void C3DPlayer::ev112(float dt)								// N2:0x461010
+void C3DPlayer::n2_ev112(float dt)								// N2:0x461010
 {
 	OMedia3DVector off(0, 0, 0);
 	f_a90 = -2.0f;
@@ -933,8 +933,8 @@ void C3DPlayer::ev112(float dt)								// N2:0x461010
 					bool powered;
 					const float up = JumpSpeed(&powered);
 					if (powered) PlayGameSound(-1, std::string("boing"), false);
-					ev114((char *)"JUMP");
-					ev116();
+					n2_ev114((char *)"JUMP");
+					n2_ev116();
 					v162(0, up, 0);
 					f_a8c = 1;
 				}
@@ -956,7 +956,7 @@ void C3DPlayer::ev112(float dt)								// N2:0x461010
 		{
 			if (v133())
 			{
-				ev116();
+				n2_ev116();
 				JimmyJetpackFlame(g_jimmy, 10.0f);
 				ev58((char *)"FLY", 1);
 				v162(0, 100.0f, 0);
@@ -968,7 +968,7 @@ void C3DPlayer::ev112(float dt)								// N2:0x461010
 			else
 			{
 				f_96c = 1200.0f;
-				if (!ev77((char *)"FLY")) ev58((char *)"FLY", 1);
+				if (!n2_ev77((char *)"FLY")) ev58((char *)"FLY", 1);
 				v174(t);
 				if (t[1] < 380.0f) v178(0, 80.0f, 0);			// vtable +0x2c8
 			}
@@ -998,7 +998,7 @@ void C3DPlayer::ev112(float dt)								// N2:0x461010
 	if (f_a8c == 1 || f_a8c == 5) f_a8c = 0;
 }
 
-OMedia3DVector C3DPlayer::ev113(float x, float y, float z)	// 0x43a5d0 (also C3DFlyingObject's)
+OMedia3DVector C3DPlayer::n2_ev113(float x, float y, float z)	// 0x43a5d0 (also C3DFlyingObject's)
 {
 	float r[4];
 	v201(r);
@@ -1013,7 +1013,7 @@ OMedia3DVector C3DPlayer::ev113(float x, float y, float z)	// 0x43a5d0 (also C3D
 	return OMedia3DVector(p.x + v.x, p.y + v.y, p.z + v.z, 1.0f);
 }
 
-unsigned char C3DPlayer::ev117(void)						// 0x43a7f0
+unsigned char C3DPlayer::n2_ev117(void)						// 0x43a7f0
 {
 	if (f_a68 != 0) return 0;
 	OMedia3DVector a = v224(0, 0, 70.0f);
@@ -1024,7 +1024,7 @@ unsigned char C3DPlayer::ev117(void)						// 0x43a7f0
 
 // --------------------------------------------------------------------------- control + camera
 
-void C3DPlayer::ev109(float dt)								// N2:0x461b50
+void C3DPlayer::n2_ev109(float dt)								// N2:0x461b50
 {
 	short mdx = 0, mdy = 0;
 	GetMouseDelta(&mdx, &mdy);
@@ -1049,8 +1049,8 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 	float k = 1.0f;
 	if (!v133())
 	{
-		if (f_a68 == 4) { if (ev77((char *)"FALL")) ev58((char *)"SWIM", 1); }
-		else if (!f_aed) ev114((char *)"FALL");
+		if (f_a68 == 4) { if (n2_ev77((char *)"FALL")) ev58((char *)"SWIM", 1); }
+		else if (!f_aed) n2_ev114((char *)"FALL");
 	}
 	f_9b8.x = g_viewport->getx();
 	f_9b8.y = g_viewport->gety();
@@ -1149,7 +1149,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 	else moved = turning;
 	if (f_aec)
 	{
-		if (f_c04 <= 0 && !ev77((char *)"BACK")) ev58((char *)"BACK", 1);
+		if (f_c04 <= 0 && !n2_ev77((char *)"BACK")) ev58((char *)"BACK", 1);
 		f_988 = 1;
 		f_96c = (float)(f_96c - f_964 * 1.5);
 		const float lim = f_968 * -0.5f;
@@ -1172,7 +1172,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 	}
 	if (g_menu && (g_menu->IsCurrentGadget(6) || g_menu->IsCurrentGadget(10)) && f_c9c && PlayerKeyAction())
 		f_96c = 0;
-	if (f_96c < 0) ev114((char *)"BACK");
+	if (f_96c < 0) n2_ev114((char *)"BACK");
 	bool turn = moved != 0;
 	if (!f_aec && mdy >= 2)
 	{
@@ -1207,7 +1207,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 		{
 			float maxd = 480.0f;
 			if (f_c04 > 0) maxd = 780.0f;
-			k = ev96(Position(this), &want, maxd);
+			k = n2_ev96(Position(this), &want, maxd);
 		}
 		else axis.x = axis.y = axis.z = 1.7f;
 		break;
@@ -1217,7 +1217,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 		look = v224(f_a7c.x, (float)(f_ae8 * 3.8 + f_a7c.y + 100.0), f_a7c.z + 40.0f);
 		break;
 	}
-	float k2 = ev95(look, &want);
+	float k2 = n2_ev95(look, &want);
 	OMedia3DVector p = Position(this);
 	const float dx = p.x - f_9b8.x, dy = p.y - f_9b8.y, dz = p.z - f_9b8.z;
 	const float dist = sqrtf(dz * dz + dy * dy + dx * dx);
@@ -1229,15 +1229,15 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 		HideAgain();
 		f_ca8 = 1;
 		want = v224(f_a6c.x, (f_a7c.y - 10.0f) + f_ae8 * 1.5f, f_a7c.z - 30.0f);
-		k2 = ev95(look, &want);
+		k2 = n2_ev95(look, &want);
 		axis.x = 2.8f;
 		axis.y = 2.5f;
 		axis.z = 2.8f;
 	}
-	ev98(dt, k2, k, Vec(f_9b8), want, look, axis);
+	n2_ev98(dt, k2, k, Vec(f_9b8), want, look, axis);
 }
 
-void C3DPlayer::ev110(float dt)								// N2:0x463140
+void C3DPlayer::n2_ev110(float dt)								// N2:0x463140
 {
 	short mdx = 0, mdy = 0;
 	GetMouseDelta(&mdx, &mdy);
@@ -1339,16 +1339,16 @@ void C3DPlayer::ev110(float dt)								// N2:0x463140
 	}
 	// camera
 	OMedia3DVector cur(g_viewport->getx(), g_viewport->gety(), g_viewport->getz(), 1.0f);
-	OMedia3DVector want = ev113(f_a6c.x, f_a6c.y, f_a6c.z);
+	OMedia3DVector want = n2_ev113(f_a6c.x, f_a6c.y, f_a6c.z);
 	float k = 1.0f;
-	if (f_c1c == 0) k = ev96(Position(this), &want, 480.0f);
+	if (f_c1c == 0) k = n2_ev96(Position(this), &want, 480.0f);
 	OMedia3DVector look = v224(f_a7c.x, f_a7c.y, f_a7c.z);
-	const float k2 = ev95(look, &want);
+	const float k2 = n2_ev95(look, &want);
 	ShowAgain();
-	ev98(dt, k2, k, cur, want, look, OMedia3DVector(1.2f, 2.0f, 1.2f, 0.0f));
+	n2_ev98(dt, k2, k, cur, want, look, OMedia3DVector(1.2f, 2.0f, 1.2f, 0.0f));
 }
 
-void C3DPlayer::ev111(float dt)								// N2:0x462b70
+void C3DPlayer::n2_ev111(float dt)								// N2:0x462b70
 {
 	short mdx = 0, mdy = 0;
 	GetMouseDelta(&mdx, &mdy);
@@ -1386,13 +1386,13 @@ void C3DPlayer::ev111(float dt)								// N2:0x462b70
 	}
 	f_978 = T + f_978;
 	OMedia3DVector cur(g_viewport->getx(), g_viewport->gety(), g_viewport->getz(), 1.0f);
-	OMedia3DVector want = ev113(f_a6c.x, f_a6c.y, f_a6c.z);
+	OMedia3DVector want = n2_ev113(f_a6c.x, f_a6c.y, f_a6c.z);
 	OMedia3DVector look = v224(f_a7c.x, f_a7c.y, f_a7c.z);
-	const float k2 = ev95(look, &want);
-	ev98(dt, k2, 1.0f, cur, want, look, OMedia3DVector(1.2f, 1.2f, 1.2f, 0.0f));
+	const float k2 = n2_ev95(look, &want);
+	n2_ev98(dt, k2, 1.0f, cur, want, look, OMedia3DVector(1.2f, 1.2f, 1.2f, 0.0f));
 }
 
-void C3DPlayer::ev122(void)									// N2:0x460380
+void C3DPlayer::n2_ev122(void)									// N2:0x460380
 {
 	f_a6c.x = 0;
 	f_a6c.y = 200.0f;
@@ -1405,12 +1405,12 @@ void C3DPlayer::ev122(void)									// N2:0x460380
 	f_af0.z = 1.4f;
 }
 
-void C3DPlayer::ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt)	// N2:0x462de0
+void C3DPlayer::n2_ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt)	// N2:0x462de0
 {
 	const float cx = g_viewport->getx(), cy = g_viewport->gety(), cz = g_viewport->getz();
-	OMedia3DVector want = ev113(off.x, off.y, off.z);
+	OMedia3DVector want = n2_ev113(off.x, off.y, off.z);
 	OMedia3DVector at = v224(look.x, look.y, look.z);
-	const float k2 = ev95(at, &want);
+	const float k2 = n2_ev95(at, &want);
 	const float dx = want.x - cx, dy = want.y - cy, dz = want.z - cz;
 	if (!f_aed)
 	{
@@ -1428,7 +1428,7 @@ void C3DPlayer::ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt
 	g_viewport->set_angley((omt_WAngle)(vy + turn));
 }
 
-void C3DPlayer::ev124(float dt)								// N2:0x4629c0
+void C3DPlayer::n2_ev124(float dt)								// N2:0x4629c0
 {
 	if (f_bf8 <= 0) return;
 	f_bf8 -= dt;
@@ -1452,12 +1452,12 @@ void C3DPlayer::ev124(float dt)								// N2:0x4629c0
 	if (f_bf8 < -2.0f) f_bf8 = 0;
 }
 
-void C3DPlayer::ev125(char *start)							// N2:0x464840
+void C3DPlayer::n2_ev125(char *start)							// N2:0x464840
 {
 	strcpy(f_9c8, start);
 }
 
-void C3DPlayer::ev126(char *game)							// N2:0x464870
+void C3DPlayer::n2_ev126(char *game)							// N2:0x464870
 {
 	strcpy(f_c25, game);
 }
@@ -1465,7 +1465,7 @@ void C3DPlayer::ev126(char *game)							// N2:0x464870
 // "PlayerLoadLevel": go to <game> at <start>. f_c18 1 first asks the game type whether a
 // promotion is due (then the promotion level comes first and <game> is remembered in f_c25);
 // f_c18 2 comes back from it. <picture> is shown on the HUD while loading.
-void C3DPlayer::ev121(char *game, char *start, char *ret_game, char *ret_start, int picture)	// N2:0x4648a0
+void C3DPlayer::n2_ev121(char *game, char *start, char *ret_game, char *ret_start, int picture)	// N2:0x4648a0
 {
 	// (debug log "Calling PlayerLoadLevel  %s  %s  %s  %s", empty)
 	JimmyActivateMenuItem(g_jimmy, this, g_jimmy, 0, 0.0f);	// Jimmy element +0x228
@@ -1479,9 +1479,9 @@ void C3DPlayer::ev121(char *game, char *start, char *ret_game, char *ret_start, 
 	if (f_c18 == 2)
 	{
 		strcpy(buf, f_c25);
-		ev125(f_a18);
+		n2_ev125(f_a18);
 		strcpy(f_a18, f_b24);
-		ev126((char *)"Promotion.gam");
+		n2_ev126((char *)"Promotion.gam");
 		strcpy(f_b24, "phonebooth");
 		strcpy(f_b89, f_c25);
 		// port: the original passes the short g_N2_545d9c in a register whose upper half is left over
@@ -1494,18 +1494,18 @@ void C3DPlayer::ev121(char *game, char *start, char *ret_game, char *ret_start, 
 		if (f_c18 == 1 && jg && jg->CheckPromotion())		// +0x188 (port: only a CJimmyGame has it)
 		{
 			strcpy(f_a18, "none");
-			ev126(buf);
+			n2_ev126(buf);
 			strcpy(buf, "Promotion.gam");
-			ev125((char *)"phonebooth");
+			n2_ev125((char *)"phonebooth");
 			strcpy(f_b24, start);
 			strcpy(f_b89, "promotion.gam");
 			g_gametype->SetCamera(NULL);					// +0x124
 		}
 		else
 		{
-			ev125(start);
+			n2_ev125(start);
 			strcpy(f_a18, start);
-			ev126(ret_game);
+			n2_ev126(ret_game);
 			strcpy(f_b24, ret_start);
 			strcpy(f_b89, buf);
 		}
@@ -1516,5 +1516,5 @@ void C3DPlayer::ev121(char *game, char *start, char *ret_game, char *ret_start, 
 		f_bdc.set(p.x, p.y, p.z, p.w);
 	}
 	LoadTask(buf, true);									// N2:0x498af0
-	ev116();
+	n2_ev116();
 }
