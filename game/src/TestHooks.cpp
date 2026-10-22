@@ -10,13 +10,19 @@
     NEG_TEST_SEQUENCE=1        With NEG_TEST_PLAY: leave the level as it loads (its start trigger
                                and story sequence run, as in a new game).
     NEG_TEST_POSLOG=<seconds>  Every <seconds> of game time, log Jimmy's position, rotation and
-                               velocity ("POS x y z rot ... vel ...").                        */
+                               velocity ("POS x y z rot ... vel ...").
+    NEG_TEST_GOTO=<s>:<tag>[@dx/dz],...  At <s> seconds of game time put Jimmy where the object
+                               tagged <tag> is (moved by dx, dz; 60 higher), e.g. to try an
+                               exit or a phone booth without steering there.
+    NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.             */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
 #include "objects/C3DStartPoint.h"
 #include "Game.h"
+#include "SaveGame.h"
+#include <stdio.h>
 #include <SDL.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +39,23 @@ void neg::TestPlayHook(const char *level)
 {
 	const char *want = getenv("NEG_TEST_PLAY");
 	if (!want || strcasecmp(want, level) != 0) return;
+	if (const char *tasks = getenv("NEG_TEST_TASK"))
+	{
+		for (const char *p = tasks; *p; )
+		{
+			const char *e = strchr(p, ',');
+			if (!e) e = p + strlen(p);
+			const char *q = strchr(p, '=');
+			if (q && q < e && q - p < 60)
+			{
+				char name[64];
+				memcpy(name, p, (size_t)(q - p)); name[q - p] = 0;
+				SetTaskState(name, atoi(q + 1));
+				SDL_Log("NEG_TEST_TASK: %s = %d", name, atoi(q + 1));
+			}
+			p = *e ? e + 1 : e;
+		}
+	}
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
@@ -48,8 +71,50 @@ void neg::TestPlayHook(const char *level)
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
 }
 
+static CGameObject *TestFindTag(const char *tag)
+{
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
+	return NULL;
+}
+
+static void TestGoto(CGameObject *o, float dt)
+{
+	static const char *spec = getenv("NEG_TEST_GOTO");
+	static float t = 0;
+	if (!spec || !*spec) return;
+	const float before = t;
+	t += dt;
+	for (const char *p = spec; *p; )
+	{
+		const char *e = strchr(p, ',');
+		if (!e) e = p + strlen(p);
+		const float at = (float)atof(p);
+		const char *c = strchr(p, ':');
+		if (c && c < e && at > before && at <= t)
+		{
+			char tag[100] = "";
+			float dx = 0, dz = 0;
+			size_t n = (size_t)(e - c - 1) < sizeof tag - 1 ? (size_t)(e - c - 1) : sizeof tag - 1;
+			memcpy(tag, c + 1, n); tag[n] = 0;
+			if (char *at_sign = strchr(tag, '@')) { *at_sign = 0; sscanf(at_sign + 1, "%f/%f", &dx, &dz); }
+			CGameObject *dest = TestFindTag(tag);
+			if (!dest) SDL_Log("NEG_TEST_GOTO: no object %s", tag);
+			else
+			{
+				float d[4];
+				dest->v195(d);
+				o->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				SDL_Log("NEG_TEST_GOTO: Jimmy to %s (%.0f %.0f %.0f)", tag, d[0] + dx, d[1] + 60.0f, d[2] + dz);
+			}
+		}
+		p = *e ? e + 1 : e;
+	}
+}
+
 void neg::TestPosLog(CGameObject *o, float dt)
 {
+	if (o) TestGoto(o, dt);
 	static float every = -1, t = 0;
 	if (every < 0) { const char *e = getenv("NEG_TEST_POSLOG"); every = e && *e ? (float)atof(e) : 0; }
 	if (every <= 0 || !o) return;

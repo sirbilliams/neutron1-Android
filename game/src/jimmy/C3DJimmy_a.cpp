@@ -4,6 +4,7 @@
 #include "../C3DAI.h"
 #include "../yokian/C3DYokian.h"
 #include "../pickups/C3DPickupItem.h"
+#include "../TestHooks.h"
 
 using namespace neg;
 using namespace jimmybg;
@@ -174,6 +175,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 
 void C3DJimmy::Process(float dt)							// 0x424600
 {
+	TestPosLog(this, dt);									// port: NEG_TEST_POSLOG / NEG_TEST_GOTO
 	g_4f8408 += dt;
 	if (!g_camera)
 	{

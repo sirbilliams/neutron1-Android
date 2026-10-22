@@ -68,11 +68,7 @@ static void RequestTaskFile(const char *name)
 
 // 0x406f90(screen): open in-game menu screen `screen` (once: 0x4f8198), with the cursor.
 // TODO(core): the BG menu.
-static void OpenMenuScreen(int screen)
-{
-	(void)screen;
-	NEG_TODO(0x406f90, "C3DAITrigger: open a menu screen");
-}
+static void OpenMenuScreen(int box)	{ neg::OpenConfirm(box); }	// 0x406f90 a yes/no box (agent F's menu)
 
 // The element of a game object (the original subtracts 0xc0 / 0xc8 without looking).
 static OMediaElement *Elt(CGameObject *o)	{ return o ? dynamic_cast<OMediaElement *>(o) : NULL; }

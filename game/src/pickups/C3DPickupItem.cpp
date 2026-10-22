@@ -114,18 +114,13 @@ static void AnnouncePickupBG(int pic, unsigned int index)
 	g_pickup_counts[2 * pic]++;								// 0x4f7db8
 }
 
-// 0x406f90: open the in-game menu on page `page` (cursor shown, page canvas shown, the game
-// paused through game type +0x168, g_4f8048 = page). Part of the menu (agent A's C2DInGameMenu).
-static void OpenInGameMenu(int page)
-{
-	NEG_TODO(0x406f90, "open the in-game menu on a page");
-	(void)page;
-}
+// 0x406f90: the yes/no box "try it in VR?" for a new gadget (box = the VR level; agent F's menu).
+static void OpenInGameMenu(int box)	{ neg::OpenConfirm(box); }
 
 // Jimmy's element slots used by the tagged pickups (C3DJimmy is reconstructed elsewhere).
 static void JimmySlot122(CGameObject *jim)	{ if (C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL) j->SaveCheckpoint(); }	// element +0x1e8
-static void JimmySelect(CGameObject *jim, short gadget)	{ (void)jim; (void)gadget; NEG_TODO(0x428d50, "C3DJimmy element +0x174: select a gadget"); }
-static void JimmySlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element +0x178"); }
+static void JimmySelect(CGameObject *jim, short gadget)	{ if (C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL) j->ActivateGadget(gadget); }	// element +0x174
+static void JimmySlot94(CGameObject *jim)	{ if (C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL) j->DeactivateGadget(); }	// element +0x178
 
 // 0x4365d0: the story steps of the tagged pickups.
 static void TaggedPickup(C3DPickupItem *p)
