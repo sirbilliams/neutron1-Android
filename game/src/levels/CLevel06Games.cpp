@@ -10,14 +10,14 @@ using namespace levels;
 
 // --------------------------------------------------------------------------- CLevel06Game 'LEV6'
 
-CLevel06Game::CLevel06Game()												// N2:0x48d250
+CLevel06Game::CLevel06Game()												// 0x455700
 {
 	static char name[] = "CLEVEL06GAME";
 	SetName(name);
 	Log("CLevel06Game()");
 	CGameType::InitObject();
 	CGameType::SetID('LEV6');
-	m_pickup_index_base = 3000;
+	m_pickup_index_base = 2900;
 }
 
 CLevel06Game::~CLevel06Game()												// 0x455820
@@ -42,14 +42,14 @@ void CLevel06Game::InitGame(void)											// 0x4558b0
 
 // --------------------------------------------------------------------------- CLevel06AGame 'LV6A'
 
-CLevel06AGame::CLevel06AGame()												// N2:0x48ce90
+CLevel06AGame::CLevel06AGame()												// 0x455330
 {
 	static char name[] = "CLEVEL06AGAME";
 	SetName(name);
 	Log("CLevel06AGame()");
 	CGameType::InitObject();
 	CGameType::SetID('LV6A');
-	m_pickup_index_base = 2900;
+	m_pickup_index_base = 2800;
 }
 
 CLevel06AGame::~CLevel06AGame()												// 0x455450
@@ -81,7 +81,7 @@ CLevel07Game::CLevel07Game()												// 0x455ad0
 	Log("CLevel07Game()");
 	CGameType::InitObject();
 	CGameType::SetID('LEV7');
-	m_pickup_index_base = 3100;
+	m_pickup_index_base = 3000;
 }
 
 CLevel07Game::~CLevel07Game()												// 0x455bf0

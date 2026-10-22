@@ -26,7 +26,7 @@ CLevel01Game::~CLevel01Game()												// 0x4504f0
 	Log("~CLevel01Game()");
 }
 
-// 0x4508d0 (shared with L1_A, L1_B, L1_C, LV4B): only CJimmyGame's.
+// 0x4508d0: only CJimmyGame's.
 void CLevel01Game::Process(float dt)	{ CJimmyGame::Process(dt); }
 
 void CLevel01Game::InitGame(void)											// 0x450580
@@ -98,7 +98,9 @@ void CLevel01AGame::InitGame(void)											// 0x44f0e0
 	InitTerrainDatabase("level1a.omt");
 	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
-	SetFog(0.28f, 0.3f, 0.4f, 0.0f, 600.0f, 4500.0f, 5000.0f, true);
+	const OMediaFARGBColor c = RGBA(0.28f, 0.3f, 0.4f, 0.0f);
+	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
+	WorldFog(g_layer_world, c, 5000.0f, 600.0f, 4500.0f);	// (the same through 0x509a30 and 0x509a3c)
 	CaptureMouse(true);
 }
 
@@ -157,9 +159,10 @@ void CLevel01CGame::InitGame(void)											// 0x44f7e0
 	CJimmyGame::InitGame();
 	v107(0);
 	InitTerrainDatabase("level1c.omt");
-	CreateTerrainUnLit();
+	CreateTerrainUnLit();									// element +0xf8
 	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 1.0f, 10000.0f, 12000.0f, 12000.0f, true);
+	g_layer_world->set_far_clip(10000.0f);					// as level 1b: far plane only, fog off
+	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);
 }
 
@@ -172,28 +175,31 @@ CLevel01EGame::CLevel01EGame()												// 0x44fcd0
 	Log("CLevel01EGame()");
 	CGameType::InitObject();
 	CGameType::SetID('LV1E');
-	m_pickup_index_base = 1900;					// (the same as CLevel03Game's)
+	m_pickup_index_base = 600;
 }
 
 CLevel01EGame::~CLevel01EGame()												// 0x44fdf0
 {
 }
 
-// 0x44fe30. Quirk: it loads level 3's terrain, and sets no fog.
-void CLevel01EGame::InitGame(void)
+// The same as CLevel01DGame::InitGame with level1e.omt.
+void CLevel01EGame::InitGame(void)											// 0x44fe30
 {
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);
-	InitTerrainDatabase("level3.omt");
-	CreateTerrainUnLit();
+	LocalSky("omt\\space.omt");								// a local: m_sky stays NULL
+	InitTerrainDatabase("level1e.omt");
+	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
+	g_layer_world->set_far_clip(120000.0f);					// 0x509a30, then the same through 0x509a3c
+	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);
 }
 
 // --------------------------------------------------------------------------- CLevel01FGame 'LV1F'
 
-CLevel01FGame::CLevel01FGame()												// 0x454f00
+CLevel01FGame::CLevel01FGame()												// 0x450000
 {
 	static char name[] = "CLEVEL01DGAME";		// sic: level 1d's name and log
 	SetName(name);
@@ -212,146 +218,23 @@ void CLevel01FGame::InitGame(void)											// 0x450160
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);
-	C3DObject *sky = CreateSky();							// a local: no sky rotation
-	SkyLoad(sky, "omt\\space.omt", false);
-	sky->place(0.0f, 0.0f, 0.0f);
-	sky->InitPhysics();
-	sky->v67(1.0f);
-	sky->v152(1.0f);
-	sky->ev51();
+	LocalSky("omt\\space.omt");								// a local: no sky rotation
 	InitTerrainDatabase("level1f.omt");
 	CreateTerrain();
 	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 14000.0f, 15000.0f, true);
-	CaptureMouse(true);
-}
-
-// --------------------------------------------------------------------------- CLevel01_AGame 'L1_A'
-
-CLevel01_AGame::CLevel01_AGame()											// 0x455330
-{
-	static char name[] = "CLEVEL01_AGAME";
-	SetName(name);
-	Log("CLevel01_AGame()");
-	CGameType::InitObject();
-	CGameType::SetID('L1_A');
-	m_pickup_index_base = 800;
-}
-
-CLevel01_AGame::~CLevel01_AGame()											// N2:0x4866a0
-{
-	Log("~CLevel01_AGame()");
-}
-
-void CLevel01_AGame::Process(float dt)	{ CJimmyGame::Process(dt); }		// 0x4508d0
-
-void CLevel01_AGame::InitGame(void)											// N2:0x486730
-{
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	v107(0);
-	m_sky = CreateSky();
-	SkyLoad(m_sky, "omt\\wintersky.omt", false);
-	m_sky->ev51();
-	m_sky->place(0.0f, 0.0f, 0.0f);
-	m_sky->InitPhysics();
-	m_sky->v67(1.0f);
-	m_sky->v152(1.0f);
-	m_sky_rotates = 0;
-	InitTerrainDatabase("level1_A.omt");
-	CreateTerrainTinted(1.0f, 1.0f, 1.0f, 1.0f);			// element +0x168
-	ViewportToOrigin();
-	SetFog(0.2f, 0.2f, 0.2f, 0.0f, 13000.0f, 17000.0f, 28000.0f, false);	// (fog off)
-	CaptureMouse(true);
-}
-
-// --------------------------------------------------------------------------- CLevel01_BGame 'L1_B'
-
-CLevel01_BGame::CLevel01_BGame()											// 0x454b80
-{
-	static char name[] = "CLEVEL01_BGAME";
-	SetName(name);
-	Log("CLevel01_BGame()");
-	CGameType::InitObject();
-	CGameType::SetID('L1_B');
-	m_pickup_index_base = 800;
-}
-
-CLevel01_BGame::~CLevel01_BGame()											// N2:0x486ab0
-{
-	Log("~CLevel01_BGame()");
-}
-
-void CLevel01_BGame::Process(float dt)	{ CJimmyGame::Process(dt); }		// 0x4508d0
-
-void CLevel01_BGame::InitGame(void)											// N2:0x486b40
-{
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	v107(0);
-	m_sky = CreateSky();
-	SkyLoad(m_sky, "omt\\dusksky.omt", false);
-	m_sky->ev51();
-	m_sky->place(0.0f, 0.0f, 0.0f);
-	m_sky->InitPhysics();
-	m_sky->v67(1.0f);
-	m_sky->v152(1.0f);
-	InitTerrainDatabase("level1_B.omt");
-	CreateTerrainTinted(1.0f, 1.0f, 1.0f, 1.0f);
-	ViewportToOrigin();
-	SetFog(0.6f, 0.37f, 0.25f, 0.0f, 1000.0f, 5000.0f, 7500.0f, true);
-	CaptureMouse(true);
-}
-
-// --------------------------------------------------------------------------- CLevel01_CGame 'L1_C'
-
-CLevel01_CGame::CLevel01_CGame()											// 0x44f300
-{
-	static char name[] = "CLEVEL01_CGAME";
-	SetName(name);
-	Log("CLevel01_CGame()");
-	CGameType::InitObject();
-	CGameType::SetID('L1_C');
-	m_pickup_index_base = 800;
-}
-
-CLevel01_CGame::~CLevel01_CGame()											// N2:0x486eb0
-{
-	Log("~CLevel01_CGame()");
-}
-
-void CLevel01_CGame::Process(float dt)	{ CJimmyGame::Process(dt); }		// 0x4508d0
-
-void CLevel01_CGame::InitGame(void)											// N2:0x486f40
-{
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	v107(0);
-	m_sky = CreateSky();
-	m_sky_rotates = 0;
-	SkyLoad(m_sky, "omt\\nightsky.omt", false);
-	m_sky->ev51();
-	m_sky->place(0.0f, 0.0f, 0.0f);
-	m_sky->InitPhysics();
-	m_sky->v67(1.0f);
-	m_sky->v152(1.0f);
-	InitTerrainDatabase("level1_C.omt");
-	CreateTerrainTinted(0.7f, 0.7f, 0.8f, 1.0f);
-	ViewportToOrigin();
-	SetFog(0.2f, 0.2f, 0.2f, 0.0f, 13000.0f, 17000.0f, 28000.0f, true);
+	const OMediaFARGBColor c = RGBA(0.0f, 0.0f, 0.0f, 0.0f);
+	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
+	WorldFog(g_layer_world, c, 15000.0f, 2000.0f, 14000.0f);
 	CaptureMouse(true);
 }
 
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel01Game(void)		{ return new CLevel01Game; }		// 'LEV1' (0x690 bytes)
-CGameObject *New_CLevel01AGame(void)	{ return new CLevel01AGame; }		// 'LV1A' (0x68c bytes)
+CGameObject *New_CLevel01Game(void)		{ return new CLevel01Game; }		// 'LEV1' (0x5c4 bytes)
+CGameObject *New_CLevel01AGame(void)	{ return new CLevel01AGame; }		// 'LV1A' (0x5c0 bytes)
 CGameObject *New_CLevel01BGame(void)	{ return new CLevel01BGame; }		// 'LV1B'
 CGameObject *New_CLevel01CGame(void)	{ return new CLevel01CGame; }		// 'LV1C'
 CGameObject *New_CLevel01EGame(void)	{ return new CLevel01EGame; }		// 'LV1E'
 CGameObject *New_CLevel01FGame(void)	{ return new CLevel01FGame; }		// 'LV1F'
-CGameObject *New_CLevel01_AGame(void)	{ return new CLevel01_AGame; }		// 'L1_A'
-CGameObject *New_CLevel01_BGame(void)	{ return new CLevel01_BGame; }		// 'L1_B'
-CGameObject *New_CLevel01_CGame(void)	{ return new CLevel01_CGame; }		// 'L1_C'
 }

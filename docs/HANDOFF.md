@@ -106,12 +106,11 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   - C3DBubble, C3DBaseball, grappling hook swing/fire, merry-go-round / SUV slot 94.
   - The lab's black ball (Bill's screenshot); verify the scooter stays hidden after the intro.
   - C3DObject; the .ase loader for the model viewer.
-  - Level game types (agent A's comparison, nothing changed yet): wrong code in LV1C, LV1E (terrain,
-    sky), LEV2, LV2B (fog), LEV3, LV3A-E, LV4A, LV4B (fog + fog-sweep Process), LV4C (terrain call);
-    VR01 = VR02 with vr01.omt; VR03-08 = VR02 copies with vrNN.omt (pickup bases 3300-3800); wrong
-    pickup-index bases: LV1E 600, LEV5 2700, LV6A/LEV6/LEV7 2800/2900/3000, VR01-08 3100 + 100 each.
-    Remove Negatron-only L1_A/B/C, L5B1, LV5C, LV5F, LPRO; fog set inline (not CJimmyGame::SetFog);
-    regenerate gen/CLocalGameObject_* (still Negatron addresses).
+  - Level game types: done except level2 (LEV2/LV2A/LV2B, agent p). Every InitGame/ctor/dtor of
+    LEV1, LV1A-F, LEV3, LV3A-E, LEV4, LV4A-D (LV4B fog sweep), LEV5, LV5A/B, LEV6, LV6A, LEV7 and
+    VR01-08 now matches Neutron.exe (fog inline through the layer globals, pickup bases, terrain
+    calls); Negatron-only L1_A/B/C, L5B1, LV5C, LV5F, LPRO removed. CJimmyGame::SetFog (N2:0x484520)
+    is still used by LEV2/LV2x and CJimmyGame::ReadState.
   - v197: A says the generated code already sets x, y, z (E's report may be stale): verify.
   - Exit-time use-after-free in C2DInGameMenu's destructor; OMT shape reader new[]/delete.
   - APK is signed with a one-off key until Bill adds NEG_KEYSTORE_B64 / NEG_KEYSTORE_PASSWORD to
