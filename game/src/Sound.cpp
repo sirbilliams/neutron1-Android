@@ -236,25 +236,17 @@ static int PlayNamedSound(int channel, const std::string &name, bool loop)
 
 int neg::PlaySound(int channel, const std::string &name, bool loop)		// 0x47d420
 {
-	if (!SfxActive())
-	{
-		g_cutscene_skipped = true;
-		return -1;
-	}
+	if (!SfxActive()) return -1;						// (Negatron also set g_cutscene_skipped)
 	return PlayNamedSound(channel, name, loop);			// "Playing channel %d"
 }
 
 int neg::PlaySoundIndex(int channel, int id, bool loop)					// 0x47d390
 {
-	if (!SfxActive())
-	{
-		g_cutscene_skipped = true;
-		return -1;
-	}
+	// (Negatron also set g_cutscene_skipped with the sound off and logged "ERROR: Playing a
+	// channel with an index" on every call; Neutron.exe does neither)
+	if (!SfxActive()) return -1;
 	if (!g_active_sound_db || !g_active_sound_db->object_exists(OMediaSound::db_type, (omt_FSChunkID)id)) return -1;
-	int ch = PlaySoundOnChannel(channel, FetchSound(g_active_sound_db, id), loop);
-	ErrorLog("ERROR: Playing a channel with an index, using index # %d", id);	// on every call, as shipped
-	return ch;
+	return PlaySoundOnChannel(channel, FetchSound(g_active_sound_db, id), loop);
 }
 
 // N2:0x4b82f0: starts the sound on a free channel and stops it at once - it is loaded into the
@@ -275,14 +267,7 @@ int neg::PlaySound3D(CGameObject *o, int channel, const std::string &name, bool 
 
 int neg::PlaySound3DIndex(CGameObject *o, int channel, int id, bool loop)		// 0x47d640
 {
-	if (!SfxActive())
-	{
-		g_cutscene_skipped = true;
-		return -1;
-	}
-	if (!g_active_sound_db || !g_active_sound_db->object_exists(OMediaSound::db_type, (omt_FSChunkID)id)) return -1;
-	int ch = PlaySoundOnChannel(channel, FetchSound(g_active_sound_db, id), loop);
-	ErrorLog("ERROR: Playing a channel with an index, using index # %d", id);
+	int ch = PlaySoundIndex(channel, id, loop);			// 0x47d390
 	if (ch != -1) Start3D(ch, o, true);
 	return ch;
 }
@@ -347,12 +332,8 @@ void neg::UpdateSound3D(int ch)
 
 int neg::PlayMusic(OMediaDataBase *db, int channel, int id, bool loop)
 {
-	if (!g_sound || !g_music_on)
-	{
-		g_cutscene_skipped = true;
-		return g_music_channel;
-	}
 	StopChannel(g_music_channel, false);
+	if (!g_sound || !g_music_on) return g_music_channel;	// (Negatron also set g_cutscene_skipped)
 	if (db)
 	{
 		g_music_db = db;
