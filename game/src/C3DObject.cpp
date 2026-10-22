@@ -23,10 +23,9 @@ C3DObject::C3DObject()										// 0x462040
 {
 	SetName((char *)"C3DOBJECT");
 	Log("C3DObject()");
-	OMediaElement::set_id('3OBJ');							// element +0x78
-	m_object_id = '3OBJ';									// CGameObject +0x404
-	f_588 = 0;
-	f_589 = 1;
+	SetObjectID('3OBJ');									// 0x462220 (direct call): element +0x78, CGameObject +0x404
+	f_574 = 0;
+	f_589 = 1;												// port: see the header
 }
 
 C3DObject::~C3DObject()										// 0x462170
@@ -85,13 +84,14 @@ void C3DObject::ev53(void)									// 0x4627b0: scale from the shape's height
 	}
 }
 
-void C3DObject::ShowAgain(void)								// N2:0x49b100
+// port: ShowAgain / HideAgain are not in Neutron.exe (see the header); Negatron's code, kept for its callers.
+void C3DObject::ShowAgain(void)
 {
 	f_589 = 1;
 	force_show();											// hide_count = 1; hide(false)
 }
 
-void C3DObject::HideAgain(void)								// N2:0x49b120
+void C3DObject::HideAgain(void)
 {
 	if (f_589)
 	{
