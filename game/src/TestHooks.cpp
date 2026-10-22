@@ -14,7 +14,9 @@
     NEG_TEST_GOTO=<s>:<tag>[#n][@dx/dz],...  At <s> seconds of game time put Jimmy where the
                                (n-th) object tagged <tag> is (moved by dx, dz; 60 higher), e.g.
                                to try an exit or a phone booth without steering there.
-    NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.             */
+    NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
+    NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
+                               gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
@@ -55,6 +57,15 @@ void neg::TestPlayHook(const char *level)
 			}
 			p = *e ? e + 1 : e;
 		}
+	}
+	if (const char *gad = getenv("NEG_TEST_GADGETS"))
+	{
+		for (const char *p = gad; *p; p++)
+			if (*p >= '0' && *p <= '9')
+			{
+				MenuSetItem(0, (short)atoi(p), 1);
+				while (p[1] >= '0' && p[1] <= '9') p++;
+			}
 	}
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
