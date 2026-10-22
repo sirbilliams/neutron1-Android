@@ -170,12 +170,13 @@ void C3DVehicle::ev109(float x, float y, float z)			// 0x465170
 	g_viewport->place(p[0], p[1], p[2]);					// viewport +0x44
 }
 
-void C3DVehicle::ev110(float dt)							// N2:0x49e710
+void C3DVehicle::ev110(float dt)							// 0x465e00 (68 KB of camera views)
 {
-	// The camera of a plain vehicle: the same twenty views as C3DCar's (level1/C3DCar.cpp), with
-	// other distances. No level places a '3VEH' and C3DCar overrides it.
+	// The camera of a plain vehicle: the same views as C3DCar's (level1/C3DCar.cpp), with other
+	// distances. No level places a plain vehicle (it has no factory ID) and C3DCar overrides it,
+	// so this is never run: left as the one remaining TODO of the class.
 	(void)dt;
-	NEG_TODO(/*N2*/0x49e710, "C3DVehicle::ev110, the camera of a plain vehicle");
+	NEG_TODO(0x465e00, "C3DVehicle::ev110, the camera of a plain vehicle");
 }
 
 void C3DVehicle::ev111(float dt)							// 0x4669f0
