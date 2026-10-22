@@ -1,37 +1,29 @@
-/*  C3DCorona ('3COR') - a glowing billboard (sprites.omt canvas 36 by default) drawn additively
-    in "Red/Green/Blue" at "Opacity", that with "AutoMod" spins at "SpinRate" and pulses its size
-    by sin(t * "GrowSpeed") * "GrowMax" around SpriteSize. Placed on its own, or made by
-    C3DTransportEffect and C3DPickupItem as their glow. Hidden in windowed mode.
-    Reconstructed from Neutron.exe: constructor 0x434880 (factory '3COR', 0x694 bytes),
+/*  C3DCorona ('3COR') - a glowing billboard (sprites.omt canvas 36, size 100) drawn additively
+    in the colour of its three members (default red 1.0, green 0.1, blue 0.1) at full opacity.
+    Made by C3DLightCone and C3DSwitch as their glow. (Negatron's corona also spun and pulsed
+    and had properties; Neutron.exe's has neither.)
+    Reconstructed from Neutron.exe: constructor 0x4154b0 (factory '3COR', 0x5fc bytes),
     destructor 0x415640 (only resets the vtables, then ~C3DSpriteType; deleting thunks 0x415610 /
-    0x415720 / 0x415730). Vtables N2:0x4d57e0 (element, 55 slots, none overridden) / N2:0x4d57cc
-    (listener) / N2:0x4d5350 (game object: 7, 240, 260 overridden; 16 and 242 C3DSpriteType's) /
-    streamer. Own members 0x668..0x68c, vtordisp 0x68c, the streamer at 0x690.
+    0x415720). Vtables 0x497530 (element, 53 slots, none overridden) / 0x49751c (listener) /
+    0x4970cc (game object at +0xc8: 259 overridden) / streamer. Own members 0x5e8..0x5f0,
+    vtordisp 0x5f4, the streamer at 0x5f8.
 
-    Members are named after their 2002 offset from the object start (element view; the
-    CGameObject-family methods of the original see them 0xc8 lower).                          */
+    Members are named after their Neutron.exe offsets (element view; the CGameObject-family
+    methods of the original see them 0xc8 lower).                                            */
 #pragma once
 #include "../C3DSpriteType.h"
 
 class C3DCorona : public C3DSpriteType
 {
 	public:
-	C3DCorona();															// 0x434880
+	C3DCorona();															// 0x4154b0
 	virtual ~C3DCorona();													// 0x415640
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   N2:0x428360
-	virtual void Process(float dt);											// SLOT 240 N2:0x4284d0 spin and pulse
-	virtual void v260(void);												// SLOT 260 N2:0x428440 load, colour, additive (hidden in a window)
+	virtual void v260(void);												// SLOT 259 0x415680 load, additive in the colour
 
-	// FIELD 0x668 0x24
-	float		m_red;					// 0x668  "Red" (= 1.0)
-	float		m_green;				// 0x66c  "Green" (= 0.1)
-	float		m_blue;					// 0x670  "Blue" (= 0.1)
-	float		m_time;					// 0x674  pulse time
-	float		m_spin_rate;			// 0x678  "SpinRate" (= 80, degrees per second)
-	float		m_grow_speed;			// 0x67c  "GrowSpeed" (= 2)
-	float		m_grow_max;				// 0x680  "GrowMax" (= 40)
-	float		m_opacity;				// 0x684  "Opacity" (= 1.0)
-	int			m_auto_mod;				// 0x688  "AutoMod" (= 1: spin and pulse)
+	// FIELD 0x5e8 0xc
+	float		m_red;					// 0x5e8  (= 1.0)
+	float		m_green;				// 0x5ec  (= 0.1)
+	float		m_blue;					// 0x5f0  (= 0.1)
 };
