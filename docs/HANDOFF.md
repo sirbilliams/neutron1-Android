@@ -109,7 +109,8 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   - Level game types: done except level2 (LEV2/LV2A/LV2B, agent p). Every InitGame/ctor/dtor of
     LEV1, LV1A-F, LEV3, LV3A-E, LEV4, LV4A-D (LV4B fog sweep), LEV5, LV5A/B, LEV6, LV6A, LEV7 and
     VR01-08 now matches Neutron.exe (fog inline through the layer globals, pickup bases, terrain
-    calls); Negatron-only L1_A/B/C, L5B1, LV5C, LV5F, LPRO removed. CJimmyGame::SetFog (N2:0x484520)
+    calls); Negatron-only L1_A/B/C, L5B1, LV5C, LV5F, LPRO removed. gen/CLocalGameObject_* regenerated
+    from the BG decompile (275-slot table; fields at BG offsets). CJimmyGame::SetFog (N2:0x484520)
     is still used by LEV2/LV2x and CJimmyGame::ReadState.
   - v197: A says the generated code already sets x, y, z (E's report may be stale): verify.
   - Exit-time use-after-free in C2DInGameMenu's destructor; OMT shape reader new[]/delete.
