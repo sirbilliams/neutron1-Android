@@ -4,7 +4,7 @@
 class CGameObject;
 class CPhysicsRay;
 class OMedia3DVector;
-class OMediaCanvasElementWrapper;
+class OMediaCanvasElement;
 class OMediaDataBase;
 class OMediaFileStream;
 class OMediaHumanInterfaceDevice;
@@ -25,7 +25,9 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4ec484 (&neg::g_data[0x484])		// address only
 #define g_4ec48c (&neg::g_data[0x48c])		// address only
 #define g_4ec490 (*(float *)&neg::g_data[0x490])
+#define g_fade_time (*(float *)&neg::g_data[0x490])
 #define g_4ec494 (*(char *)&neg::g_data[0x494])
+#define g_hud_on (*(char *)&neg::g_data[0x494])
 #define g_4ec498 (*(int *)&neg::g_data[0x498])
 #define g_4ec794 (&neg::g_data[0x794])		// address only
 #define g_4ec7f8 (&neg::g_data[0x7f8])		// address only
@@ -312,8 +314,10 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f7c4c (*(unsigned int *)&neg::g_data[0xbc4c])
 #define g_4f7c50 (*(unsigned int *)&neg::g_data[0xbc50])
 #define g_4f7c54 (*(unsigned int *)&neg::g_data[0xbc54])
-#define g_4f7c90 (neg::g_ptrs[0x2f24])		// pointer
-#define g_4f7c94 (neg::g_ptrs[0x2f25])		// pointer
+#define g_4f7c90 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f24])
+#define g_hud_4f7c90 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f24])
+#define g_4f7c94 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f25])
+#define g_box_12 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f25])
 #define g_4f7c98 (neg::g_ptrs[0x2f26])		// pointer
 #define g_4f7c9c (*(unsigned short *)&neg::g_data[0xbc9c])
 #define g_4f7c9e (*(unsigned short *)&neg::g_data[0xbc9e])
@@ -321,10 +325,8 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f7ca4 (*(unsigned int *)&neg::g_data[0xbca4])
 #define g_4f7ca8 (*(unsigned int *)&neg::g_data[0xbca8])
 #define g_4f7cac (*(unsigned int *)&neg::g_data[0xbcac])
-#define g_4f7cb0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f2c])
-#define g_hud_health_bar (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f2c])
-#define g_health_bar (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f2c])
-#define g_gadget_bar_frame (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f2c])
+#define g_4f7cb0 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f2c])
+#define g_gadget_bar_frame (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f2c])
 #define g_4f7cb8 (neg::g_ptrs[0x2f2e])		// pointer
 #define g_4f7cbc (*(unsigned short *)&neg::g_data[0xbcbc])
 #define g_4f7cbe (*(unsigned short *)&neg::g_data[0xbcbe])
@@ -332,8 +334,10 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f7cc4 (*(unsigned int *)&neg::g_data[0xbcc4])
 #define g_4f7cc8 (*(unsigned int *)&neg::g_data[0xbcc8])
 #define g_4f7ccc (*(unsigned int *)&neg::g_data[0xbccc])
-#define g_4f7cd0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f34])
-#define g_4f7cd4 (&neg::g_ptrs[0x2f35])		// pointer array, stride 4
+#define g_4f7cd0 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f34])
+#define g_box_quit (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f34])
+#define g_4f7cd4 ((OMediaCanvasElement* *)&neg::g_ptrs[0x2f35])
+#define g_gadget_icons ((OMediaCanvasElement* *)&neg::g_ptrs[0x2f35])
 #define g_4f7cd8 (neg::g_ptrs[0x2f36])		// pointer
 #define g_4f7cdc (neg::g_ptrs[0x2f37])		// pointer
 #define g_4f7ce0 (neg::g_ptrs[0x2f38])		// pointer
@@ -341,18 +345,21 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f7ce8 (neg::g_ptrs[0x2f3a])		// pointer
 #define g_4f7cec (neg::g_ptrs[0x2f3b])		// pointer
 #define g_4f7cf0 (neg::g_ptrs[0x2f3c])		// pointer
-#define g_4f7cfc (neg::g_ptrs[0x2f3f])		// pointer
-#define g_4f7d00 ((unsigned int *)&neg::g_data[0xbd00])		// array, stride 4
-#define g_4f7db0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f6c])
-#define g_dialog_5448e0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2f6c])
+#define g_4f7cfc (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f3f])
+#define g_box_4f7cfc (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f3f])
+#define g_4f7d00 ((unsigned int *)&neg::g_data[0xbd00])
+#define g_story_flags ((unsigned int *)&neg::g_data[0xbd00])
+#define g_4f7db0 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f6c])
+#define g_box_no (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2f6c])
 #define g_4f7db8 ((int *)&neg::g_data[0xbdb8])
 #define g_pickup_counts ((int *)&neg::g_data[0xbdb8])
-#define g_4f7ea0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fa8])
-#define g_4f7ea4 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fa9])
-#define g_4f7eec (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fbb])
-#define g_4f7ef0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fbc])
-#define g_dialog_5446f0 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fbc])
-#define g_dlg_quit (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x2fbc])
+#define g_4f7ea0 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fa8])
+#define g_box_level (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fa8])
+#define g_4f7ea4 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fa9])
+#define g_health_bar (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fa9])
+#define g_4f7eec (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fbb])
+#define g_box_save (*(OMediaCanvasElement* *)&neg::g_ptrs[0x2fbb])
+#define g_4f7ef0 (&neg::g_ptrs[0x2fbc])		// pointer array, stride 24
 #define g_4f7ef4 (*(unsigned short *)&neg::g_data[0xbef4])
 #define g_4f7ef6 (*(unsigned short *)&neg::g_data[0xbef6])
 #define g_4f7ef8 (*(unsigned short *)&neg::g_data[0xbef8])
@@ -407,19 +414,26 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f8010 (*(unsigned short *)&neg::g_data[0xc010])
 #define g_4f8014 (*(unsigned int *)&neg::g_data[0xc014])
 #define g_4f8018 (*(unsigned int *)&neg::g_data[0xc018])
-#define g_4f8020 (neg::g_ptrs[0x3008])		// pointer
-#define g_4f8024 (neg::g_ptrs[0x3009])		// pointer
-#define g_4f8028 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x300a])
-#define g_4f8028 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x300a])
-#define g_gadget_bar (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x300a])
-#define g_4f802c (neg::g_ptrs[0x300b])		// pointer
+#define g_4f8020 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3008])
+#define g_fade_quad (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3008])
+#define g_4f8024 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3009])
+#define g_box_delete (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3009])
+#define g_4f8028 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x300a])
+#define g_gadget_bar (*(OMediaCanvasElement* *)&neg::g_ptrs[0x300a])
+#define g_4f802c (*(OMediaCanvasElement* *)&neg::g_ptrs[0x300b])
+#define g_box_load (*(OMediaCanvasElement* *)&neg::g_ptrs[0x300b])
 #define g_4f8030 (*(unsigned int *)&neg::g_data[0xc030])
 #define g_4f8034 (*(unsigned int *)&neg::g_data[0xc034])
 #define g_4f8038 (*(unsigned int *)&neg::g_data[0xc038])
 #define g_4f803c (*(unsigned short *)&neg::g_data[0xc03c])
-#define g_4f8040 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x3010])
+#define g_4f8040 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3010])
+#define g_hud_lives (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3010])
 #define g_4f8048 (*(int *)&neg::g_data[0xc048])
-#define g_4f80fc (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x303f])
+#define g_confirm_box (*(int *)&neg::g_data[0xc048])
+#define g_4f804c ((OMediaCanvasElement* *)&neg::g_ptrs[0x3013])
+#define g_story_lines ((OMediaCanvasElement* *)&neg::g_ptrs[0x3013])
+#define g_4f80fc (*(OMediaCanvasElement* *)&neg::g_ptrs[0x303f])
+#define g_health_frame (*(OMediaCanvasElement* *)&neg::g_ptrs[0x303f])
 #define g_4f8100 (neg::g_ptrs[0x3040])		// pointer
 #define g_4f8104 (*(unsigned short *)&neg::g_data[0xc104])
 #define g_4f8106 (*(unsigned short *)&neg::g_data[0xc106])
@@ -427,7 +441,8 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f810c (*(unsigned int *)&neg::g_data[0xc10c])
 #define g_4f8110 (*(unsigned int *)&neg::g_data[0xc110])
 #define g_4f8114 (*(unsigned int *)&neg::g_data[0xc114])
-#define g_4f8118 (neg::g_ptrs[0x3046])		// pointer
+#define g_4f8118 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3046])
+#define g_box_yes (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3046])
 #define g_4f8120 (neg::g_ptrs[0x3048])		// pointer
 #define g_4f8124 (*(short *)&neg::g_data[0xc124])
 #define g_4f8126 (*(short *)&neg::g_data[0xc126])
@@ -442,31 +457,44 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f8144 (*(unsigned int *)&neg::g_data[0xc144])
 #define g_4f8148 (*(unsigned int *)&neg::g_data[0xc148])
 #define g_4f814c (*(unsigned int *)&neg::g_data[0xc14c])
-#define g_4f8150 (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x3054])
-#define g_hud_picture (*(OMediaCanvasElementWrapper* *)&neg::g_ptrs[0x3054])
+#define g_4f8150 (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3054])
+#define g_hud_picture (*(OMediaCanvasElement* *)&neg::g_ptrs[0x3054])
 #define g_4f8154 (*(int *)&neg::g_data[0xc154])
+#define g_popup_pic (*(int *)&neg::g_data[0xc154])
 #define g_4f8158 (*(int *)&neg::g_data[0xc158])
+#define g_popup_next (*(int *)&neg::g_data[0xc158])
 #define g_4f815c (*(float *)&neg::g_data[0xc15c])
+#define g_popup_time (*(float *)&neg::g_data[0xc15c])
 #define g_4f8160 (*(unsigned int *)&neg::g_data[0xc160])
+#define g_popup_index (*(unsigned int *)&neg::g_data[0xc160])
 #define g_4f8164 ((MenuPage* *)&neg::g_ptrs[0x3059])
 #define g_menu_pages ((MenuPage* *)&neg::g_ptrs[0x3059])
-#define g_4f8168 (*(void* *)&neg::g_ptrs[0x305a])
-#define g_menu_page1 (*(void* *)&neg::g_ptrs[0x305a])
+#define g_4f8168 (neg::g_ptrs[0x305a])		// pointer
 #define g_4f816c (neg::g_ptrs[0x305b])		// pointer
 #define g_4f8170 (neg::g_ptrs[0x305c])		// pointer
 #define g_4f8174 (neg::g_ptrs[0x305d])		// pointer
 #define g_4f8178 (neg::g_ptrs[0x305e])		// pointer
 #define g_4f817c (neg::g_ptrs[0x305f])		// pointer
 #define g_4f8180 (*(char *)&neg::g_data[0xc180])
+#define g_confirm_shown (*(char *)&neg::g_data[0xc180])
 #define g_4f8181 (*(char *)&neg::g_data[0xc181])
+#define g_menu_active (*(char *)&neg::g_data[0xc181])
 #define g_4f8182 (*(char *)&neg::g_data[0xc182])
+#define g_menu_input_lock (*(char *)&neg::g_data[0xc182])
 #define g_4f8188 (*(float *)&neg::g_data[0xc188])
+#define g_story_time (*(float *)&neg::g_data[0xc188])
 #define g_4f818c (*(float *)&neg::g_data[0xc18c])
+#define g_fade_left (*(float *)&neg::g_data[0xc18c])
 #define g_4f8190 (*(int *)&neg::g_data[0xc190])
+#define g_fade_mode (*(int *)&neg::g_data[0xc190])
 #define g_4f8194 (*(int *)&neg::g_data[0xc194])
+#define g_story_scene (*(int *)&neg::g_data[0xc194])
 #define g_4f8198 (*(char *)&neg::g_data[0xc198])
+#define g_confirm_open (*(char *)&neg::g_data[0xc198])
 #define g_4f819c (*(float *)&neg::g_data[0xc19c])
+#define g_pulse_time (*(float *)&neg::g_data[0xc19c])
 #define g_4f81a0 (*(float *)&neg::g_data[0xc1a0])
+#define g_pulse (*(float *)&neg::g_data[0xc1a0])
 #define g_4f81a4 (*(int *)&neg::g_data[0xc1a4])
 #define g_4f81a8 ((char *)&neg::g_data[0xc1a8])
 #define g_empty_string ((char *)&neg::g_data[0xc1a8])
@@ -502,10 +530,12 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f82c8 (*(float *)&neg::g_data[0xc2c8])
 #define g_4f82cc (*(short *)&neg::g_data[0xc2cc])
 #define g_4f82d0 (&neg::g_data[0xc2d0])		// address only
-#define g_4f82e4 (&neg::g_data[0xc2e4])		// address only
+#define g_4f82e4 ((int *)&neg::g_data[0xc2e4])
+#define g_save_slot_info ((int *)&neg::g_data[0xc2e4])
 #define g_4f8399 (&neg::g_data[0xc399])		// address only
 #define g_4f83c0 (*(int *)&neg::g_data[0xc3c0])
 #define g_4f83cc (*(short *)&neg::g_data[0xc3cc])
+#define g_lives (*(short *)&neg::g_data[0xc3cc])
 #define g_4f83d0 (*(float *)&neg::g_data[0xc3d0])
 #define g_4f83d4 (*(float *)&neg::g_data[0xc3d4])
 #define g_health (*(float *)&neg::g_data[0xc3d4])
@@ -541,8 +571,10 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_tex_scroll_time (*(float *)&neg::g_data[0x105ec])
 #define g_4fc5fc (neg::g_ptrs[0x417f])		// pointer
 #define g_4fc600 (*(int *)&neg::g_data[0x10600])
-#define g_4fc604 (&neg::g_data[0x10604])		// address only
+#define g_4fc604 ((char *)&neg::g_data[0x10604])
+#define g_task_request ((char *)&neg::g_data[0x10604])
 #define g_4fc67c (*(char *)&neg::g_data[0x1067c])
+#define g_task_requested (*(char *)&neg::g_data[0x1067c])
 #define g_4fc680 (*(int *)&neg::g_data[0x10680])
 #define g_save_level_id (*(int *)&neg::g_data[0x10680])
 #define g_4fc684 (*(float *)&neg::g_data[0x10684])
@@ -552,7 +584,7 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4fc68c (*(int *)&neg::g_data[0x1068c])
 #define g_save_score (*(int *)&neg::g_data[0x1068c])
 #define g_4fc690 (*(int *)&neg::g_data[0x10690])
-#define g_save_cam_x (*(int *)&neg::g_data[0x10690])
+#define g_save_scene (*(int *)&neg::g_data[0x10690])
 #define g_4fc69c (neg::g_ptrs[0x41a7])		// pointer
 #define g_4fc6a0 (*(unsigned char *)&neg::g_data[0x106a0])
 #define g_4fc6a4 (neg::g_ptrs[0x41a9])		// pointer

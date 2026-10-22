@@ -702,20 +702,11 @@ bool ExitOpen(CLoadLevel *l)
 	return true;
 }
 
-// The caption: the TRIGTEXTSTRING lines of the current group typed so far (C2DInGameMenu::v340).
+// The caption: Negatron's trigger texts (dat\menu.dat TRIGTEXTSTRING lines). Boy Genius has
+// none: no caption.
 void Caption(std::string &out)
 {
-	if (!g_menu || !g_trig_text_group[0]) return;
-	for (std::list<C2DInGameMenu::MenuObject *>::iterator i = C2DInGameMenu::s_objects.begin();
-		 i != C2DInGameMenu::s_objects.end(); ++i)
-	{
-		C2DInGameMenu::MenuObject *m = *i;
-		if (!m || m->type != C2DInGameMenu::MOBJ_TRIGTEXTSTRING) continue;
-		if (strcasecmp(m->trigger, g_trig_text_group) != 0) continue;
-		if (m->id > g_trig_text_line) continue;
-		if (!out.empty()) out += '\n';
-		out += m->text;
-	}
+	(void)out;
 }
 
 // The display name of a level, by its 4cc (the companion panel, the launcher's slots.txt), from

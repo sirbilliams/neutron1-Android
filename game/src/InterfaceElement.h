@@ -215,7 +215,7 @@ extern int							g_effect_queue_next;				// N2:0x545da4  slot the next Queue* ca
 // by the functions noted.
 extern InterfaceElt		g_elt_5444d8;			// N2:0x5444d8
 extern InterfaceElt		g_elt_5445e8;			// N2:0x5445e8
-extern InterfaceElt		g_elt_544908[14];		// 0x4f804c  set up like Create by N2:0x401380: each its own name and canvas, x 0, one shared y
+extern InterfaceElt		g_elt_544908[14];		// N2:0x544908 (addrmap guessed 0x4f804c: wrong)  set up like Create by N2:0x401380: each its own name and canvas, x 0, one shared y
 extern InterfaceElt		g_elt_545740;			// N2:0x545740 (addrmap guessed 0x4f80fc, a pointer in Neutron.exe: wrong)
 extern InterfaceElt		g_elt_545858;			// N2:0x545858
 extern InterfaceElt		g_elt_545a70;			// N2:0x545a70  shown / hidden by N2:0x40b280 / N2:0x40b2a0
