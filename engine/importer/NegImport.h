@@ -1,6 +1,7 @@
 /*  Installs the game files from the game's CD image (.iso): finds the InstallShield cabinet on
     the disc (data1.hdr / data1.cab), copies it out, and extracts the "Program Executable Files"
-    group (omt/, gam/, grn/ ... and Neutron2.exe) into a folder - what the CD's setup.exe does.
+    group (omt/, gam/, ASE/, png/ ... and Neutron.exe, OMT2.dll) into a folder - what the CD's
+    setup.exe does. Jimmy Neutron: Boy Genius (Neutron.exe); the Negatron CD is refused.
 
     Used by the Android app (through JNI, see NegImportJNI.c) and by the desktop tool neg_import. */
 #pragma once

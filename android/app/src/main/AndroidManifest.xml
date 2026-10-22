@@ -21,9 +21,10 @@
         android:appCategory="game"
         android:isGame="true">
 
-        <!-- First screen: checks / imports the game files, then starts the engine -->
+        <!-- First screen: checks / imports the game files, then starts the engine. Home-screen label:
+             the short name (the full one is the app's name in Settings) -->
         <activity android:name=".SetupActivity"
-            android:label="@string/app_name"
+            android:label="@string/app_short"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
             android:screenOrientation="sensorLandscape"
             android:exported="true">

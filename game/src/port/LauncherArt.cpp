@@ -4,13 +4,17 @@
     own full-screen pictures (screens.omt canvases, 640 x 480), read from the player's installed
     files here and written as PNGs into the app's files folder (NEG_LAUNCHER_ART, set by
     NegatronActivity), so the launcher can show them from its next start. Nothing of the game's art
-    is in the repository. Canvases (screens.omt, by id, as `neg_hdtool list` shows them):
-      menu.png      the main menu page's background (dat\menu.dat BACKGROUND MAINMENU: the PDA)
-      loadsave.png  239 "loadsavegame"      options.png  236 "options"
-      museum.png    541 "museum"            loading.png  252 "loadscreen"
-      inventory.png 53 "menu inventorydark4" credits.png 246 "menu credits4"
+    is in the repository. Canvases (Boy Genius's screens.omt, by id, as `neg_hdtool list` shows them):
+      menu.png      the main menu page's background (the menu's BACKGROUND MAINMENU object; else 20 "menu")
+      loadsave.png  239 "MenuLSBackground"  options.png  236 "OptionsBackground"
+      newgame.png   149 "LoadingNeighborhood" (Retroville, where the story starts)
+      loading.png   252 "loadscreen"
+      inventory.png 53 "menucollectedItems2" credits.png 246 "Credits"
     and level-<gam, lower case>.png: the loading picture (CLoadLevel "LoadScreen") of every exit
-    of the levels played, so Continue can show the autosave's level.                          */
+    of the levels played, so Continue can show the autosave's level.
+    TODO(BG): BG's CLoadLevel has no LoadScreen field (its .gam files have none) and BG has no
+    dat\menu.dat: find how Neutron.exe picks a level's loading picture (the "Loading<Area>"
+    canvases 146..155) and its main menu background, then fill ScanExits / MainMenuBackground. */
 
 #include "LauncherArt.h"
 #include "../C2DInGameMenu.h"
@@ -114,10 +118,11 @@ void neg::LauncherArtTick(void)
 	if (!s_fixed_done)
 	{
 		s_fixed_done = true;
-		Save(MainMenuBackground(), "menu.png");
+		const int menu = MainMenuBackground();
+		Save(menu >= 0 ? menu : 20, "menu.png");
 		Save(239, "loadsave.png");
 		Save(236, "options.png");
-		Save(541, "museum.png");
+		Save(149, "newgame.png");
 		Save(252, "loading.png");
 		Save(53, "inventory.png");
 		Save(246, "credits.png");

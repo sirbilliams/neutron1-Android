@@ -602,7 +602,8 @@ final class CompanionView extends View {
         }
     }
 
-    /** The Vox world picker, in the map's window: one steel card per world, left to right as on
+    /** (Negatron only: the native picker is disabled in Boy Genius, so this never shows.)
+     *  The Vox world picker, in the map's window: one steel card per world, left to right as on
      *  the game's screen, the chosen one raised and lit (its colour picture, LED on). */
     private void drawPicker(Canvas c) {
         RectF crt = mRect2;

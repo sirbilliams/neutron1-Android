@@ -1,6 +1,7 @@
 /*  port: NEG_START and save\slots.txt - see StartMode.h. Not in the original.             */
 #include "StartMode.h"
 #include "AssetView.h"
+#include "Companion.h"
 #include "../C2DInGameMenu.h"
 #include "../CGameType.h"
 #include "../Globals.h"
@@ -140,7 +141,7 @@ void neg::WriteSaveSlotList(void)
 		struct stat st;
 		long mtime = stat(omf_SDLResolvePath(path).c_str(), &st) == 0 ? (long)st.st_mtime : 0;
 		char id[5] = { (char)(level >> 24), (char)(level >> 16), (char)(level >> 8), (char)level, 0 };
-		const char *lname = SaveLevelName(level);
+		const char *lname = CompanionLevelName(gam);		// port: no names in BG yet (Companion.cpp)
 		if (k == 0) fprintf(f, "autosave");
 		else fprintf(f, "%d", k);
 		fprintf(f, "\t%s\t%s\t%s\t%d\t%ld\n", id, lname ? lname : "", gam, score, mtime);

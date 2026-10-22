@@ -28,7 +28,7 @@ import java.util.Locale;
  * parsed from Display.toString() ("type INTERNAL" ...), else guessed from the display's name.
  */
 final class BottomScreen {
-    private static final String TAG = "Negatron";
+    private static final String TAG = "BoyGenius";
     private static final String PREFS = "negatron_displays";
     private static final String KEY_BUILTIN = "builtin_secondary";
     static final String LOG_FILE = "display-log.txt";
