@@ -1,20 +1,18 @@
-/*  C3DGoddard - see C3DGoddard.h.
+/*  C3DGoddard - see C3DGoddard.h. Reconstructed from Neutron.exe 0x41c810..0x41eea0.
     Constants: 0x48e5e8 = 16384 / 360, 0x48e5b4 = 360 / 16384, 0x49fabc = 1 / 45, 0x49fab8 = 52,
-    0x49fadc = 14.4 (mouse to steering), 0x48e5dc = 200 (arrow distance from the viewport).   */
+    0x49fadc = 14.4 (mouse to steering), 0x48e5dc = 200 (arrow distance from the viewport),
+    0x49fac0 = 0.8 (chase camera).                                                             */
 #include "C3DGoddard.h"
-// TODO(BG): #include "objects/C3DBone.h" (Negatron-only class, deleted)
+#include "C3DJimmy.h"				// DeactivateGadget, f_1e00
 #include "Mouse.h"
 #include "C3DShadow.h"
 #include "C3DCursor.h"
-// TODO(BG): #include "C3DGrannyObj.h" (Negatron-only class, deleted)
-#include "C3DPlayer.h"				// PlayerKey*, JimmyActivateMenuItem
 #include "C3DRocketShip.h"			// neg::GoddardMarker
 #include "CGameType.h"
 #include "Bridge.h"					// GameIsRunning
 #include "Physics.h"
 #include "Game.h"
 #include "Sound.h"
-#include "Todo.h"
 #include "gen/globals.h"
 #include "OMediaElement.h"
 #include "OMediaViewPort.h"
@@ -45,19 +43,19 @@ static const float kSides[6][3] =
 
 // --------------------------------------------------------------------------- helpers
 
-static OMedia3DVector Position(CGameObject *o)				// vtable +0x30c
+static OMedia3DVector Position(CGameObject *o)				// vtable +0x310
 {
 	float p[4];
 	o->v195(p);
 	return OMedia3DVector(p[0], p[1], p[2], p[3]);
 }
 
-// CGameObject slot 226 (0x472b10): (x, y, z) turned by the object's rotation, w = 0 (as in
+// CGameObject slot 227 (0x472b10): (x, y, z) turned by the object's rotation, w = 0 (as in
 // C3DAI.cpp; the generated declaration of v226 has the wrong signature).
 static OMedia3DVector ObjectDir(CGameObject *o, float x, float y, float z)
 {
 	float rot[4];
-	o->v201(rot);											// vtable +0x324
+	o->v201(rot);											// vtable +0x328
 	const omt_Angle ax = (omt_Angle)((int)(rot[0] * kDegToAngle) & omc_MaxAngleMask);
 	const omt_Angle ay = (omt_Angle)((int)(rot[1] * kDegToAngle) & omc_MaxAngleMask);
 	const omt_Angle az = (omt_Angle)((int)(rot[2] * kDegToAngle) & omc_MaxAngleMask);
@@ -74,7 +72,7 @@ static int Random1001(void)
 	return ((int)((*seed >> 16) * 1001) >> 16) & 0xffff;
 }
 
-// The running level's ID (g_gametype +0x490: its ObjectID, e.g. 'L1_A').
+// The running level's ID (g_gametype +0x490: its ObjectID, e.g. 'LV1B').
 static int LevelID(void)
 {
 	return static_cast<CGameObject *>(g_gametype)->m_object_id;
@@ -88,16 +86,16 @@ static CGameObject *FindObjectByTag(const char *tag)
 	return NULL;
 }
 
-// 0x458e40 (CLocalGameObject family): the nearest object with ObjectID id1 or id2 that is
-// active (v123) and f_140, by quick_magnitude of (o - it) (as in C3DJimmy_a.cpp).
-static CGameObject *FindNearest(CGameObject *o, int id1, int id2)
+// 0x458e40 (CLocalGameObject family): the nearest object with ObjectID <id> that is active
+// (v123) and f_140, by quick_magnitude of (o - it) (as in C3DJimmy_a.cpp).
+static CGameObject *FindNearest(CGameObject *o, int id)
 {
 	CGameObject *best = NULL;
 	float best_d = 0;
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 	{
 		CGameObject *it = *i;
-		if (!it || (it->m_object_id != id1 && it->m_object_id != id2)) continue;
+		if (!it || it->m_object_id != id) continue;
 		if (!it->v123() || !it->f_140) continue;
 		OMedia3DVector a = Position(o), b = Position(it);
 		OMedia3DVector d(a.x - b.x, a.y - b.y, a.z - b.z, 0);
@@ -111,76 +109,61 @@ static CGameObject *FindNearest(CGameObject *o, int id1, int id2)
 	return best;
 }
 
-// N2:0x465b60: a key of the "deactivate item" list (no joystick button); as the key tests of
-// C3DPlayer.cpp: 0x1f5 left mouse, 0x1f4 right mouse, else a key of g_keys (which clears the
-// mouse movement N2:0x4a39e0).
-static bool KeyDeactivateItem(void)
-{
-	for (const int *list = g_key_deactivate_item; *list; list++)
-	{
-		const int k = *list;
-		if (k == 0x1f5) { if (g_mouse_down) return true; }
-		else if (k == 0x1f4) { if (g_mouse_rdown) return true; }
-		else if ((unsigned)k < 256 && g_keys[k])			// port: index checked (the original reads g_keys[k] for any k)
-		{
-			g_N2_56aebe = 0;
-			g_N2_56aec0 = 0;
-			return true;
-		}
-	}
-	return false;
-}
-
-using neg::GetMouseDelta;									// 0x46a460 (Mouse.h)
-
-// A C3DBone that Goddard picked up: hidden, its +0x924 cleared.
-static void BoneTaken(CGameObject *bone)
-{
-	(void)bone;												// TODO(BG): C3DBone is Negatron only (hide it, +0x924 = 0)
-}
-
 // The arrow of a C3DCursor (its CGameObject part) as an element.
 static C3DObject *Arrow(CGameObject *o)
 {
 	return o ? dynamic_cast<C3DObject *>(o) : NULL;
 }
 
-// A head prop / shadow prop of Goddard: model `file` on our bone `bone`.
-// TODO(BG): the props were Negatron C3DGrannyObjs (no such class in Neutron.exe): none for now.
-static C3DAnimated *NewProp(C3DGoddard *g, const char *file, const char *bone)
+// The arrow <arrow> 200 units in front of the viewport towards <target>, turned like us (rot,
+// only its z kept), spinning at <spin> degrees a second (inline in v243, once per arrow).
+static void PointArrow(CGameObject *arrow, CGameObject *target, const float rot[4], float dt, float spin)
 {
-	(void)g; (void)file; (void)bone;
-	return NULL;
+	const float vx = g_viewport->getx(), vy = g_viewport->gety(), vz = g_viewport->getz();	// 2002 +0x44..+0x4c
+	const OMedia3DVector rp = Position(target);
+	OMedia3DVector d(rp.x - vx, rp.y - vy, rp.z - vz, 0);
+	const float k = 1.0f / d.quick_magnitude();
+	d.x = k * d.x;
+	d.y = k * d.y;
+	d.z = k * d.z;
+	d.x = d.x * 200.0f;										// 0x48e5dc
+	d.y = d.y * 200.0f;
+	d.z = d.z * 200.0f;
+	float ar[4];
+	arrow->v201(ar);										// +0x328
+	arrow->v196(d.x + vx, d.y + vy, d.z + vz, 1.0f);		// +0x314
+	arrow->v202(rot[0], rot[1], ar[2], rot[3]);				// +0x32c
+	arrow->AddRotation(0, 0, dt * spin);					// +0x334
+	Arrow(arrow)->force_show();								// element +0x70 / hide(false)
 }
 
 // --------------------------------------------------------------------------- construction
 
-C3DGoddard::C3DGoddard()									// N2:0x4383d0
+C3DGoddard::C3DGoddard()									// 0x41c810
 {
 	SetName((char *)"C3DGODDARD");
 	Log("C3DGoddard()");
-	// (Negatron's Goddard was a Granny model: f_6d0 = 1, f_649 = 0. Boy Genius's is a morph model.)
 	C3DGoddard::InitObject();								// 0x41cd70 (called directly)
 	C3DObject::SetObjectID('3GOD');							// 0x462220
-	m_time = 0;
-	m_speed = 1.0f;
-	m_turn_rates.x = 0;											// turn rates
+	m_turn_rates.x = 0.3f;									// turn rates
 	m_turn_rates.y = 3.2f;
 	m_turn_rates.z = 0.3f;
-	m_state = 1;
-	m_ai_state = 1;												// "AIState"
-	C3DGoddard::ev144(0);									// N2:0x438b90
+	m_time = 0;
+	m_speed = 1.0f;
+	m_state = 4;
+	m_ai_state = 4;											// "AIState"
+	C3DGoddard::ev95(0);									// 0x41cc30
 	f_1b5e = 0;
 	v136(1);
 	m_target_id = '3JIM';
 	v50(0);
-	f_1b50 = new C3DShadow;									// 0x60c bytes
+	f_1b50 = new C3DShadow;									// 0x5f4 bytes
 	v107(0);
 	v36(0);
 	f_1b54 = -1;
 	f_1b58 = -1;
 	f_009 = 1;
-	m_hover = 1;												// hovering
+	m_hover = 1;											// hovering
 	f_1b60 = 0;
 	f_1b64 = 0;
 	f_1b68 = 0;
@@ -188,23 +171,21 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	f_1b70 = 700.0f;
 	f_1b74 = 30.0f;
 	m_speed = 0;
-	f_1bb4 = 0;
 	f_1b78 = 1;
 	f_1b94 = 1500.0f;
 	f_1b7c = -1;
-	ev72(m_anim_wag, (char *)"none");							// WAG
-	ev72(m_anim_run, (char *)"RUN");							// RUN
-	ev72(m_anim_fly, (char *)"FLY");							// FLY
-	ev72(m_anim_sit, (char *)"none");							// SIT
-	ev72(m_anim_none, (char *)"none");
-	ev72(m_anim_walk, (char *)"RUN");							// WALK
-	C3DCursor *c = new C3DCursor;							// 0x92c bytes
+	ev72(m_anim_wag, (char *)"WAG");
+	ev72(m_anim_run, (char *)"RUN");
+	ev72(m_anim_fly, (char *)"FLY");
+	ev72(m_anim_sit, (char *)"WAG");
+	ev72(m_anim_none, (char *)"WAG");
+	ev72(m_anim_walk, (char *)"RUN");
+	C3DCursor *c = new C3DCursor;							// 0x6c4 bytes
 	f_1b80 = c ? static_cast<CGameObject *>(c) : NULL;
-	Arrow(f_1b80)->HideAgain();								// element +0xdc
+	Arrow(f_1b80)->hide(true);								// element +0x58
 	c = new C3DCursor;
 	f_1b84 = c ? static_cast<CGameObject *>(c) : NULL;
-	f_934 = -1;
-	Arrow(f_1b84)->HideAgain();
+	Arrow(f_1b84)->hide(true);
 	f_1b88 = NULL;
 	f_1b8c = NULL;
 	f_1b90 = 0;
@@ -212,19 +193,6 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	m_990 = 150.0f;
 	f_1ba0 = 0;
 	f_1ba4 = 0;
-	f_1ba5 = 0;
-	f_1ba8 = NULL;
-	f_8a4 = 1;												// never culled
-	f_1bac = 0;
-	f_1bb0 = 0;
-	f_4c4 = 1;												// (element +0x584)
-	f_1bb8 = -1;
-	f_1bbc = NULL;
-	f_1bbc = NewProp(this, "headspinbase.grn", "head");
-	// (N2: f_1bbc "SlideSpeedX" = 0.1)
-	f_1bc0 = NULL;
-	f_1bc0 = NewProp(this, "goddshadow.grn", "shadowbone");
-	// (then a call to the empty 0x472970)
 }
 
 C3DGoddard::~C3DGoddard()									// 0x41cbe0
@@ -232,54 +200,36 @@ C3DGoddard::~C3DGoddard()									// 0x41cbe0
 }
 
 namespace neg {
-CGameObject *New_C3DGoddard(void)	{ return new C3DGoddard; }				// factory '3GOD' (0x1bcc bytes)
+CGameObject *New_C3DGoddard(void)	{ return new C3DGoddard; }				// factory '3GOD' (0x9f4 bytes)
 
-// C3DRocketShip.h: Goddard's arrow towards the red neutrons (+0x1b80).
+// C3DRocketShip.h: Goddard's arrow towards the red neutrons (+0x9c4).
 CGameObject *GoddardMarker(CGameObject *goddard)
 {
 	C3DGoddard *g = goddard ? dynamic_cast<C3DGoddard *>(goddard) : NULL;
-	return g ? g->f_1b80 : NULL;							// (port: the original reads +0x1b80 of whatever the object is)
+	return g ? g->f_1b80 : NULL;							// (port: the original reads +0x9c4 of whatever the object is)
 }
 }
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DGoddard::ev60(void)									// N2:0x43b570
-{
-	ev58((char *)"SIT", 1);									// +0xe8
-}
-
-void C3DGoddard::ev67(void)									// N2:0x43b510
-{
-	if (strcasecmp(ev66(), "FIX") && strcasecmp(ev66(), "LOSTWING")) return;	// +0x108, _stricmp
-	ev58((char *)"ROCK", 1);
-}
-
-void C3DGoddard::ev73(int state)							// N2:0x439b50
-{
-	C3DAI::ev73(state);									// N2:0x412240
-	if (state == 3)
-	{
-		m_speed = 400.0f;
-		n2_ev90(1);											// +0x168
-		return;
-	}
-	if (state == 7) n2_ev90(0);
-}
-
-void C3DGoddard::ev82(void)								// N2:0x439c30
+void C3DGoddard::ev82(void)									// 0x41e530
 {
 	float r[4];
-	m_target->v201(r);											// +0x324
-	if (!m_arrived) v218(0, r[1], 0);							// CGameObject +0x368
+	m_target->v201(r);										// +0x328
+	if (!m_arrived) v218(0, r[1], 0);						// CGameObject +0x36c
 }
 
-void C3DGoddard::n2_ev118(void)								// N2:0x43a140
+void C3DGoddard::ev84(void)									// 0x41e6b0
 {
-	if (f_1b54 != -1) f_1b54 = -1;							// (not stopped)
+	if (f_1b54 != -1) f_1b54 = -1;							// (the sound is not stopped)
 }
 
-void C3DGoddard::ev88(void)								// 0x429a00
+void C3DGoddard::ev86(void)									// 0x41e6b0 (the same code)
+{
+	if (f_1b54 != -1) f_1b54 = -1;
+}
+
+void C3DGoddard::ev88(void)									// 0x41e6d0
 {
 	if (f_1b58 != -1)
 	{
@@ -288,47 +238,63 @@ void C3DGoddard::ev88(void)								// 0x429a00
 	}
 }
 
-void C3DGoddard::ev144(short side)							// N2:0x438b90
+void C3DGoddard::ev92(float unused)							// 0x41ddd0
 {
-	if (side >= 0 && side <= 5)
+	(void)unused;
 	{
-		m_offset.x = kSides[side][0];
-		m_offset.y = kSides[side][1];
-		m_offset.z = kSides[side][2];
+		const OMedia3DVector p = Position(this);
+		m_dest_vec.x = m_dest_point.x - p.x;
+		m_dest_vec.y = m_dest_point.y - Position(this).y;
+		m_dest_vec.z = m_dest_point.z - Position(this).z;
 	}
+	omt_Angle a1, a2;
+	m_dest_vec.angles(a1, a2);
+	float ry;
+	if (m_state == 5) ry = (float)a2 * kAngleToDeg + 180.0f;	// 0x48e5b0: fleeing - turned round
+	else ry = (float)a2 * kAngleToDeg;
+	if (!v133()) v218(0, ry, 0);							// +0x36c: yaw only (C3DAI's also turns x)
+	if (!m_arrived) v218(0, ry, 0);
+}
+
+void C3DGoddard::ev95(short side)							// 0x41cc30
+{
+	if (side < 0 || side > 5) return;						// (the switch has no default: nothing is stored)
+	m_offset.x = kSides[side][0];
+	m_offset.y = kSides[side][1];
+	m_offset.z = kSides[side][2];
 	f_1b5c = side;
 }
 
-unsigned char C3DGoddard::ev145(short side)					// 0x41e9e0
+unsigned char C3DGoddard::ev96(short side)					// 0x41e9e0
 {
-	OMedia3DVector me = Position(this);						// CGameObject +0x30c
-	me.y = me.y + 20.0f;
+	OMedia3DVector me = Position(this);						// CGameObject +0x310
+	me.y = me.y + 20.0f;									// 0x495324
 	if (side < 0 || side > 5) return 0;
 	float t[4];
 	{
-		const OMedia3DVector v = m_target->v224(kSides[side][0], 20.0f, kSides[side][2]);	// +0x380
+		const OMedia3DVector v = m_target->v224(kSides[side][0], 20.0f, kSides[side][2]);	// +0x384
 		t[0] = v.x; t[1] = v.y; t[2] = v.z; t[3] = v.w;
 	}
 	if (PhysicsLineBlocked(me, OMedia3DVector(t[0], t[1], t[2], t[3]), false)) return 0;	// 0x47c210
-	ev144(side);											// +0x240
+	ev95(side);												// +0x17c
 	return 1;
 }
 
-void C3DGoddard::ev146(float dt)							// 0x41cea0
+void C3DGoddard::ev97(float dt)								// 0x41cea0
 {
 	float side_x = 0, side_z = 0;
 	float v[4];
-	v174(v);												// CGameObject +0x2b8: velocity
+	v174(v);												// CGameObject +0x2bc: velocity
 	const float vy = v[1];
 	if ((float)sqrt((double)v[0] * v[0] + (double)v[2] * v[2] + (double)vy * vy) != 0)
 	{
 		f_1b6c = f_1b68;
-		AddRotation(0, f_1b68 * dt, 0);						// +0x330
+		AddRotation(0, f_1b68 * dt, 0);						// +0x334
 		// leaning out of the turn: (a, 0, 0) turned by our heading (the inlined rotation of
 		// angles (0, y, 0): sin 0 / cos 0 from the table)
-		const float a = (1.0f - v145()) * (f_1b6c * (1.0f / 45.0f)) * m_speed * dt;	// +0x244; 0x49fabc
+		const float a = (1.0f - v145()) * (f_1b6c * (1.0f / 45.0f)) * m_speed * dt;	// +0x248; 0x49fabc
 		float r[4];
-		v201(r);											// +0x324
+		v201(r);											// +0x328
 		const int ay = (int)(r[1] * kDegToAngle) & omc_MaxAngleMask;	// _ftol
 		OMediaCosSinTable &tab = OMediaCosSinTable::global;
 		const float s0 = tab.sin(0), c0 = tab.cos(0), sy = tab.sin(ay), cy = tab.cos(ay);
@@ -338,8 +304,8 @@ void C3DGoddard::ev146(float dt)							// 0x41cea0
 		side_x = u * cy - w * sy;
 		side_z = w * cy + u * sy;
 	}
-	const OMedia3DVector f = ObjectDir(this, 0, 0, m_speed);	// +0x388
-	v176(side_x + f.x, vy, side_z + f.z);					// +0x2c0: velocity (y kept)
+	const OMedia3DVector f = ObjectDir(this, 0, 0, m_speed);	// +0x38c
+	v176(side_x + f.x, vy, side_z + f.z);					// +0x2c4: velocity (y kept)
 	if (f_1b64 > 0)
 	{
 		f_1b64 = f_1b64 - dt * 52.0f;						// 0x49fab8
@@ -352,20 +318,20 @@ void C3DGoddard::ev146(float dt)							// 0x41cea0
 	}
 }
 
-void C3DGoddard::ev147(unsigned char on)					// N2:0x439a40
+void C3DGoddard::ev98(unsigned char on)						// 0x41dcd0
 {
 	if (on)
 	{
 		float r[4];
-		v201(r);											// +0x324
-		v203(0, r[1], 0);									// +0x32c
-		v152(60.0f);										// +0x260
-		if (f_1b7c == -1) f_1b7c = PlayGameSound(-1, std::string("sonar"), true);	// 0x458b40
+		v201(r);											// +0x328
+		v203(0, r[1], 0);									// +0x330
+		v152(60.0f);										// +0x264
+		if (f_1b7c == -1) f_1b7c = PlayGameSoundIndex(-1, 0xcc, true);	// 0x458980: the sonar
 		return;
 	}
-	v152(f_034);											// +0x260 (CGameObject +0x34)
-	Arrow(f_1b80)->HideAgain();								// element +0xdc
-	Arrow(f_1b84)->HideAgain();
+	v152(bg_v67());											// +0x264 (CGameObject +0x10c)
+	Arrow(f_1b80)->hide(true);								// element +0x58
+	Arrow(f_1b84)->hide(true);
 	m_speed = 450.0f;
 	if (f_1b7c != -1)
 	{
@@ -374,7 +340,7 @@ void C3DGoddard::ev147(unsigned char on)					// N2:0x439a40
 	}
 }
 
-void C3DGoddard::ev148(void)								// 0x41e720
+void C3DGoddard::ev99(void)									// 0x41e720
 {
 	// try the two sides next to ours, else (while hovering) stay
 	static const short next[6][2] = { { 5, 1 }, { 0, 4 }, { 3, 5 }, { 2, 4 }, { 1, 3 }, { 0, 2 } };
@@ -391,54 +357,9 @@ void C3DGoddard::ev148(void)								// 0x41e720
 			b = 1;
 		}
 	}
-	if (ev145(a)) return;									// +0x244
-	if (ev145(b)) return;
-	if (m_hover) ev144(s);									// +0x240
-}
-
-void C3DGoddard::ev149(void)								// N2:0x439c80
-{
-	const OMedia3DVector p = Position(this);
-	const OMedia3DVector q = Position(m_target);
-	const float dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z;
-	const float d = (float)sqrt((double)dx * dx + (double)dy * dy + (double)dz * dz);	// fsqrt
-	if (d > 350.0f && f_1b60)								// N2:0x4d783c
-	{
-		f_1b60 = 0;
-		m_hover = 1;
-	}
-	if (d > 440.0f) m_speed = 600.0f;							// 0x49fac0
-	else m_speed = 450.0f;
-	if (d > 1500.0f && !f_1ba5)								// N2:0x4cb1e0: left behind - jump there
-	{
-		m_keep_point = 0;
-		const OMedia3DVector t = m_target->v224(0, 0, -800.0f);	// +0x380
-		v196(t.x, t.y, t.z, t.w);							// +0x310
-	}
-	if (f_1b5c != 2 && f_1b5c != 0 && m_time > 2.0f) ev148();	// 0x48d954; +0x250
-	if (v133())												// +0x214 on the floor
-	{
-		float v[4];
-		v174(v);											// +0x2b8
-		if ((float)sqrt((double)v[0] * v[0] + (double)v[1] * v[1] + (double)v[2] * v[2]) > 20.0f)	// 0x495324
-		{
-			if (!IsAnim((char *)"RUN")) ev58((char *)"RUN", 1);
-		}
-		else if (!IsAnim((char *)"WAG")) ev58((char *)"WAG", 1);
-	}
-	else if (!IsAnim((char *)"FLY")) ev58((char *)"FLY", 1);
-	if (!f_1b90) return;
-	f_1b90 = 0;
-	if (!g_camera)
-	{
-		ErrorLog("ERROR: no pco for C3DGoddard");
-		return;
-	}
-	if (!g_camera->NameContains((char *)"C3DJIMMY")) return;	// +0x18
-	const OMedia3DVector c = Position(g_camera);
-	const OMedia3DVector t = g_camera->v224(0, 0, -250.0f);	// +0x380: behind Jimmy
-	if (!PhysicsLineBlocked(c, t, false))					// 0x47c210
-		v196(t.x, t.y, t.z, t.w);							// +0x310
+	if (ev96(a)) return;									// +0x180
+	if (ev96(b)) return;
+	if (m_hover) ev95(s);									// +0x17c
 }
 
 // --------------------------------------------------------------------------- CGameObject slots
@@ -456,48 +377,27 @@ void C3DGoddard::InitObject(void)							// 0x41cd70
 	for (unsigned i = 0; i < sizeof(anims) / sizeof(anims[0]); i++)
 		CreateAnim((char *)anims[i][0], (char *)anims[i][1]);	// element +0xd8
 	CreateTexture((char *)"goddard02.png", 0);				// element +0xf0
-	ApplyTexture(f_590, 0);									// element +0xf4
+	ApplyTexture(f_590, 0);									// element +0xf4 (BG +0x57c: the HI base shape)
 	ev58((char *)"WAG", 1);									// element +0xe0 (0x4eca68)
-	// (debug log)
 }
 
-void C3DGoddard::AddTouching(CGameObject *other)			// N2:0x43a830
+void C3DGoddard::InitPhysics(void)							// 0x42ab50
+{
+	if (!f_4aa) C3DObject::InitPhysics();					// 0x4623d0
+}
+
+void C3DGoddard::AddTouching(CGameObject *other)			// 0x41eda0
 {
 	C3DAI::AddTouching(other);								// 0x40a3c0
-	if (other->NameContains((char *)"C3DJIMMY"))			// +0x18
+	if (other->NameContains((char *)"C3DJIMMY") && m_state == 4)	// following: jump over him
 	{
-		if (f_1ba5)											// brought the bone: back to our place
-		{
-			m_offset.x = m_saved_offset.x;
-			m_offset.y = m_saved_offset.y;
-			m_offset.z = m_saved_offset.z;
-			f_1ba5 = 0;
-			return;
-		}
-		if (m_state == 4)										// following: jump over him
-		{
-			m_keep_point = 1;
-			f_1ba0 = 0;
-			m_dest_point.y = Position(m_target).y + 500.0f;			// 0x4d5fdc
-		}
-		return;
+		m_keep_point = 1;
+		f_1ba0 = 0;
+		m_dest_point.y = Position(m_target).y + 500.0f;		// 0x48e5bc
 	}
-	if (!other->NameContains((char *)"C3DBONE")) return;
-	// (debug log "MEBTEMP touched a 3dbone")
-	ev73(4);												// element +0x1ac
-	CGameObject *jim = FindObjectByTag("JIM1");				// 0x474070
-	BoneTaken(other);
-	f_1ba5 = 1;
-	if (!jim) return;
-	m_target = jim;											// bring it to Jimmy
-	m_offset.x = 0;
-	m_offset.y = 0;
-	m_offset.z = -100.0f;
-	m_attack_time = 0;
-	ev88();												// element +0x1f0
 }
 
-void C3DGoddard::v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly)	// N2:0x43a9a0
+void C3DGoddard::v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly)	// 0x41ee10
 {
 	(void)nx; (void)ny; (void)nz; (void)nw; (void)poly;
 	m_keep_point = 0;
@@ -506,13 +406,12 @@ void C3DGoddard::v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *p
 void C3DGoddard::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	// 0x41e700
 {
 	(void)a; (void)b; (void)c; (void)d; (void)poly;
-	if (m_state == 4) ev148();								// element +0x250
+	if (m_state == 4) ev99();								// element +0x18c
 }
 
-void C3DGoddard::Process(float dt)							// N2:0x439170
+void C3DGoddard::Process(float dt)							// 0x41dee0
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	if (m_keep_point)												// the jump lasts 5 s at most
+	if (m_keep_point)										// the jump lasts 5 s at most
 	{
 		f_1ba0 = dt + f_1ba0;
 		if (f_1ba0 > 5.0f)									// 0x48d950
@@ -522,179 +421,173 @@ void C3DGoddard::Process(float dt)							// N2:0x439170
 		}
 	}
 	if (!GameIsRunning()) return;							// 0x475ca0
-	if (!v131())											// +0x20c
+	if (!v131())											// +0x210
 	{
-		C3DAnimated::Process(dt);							// N2:0x41c120
-		f_1b50->HideAgain();								// sprite +0xd8
-		f_1bc0->HideAgain();								// element +0xdc
+		f_1b50->hide(true);									// element +0x58
 		return;
 	}
-	const OMedia3DVector head = v224(0, 100.0f, -150.0f);	// +0x380
-	if (f_1ba8)
-	{
-		f_1ba8->place(head.x, head.y, head.z);				// 2002 +0x44..+0x4c
-		float r[4];
-		v201(r);											// +0x324
-		const int ay = (int)(r[1] * kDegToAngle);			// _ftol
-		const int ax = (int)(r[0] * kDegToAngle);
-		f_1ba8->set_angle((omt_Angle)ax, (omt_Angle)ay, 0);	// 2002 +0x50..+0x54
-	}
-	if (v133())												// +0x214 on the floor: the Granny shadow
-	{
-		if (f_1bc0) f_1bc0->ShowAgain();					// element +0xd8
-		if (f_1b50) f_1b50->HideAgain();					// sprite +0xd8
-	}
-	else
-	{
-		if (f_1bc0) f_1bc0->HideAgain();					// element +0xdc
-		if (f_1b50) f_1b50->ShowAgain();					// sprite +0xd4
-	}
-	if (!g_windowed)
+	if (g_camera && g_camera->NameContains((char *)"C3DROCKETSHIP"))
+		v132(0);											// +0x214
+	if (!g_windowed)										// 0x509a13: the blob shadow on the ground under us
 	{
 		const OMedia3DVector q = Position(this);
 		const OMedia3DVector a(q.x, q.y + 100.0f, q.z, q.w);	// 0x48d96c
 		const OMedia3DVector b(q.x, a.y - 2000.0f, q.z, q.w);	// 0x48e5a4
 		if (PhysicsClosestHit(a, b, false))					// 0x47c6e0
 		{
-			const float hit_y = g_phys_ray.end.y;			// 0x5cfc60..
+			const float hit_y = g_phys_ray.end.y;			// 0x5cfc64
 			if (f_1b50)
 			{
 				const OMedia3DVector s = Position(this);
-				f_1b50->v197(s.x, hit_y + 30.0f, s.z);			// +0x314; 0x48d404
-				f_1b50->ShowAgain();						// sprite +0xd4
+				f_1b50->v197(s.x, hit_y + 30.0f, s.z);		// +0x318; 0x48d404
+				f_1b50->force_show();						// element +0x70 / hide(false)
 			}
 		}
 	}
 	if (g_camera == static_cast<CGameObject *>(this)) return;	// steered (v243)
-	if (0)	// TODO(BG): N2 flag mapped to 0x50988b (g_keys[0x53]?), never set in the shipped game
+	if (!g_camera)
 	{
-		if (!f_1bbc)
+		// no camera object (a cut scene): in state 4 he sits (SIT, stopped) and the animation runs
+		if (m_state == 4)
 		{
-			f_1bbc = NewProp(this, "headspinbase.grn", "head");
+			if (!f_1b60)
+			{
+				f_1b60 = 1;
+				ev58((char *)"SIT", 1);						// element +0xe0 (0x4eca5c)
+				v261();										// +0x410: stop
+				float acc[4];
+				v155(acc);									// +0x270
+				const float az = acc[2];
+				v155(acc);
+				v157(acc[0], g_gravity.y, az);				// +0x278; 0x5cfc04
+			}
+			C3DAnimated::Process(dt);						// 0x40e050
+			return;
 		}
-		ev73(1);											// element +0x1ac: wait
+		m_anims_disabled = 0;
+		C3DAI::Process(dt);									// 0x408000
+		return;
 	}
+	// Jimmy (or another object) has the camera: follow him
+	m_anims_disabled = 1;
+	m_state = 4;
+	ev92(dt);												// element +0x170
+	if (f_1b90)												// go behind the camera object
+	{
+		f_1b90 = 0;
+		if (!g_camera)
+		{
+			ErrorLog("ERROR: no pco for C3DGoddard");
+		}
+		else if (g_camera->NameContains((char *)"C3DJIMMY"))
+		{
+			const OMedia3DVector c = Position(g_camera);
+			const OMedia3DVector t = g_camera->v224(0, 0, -250.0f);	// +0x384
+			if (!PhysicsLineBlocked(c, t, false))			// 0x47c210
+				v196(t.x, t.y, t.z, t.w);					// +0x314
+		}
+	}
+	if ((g_keys[0x47] || g_509acb) && !g_4f8198)			// 0x50987f ('G'), joystick button 7
+		f_1b90 = 1;
+	if (!f_1b60) C3DAI::Process(dt);						// 0x408000
+	else C3DAnimated::Process(dt);							// 0x40e050
 	float v[4];
-	v174(v);												// +0x2b8
-	if (v[1] > 0) ev94(dt, 115.0f);						// element +0x208
-	C3DAI::Process(dt);										// N2:0x411240
-	switch (m_state)
+	v174(v);												// +0x2bc
+	if (v[1] > 0) ev94(dt, 115.0f);							// element +0x178
+	m_time = dt + m_time;
+	if (!m_target || m_state != 4) return;
+	const OMedia3DVector p = Position(this);
+	const OMedia3DVector q = Position(m_target);
+	const float d = (float)sqrt((double)(p.y - q.y) * (p.y - q.y) + (double)(p.z - q.z) * (p.z - q.z) + (double)(p.x - q.x) * (p.x - q.x));
+	if (d > 350.0f && f_1b60)								// 0x49fae4: far enough: stand up again
 	{
-		case 1:												// waiting: sit and do tricks for Jimmy
-		{
-			f_1b60 = 1;
-			v261();											// +0x414
-			float acc[4];
-			v155(acc);										// +0x26c
-			const float az = acc[2];
-			v155(acc);
-			v157(acc[0], g_gravity.y, az);					// +0x274; 0x5cfc04
-			f_1bb0 = f_1bb0 - dt;
-			if (f_1bb0 > 0) break;
-			CGameObject *j = g_jimmy;						// (g_N2_545fd0 - 0xc0)
-			const OMedia3DVector jp = Position(j);
-			const OMedia3DVector mp = Position(this);
-			OMedia3DVector d(jp.x - mp.x, jp.y - mp.y, jp.z - mp.z, 0);
-			omt_Angle ax, ay;
-			d.angles(ax, ay);								// OMedia3DVector::angles
-			float r[4];
-			v201(r);
-			v203(0, (float)ay * kAngleToDeg, r[2]);			// +0x32c: face Jimmy
-			v201(r);
-			v218(0, (float)ay * kAngleToDeg, r[2]);			// +0x368
-			switch (f_1bac)
-			{
-				case 0: ev58((char *)"PLAY", 1); f_1bb0 = 4.0f; break;
-				case 1:
-				case 3: ev58((char *)"SIT", 1); f_1bb0 = 3.0f; break;
-				case 2: ev58((char *)"CHASE", 1); f_1bb0 = 5.0f; break;
-				case 4:
-					ev58((char *)"JUMP", 1);
-					f_1bb0 = 4.0f;
-					PlayGameSound3DNoDoppler(this, -1, std::string("goddard bark"), false);	// 0x458a40
-					break;
-				case 5: ev58((char *)"WAG", 1); f_1bb0 = 2.0f; break;
-				case 6: ev58((char *)"SIT", 1); f_1bb0 = 5.0f; break;
-				default: break;
-			}
-			if (++f_1bac > 4) f_1bac = 0;
-			break;
-		}
-		case 2:
-		case 3:
-		case 13:
-			if (v133())										// +0x214
-			{
-				if (!IsAnim((char *)"RUN")) ev58((char *)"RUN", 1);
-			}
-			else if (!IsAnim((char *)"FLY")) ev58((char *)"FLY", 1);
-			break;
-		case 4:
-			ev149();										// element +0x254
-			break;
-		case 7:
-			// (debug log "HI")
-			break;
-		default:
-			break;
+		f_1b60 = 0;
+		m_hover = 1;
 	}
+	if (d > 440.0f) m_speed = 600.0f;						// 0x49fae0
+	else m_speed = 450.0f;
+	if (d > 1500.0f)										// 0x495318: left behind - jump there
+	{
+		m_keep_point = 0;
+		const OMedia3DVector t = m_target->v224(0, 0, -800.0f);	// +0x384
+		v196(t.x, t.y, t.z, t.w);							// +0x314
+	}
+	if (f_1b5c != 2 && f_1b5c != 0 && m_time > 2.0f) ev99();	// 0x48d954; +0x18c
+	if (!v133())											// +0x218: in the air
+	{
+		if (!IsAnim((char *)"FLY")) ev58((char *)"FLY", 1);
+		return;
+	}
+	v174(v);												// +0x2bc
+	if ((float)sqrt((double)v[2] * v[2] + (double)v[1] * v[1] + (double)v[0] * v[0]) > 20.0f)	// 0x495324
+	{
+		if (!IsAnim((char *)"RUN")) ev58((char *)"RUN", 1);
+	}
+	else if (!IsAnim((char *)"WAG")) ev58((char *)"WAG", 1);
 }
 
 void C3DGoddard::v243(float dt)								// 0x41d0c0
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	ev146(dt);												// element +0x248
+	C3DObject::v243(dt);									// 0x462650: the viewport behind us
+	ev97(dt);												// element +0x184
 	short mx = 0, my = 0;
 	GetMouseDelta(&mx, &my);								// 0x46a460
 	float v[4];
-	v174(v);												// +0x2b8
-	if (v[1] > 0) ev94(dt, 115.0f);						// element +0x208
+	v174(v);												// +0x2bc
+	if (v[1] > 0) ev94(dt, 115.0f);							// element +0x178
 	f_1b98 = (float)mx * dt * 14.4f + f_1b98;				// 0x49fadc
 	f_1b9c = (float)my * dt * 14.4f + f_1b9c;
-	int anim;												// the animation wanted
-	if (PlayerKeyLeft() || f_1b98 > 3.0f)					// N2:0x4659f0; 0x48e5a0
+
+	int anim = 0;											// the animation wanted
+	// Turn keys: g_keys[0x25] / [0x27] are the cursor keys (0x50985d / 0x50985f), the joystick x
+	// is 0x509aa0.
+	const bool left = g_keys[0x25] || f_1b98 > 3.0f || g_joy_x < -0.5f;
+	const bool right = !left && (g_keys[0x27] || f_1b98 < -3.0f || g_joy_x > 0.5f);
+	if (left || right)
 	{
-		f_1b64 = f_1b64 + 7.0f;								// 0x48e5b8
-		if (f_1b64 > 60.0f) f_1b64 = 60.0f;					// 0x49d5b4
-		goto turning;
+		if (left)
+		{
+			f_1b64 = f_1b64 + 7.0f;							// 0x48e5b8
+			if (f_1b64 > 60.0f) f_1b64 = 60.0f;				// 0x49d5b4
+		}
+		else
+		{
+			f_1b64 = f_1b64 - 7.0f;
+			if (f_1b64 < -60.0f) f_1b64 = -60.0f;			// 0x49d5b0
+		}
+		if (m_speed <= 50.0f)								// 0x48d400: turning gets him moving
+		{
+			if (m_speed < 40.0f) m_speed = 40.0f;			// 0x49fad4
+			m_speed = f_1b74 + m_speed;
+		}
 	}
-	if (PlayerKeyRight() || f_1b98 < -3.0f)					// N2:0x465a60; 0x49d5b0
+	else
 	{
-		f_1b64 = f_1b64 - 7.0f;
-		if (f_1b64 < -60.0f) f_1b64 = -60.0f;				// 0x49d5b0
-		goto turning;
+		anim = (int)(unsigned short)my;						// sic: the original leaves its animation variable
+															// holding the mouse y here (a short written into a zeroed int)
 	}
-	anim = (int)my;											// sic: the original leaves its animation
-															// variable holding the mouse y here
-	goto speed;
-turning:
-	anim = 0;
-	if (m_speed <= 50.0f)										// 0x48d400: turning gets him moving
-	{
-		if (m_speed < 40.0f) m_speed = 40.0f;					// 0x49fad4
-		m_speed = f_1b74 + m_speed;
-	}
-speed:
-	if (PlayerKeyGo() || f_1b9c > 1.0f)						// N2:0x465910; 0x48d924
+	// Go: cursor up (0x50985e), the mouse y, the left mouse button (0x509834), the joystick y
+	// (0x509aa4) or button 0 (0x509ac4); back: cursor down (0x509860), the joystick, the mouse y.
+	if (g_keys[0x26] || f_1b9c > 1.0f || g_mouse_down || g_joy_y > 0.5f || g_joy_button0)
 	{
 		anim = 0;
 		if (m_speed < f_1b70)
 		{
-			if (m_speed < 20.0f) m_speed = 20.0f;				// 0x495324
+			if (m_speed < 20.0f) m_speed = 20.0f;			// 0x495324
 			m_speed = f_1b74 + m_speed;
 			if (m_speed > f_1b70) m_speed = f_1b70;
 		}
 	}
-	else if (PlayerKeyBack() || f_1b9c < -1.0f)				// N2:0x465980; 0x49b1f8
+	else if (g_keys[0x28] || g_joy_y < -0.5f || f_1b9c < -1.0f)
 	{
 		anim = 0;
-		if (m_speed > -200.0f) m_speed = m_speed - f_1b74;		// 0x49facc
+		if (m_speed > -200.0f) m_speed = m_speed - f_1b74;	// 0x49facc
 	}
 	else if (m_speed <= 0) anim = 1;
 	else
 	{
-		m_speed = m_speed - f_1b74 * 0.25f;						// 0x49fad0
-		if (m_speed < 10.0f)									// 0x48e5ec
+		m_speed = m_speed - f_1b74 * 0.25f;					// 0x49fad0
+		if (m_speed < 10.0f)								// 0x48e5ec
 		{
 			anim = 1;
 			m_speed = 0;
@@ -711,20 +604,22 @@ speed:
 	f_1b9c = 0;
 	f_1b68 = f_1b64;
 
+	// Jump keys: the right mouse button (0x50993a), Insert, Shift, Num 0 (0x509865, 0x509848,
+	// 0x509898) or joystick button 1 (0x509ac5).
 	float a[4];
-	if (!PlayerKeyJump() && !g_joy_button1)					// N2:0x4658a0, 0x509ac5
+	if (!g_mouse_rdown && !g_keys[0x2d] && !g_keys[0x10] && !g_keys[0x60] && !g_joy_button1)
 	{
-		v155(a);											// +0x26c
+		v155(a);											// +0x270
 		const float az = a[2];
 		v155(a);
-		v157(a[0], 0, az);									// +0x274
+		v157(a[0], 0, az);									// +0x278
 		v174(v);
 		if (v[1] < -200.0f)									// 0x49facc: falling: no faster
 		{
 			v174(v);
 			const float vz = v[2];
 			v174(v);
-			v176(v[0], -200.0f, vz);						// +0x2c0
+			v176(v[0], -200.0f, vz);						// +0x2c4
 		}
 	}
 	else if (Position(this).y < f_1b94)						// flying up
@@ -758,7 +653,7 @@ speed:
 			v176(v[0], -200.0f, vz);
 		}
 	}
-	if (!v133()) anim = 3;									// +0x214 in the air: FLY
+	if (!v133()) anim = 3;									// +0x218 in the air: FLY
 	if (f_1b78 != anim)
 	{
 		if (anim == 0) { f_1b78 = 0; ev58((char *)"RUN", 1); }
@@ -768,126 +663,92 @@ speed:
 
 	// the arrows: 200 units in front of the viewport towards the nearest red neutron / pickup
 	float rot[4];
-	v201(rot);												// +0x324 (x, y and w are used)
-	f_1b8c = FindNearest(this, '3RED', -1);					// 0x458e40
-	if (f_1b8c)
 	{
-		const float vx = g_viewport->getx(), vy = g_viewport->gety(), vz = g_viewport->getz();	// 2002 +0x44..
-		const OMedia3DVector rp = Position(f_1b8c);
-		OMedia3DVector d(rp.x - vx, rp.y - vy, rp.z - vz, 0);
-		const float k = 1.0f / d.quick_magnitude();
-		d.x = k * d.x * 200.0f;								// 0x48e5dc
-		d.y = k * d.y * 200.0f;
-		d.z = k * d.z * 200.0f;
-		C3DObject *arrow = Arrow(f_1b80);
-		float ar[4];
-		f_1b80->v201(ar);
-		f_1b80->v196(d.x + vx, d.y + vy, d.z + vz, 1.0f);	// +0x310
-		f_1b80->v202(rot[0], rot[1], ar[2], rot[3]);		// +0x328
-		f_1b80->AddRotation(0, 0, dt * 100.0f);				// +0x330; 0x48d96c
-		arrow->ShowAgain();									// element +0xd8
+		float r[4];
+		v201(r);											// +0x328 (x, y and w are used)
+		rot[0] = r[0]; rot[1] = r[1]; rot[2] = 0; rot[3] = r[3];
 	}
-	else Arrow(f_1b80)->HideAgain();						// element +0xdc
-	f_1b88 = FindNearest(this, '3PIC', -1);
-	if (f_1b88)
+	f_1b8c = FindNearest(this, '3RED');						// 0x458e40
+	if (f_1b8c) PointArrow(f_1b80, f_1b8c, rot, dt, 100.0f);	// 0x48d96c
+	else Arrow(f_1b80)->hide(true);
+	f_1b88 = FindNearest(this, '3PIC');
+	if (f_1b88) PointArrow(f_1b84, f_1b88, rot, dt, -100.0f);	// 0x49fac4
+	else Arrow(f_1b84)->hide(true);
+
+	// Tab (0x509841), Space (0x509858), Esc (0x509853) or joystick button 2 (0x509ac6): back to Jimmy
+	if (g_keys[0x09] || g_keys[0x20] || g_keys[0x1b] || g_joy_button2)
 	{
-		const float vx = g_viewport->getx(), vy = g_viewport->gety(), vz = g_viewport->getz();
-		const OMedia3DVector rp = Position(f_1b88);
-		OMedia3DVector d(rp.x - vx, rp.y - vy, rp.z - vz, 0);
-		const float k = 1.0f / d.quick_magnitude();
-		d.x = k * d.x * 200.0f;
-		d.y = k * d.y * 200.0f;
-		d.z = k * d.z * 200.0f;
-		C3DObject *arrow = Arrow(f_1b84);
-		float ar[4];
-		f_1b84->v201(ar);
-		f_1b84->v196(d.x + vx, d.y + vy, d.z + vz, 1.0f);
-		f_1b84->v202(rot[0], rot[1], ar[2], rot[3]);
-		f_1b84->AddRotation(0, 0, dt * -100.0f);			// 0x49fac4
-		arrow->ShowAgain();
+		CGameObject *jim = FindObjectByTag("JIM1");			// 0x474070 (0x4ec7f8)
+		if (jim && !g_4f8182)
+		{
+			C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim);	// port: the original does not check
+			if (j)
+			{
+				j->DeactivateGadget();						// Jimmy's element +0x178
+				g_gametype->SetCamera(jim);					// g_gametype +0x118
+				j->f_1e00 = 1;								// the key does not reach his gadgets
+			}
+		}
 	}
-	else Arrow(f_1b84)->HideAgain();
-	if (KeyDeactivateItem() && g_jimmy)						// N2:0x465b60
-		JimmyActivateMenuItem(g_jimmy, this, NULL, 0, 0);	// Jimmy element +0x228
-	// (then the camera point behind us is worked out and thrown away: only the ray test's
-	// result, g_phys_ray, is left)
+
+	// The chase camera: from our position 80% of the way to the point behind and above us
+	// (110 up, 210 back), or to where a wall is in the way (15 above that).
 	const OMedia3DVector p = Position(this);
-	const OMedia3DVector t = v224(0, 110.0f, -210.0f);		// +0x380
-	PhysicsLineBlocked(p, t, false);						// 0x47c210
+	OMedia3DVector t = v224(0, 110.0f, -210.0f);			// +0x384
+	if (PhysicsLineBlocked(p, t, false))					// 0x47c210
+	{
+		t.x = g_phys_ray.end.x;								// 0x5cfc60
+		t.y = g_phys_ray.end.y + 15.0f;						// 0x49d5e0
+		t.z = g_phys_ray.end.z;
+		t.w = g_phys_ray.end.w;
+	}
+	OMedia3DVector d(t.x - p.x, t.y - p.y, t.z - p.z, 0);
+	const float len = (float)sqrt((double)d.y * d.y + (double)d.x * d.x + (double)d.z * d.z);
+	const float k = 1.0f / d.quick_magnitude();
+	d.x = k * d.x;
+	d.y = k * d.y;
+	d.z = k * d.z;
+	g_viewport->place(d.x * len * 0.8f + p.x,				// 0x49fac0; 2002 +0x44..+0x4c
+					  d.y * len * 0.8f + p.y,
+					  d.z * len * 0.8f + p.z);
+	float r[4];
+	v201(r);												// +0x328
+	const int ax = (int)(r[0] * kDegToAngle);				// _ftol; stored as shorts at 2002 +0x50..+0x54
+	const int ay = (int)(r[1] * kDegToAngle);
+	g_viewport->set_angle((omt_Angle)ax, (omt_Angle)ay, 0);
 }
 
 void C3DGoddard::v260(void)									// 0x41e590
 {
 	C3DAI::v260();											// 0x409480
 	f_1b94 = 1500.0f;
-	if (LevelID() == 'LV3C')
+	// hidden in LV4A, LV1C, LV1D, LEV6, LEV7 and LV6A; VR06 lets him fly higher
+	const int id = LevelID();
+	bool hidden;
+	if (id > 'LV4A')
 	{
-		HideAgain();										// element +0xdc
+		hidden = (id == 'LV6A');
+		if (!hidden && id == 'VR06') f_1b94 = 3500.0f;
+	}
+	else if (id == 'LV4A') hidden = true;
+	else if (id > 'LV1D') hidden = false;
+	else if (id >= 'LV1C') hidden = true;
+	else if (id < 'LEV6') hidden = false;
+	else hidden = (id <= 'LEV7');
+	if (hidden)
+	{
+		hide(true);											// element +0x58
 		v52(0);												// +0xd0
-		v132(0);
+		v132(0);											// +0x214
 		f_1ba4 = 1;
+		return;
 	}
-	else
-	{
-		if (LevelID() == 'VR06') f_1b94 = 3500.0f;
-		ShowAgain();										// element +0xd8
-		v52(1);
-		v132(1);
-		InitPhysics();										// +0x2c
-		ev144(0);											// element +0x240
-		f_1b90 = 1;											// next ev149: behind Jimmy
-		v67(130.0f);
-		f_1ba4 = 0;
-	}
-	if (f_1b80) Arrow(f_1b80)->HideAgain();					// element +0xdc
-	if (f_1b84) Arrow(f_1b84)->HideAgain();
-}
-
-void C3DGoddard::v266(void)									// N2:0x43a090
-{
-	if (!f_1bc0) return;
-	f_1bc0->ev65(0, 2, 0);									// +0x104: blend Dst_Color, Zero
-	f_1bc0->n2_ev91(1);										// +0x16c: second pass
-	// (N2: f_1bbc +0xd7c = 0.5, +0xd70 = NULL: C3DGrannyObj fields) TODO(BG)
-}
-
-void C3DGoddard::v270(int old_mode, int new_mode)			// N2:0x43b410
-{
-	// (debug log "C3DGoddard::ChangeState %d  %d")
-	if (new_mode == 3)										// a cut scene: look ahead, wait
-	{
-		float r[4];
-		v201(r);
-		v203(0, r[1], 0);									// +0x32c
-		v201(r);
-		v218(0, r[1], 0);									// +0x368
-		if (f_934 == -1)
-		{
-			// (debug log "MEBTEMP C3DGoddard::Swithing to WAITING %d  %d")
-			if (m_state == 4)
-			{
-				f_934 = 4;
-				ev73(1);									// element +0x1ac
-			}
-		}
-	}
-	if (old_mode == 3 && f_934 != -1)
-	{
-		// (debug log "MEBTEMP C3DGoddard::Swithing back to AI %d   %d  %d")
-		if (f_934 == 4)
-		{
-			ev73(4);
-			f_934 = -1;
-		}
-	}
-}
-
-void C3DGoddard::ReadState(OMediaStreamOperators &s)		// N2:0x43a0f0
-{
-	C3DAI::ReadState(s);									// N2:0x4155e0
-	if (m_state == 3)
-	{
-		m_speed = 400.0f;
-		n2_ev90(1);											// element +0x168
-	}
+	force_show();											// element +0x70 / hide(false)
+	v52(1);
+	v132(1);
+	InitPhysics();											// +0x2c
+	ev95(0);												// element +0x17c
+	f_1b90 = 1;												// next Process: behind Jimmy
+	v67(130.0f);											// +0x110
+	f_1ba4 = 0;
 }

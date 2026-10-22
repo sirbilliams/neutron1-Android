@@ -306,8 +306,8 @@ void C3DJimmy::Process(float dt)							// 0x424600
 	if (f_a1c && f_a1c->f_1b5c == 4 && f_a1c->m_time > 9.0f)	// Goddard: BG +0x9a0 side, +0x6bc time there
 	{
 		f_a1c->m_time = 0;
-		if (f_a1c->f_1b5e == 1) { f_a1c->ev144(2); return; }	// BG +0x9a2, element +0x17c
-		if (f_a1c->f_1b5e == 3) f_a1c->ev144(0);
+		if (f_a1c->f_1b5e == 1) { f_a1c->ev95(2); return; }	// BG +0x9a2, element +0x17c (Goddard ev95)
+		if (f_a1c->f_1b5e == 3) f_a1c->ev95(0);
 	}
 }
 
