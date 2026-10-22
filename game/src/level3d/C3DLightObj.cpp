@@ -45,7 +45,7 @@ C3DLightObj::C3DLightObj()									// 0x42dba0
 	// (then a call to the empty 0x472970)
 }
 
-C3DLightObj::~C3DLightObj() {}								// N2:0x450510
+C3DLightObj::~C3DLightObj() {}								// 0x42dd80
 
 namespace neg {
 CGameObject *New_C3DLightObj(void) { return new C3DLightObj; }			// '3LIO' (0x6a4 bytes)
@@ -70,10 +70,9 @@ void C3DLightObj::InitObject(void)							// 0x42ddc0
 	v67(10.0f);												// radius
 }
 
-void C3DLightObj::Process(float dt)							// N2:0x450690
+void C3DLightObj::Process(float dt)							// 0x42df00
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DSprite::Process(dt);									// 0x463090
+	C3DSprite::Process(dt);									// (no pause check)									// 0x463090
 	m_time += dt;
 	m_toggle_time += dt;
 	if (!m_activated || !m_pulsate) return;
@@ -90,18 +89,18 @@ void C3DLightObj::Process(float dt)							// N2:0x450690
 	set_diffuse(OMediaFARGBColor(m_pulse, m_red, m_green, m_blue));
 }
 
-void C3DLightObj::v260(void)								// N2:0x4507e0
+void C3DLightObj::v260(void)								// 0x42e030
 {
-	C3DSprite::v260();										// N2:0x49cfd0 (not C3DSpriteType's)
+	C3DSprite::v260();										// (C3DSprite::v259, not C3DSpriteType's)
 	set_blend(omblendfc_Src_Alpha, g_windowed ? omblendfc_Inv_Src_Alpha : omblendfc_One);	// +0xb4 = 6, +0xb8 = 7 / 1
 	m_time = m_offset_time;
 	if (m_activated)
 	{
 		set_diffuse(OMediaFARGBColor(m_alpha, m_red, m_green, m_blue));
-		ShowAgain();										// element +0xd4
+		force_show();										// inline: hide_count (+0x70) = 1, hide(false)
 		return;
 	}
-	HideAgain();											// element +0xd8
+	OMediaElement::hide(true);								// element +0x58
 }
 
 void C3DLightObj::v268(int a2)								// 0x42e0f0
@@ -116,10 +115,10 @@ void C3DLightObj::v268(int a2)								// 0x42e0f0
 	else if (a2 != 1) return;
 	if (m_on_sound != -1) PlayGameSoundIndex(-1, m_on_sound, false);	// 0x458980
 	m_activated = 1;
-	ShowAgain();
+	force_show();
 	return;
 off:
 	if (m_off_sound != -1) PlayGameSoundIndex(-1, m_off_sound, false);
 	m_activated = 0;
-	HideAgain();
+	OMediaElement::hide(true);
 }

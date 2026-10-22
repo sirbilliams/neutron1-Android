@@ -1,9 +1,8 @@
-/*  C3DNeutron - see C3DNeutron.h. Reconstructed from Neutron.exe 0x4329a0..0x4402a0. */
+/*  C3DNeutron - see C3DNeutron.h. Reconstructed from Neutron.exe 0x4329a0..0x433060. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DNeutron.h"
 #include "../C2DInGameMenu.h"
-#include "../C3DJimmy.h"
 #include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../InterfaceElement.h"
@@ -22,18 +21,14 @@ using namespace neg;
 
 // --------------------------------------------------------------------------- helpers
 
-// 0x474070: the first object of the global list whose ObjectTag matches (_stricmp).
-static CGameObject *FindObjectByTag(const char *tag)
-{
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
-	return NULL;
-}
-
-// 0x42a920: the neutron energy (g_health) += d, kept in 0..100; "low neutron energy" once when
-// it falls below 19 (g_4f83dc remembers it until it is above 20 again). (As in C3DRocketShip.cpp.)
+// 0x42a920: the neutron energy (g_health) += d, kept in 0..100 (not in the VR levels 'VR01'..
+// 'VR08'). Sound 80 when it runs out; sound 182 ("low neutron energy") once when it falls below
+// 19 (g_4f83dc remembers it until it is above 20 again).
 static void AddEnergy(float d)
 {
+	const int type = g_gametype->m_object_id;				// (+0x490 of the game type)
+	if (type >= 'VR01' && type <= 'VR08') return;
+	if (g_health > 0 && g_health + d <= 0) PlayGameSoundIndex(-1, 80, false);	// 0x458980
 	g_health += d;
 	if (g_health > 100.0f)
 	{
@@ -41,51 +36,44 @@ static void AddEnergy(float d)
 		g_4f83dc = 0;
 		return;
 	}
-	if (g_health < 0)
+	if (g_health >= 0)
 	{
-		g_health = 0;
-		return;
-	}
-	if (g_health < 19.0f && g_health != 0)					// 0x4a3e90
-	{
-		if (!g_4f83dc)
+		if (g_health >= 19.0f)								// 0x4a3e90
 		{
-			PlayGameSound(-1, std::string("low neutron energy"), false);
-			g_4f83dc = 1;
+			if (g_health > 20.0f) g_4f83dc = 0;				// 0x495324
+			return;
 		}
-		return;
 	}
-	if (g_health > 20.0f) g_4f83dc = 0;
+	else g_health = 0;
+	if (!g_4f83dc)
+	{
+		PlayGameSoundIndex(-1, 182, false);
+		g_4f83dc = 1;
+	}
 }
 
-// N2:0x404dd0: set the type of item `item` of menu page `page` (as in CLoadLevel.cpp). The pickups
-// come in pairs (10/21 and 31/38): giving one also gives (and counts) the other.
+// 0x42adc0: points (Boy Genius: no difficulty scaling; the "+N" pop-up shows the last award).
+static void AddPoints(int points)
+{
+	g_score += points;										// 0x4f83c0
+	if (points > 0)
+	{
+		g_score_popup = points;								// 0x4f83c4
+		g_score_popup_time = 1.2f;							// 0x4f83c8
+	}
+	if (g_score < 0) g_score = 0;
+}
+
+// 0x4038c0: set the type of item `item` (0..28) of menu page `page`.
 static void SetItemState(short page, short item, short state)
 {
-	if (item < 0 || item >= C2DInGameMenu::MENU_ITEMS) return;
+	if (item < 0 || item >= 29) return;
+	// ("Activating Item %d for %d IsActive:%d": debug log)
 	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
 	if (p) p->items[item].type = state;
-	if (page != C2DInGameMenu::MENU_PICKUPS) return;
-	C2DInGameMenu::MenuPage *pk = C2DInGameMenu::Page(C2DInGameMenu::MENU_PICKUPS);
-	if (item == 10)
-	{
-		if (!pk || !pk->items[21].type) { SetItemState(2, 21, 1); g_pickup_counts[2 * 21]++; }
-	}
-	else if (item == 21)
-	{
-		if (!pk || !pk->items[10].type) { SetItemState(2, 10, 1); g_pickup_counts[2 * 10]++; }
-	}
-	else if (item == 38)
-	{
-		if (!pk || !pk->items[31].type) { SetItemState(2, 31, 1); g_pickup_counts[2 * 31]++; }
-	}
-	else if (item == 31)
-	{
-		if (!pk || !pk->items[38].type) { SetItemState(2, 38, 1); g_pickup_counts[2 * 38]++; }
-	}
 }
 
-// N2:0x490890 + element: the element behind a game object (the original looks it up by 4cc).
+// 0x4592f0: the element behind a game object (the original looks it up by its ObjectID).
 static OMediaElement *ElementOf(CGameObject *o)	{ return o ? dynamic_cast<OMediaElement *>(o) : NULL; }
 
 // --------------------------------------------------------------------------- construction
@@ -118,7 +106,7 @@ C3DNeutron::C3DNeutron()									// 0x4329a0
 	// (an empty debug log)
 }
 
-C3DNeutron::~C3DNeutron() {}								// N2:0x459b20
+C3DNeutron::~C3DNeutron() {}								// 0x432cf0
 
 namespace neg {
 CGameObject *New_C3DNeutron(void) { return new C3DNeutron; }	// '3NEU' (0x6c0 bytes)
@@ -128,34 +116,25 @@ CGameObject *New_C3DNeutron(void) { return new C3DNeutron; }	// '3NEU' (0x6c0 by
 
 void C3DNeutron::AddTouching(CGameObject *other)			// 0x432ef0
 {
-	C3DSpriteType::AddTouching(other);						// 0x43cf10
+	CGameObject::AddTouching(other);						// 0x470a90
 	if (m_collected || g_camera != other) return;
-	AddEnergy(5.0f);
-	AddScore(10);											// N2:0x482b50
-	CGameObject *jim = FindObjectByTag("JIM1");
-	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// (JIM1 - 0xc0)
-	if (j) j->ev156(1.0f, 0.3f, 0.3f, 1.0f);				// element +0x270: a red flash
-	if (g_health < 100.0f) SetItemState(2, 45, 1);			// 0x48d96c
-	m_channel = PlayGameSound(-1, std::string("neutron"), false);	// 0x458b40
+	AddEnergy(5.0f);										// 0x42a920
+	AddPoints(5);											// 0x42adc0
+	if (g_health < 100.0f) SetItemState(2, 0, 1);			// 0x48d96c, 0x4038c0
+	m_channel = PlayGameSoundIndex(-1, 4, false);			// 0x458980
 	m_collected = 1;
-}
-
-unsigned char C3DNeutron::v231(CGameObject *other)			// N2:0x43d610
-{
-	return g_camera == other;
 }
 
 // 0x432d30: every 0.05 s (scaled) the next frame: spinning 0..7; collected, 8..12, then at 13
 // hidden, no collisions, gone. Gone, it comes back after 240 s.
 void C3DNeutron::Process(float dt)
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DSpriteType::Process(dt);								// 0x40ff40
+	C3DSprite::Process(dt);									// 0x463090 (no pause check)
 	m_time = dt + m_time;
 	if (m_gone)
 	{
 		if (!(m_time > 240.0f)) return;						// 0x48d934
-		OMediaElement *e = ElementOf(this);					// N2:0x490890
+		OMediaElement *e = ElementOf(this);					// 0x4592f0
 		if (e) e->force_show();								// (2002 +0x70 hide count: 1, then hide(false))
 		m_collected = 0;
 		m_time = 0;
@@ -163,7 +142,7 @@ void C3DNeutron::Process(float dt)
 		v136(1);											// +0x220
 		return;
 	}
-	if (!(g_enemy_time_scale * m_time > 0.05f)) return;		// N2:0x540594, 0x495334
+	if (!(m_time > 0.05f)) return;							// 0x495334 (no time scale)
 	m_time = 0;
 	if (m_collected)
 	{
@@ -192,37 +171,17 @@ void C3DNeutron::v258(void)									// 0x432ec0
 	set_canvas(m_frames[0]);
 }
 
-void C3DNeutron::v260(void)									// 0x42ca60
+// Reload: four times in ten the neutron is there, else it starts collected and gone.
+void C3DNeutron::v260(void)									// 0x432f70
 {
-	set_canvas(m_frames[0]);
-}
-
-void C3DNeutron::WriteState(OMediaStreamOperators &s)		// N2:0x459ec0
-{
-	CLocalGameObject::WriteState(s);
-	bool collected = m_collected != 0, gone = m_gone != 0;	// (bool operators, one byte each)
-	s << collected;
-	s << gone;
-}
-
-void C3DNeutron::ReadState(OMediaStreamOperators &s)		// N2:0x459e10
-{
-	CLocalGameObject::ReadState(s);
-	bool collected, gone;
-	s >> collected;
-	s >> gone;
-	m_collected = collected;
-	m_gone = gone;
-	if (!m_collected)
+	*g_random_seed = *g_random_seed * 0x19660d + 0x7fff;
+	const int r = (int)(((*g_random_seed >> 16) * 1001) >> 16) & 0xffff;
+	if ((float)r * 0.001f < 0.4)							// 0x48e5d8, 0x4ab220 (double)
 	{
-		if (m_gone) ErrorLog("Error: INVALID NEUTRON DETECTED");
-		m_gone = 0;
 		set_canvas(m_frames[0]);
-		ShowAgain();										// element +0xd4
-		v136(1);
 		return;
 	}
-	HideAgain();											// element +0xd8
+	OMediaElement::hide(true);								// +0x58
 	m_collected = 1;
 	m_gone = 1;
 	v136(0);

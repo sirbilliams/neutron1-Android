@@ -2,11 +2,11 @@
     0x2d) that, touched by Jimmy or a baseball or after a random 0..30 s wait, plays "leaves" and
     falls for 7 s (velocity y -150 against the gravity, collisions on, the frames cycled every
     0.07 s until it lands), then goes back to its initial position and waits again.
-    Reconstructed from Neutron.exe: constructor 0x42c6f0, destructor 0x42c970 (only resets the
-    vtables, then ~C3DSpriteType; deleting thunks 0x42c940 / 0x42cd00 / 0x42cd10). Vtables
-    0x4a5b44 (element) / 0x4a5b30 (listener) / 0x4a56e0 (game object: 0, 16, 240, 260
-    overridden; 260 is code shared with C3DNeutron / C3DCheckPoint) / 0x4a56d0 (streamer).
-    Own members 0x668..0x6c0, vtordisp 0x6c0, the streamer at 0x6c4 (0x6c8 bytes).
+    Reconstructed from Neutron.exe: constructor 0x42c6f0 (factory '3LEA', 0x648 bytes), destructor
+    0x42c970 (only resets the vtables, then ~C3DSpriteType; deleting thunks 0x42c940 / 0x42cd00
+    / 0x42cd10). Vtables 0x4a5b44 (element, 53 slots, C3DSprite's) / 0x4a5b30 (listener) /
+    0x4a56e0 (game object at +0xc8: 0, 16, Process, v260 overridden) / 0x4a56d0 (streamer, +0x644). The sound is sound 177 by
+    index (Negatron played "leaves" by name). The members' 2002 offsets below are Negatron's.
 
     Members are named after their 2002 offset from the object start (element view; the
     CGameObject-family methods of the original see them 0xc8 lower).                          */
