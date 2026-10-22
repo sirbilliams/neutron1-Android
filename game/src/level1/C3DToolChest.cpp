@@ -70,6 +70,6 @@ void C3DToolChest::AddTouching(CGameObject *other)			// 0x446190
 	if (cam && cam->NameContains((char *)"C3DCUTSCENECAMERA"))
 	{
 		C3DTriggerType *t = dynamic_cast<C3DTriggerType *>(cam);
-		if (t) t->CallNextTrigger("GOTKEY", 0);				// element +0xd4 (BG slot 53)
+		if (t) t->CallNextTrigger("GOTKEY");				// element +0xd4 (BG slot 53)
 	}
 }
