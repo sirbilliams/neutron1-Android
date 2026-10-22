@@ -10,7 +10,7 @@
       * update_logic (slot 15) runs UpdateGame every frame: the start-up splashes 0 and 1 (3 s
         each, Escape skips), then RequestLevel("level1d.gam"); when RequestLevel's countdown runs
         out or LoadLevelNow was called, m_load_pending is set and CheckLoadLevel deletes the
-        level's objects and calls LoadGame(m_level_name, -1).
+        level's objects and calls LoadGame(m_level_name).
       * LoadGame reads gam\<name>: the game type's 4cc, the object count, then per object its 4cc
         and its properties (CGameObject::ReadProperties); objects come from neg::CreateObject.
         Then ResetLevel resets every object.
@@ -69,7 +69,7 @@ class CEditor : public OMediaElement
 	virtual void ShowProperties(bool on);									// SLOT 60 0x46d7c0
 	virtual bool ToggleOption(int index);									// SLOT 61 0x46cd10
 	virtual void SaveGame(char *name);										// SLOT 62 0x46dd50
-	virtual void LoadGame(char *name, int level_id);						// SLOT 63 0x46e170
+	virtual void LoadGame(char *name);										// SLOT 63 0x46e170
 	virtual void CheckLoadLevel(void);										// SLOT 64 0x46dff0
 	virtual void MakeBackupName(char *name);								// SLOT 65 0x46e7b0
 	virtual void ListObjects(void);											// SLOT 66 N2:0x4a8c70
@@ -142,7 +142,6 @@ class CEditor : public OMediaElement
 namespace neg {
 extern OMediaCanvas				*g_editor_font_canvas;	// 0x509978 png\fontsmall.png
 extern OMediaCanvasFont			*g_editor_font;			// 0x50997c
-extern unsigned char			 g_new_game;			// N2:0x56af08 set when level1d.gam (a new game) is loaded
 extern OMediaCanvasElement		*g_splash;				// 0x509984
 extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\splash.omt
 extern OMediaFileStream			*g_editor_stream;		// 0x50998c

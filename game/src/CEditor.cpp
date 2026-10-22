@@ -64,7 +64,6 @@ std::string omf_SDLResolvePath(const std::string &in);		// engine/sdl: DOS path 
 namespace neg {
 OMediaCanvas			*g_editor_font_canvas = NULL;	// 0x509978
 OMediaCanvasFont		*g_editor_font = NULL;			// 0x50997c
-unsigned char			 g_new_game = 0;				// N2:0x56af08
 OMediaCanvasElement		*g_splash = NULL;				// 0x509984
 OMediaDataBase			*g_editor_db = NULL;			// 0x509988
 OMediaFileStream		*g_editor_stream = NULL;		// 0x50998c
@@ -209,7 +208,6 @@ static void SetGameState(int state)
 
 
 // N2:0x482b40
-static void SetLevel1cLoaded(unsigned char v)	{ neg::SetFlag545e54(v != 0); }	// N2:0x482b40 (InterfaceElement.cpp)
 
 
 static void DeleteFile(const char *dos_path)	// KERNEL32 DeleteFileA
@@ -391,7 +389,6 @@ CEditor::CEditor()
 	f_811 = 0;
 	m_panel_open = 0;
 	m_list_filter = 0;
-	g_new_game = 0;
 	m_label_mode = 1;
 	Trace("CEditor() done");
 }
@@ -674,7 +671,7 @@ void CEditor::CheckLoadLevel(void)
 	CloseAllDatabases();									// 0x46b000
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 		if (*i) static_cast<CLocalGameObject *>(*i)->f_4aa = 0;	// +0x49e
-	LoadGame(m_level_name, -1);								// vtable +0xfc
+	LoadGame(m_level_name);									// vtable +0xfc
 	m_load_pending = 0;
 }
 
@@ -706,33 +703,21 @@ static CGameObject *PortPlaceholder(int id)
 	return o;
 }
 
-void CEditor::LoadGame(char *name, int level_id)
+void CEditor::LoadGame(char *name)
 {
-	g_new_game = 0;
-	SetLevel1cLoaded(0);
-	if (strcasecmp(m_level_name, "level1d.gam") == 0)
-	{
-		// A new game: forget the autosaves.
-		g_new_game = 1;
-		SetGameState(0);
-		DeleteFile("save\\autosave.tsk");
-		static const char *const autosaves[] = {
-			"save\\autosave01.tsk", "save\\autosave02.tsk", "save\\autosave03.tsk", "save\\autosave04.tsk",
-			"save\\autosave05.tsk", "save\\autosave06.tsk", "save\\autosave07.tsk", "save\\autosave08.tsk",
-			"save\\autosave09.tsk", "save\\autosave10.tsk", "save\\autosave11.tsk", "save\\autosave12.tsk",
-			"save\\autosave13.tsk", "save\\autosave14.tsk", "save\\autosave15.tsk", "save\\autosave16.tsk",
-			"save\\autosave17.tsk" };
-		for (unsigned i = 0; i < sizeof(autosaves) / sizeof(autosaves[0]); i++) DeleteFile(autosaves[i]);
-		neg::WriteSaveSlotList();							// port: save\slots.txt (StartMode.h)
-	}
-	else if (strcasecmp(m_level_name, "level1_c.gam") == 0)
-		SetLevel1cLoaded(1);
-
 	strcpy(m_game_name, name);
-	strcpy(g_game_file, name);
+	strcpy(g_game_file, name);								// port: Negatron's current-game global (SaveGame.cpp)
+	if (strcasecmp(name, "level1d.gam") == 0)
+	{
+		// port: a new game forgets the port's autosaves (Neutron.exe has none; StartMode.h)
+		DeleteFile("save\\autosave.tsk");
+		char f[32];
+		for (int i = 1; i <= 17; i++) { snprintf(f, sizeof f, "save\\autosave%.2d.tsk", i); DeleteFile(f); }
+		neg::WriteSaveSlotList();
+	}
 	char path[128];
 	strcpy(path, "gam\\");
-	strcat(path, name);
+	strcat(path, name);										// (0x40acc0: the path's slashes)
 	OMediaFilePath fp(path, 'null', 'null');
 	OMediaFileStream fs;
 	Trace("LOADING NEW GAME");
@@ -742,7 +727,7 @@ void CEditor::LoadGame(char *name, int level_id)
 	if (!fs.fileexists())
 	{
 		Trace("WARNING file %s does not exist for load", name);
-		CGameObject *o = neg::CreateObject(level_id);
+		CGameObject *o = neg::CreateObject(0);				// port: the original passes an uninitialised local
 		if (!o)
 		{
 			g_gametype = NULL;
@@ -763,7 +748,8 @@ void CEditor::LoadGame(char *name, int level_id)
 		return;
 	}
 
-	fs >> level_id;											// the game type's 4cc (the parameter is reused)
+	int level_id;
+	fs >> level_id;											// the game type's 4cc
 	CGameObject *gt = neg::CreateObject(level_id);
 	if (!gt || !GameTypeOf(gt))
 	{
@@ -816,8 +802,8 @@ void CEditor::LoadGame(char *name, int level_id)
 	}
 	fs.close();
 	Trace("File closed, Calling ResetLevel 1");
-	ResetLevel();
-	if (g_task_file[0]) RestoreTask(g_task_file);			// N2:0x498440
+	ResetLevel();											// vtable +0x128
+	if (g_task_file[0]) RestoreTask(g_task_file);			// port: Negatron's savegame restore (TODO(F))
 	Trace("File closed, Calling ResetLevel 2");
 	g_splash->hide(true);
 	TestPlayHook(name);										// port: test-only (NEG_TEST_PLAY)
@@ -1569,7 +1555,7 @@ void CEditor::ClickList(int x, int y)
 				DeleteAllObjects();
 				HideList(true);
 				m_mode = 0;
-				LoadGame(Levels()[i].name, Levels()[i].id);
+				LoadGame(Levels()[i].name);
 				break;
 		}
 	}

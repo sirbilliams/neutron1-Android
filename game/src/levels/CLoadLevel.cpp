@@ -221,6 +221,7 @@ void CLoadLevel::AddTouching(CGameObject *other)
 	if (m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;						// the fade loads the level when it is out
+		g_editor->m_load_countdown = -1;				// port: until PlayerLoadLevel is Neutron.exe's (load now, slot 64), not RequestLevel (TODO(E))
 		neg::StartFade(m_fade_type, m_fade_time);			// 0x403c10
 		g_view_restore = 1;									// 0x4f8430
 		p->PauseAnim(1);									// element +0x11c (slot 71)
