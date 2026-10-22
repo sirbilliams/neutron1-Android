@@ -3,15 +3,14 @@
     jimmy/C3DJimmy_a.cpp (CGameObject family, C3DPlayer's slots) and _b.cpp (Jimmy's own).       */
 #include "jimmy/JimmyBG.h"
 #include "objects/C3DStartPoint.h"
+#include "JimmySlots.h"
 
 using namespace neg;
 using namespace jimmybg;
 
 // Factory entries of the helper classes (gen/factory.cpp: weak TODO stubs until they exist).
 namespace neg {
-void JimmyElementSlot94(CGameObject *jim);
 void JimmyAddEnergy(float d);
-void JimmyElementSlot95(CGameObject *jim);
 CGameObject *New_C3DRocketShip(void);
 CGameObject *New_C3DShrinkRay(void);
 CGameObject *New_C3DBubble(void);
@@ -21,9 +20,33 @@ CGameObject *New_C3DGoddard(void);
 CGameObject *New_C3DJeep(void);
 }
 
-// CLoadLevel's hooks (levels/CLoadLevel.cpp): Jimmy's element slots 94 and 95.
-void neg::JimmyElementSlot94(CGameObject *jim)	{ if (C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim)) j->DeactivateGadget(); }
-void neg::JimmyElementSlot95(CGameObject *jim)	{ if (C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim)) j->MenuMark(); }
+// The core's hooks (JimmySlots.h: CJimmyGame, CLoadLevel): Jimmy's element slots.
+static C3DJimmy *J(CGameObject *jim)	{ return jim ? dynamic_cast<C3DJimmy *>(jim) : NULL; }
+void neg::JimmyElementSlot88(CGameObject *jim, float a, float b, float c, float d)	{ if (C3DJimmy *j = J(jim)) j->TouchedShock(OMedia3DVector(a, b, c, d)); }
+void neg::JimmyElementSlot89(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->TouchedHurt(); }
+void neg::JimmyElementSlot94(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->DeactivateGadget(); }
+void neg::JimmyElementSlot95(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->MenuMark(); }
+void neg::JimmyElementSlot99(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->Slot99(); }
+void neg::JimmyElementSlot100(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->EnterWater(); }
+void neg::JimmyElementSlot101(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->LeaveWater(); }
+void neg::JimmyElementSlot102(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->Splash(); }
+void neg::JimmyElementSlot103(CGameObject *jim)	{ if (C3DJimmy *j = J(jim)) j->Slot103(); }
+void neg::JimmyElementSlot104(CGameObject *jim, float a, int b, float c)	{ if (C3DJimmy *j = J(jim)) j->Shock(a, b, c); }
+void neg::JimmyElementSlot121(CGameObject *jim, int sound_set)	{ if (C3DJimmy *j = J(jim)) j->SetStepSound(sound_set); }
+void neg::JimmyElementSlot128(CGameObject *jim, float dt)	{ if (C3DJimmy *j = J(jim)) j->ProcessGadgets(dt); }
+unsigned char &neg::JimmyByte(CGameObject *jim, int off)
+{
+	static unsigned char none = 0;
+	C3DJimmy *j = J(jim);
+	if (!j) return none;
+	switch (off)
+	{
+		case 0x1e01: return j->f_1e01;
+		case 0x1e02: return j->f_1e02;
+		case 0x1e03: return j->f_1e03;
+	}
+	return none;
+}
 
 void neg::JimmyAddEnergy(float d)	{ AddEnergy(d); }		// 0x42a920 (for C3DJetpackFire)
 

@@ -23,7 +23,6 @@
 namespace neg {
 CGameObject			*g_camera = NULL;
 unsigned int		 g_song_id = 0;
-bool				 g_game_paused = false;
 bool				 g_help_shown = false;
 OMediaElement		*g_terrain = NULL;
 unsigned int		 g_input_device[4] = { 'KEYB', 'KEYB', 'KEYB', 'KEYB' };
@@ -432,13 +431,15 @@ void CGameType::SetTerrainUnLit(void)			{ ForEachTerrainShape(ApplyUnLit, 0); }	
 
 void CGameType::PauseGame(bool pause)										// 0x475a00
 {
-	Log("PauseGame(%d)", (int)pause);
-	g_game_paused = pause;
+	Log("PauseGame(%d)", (int)pause);	// Neutron.exe: only the log (Negatron also paused through a flag at 0x5099ad, which Neutron.exe has not)
 }
 
-bool CGameType::IsPaused(void)												// 0x475a30
+// port: Negatron's slot 69 "is the game paused" (Neutron.exe has no such slot: its slot 69 is
+// ev70). The Negatron-derived code that asks it means "the menu holds the game", which in
+// Neutron.exe is CJimmyGame::StopGame (slot 90) and is tested with GameIsRunning (0x475ca0).
+bool CGameType::IsPaused(void)
 {
-	return g_game_paused;
+	return !neg::GameIsRunning();
 }
 
 void CGameType::ev70(void)													// N2:0x4b0a50 (InitGame clears it; C3DCar/C3DVehicle test it)

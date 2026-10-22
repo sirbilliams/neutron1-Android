@@ -10,6 +10,7 @@
 #include "../Todo.h"
 #include "../C3DPlayer.h"
 #include "../Fade.h"
+#include "../JimmySlots.h"
 #include "../CGameType.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
@@ -34,15 +35,6 @@ static void JimmyLoadLevel(C3DPlayer *p, const char *level, const char *start, c
 	char l[100], s[100], rl[100], rs[100];
 	strcpy(l, level); strcpy(s, start); strcpy(rl, ret_level); strcpy(rs, ret_start);
 	p->PlayerLoadLevel(l, s, rl, rs);						// element slot 90 (+0x168)
-}
-
-// C3DJimmy element slots 94 (+0x178: put the item in hand away) and 95 (+0x17c). Weak: C3DJimmy
-// (agent E) defines them.
-namespace neg {
-void JimmyElementSlot94(CGameObject *jim) __attribute__((weak));
-void JimmyElementSlot95(CGameObject *jim) __attribute__((weak));
-void JimmyElementSlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element slot 94 (CLoadLevel)"); }
-void JimmyElementSlot95(CGameObject *jim)	{ (void)jim; NEG_TODO(0x4299b0, "C3DJimmy element slot 95 (CLoadLevel)"); }
 }
 
 // --------------------------------------------------------------------------- small helpers
@@ -221,6 +213,7 @@ void CLoadLevel::AddTouching(CGameObject *other)
 	if (m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;						// the fade loads the level when it is out
+		g_editor->m_load_countdown = -1;				// port: until PlayerLoadLevel is Neutron.exe's (load now, slot 64), not RequestLevel (TODO(E))
 		neg::StartFade(m_fade_type, m_fade_time);			// 0x403c10
 		g_view_restore = 1;									// 0x4f8430
 		p->PauseAnim(1);									// element +0x11c (slot 71)

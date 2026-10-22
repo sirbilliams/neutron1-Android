@@ -184,7 +184,3 @@
 	unsigned int   f_418;
 	unsigned int   f_41c;
 	unsigned char  f_42c;
-	unsigned char  _gap_42d[3];
-	float          f_430;
-	unsigned char  _gap_434[4];
-	unsigned int   f_438;

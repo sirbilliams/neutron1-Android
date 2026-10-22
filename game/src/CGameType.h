@@ -72,9 +72,9 @@ class CGameType : public OMediaElement, public CLocalGameObject
 	virtual void SetTerrainLit(void);										// ESLOT 65 0x475bb0  +0x104
 	virtual void SetTerrainUnLit(void);										// ESLOT 66 0x475c50  +0x108
 	virtual void SetTerrainVertexLit(void);									// ESLOT 67 0x475c00  +0x10c
-	virtual void PauseGame(bool pause);										// ESLOT 68 0x475a00  +0x110
-	virtual bool IsPaused(void);											// ESLOT 69 0x475a30  +0x114
-	virtual void ev70(void);												// ESLOT 70 N2:0x4b0a50  +0x118
+	virtual void PauseGame(bool pause);										// ESLOT 68 0x475a00  +0x110 (only logs; no game type overrides it)
+	virtual bool IsPaused(void);											// port: Negatron's ESLOT 69 (not in Neutron.exe): !GameIsRunning()
+	virtual void ev70(void);												// ESLOT 70 0x475a30 (BG slot 69, +0x114) g_5099a9 = 1
 	virtual void OnActivate(void) {}										// ESLOT 71 0x40db10  +0x11c (empty) omsg_Activate
 	virtual void OnDeactivate(void) {}										// ESLOT 72 0x40db10  +0x120 (empty) omsg_DeActivate
 	virtual void SetCamera(CGameObject *camera);							// ESLOT 73 0x475a40  +0x124
@@ -104,7 +104,6 @@ class CGameType : public OMediaElement, public CLocalGameObject
 namespace neg {
 extern CGameObject		*g_camera;				// 0x5099e4  active camera (SetCamera); gets v243(dt) each frame
 extern unsigned int		 g_song_id;				// 0x5099a4  chunk id of the level song (StartSong)
-extern bool				 g_game_paused;			// 0x5099ad  PauseGame / IsPaused
 extern bool				 g_help_shown;			// 0x5099ee  ToggleHelp
 extern OMediaElement	*g_terrain;				// 0x5099e8  the last '3TER' object CreateTerrain made (its element)
 extern unsigned int		 g_input_device[4];		// 0x4f6420  per player, 'KEYB' initially (SetInputDevice)

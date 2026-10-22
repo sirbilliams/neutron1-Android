@@ -2,9 +2,9 @@
     Reconstructed from Neutron.exe: constructor 0x47e310, destructor 0x47e410.
 
     It drives the game: each rendered frame, render_viewport (0x47e4f0) measures the frame time and,
-    before drawing, runs the per-frame game passes over g_objects - v241(dt), v4(dt) (which calls
-    Process(dt), or v242(dt) while editing) and v247/v248 - plus physics, texture animations, input
-    and sounds. That is how every game object, the running game type included, is updated.       */
+    before drawing, runs the per-frame game passes over g_objects - v4(dt) (which calls Process(dt),
+    or v242(dt) while editing) and v247/v248 - plus physics, particles, texture animations and
+    sounds (the running game type's Process polls the joystick). That is how every game object, the running game type included, is updated.       */
 #pragma once
 #include "OMediaViewPort.h"
 
