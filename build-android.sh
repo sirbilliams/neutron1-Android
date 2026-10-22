@@ -1,13 +1,13 @@
 #!/bin/bash
-# Builds the Neutron vs Negatron Android APK on your own Linux PC with podman (no Android Studio needed).
+# Builds the Jimmy Neutron: Boy Genius Android APK on your own Linux PC with podman (no Android Studio needed).
 #
 #   bash build-android.sh
 #
 # The build image (Android SDK + NDK, ~3 GB) is created on first run. The APK ends up in
-# ~/Negatron-Android/Neutron-vs-Negatron.apk. Game files are NOT part of the build - see README.
+# ~/BoyGenius-Android/Jimmy-Neutron-Boy-Genius.apk. Game files are NOT part of the build - see README.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="$HOME/Negatron-Android"
+OUT="$HOME/BoyGenius-Android"
 IMAGE=negatron_android_sdk34_ndk26
 
 step() { printf '\n\033[1;32m==> %s\033[0m\n' "$*"; }
@@ -30,5 +30,5 @@ podman run --rm -v "$ROOT":/src:Z -v negatron-gradle-cache:/root/.gradle "$IMAGE
     > "$ROOT/android-build.log" 2>&1 || die "build failed - see $ROOT/android-build.log"
 
 mkdir -p "$OUT"
-cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk" "$OUT/Neutron-vs-Negatron.apk"
-step "Done: $OUT/Neutron-vs-Negatron.apk"
+cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk" "$OUT/Jimmy-Neutron-Boy-Genius.apk"
+step "Done: $OUT/Jimmy-Neutron-Boy-Genius.apk"

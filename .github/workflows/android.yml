@@ -63,26 +63,24 @@ jobs:
       - name: Collect APK
         run: |
           mkdir -p out
-          cp android/app/build/outputs/apk/debug/app-debug.apk out/Neutron-vs-Negatron.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk out/Jimmy-Neutron-Boy-Genius.apk
           ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Neutron-vs-Negatron-apk
-          path: out/Neutron-vs-Negatron.apk
+          name: Jimmy-Neutron-Boy-Genius-apk
+          path: out/Jimmy-Neutron-Boy-Genius.apk
           if-no-files-found: error
 
       # Every push to main replaces the "latest" pre-release, so the newest APK is always at
-      # https://github.com/<owner>/<repo>/releases/download/latest/Neutron-vs-Negatron.apk
-      # It also carries the same APK under its old name, Negatron-Viewer.apk, so old links keep working.
+      # https://github.com/<owner>/<repo>/releases/download/latest/Jimmy-Neutron-Boy-Genius.apk
       - name: Publish as the latest build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp out/Neutron-vs-Negatron.apk out/Negatron-Viewer.apk
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest out/Neutron-vs-Negatron.apk out/Negatron-Viewer.apk --prerelease --target "$GITHUB_SHA" \
+          gh release create latest out/Jimmy-Neutron-Boy-Genius.apk --prerelease --target "$GITHUB_SHA" \
             --title "Latest build ($(date -u +%Y-%m-%d) ${GITHUB_SHA::7})" \
             --notes "Built automatically from ${GITHUB_SHA::7}: $(git log -1 --format=%s)"
 
@@ -96,13 +94,13 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           awk -v h="## $TAG" '$0 == h { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > notes.md
-          [ -s notes.md ] || echo "Neutron vs Negatron $TAG (no CHANGELOG.md section for this tag)" > notes.md
+          [ -s notes.md ] || echo "Jimmy Neutron: Boy Genius $TAG (no CHANGELOG.md section for this tag)" > notes.md
           cat notes.md
           if gh release view "$TAG" > /dev/null 2>&1; then
-            gh release upload "$TAG" out/Neutron-vs-Negatron.apk --clobber
+            gh release upload "$TAG" out/Jimmy-Neutron-Boy-Genius.apk --clobber
           else
-            gh release create "$TAG" out/Neutron-vs-Negatron.apk --verify-tag \
-              --title "Neutron vs Negatron $TAG" --notes-file notes.md
+            gh release create "$TAG" out/Jimmy-Neutron-Boy-Genius.apk --verify-tag \
+              --title "Jimmy Neutron: Boy Genius $TAG" --notes-file notes.md
           fi
 
   linux:

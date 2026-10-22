@@ -9,11 +9,13 @@ android {
     ndkVersion ndkVer
 
     defaultConfig {
-        applicationId 'com.sirbilliams.negatron'     // unchanged since the viewer: updates install over it
+        // Its own id, so it installs next to the Negatron app (com.sirbilliams.negatron). The Java package /
+        // namespace stays com.sirbilliams.negatron (internal: the native code's JNI names use it).
+        applicationId 'com.sirbilliams.neutron1'
         minSdkVersion 24
         targetSdkVersion 34
-        versionCode 100
-        versionName '1.0'
+        versionCode 1
+        versionName '0.1'
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-24'
