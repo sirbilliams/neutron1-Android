@@ -17,7 +17,7 @@
 class CLevel01Game : public CJimmyGame										// vtables N2:0x50ada4 / N2:0x50ad90 / 0x4c561c / N2:0x50a904
 {
 	public:
-	CLevel01Game();															// 0x47e0e0
+	CLevel01Game();															// 0x4503c0
 	virtual ~CLevel01Game();												// 0x4504f0
 	virtual void Process(float dt);											// SLOT 240 0x4508d0
 	virtual void InitGame(void);											// ESLOT 45 0x450580
