@@ -24,11 +24,14 @@ final class LauncherPages {
     static final boolean GAME_LOADS = true;
     static final int SLOTS = 10;
 
-    /** A saved game: its slot, the level it was saved in, the score and when. */
+    /** A saved game (Boy Genius: JimmyGame1..10.tsk in the game folder, written from the PDA's
+     *  load / save page; no autosave): its slot, the level it was saved in, the score, the story
+     *  message ("objective") number and when. */
     static final class Slot {
-        int number;                 // 1..10, 0 = the autosave
+        int number;                 // 1..10 (index 0 of slots() is never present)
         String levelName = "", gam = "";
         long score = -1;
+        int story = -1;
         long time;                  // ms
         boolean present;
 
@@ -39,19 +42,21 @@ final class LauncherPages {
         }
 
         String[] detail() {
-            String title = number == 0 ? "AUTOSAVE" : "SLOT " + number;
+            String title = "GAME " + number;
             if (!present) return new String[] { title, "EMPTY" };
             ArrayList<String> d = new ArrayList<>();
             d.add(title);
             d.add("LEVEL  " + level().toUpperCase(Locale.ROOT));
-            if (score >= 0) d.add("SCORE  " + score);
+            if (score >= 0) d.add("POINTS  " + score);
+            if (story > 0) d.add("OBJECTIVE  " + story);
             if (time > 0) d.add("SAVED  " + new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ROOT).format(new Date(time)));
             return d.toArray(new String[0]);
         }
     }
 
-    /** The autosave (index 0) and slots 1..10, from save/slots.txt (written by the game: TAB-separated
-     *  slot, level id, level name, gam, score, mtime; docs/controls.md), else from the .tsk headers. */
+    /** Slots 1..10 (index 0 unused), from slots.txt (written by the game: TAB-separated slot, level
+     *  id, level name, gam, score, mtime, story; game/src/port/StartMode.h), else from the .tsk
+     *  headers. saveDir: the game folder. */
     static Slot[] slots(File saveDir) {
         Slot[] out = new Slot[SLOTS + 1];
         for (int n = 0; n <= SLOTS; n++) {
@@ -66,13 +71,14 @@ final class LauncherPages {
                     if (line.startsWith("#")) continue;
                     String[] f = line.split("\t", -1);
                     if (f.length < 6) continue;
-                    int n = f[0].equalsIgnoreCase("autosave") ? 0 : parseInt(f[0], -1);
-                    if (n < 0 || n > SLOTS) continue;
+                    int n = parseInt(f[0], -1);
+                    if (n < 1 || n > SLOTS) continue;
                     Slot s = out[n];
                     s.levelName = f[2].trim();
                     s.gam = f[3].trim();
                     s.score = parseInt(f[4], -1);
-                    s.time = parseInt(f[5], 0) * 1000L;
+                    s.time = parseLong(f[5]) * 1000L;
+                    if (f.length > 6) s.story = parseInt(f[6], -1);
                     s.present = true;
                 }
             } catch (IOException e) {
@@ -80,8 +86,23 @@ final class LauncherPages {
             }
             return out;
         }
-        for (int n = 0; n <= SLOTS; n++) readTsk(saveDir, out[n]);
+        for (int n = 1; n <= SLOTS; n++) readTsk(saveDir, out[n]);
         return out;
+    }
+
+    /** The newest save (Continue), or null. */
+    static Slot newest(Slot[] slots) {
+        Slot best = null;
+        for (Slot s : slots) if (s.present && (best == null || s.time > best.time)) best = s;
+        return best;
+    }
+
+    private static long parseLong(String s) {
+        try {
+            return Long.parseLong(s.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static int parseInt(String s, int def) {
@@ -92,8 +113,8 @@ final class LauncherPages {
         }
     }
 
-    /** The game has not written slots.txt yet: the .tsk header (big-endian: version string,
-     *  "DUMMY   " = empty; int level 4cc; gam string; task string; float health; short lives; int score). */
+    /** The game has not written slots.txt yet: the .tsk header (big-endian: int level 4cc; float
+     *  health; short lives; int score; int story message). */
     private static void readTsk(File saveDir, Slot s) {
         File f = new File(saveDir, fileName(s.number));
         if (!f.isFile()) return;
@@ -108,39 +129,63 @@ final class LauncherPages {
     static void readTsk(InputStream raw, Slot s) {
         try {
             DataInputStream in = new DataInputStream(raw);
-            if (pascal(in).trim().equalsIgnoreCase("DUMMY")) return;
-            in.readInt();
-            s.gam = pascal(in);
-            pascal(in);
+            int id = in.readInt();
+            s.gam = levelFile(id);
+            if (s.gam == null) return;                  // not a Boy Genius save
+            s.levelName = levelName(id);
             in.readFloat();
             in.readShort();
             s.score = in.readInt();
+            s.story = in.readInt();
             s.present = true;
         } catch (IOException e) {
             s.present = false;
         }
     }
 
-    /** The save file of slot n (0 = the autosave). */
+    /** The level file of a level id (the game's TaskGameLoad 0x4603f0: 'LEV1' level1.gam, 'LV1B'
+     *  level1b.gam, 'VR01' VR01.gam), or null. */
+    static String levelFile(int id) {
+        char a = (char) ((id >> 24) & 0xff), b = (char) ((id >> 16) & 0xff), c = (char) ((id >> 8) & 0xff), d = (char) (id & 0xff);
+        if (a == 'V' && b == 'R' && Character.isDigit(c) && Character.isDigit(d)) return "VR" + c + d + ".gam";
+        if (a == 'L' && b == 'E' && c == 'V' && Character.isDigit(d)) return "level" + d + ".gam";
+        if (a == 'L' && b == 'V' && Character.isDigit(c) && Character.isLetter(d)) return "level" + c + Character.toLowerCase(d) + ".gam";
+        return null;
+    }
+
+    /** The game's own name of a level (the phone booth keypad), else "" (game/src/port/Companion.cpp). */
+    static String levelName(int id) {
+        switch (id) {
+            case 0x4c563142: return "Lab";              // LV1B
+            case 0x4c455631: return "Neighborhood";     // LEV1
+            case 0x4c455632: return "School";           // LEV2
+            case 0x4c455634: return "Downtown";         // LEV4
+            case 0x4c455633: return "Retroland";        // LEV3
+            case 0x4c563443: return "Powerplant";       // LV4C
+            case 0x4c455635: return "Area 51";          // LEV5
+            case 0x4c563541: return "Rocket Maze";      // LV5A
+            case 0x4c455636: return "Yokian Ship";      // LEV6
+            default: return "";
+        }
+    }
+
+    /** The save file of slot n (1..10). */
     static String fileName(int n) {
-        return n == 0 ? "autosave.tsk" : "JimmyGame" + n + ".tsk";
+        return "JimmyGame" + n + ".tsk";
     }
 
     // ------------------------------------------------------------------ export / import
 
-    /** The save folder's files that travel (the game's own .tsk format, as the PC game's save
-     *  folder): everything but slots.txt, which the game rewrites at each start. */
+    /** The game folder's files that travel: the saves JimmyGame1..10.tsk (the game's own .tsk
+     *  format, as the PC game keeps them in its folder). */
     static boolean exported(String name) {
-        return !name.equalsIgnoreCase("slots.txt") && !name.endsWith(".tmp");
+        return slotOf(name) >= 1;
     }
 
-    /** The slot a save file's name stands for: 0 autosave.tsk, 1..10 JimmyGame<n>.tsk, -2 another
-     *  save file the game keeps (autosave01..17.tsk), -1 not a save file. */
+    /** The slot a save file's name stands for: 1..10 JimmyGame<n>.tsk, -1 not a save file. */
     static int slotOf(String name) {
         String n = name.toLowerCase(Locale.ROOT);
-        if (n.equals("autosave.tsk")) return 0;
         if (n.matches("jimmygame([1-9]|10)\\.tsk")) return Integer.parseInt(n.substring(9, n.length() - 4));
-        if (n.matches("autosave[0-9]{1,2}\\.tsk")) return -2;
         return -1;
     }
 
@@ -155,9 +200,9 @@ final class LauncherPages {
     static LauncherModel.Page saves() {
         LauncherModel.Page p = new LauncherModel.Page("saves", "Saves");
         p.pic = "saves";
-        p.add("export_all", "Export saves", "Write all the game's saves (the autosave and slots 1-10) to one "
-                + ".zip: Downloads, Drive... They are the original game's own files, usable in the PC game's "
-                + "save folder too. One slot: Load Game, then Y.");
+        p.add("export_all", "Export saves", "Write all the game's saves (games 1-10) to one "
+                + ".zip: Downloads, Drive... They are the original game's own files (JimmyGame1..10.tsk), "
+                + "usable in the PC game's folder too. One slot: Load Game, then Y.");
         p.add("import", "Import saves", "Bring saves back from a .zip (or one .tsk file). You see what is in it "
                 + "and confirm before any save is replaced.");
         p.add("back", "Back", "Back to the main menu.");
@@ -174,18 +219,18 @@ final class LauncherPages {
             if (!f.replaces) continue;
             replaced++;
             if (which.length() > 0) which.append(", ");
-            which.append(f.info.number == 0 ? "autosave" : f.info.number > 0 ? "slot " + f.info.number : f.name);
+            which.append(f.info.number > 0 ? "game " + f.info.number : f.name);
         }
         p.warning = replaced == 0 ? "Nothing you have is replaced."
                 : "Replaces " + replaced + " save" + (replaced == 1 ? "" : "s") + " you have: " + which + ".";
         p.add("back", "Cancel", "Keep your saves as they are.");
         p.add("import_yes", replaced > 0 ? "Import and replace" : "Import",
-                "Copy the " + files.size() + " file" + (files.size() == 1 ? "" : "s") + " into the game's save folder.");
+                "Copy the " + files.size() + " file" + (files.size() == 1 ? "" : "s") + " into the game's folder.");
         for (Incoming f : files) {
             int n = f.info.number;
             LauncherModel.Item i = p.add("file", f.name, f.replaces ? "Replaces the save you have." : "New.");
             i.value = f.replaces ? "REPLACES" : "NEW";
-            i.detail = n >= 0 ? f.info.detail() : new String[] { f.name.toUpperCase(Locale.ROOT) };
+            i.detail = n >= 1 ? f.info.detail() : new String[] { f.name.toUpperCase(Locale.ROOT) };
         }
         p.sel = 0;
         return p;
@@ -205,29 +250,17 @@ final class LauncherPages {
         return p;
     }
 
-    private static String pascal(DataInputStream in) throws IOException {
-        int n = in.readUnsignedByte();
-        byte[] b = new byte[n];
-        in.readFully(b);
-        StringBuilder sb = new StringBuilder();
-        for (byte x : b) sb.append(x >= 32 && x < 127 ? (char) x : '?');
-        return sb.toString();
-    }
-
-    // TODO(BG): Continue / New game / the slots follow Negatron's saves (save/autosave.tsk + slots.txt,
-    // game/src/port/StartMode.h). Boy Genius has no autosave (its saves: JimmyGame1..10.tsk, plus
-    // NewGame.tsk / RestartLevel.tsk): rework once StartMode is ported to BG.
-    static LauncherModel.Page main(Slot autosave, boolean test) {
+    /** The main page. newest: the newest save (Continue), or null. */
+    static LauncherModel.Page main(Slot newest, boolean test) {
         LauncherModel.Page p = new LauncherModel.Page("main", "Main menu");
-        boolean canContinue = GAME_LOADS && autosave.present;
+        boolean canContinue = GAME_LOADS && newest != null;
         LauncherModel.Item i = p.add("continue", "Continue", canContinue
-                ? "Carry on from the autosave."
-                : GAME_LOADS ? "No autosave yet: start a new game." : "Continue from the autosave: coming with the game's save / load.");
+                ? "Carry on from your newest save (game " + newest.number + ")."
+                : "No saved game yet: start a new game. (In the game: the PDA's Load/Save page.)");
         i.enabled = canContinue;
-        if (canContinue) i.detail = autosave.detail();
-        p.add("new", "New game", "Start the story from the beginning. The autosave is replaced.");
-        i = p.add("load", "Load game", GAME_LOADS ? "Pick one of the game's save slots."
-                : "The game's save slots: coming with the game's save / load.");
+        if (canContinue) i.detail = newest.detail();
+        p.add("new", "New game", "Start the story from the beginning: the opening, then the neighborhood.");
+        i = p.add("load", "Load game", "Pick one of the game's ten saves.");
         i.enabled = GAME_LOADS;
         p.add("saves", "Saves", "Export the game's saves to a file, or import them.");
         p.add("assets", "Asset viewer", "Fly freely through any level, or look at the game's models.");
@@ -241,8 +274,8 @@ final class LauncherPages {
     static LauncherModel.Page newGame() {
         LauncherModel.Page p = new LauncherModel.Page("new", "New game");
         p.pic = "new";
-        p.warning = "A new game wipes the autosave: Continue will start from the beginning.";
-        p.add("new_yes", "Start a new game", "Wipe the autosave and start from the beginning.");
+        p.warning = "Your saves are kept: save in the game (PDA, Load/Save) to keep the new one too.";
+        p.add("new_yes", "Start a new game", "The opening, then the neighborhood.");
         p.add("back", "Cancel", "Back to the main menu.");
         p.sel = 1;                                  // the safe choice first
         return p;
@@ -253,7 +286,7 @@ final class LauncherPages {
         p.pic = "load";
         for (int n = 1; n < slots.length; n++) {
             Slot s = slots[n];
-            LauncherModel.Item i = p.add("slot:" + n, n + "  " + (s.present ? s.level() : "---"),
+            LauncherModel.Item i = p.add("slot:" + n, "Game " + n + "  " + (s.present ? s.level() : "---"),
                     s.present ? "Load this game. Y (or hold): export this slot to a file." : "Empty slot.");
             i.value = s.present && s.score >= 0 ? String.valueOf(s.score) : null;
             i.enabled = s.present && GAME_LOADS;
@@ -370,7 +403,7 @@ final class LauncherPages {
         p.add("explore", "Explore a level", "Fly freely through any level with a noclip camera: "
                 + "nothing moves, no story, no enemies, nothing is saved.");
         LauncherModel.Item m = p.add("models", "Model viewer", null);
-        m.detail = new String[] { "Models: .ase .omt", "Up/down model  L1/R1 jump 10  Sticks turn",
+        m.detail = new String[] { "Models: the shapes of the .omt files", "Up/down model  L1/R1 jump 10  Sticks turn",
             "L2/R2 zoom  A auto-turn  B leave" };
         p.add("back", "Back", "Back to the main menu.");
         return p;
@@ -381,7 +414,7 @@ final class LauncherPages {
         "L stick move  R stick look  L2/R2 down/up",
         "A speed  Y fog  X Jimmy  Start reset  B leave" };
 
-    /** Explore a level: the installed gam files, named as the bottom-screen panel names them (save/levels.txt,
+    /** Explore a level: the installed gam files, named as the bottom-screen panel names them (levels.txt,
      *  written by the game at every start; before that, the file names). */
     static LauncherModel.Page explore(File saveDir, List<String> gams, String select) {
         java.util.HashMap<String, String> names = new java.util.HashMap<>();
