@@ -23,7 +23,6 @@
 namespace neg {
 CGameObject			*g_camera = NULL;
 unsigned int		 g_song_id = 0;
-bool				 g_game_paused = false;
 bool				 g_help_shown = false;
 OMediaElement		*g_terrain = NULL;
 unsigned int		 g_input_device[4] = { 'KEYB', 'KEYB', 'KEYB', 'KEYB' };
@@ -184,10 +183,10 @@ void CGameType::UnInitDatabases(void)										// 0x474a80
 
 void CGameType::Process(float dt)											// 0x475a70
 {
-	g_509aec = UpdateInput();												// 0x478530: the joystick poll
 	CLocalGameObject::Process(dt);
-	ev76();																	// element +0x128 (empty)
-	if (g_camera) g_camera->v243(dt);										// vtable +0x3cc
+	ev76();									// element vtable +0x130
+	if (g_camera && (!g_5099ab || g_4f641c))	// GameIsRunning() inline
+		g_camera->v243(dt);					// vtable +0x3cc
 }
 
 void CGameType::SetID(int id)												// 0x474790
@@ -430,20 +429,20 @@ void CGameType::SetTerrainLit(void)				{ ForEachTerrainShape(ApplyLight, ommlmc_
 void CGameType::SetTerrainVertexLit(void)		{ ForEachTerrainShape(ApplyLight, ommlmc_VertexColor); }	// 0x475c00 -> 0x4775f0
 void CGameType::SetTerrainUnLit(void)			{ ForEachTerrainShape(ApplyUnLit, 0); }					// 0x475c50 -> 0x477550
 
-void CGameType::PauseGame(bool pause)										// 0x475a00: only logs
+void CGameType::PauseGame(bool pause)										// 0x475a00
 {
-	Log("PauseGame(%d)", (int)pause);
-	// port: Negatron's pause flag, read by IsPaused (Neutron.exe has neither; the game stops
-	// through CJimmyGame::StopGame, slot 90). Kept until the menu (agent F) is Neutron.exe's.
-	g_game_paused = pause;
+	Log("PauseGame(%d)", (int)pause);	// Neutron.exe: only the log (Negatron also paused through a flag at 0x5099ad, which Neutron.exe has not)
 }
 
-bool CGameType::IsPaused(void)												// port: Negatron's N2:0x4b0a40 (no such slot in Neutron.exe)
+// port: Negatron's slot 69 "is the game paused" (Neutron.exe has no such slot: its slot 69 is
+// ev70). The Negatron-derived code that asks it means "the menu holds the game", which in
+// Neutron.exe is CJimmyGame::StopGame (slot 90) and is tested with GameIsRunning (0x475ca0).
+bool CGameType::IsPaused(void)
 {
-	return g_game_paused;
+	return !neg::GameIsRunning();
 }
 
-void CGameType::ev70(void)													// 0x475a30 (BG slot 69; InitGame clears it; C3DCar/C3DVehicle test it)
+void CGameType::ev70(void)													// N2:0x4b0a50 (InitGame clears it; C3DCar/C3DVehicle test it)
 {
 	g_5099a9 = 1;
 }

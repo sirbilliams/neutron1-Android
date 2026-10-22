@@ -50,7 +50,6 @@ class CJimmyGame : public CGameType
 	virtual void InitTerrainDatabase(std::string path);						// ESLOT 57 0x44e7b0
 	virtual void CreateTerrain(void);										// ESLOT 61 0x44d4f0
 	virtual void CreateTerrainUnLit(void);									// ESLOT 62 0x44d810
-	virtual void PauseGame(bool pause);										// ESLOT 68 N2:0x485410
 	virtual void OnActivate(void);											// ESLOT 71 N2:0x482a80 "GetFocus()"
 	virtual void OnDeactivate(void);										// ESLOT 72 N2:0x482ad0 "LoseFocus()"
 	virtual void TouchSurface(CGameObject *o, OMedia3DMaterial *mat, OMediaCanvas *tex, float dt);	// ESLOT 78 0x44e030 (BG slot 76)
