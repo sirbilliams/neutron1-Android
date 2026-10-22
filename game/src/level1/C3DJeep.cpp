@@ -1,9 +1,11 @@
-/*  C3DJeep - see C3DJeep.h. Reconstructed from Neutron.exe N2:0x4420d0..N2:0x442f10. */
+/*  C3DJeep - see C3DJeep.h. Reconstructed from Neutron.exe 0x4211a0..0x421d70. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DJeep.h"
 #include "../Bridge.h"
+#include "../C2DInGameMenu.h"
 #include "../C3DAnimated.h"
+#include "../C3DJimmy.h"
 #include "../C3DPlayer.h"
 #include "../CGameType.h"
 #include "../CViewPort.h"
@@ -12,7 +14,6 @@
 #include "../Sound.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
-#include "OMediaStreamOperators.h"
 #include <math.h>
 #include <string>
 #include <string.h>
@@ -28,68 +29,67 @@ static CGameObject *FindObjectByTag(const char *tag)
 	return NULL;
 }
 
+// The keys the original tests inline (g_keys is the keyboard, 0x509838 + the Windows key code;
+// 0x509834 the left, 0x50993a the right mouse button).
+static bool JumpKeyDown(void)								// right mouse, Insert, Shift, Num 0, button 1
+{
+	return g_50993a || g_keys[0x2d] || g_keys[0x10] || g_keys[0x60] || g_joy_button1;
+}
+
 // --------------------------------------------------------------------------- construction
 
-C3DJeep::C3DJeep()											// N2:0x4420d0
+C3DJeep::C3DJeep()											// 0x4211a0
 {
 	SetName((char *)"C3DJEEP");
 	Log("C3DJeep()");
 	f_9f0 = 0;												// power at ResetObject
-	C3DJeep::InitObject();									// 0x4213f0 (inlined)
+	C3DJeep::InitObject();									// 0x4213f0 (called directly)
 	f_a84 = NULL;
 	C3DObject::SetObjectID('3JEE');							// 0x462220
 	v67(150.0f);											// radius
 	f_a38 = 1;												// camera
-	v107(1);
+	v36(1);
+	v107(0);
+	f_00b = 0;
 	v44(0);
 	f_a43 = 0;												// walls do not crash it
-	f_6d0 = 2;												// a plain shape
 	f_a88 = 0;
-	f_4c4 = 1;
+	f_6d0 = 2;												// port: a plain shape for the Negatron-shaped C3DAnimated base
 }
 
-C3DJeep::~C3DJeep() {}										// 0x421330
+C3DJeep::~C3DJeep()											// 0x421330
+{
+	Log("~C3DJeep()");
+}
 
 namespace neg {
-CGameObject *New_C3DJeep(void) { return new C3DJeep; }		// '3JEE' (0xa94 bytes)
+CGameObject *New_C3DJeep(void) { return new C3DJeep; }		// '3JEE' (0x6ac bytes)
 }
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DJeep::ShowAgain(void)								// 0x464f30: C3DVehicle's element slot 55
+unsigned char C3DJeep::ev123(void)							// 0x421c10: Left arrow, joystick left
 {
-	C3DObject::ShowAgain();
-	for (int i = 0; i < 6; i++)								// the wheels: hide(false)
-		if (f_960[i]) f_960[i]->ShowAgain();
+	return g_50985d || g_joy_x < -0.5f;
 }
 
-void C3DJeep::ev107(float power)							// N2:0x4428f0
+unsigned char C3DJeep::ev124(void)							// 0x421c40: Right arrow, joystick right
 {
-	f_9f8 = power + 600.0f;									// N2:0x4d0ca0
-	f_a00 = 1200.0f;
-	f_9f4 = power;
-	f_a08 = power * 4.5f + 1800.0f;							// N2:0x4d92dc, N2:0x4d986c
-	f_a04 = 0;
-	f_a0c = 0;
-	f_a10 = f_a08 * 0.66f;									// 0x4a3118
-	f_9fc = f_9f8;
-	if (g_power_timers[0] > 0) f_a14 = f_a10 * 1.4f;		// N2:0x4e413c
-	else f_a14 = f_a10;
+	return g_50985f || g_joy_x > 0.5f;
 }
 
-unsigned char C3DJeep::ev123(void) { return PlayerKeyLeft(); }	// N2:0x442da0 (N2:0x4659f0)
-unsigned char C3DJeep::ev124(void) { return PlayerKeyRight(); }	// N2:0x442db0 (N2:0x465a60)
-
-unsigned char C3DJeep::ev125(void)							// N2:0x442dc0
+unsigned char C3DJeep::ev125(void)							// 0x421c70: go, with the rear wheels down
 {
-	if (!PlayerKeyGo() && !PlayerKeyAction() && !g_joy_button0) return 0;	// N2:0x465910, N2:0x465750
+	if (!g_509834 && !g_50985e && g_joy_y <= 0.5f && !g_joy_button0) return 0;	// left mouse, Up arrow, joystick up, button 0
 	return f_9ea > 0;
 }
 
-unsigned char C3DJeep::ev126(void)							// N2:0x442df0
+unsigned char C3DJeep::ev126(void)							// 0x421cb0: back, with the rear wheels down
 {
 	if (g_joy_button0) return 0;
-	return PlayerKeyBack();									// N2:0x465980
+	const bool back = (g_50993a && !g_509834) || g_509860 || g_joy_y < -0.7f;	// right mouse, Down arrow, joystick down
+	if (!back) return 0;
+	return f_9ea > 0;
 }
 
 // --------------------------------------------------------------------------- CGameObject slots
@@ -105,23 +105,18 @@ void C3DJeep::InitObject(void)								// 0x4213f0
 	InitPhysics();											// +0x2c
 }
 
-void C3DJeep::UnInitObject(void)							// 0x44bbb0
+void C3DJeep::UnInitObject(void)							// 0x4213e0
 {
-	C3DAnimated::UnInitObject();
+	Log("UnInitObject()");									// CLocalGameObject's (0x458810)
+	set_shape(NULL);										// element +0xac
+	f_414 = NULL;
 }
 
-void C3DJeep::InitPhysics(void)								// N2:0x442550
+void C3DJeep::InitPhysics(void)								// 0x421570
 {
 	if (f_4aa) return;
 	Log("InitPhysics()");
 	C3DObject::InitPhysics();								// 0x4623d0
-}
-
-void C3DJeep::AddTouching(CGameObject *other)				// N2:0x4429c0
-{
-	CGameObject::AddTouching(other);						// 0x470a90
-	if (g_jimmy && other == g_jimmy)
-		JimmyActivateMenuItem(g_jimmy, this, this, 4, 13.0f);	// Jimmy element +0x228: ride it
 }
 
 void C3DJeep::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	// 0x421910
@@ -129,13 +124,13 @@ void C3DJeep::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	//
 	if (!f_a44 && f_a43)
 	{
 		float v[4];
-		v174(v);											// +0x2b8
+		v174(v);											// +0x2bc
 		OMedia3DVector h(v[0], 0, v[2], v[3]);
 		if (h.quick_magnitude() > 20.0f)					// 0x495324
 		{
-			const OMedia3DVector fwd = v226(0, 0, 1.0f);	// +0x388
+			const OMedia3DVector fwd = v226(0, 0, 1.0f);	// +0x38c
 			if (!(fabsf(fwd.z * c + fwd.y * b + fwd.x * a) < 0.9f))	// 0x4a3144
-				ev131();									// element +0x20c: crash
+				ev131();									// element +0x140: crash
 		}
 	}
 	if (f_a44)
@@ -143,7 +138,7 @@ void C3DJeep::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	//
 		CLocalGameObject::v220(a, b, c, d, poly);			// 0x458890
 		return;
 	}
-	float s = v153();										// +0x264
+	float s = v153();										// +0x268
 	if (!(s > 0)) return;
 	float v[4];
 	v174(v);
@@ -159,112 +154,82 @@ void C3DJeep::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	//
 		s = s - fabsf(dot) * f_a00 * g_frame_time;			// 0x696030
 		if (!(s > 100.0f)) s = 100.0f;						// 0x4a3130
 	}
-	else if (PlayerKeyGo())									// N2:0x465910
+	else if (g_50985e || g_509834 || g_joy_y > 0.5f)		// going: Up arrow, left mouse, joystick up
 	{
 		s = s - fabsf(dot) * f_a00 * g_frame_time;
 		if (!(s > 230.0f)) s = 230.0f;						// 0x4a3128
 	}
-	v154(s);												// +0x268
+	v154(s);												// +0x26c
 }
 
-// The driver kept on it: his position (object and element) and rotation are ours.
-static void KeepDriver(C3DJeep *j)
+void C3DJeep::Process(float dt)								// 0x421580
 {
-	C3DAnimated *drv = j->f_a84;
-	float p[4];
-	j->v195(p);												// +0x30c
-	drv->v197(p[0], p[1], p[2]);							// +0x314
-	drv->place(p[0], p[1], p[2]);							// element +0x44
-	float r[4];
-	j->v201(r);												// +0x324
-	drv->v203(r[0], r[1], r[2]);							// +0x32c
-}
-
-void C3DJeep::Process(float dt)								// N2:0x442560
-{
-	if (!f_589) return;										// hidden (HideAgain)
-	if (g_gametype->IsPaused())								// +0x114
-	{
-		if (f_a84) KeepDriver(this);
-		ev140();											// element +0x230: mirror off
-		return;
-	}
-	C3DCar::Process(dt);									// N2:0x424b30
+	if (!GameIsRunning()) return;							// 0x475ca0
+	C3DCar::Process(dt);									// 0x412ed0
 	if (!f_a84)												// nobody on it
 	{
 		f_a0c = 0;
 		f_29c = 10.0f;
 		f_a24 = 0;
 		f_a28 = 0;
-		v154(0);											// +0x268
+		v154(0);											// +0x26c
 		f_a04 = 0;
 		return;
 	}
-	if (!PlayerKeyJump()) f_a80 = 0;						// N2:0x4658a0
-	else if (!f_a80 && v133())								// +0x214: a hop
+	if (C3DJimmy *j = dynamic_cast<C3DJimmy *>(f_a84)) j->MenuInput(dt);	// element +0x1ac
+	if (!JumpKeyDown()) f_a80 = 0;
+	else if (!f_a80 && v133())								// +0x218: a hop
 	{
-		v162(0, 700.0f, 0);									// +0x288
+		v162(0, 700.0f, 0);									// +0x28c
 		f_a80 = 1;
 	}
-	KeepDriver(this);
+	// the driver is kept on it: his position (object and element) and rotation are ours
+	C3DAnimated *drv = f_a84;
+	float p[4];
+	v195(p);												// +0x310
+	drv->v197(p[0], p[1], p[2]);							// +0x318
+	drv->place(p[0], p[1], p[2]);							// element +0x44
+	float r[4];
+	v201(r);												// +0x328
+	drv->v203(r[0], r[1], r[2]);							// +0x330
 	f_a88 += dt;
 	if (!(f_a88 > 0.3)) return;								// 0x4a3110
-	if (v153() < 10.0f) f_a84->ev58((char *)"SCOOTSTOP", 1);	// 0x48e5ec, element +0xe8
+	if (v153() < 10.0f) f_a84->ev58((char *)"SCOOTSTOP", 1);	// 0x48e5ec, element +0xe0
 	else f_a84->ev58((char *)"SCOOT", 1);
 	f_a88 = 0;
 }
 
 void C3DJeep::v243(float dt)								// 0x421880
 {
-	if (GameIsRunning()) C3DVehicle::v243(dt);				// 0x475ca0
+	if (ConfirmOpen()) return;								// 0x407060
+	if (!GameIsRunning()) return;							// 0x475ca0
+	if (g_4f8181) return;
+	if (g_509834) g_4f8182 = 1;
+	C3DVehicle::v243(dt);									// 0x465830
 }
 
 void C3DJeep::v260(void)									// 0x4217d0
 {
-	C3DVehicle::v260();								// N2:0x464ed0
-	ev107(f_9f0);											// element +0x1ac
+	ev107(f_9f0);											// element +0xe0
 }
 
-void C3DJeep::v275(void)									// N2:0x442a50
+void C3DJeep::v275(void)									// 0x4218c0
 {
-	FindObjectByTag("JIM1");								// (the result is not used)
-	if (g_jimmy) static_cast<CLocalGameObject *>(g_jimmy)->v275();	// +0x44c
-	ev140();												// element +0x230
+	if (C3DJimmy *j = dynamic_cast<C3DJimmy *>(FindObjectByTag("JIM1")))
+	{
+		j->v275();											// +0x438
+		j->f_1e25 = 1;
+	}
+	ev140();												// element +0x164
+	g_4f8182 = 1;
 }
 
 void C3DJeep::v277(void)									// 0x421bb0
 {
-	C3DAnimated::v277();									// 0x40e770
 	if (f_a78 != -1) StopChannel(f_a78, false);				// 0x47d7a0 (the channel is kept)
-	ev140();
 }
 
-void C3DJeep::v278(void)									// N2:0x442d40
+void C3DJeep::v278(void)									// 0x421bd0
 {
-	C3DAnimated::v278();									// 0x40e790
-	if (f_a78 != -1) f_a78 = PlayGameSound3D(this, -1, std::string("Scooter"), true);	// N2:0x48f200
-}
-
-void C3DJeep::WriteState(OMediaStreamOperators &s)			// N2:0x46cc40 (C3DRocketShip's)
-{
-	CLocalGameObject::WriteState(s);							// N2:0x4651b0
-	float v[4], a, b, c;
-	v195(v); a = v[0];
-	v195(v); b = v[1];
-	v195(v); c = v[2];
-	s << a << b << c;
-	v201(v); a = v[0];
-	v201(v); b = v[1];
-	v201(v); c = v[2];
-	s << a << b << c;
-}
-
-void C3DJeep::ReadState(OMediaStreamOperators &s)			// N2:0x442e10
-{
-	CLocalGameObject::ReadState(s);							// N2:0x4651a0
-	float a, b, c;
-	s >> a >> b >> c;
-	v197(a, b, c);											// +0x314: position
-	s >> a >> b >> c;
-	v203(a, b, c);											// +0x32c: rotation
+	if (f_a78 != -1) f_a78 = PlayGameSound3DIndex(this, -1, 0x2e, true);	// 0x4589c0: "Scooter"
 }
