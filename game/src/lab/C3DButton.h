@@ -1,24 +1,28 @@
-/*  C3DButton ('3BUT') - a push button: a morph object with two animations UP / DOWN ("Up.ase" /
-    "Down.ase", default "buttonup.ase" / "buttondown.ase"; "...ship.ase" in LEV6 / LV6A) and one
-    texture ("UpDown.Png", "switch.png"). Its colour ("Red", "Green", "Blue"; -1 each: leave the
-    material alone) pulses while it is up and available (f_930, from "ButtonAvailable").
-    Pressed (ev95; touched by the camera object or a water balloon once the task "TaskName" has
-    reached RequiredLevel, or told so by NextState): when up and available and not timed out, it
-    plays "AvailSoundName" (or "not available"), goes DOWN (dark), tells the object tagged
+/*  C3DButton ('3BUT') - a push button: a morph object with two animations UP / DOWN (created
+    as HIUP / HIDOWN from "Up.ase" / "Down.ase", default "buttonup.ase" / "buttondown.ase";
+    "...ship.ase" in LEV6 / LV6A) and one texture ("UpDown.Png", "switch.png"). Its colour
+    ("Red" 1, "Green" 0.1, "Blue" 0.1) is dimmed to half while it is not available, and its
+    red pulses (0.5 + 0.5 x the global pulse; green 0.2, blue 0.3) while it plays UP.
+    Touched by the camera object (Jimmy) or a baseball while available and not just pressed:
+    if it is up (the animation name is "HIUP" - see the note in AddTouching) it plays
+    "AvailSound" (an index, -1 none), goes DOWN (dark grey), tells the object tagged
     "ActivateButton" NextState("Toggle") and, if that is another button, makes it available and
-    itself not. Pressed while down it goes back UP and toggles the same object. "ResetTime" (4 s)
-    after a press it resets (ResetObject: back to ButtonAvailable, UP or DOWN).
-    Reconstructed from Neutron.exe: constructor 0x4115c0 (factory '3BUT', 0xb50 bytes),
-    destructor 0x411860 (only resets the vtables, then ~C3DAnimated; deleting thunks 0x411830 /
-    0x411f50 / 0x411f60 / 0x411f70).
+    itself not; in LV4B the button tagged REACTOR also gives 1000 points and sets the task
+    REACTOR to 10 (once). Otherwise it plays UP, restores its colour and toggles the same
+    object. 4 s after a press it resets (ResetObject: back to "ButtonAvailable", UP or DOWN).
+    Radius 300 (150 after a reset).
+    Reconstructed from Neutron.exe (Boy Genius): constructor 0x4115c0 (factory '3BUT', 0x87c
+    bytes), destructor 0x411860 (only resets the vtables, then ~C3DAnimated; deleting thunks
+    0x411830 / 0x411f50 / 0x411f60 / 0x411f70). Boy Genius's button is simpler than Negatron's:
+    no task requirement, sound by index, no ResetTime / Radius / AvailSoundName properties, no
+    state in the savegame.
 
-    Original layout: as C3DAnimated (element vtable 0x494000, 96 slots: C3DAnimated's 94 + 94,
-    95; OMediaAnim vtable 0x493fb0 at +0x90; listener 0x493fec at +0x30; CLocalGameObject vtable
-    0x493b60 at +0xc0), own members 0x924..0xb48, vtordisp 0xb48, streamer 0xb4c.          */
+    Original layout: as C3DAnimated (element vtable 73 slots: C3DAnimated's 72 + 72 (the empty
+    0x4732a0); OMediaAnim at +0x90; listener at +0x30; CLocalGameObject vtable at +0xc0: 0, 7,
+    10, 16, 241, 257 overridden), own members 0x6bc..0x874, vtordisp 0x874, streamer 0x878.
+    Member names are their offsets from the object start.                                     */
 #pragma once
 #include "../C3DAnimated.h"
-
-class OMediaStreamOperators;
 
 class C3DButton : public C3DAnimated
 {
@@ -27,40 +31,28 @@ class C3DButton : public C3DAnimated
 	virtual ~C3DButton();													// 0x411860
 
 	// ---- element-family slots
-	virtual void ev69(void);												// ESLOT 69 N2:0x424320 load the animations and the texture (once)
-	virtual void ev94(int unused) { (void)unused; }							// ESLOT 94 0x4732a0 (empty, one stack argument)
-	virtual void ev95(void);												// ESLOT 95 N2:0x423c10 pressed
+	virtual void ev72_bg(int unused) { (void)unused; }						// ESLOT 72 0x4732a0 (empty, one stack argument)
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   0x4119d0 properties
+	virtual void InitObject(void);											// SLOT 7   0x4119d0 properties, animations, texture
 	virtual void ResetObject(void);											// SLOT 10  0x4118b0 available again (or not): UP / DOWN
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x47d9a0 the camera or a water balloon: press
-	virtual void Process(float dt);											// SLOT 240 0x411de0 reset timer, pulse
-	virtual void v258(void);												// SLOT 258 0x411ef0 radius 300
-	virtual void v260(void);												// SLOT 260 N2:0x4242f0 radius "Radius"
-	virtual void v268(int state);											// SLOT 268 N2:0x47da00 "NextState": press (state unused)
-	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x424410 + reset timer, animation
-	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x4243c0 + reset timer, animation
+	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x411bb0 the camera or a baseball: press
+	virtual void Process(float dt);											// SLOT 241 0x411de0 held in place, reset timer, pulse
+	virtual void v258(void);												// SLOT 257 0x411ef0 (BG numbering) radius 300
 
 	// ---- data members (object offsets)
-	float				f_924;			// 0x924  "Red" (1)
-	float				f_928;			// 0x928  "Green" (0.1)
-	float				f_92c;			// 0x92c  "Blue" (0.1)
-	int					f_930;			// 0x930  available (0)
-	int					f_934;			// 0x934  "ButtonAvailable" (0)
-	int					f_938;			// 0x938  "NASound" (-1; not used)
-	int					f_93c;			// 0x93c  "AvailSound" (-1: no "not available" sound)
-	char				f_940[100];		// 0x940  "ActivateButton" ("none"): tag of the object pressed
-	char				f_9a4[100];		// 0x9a4  "Down.ase"
-	char				f_a08[100];		// 0xa08  "Up.ase"
-	char				f_a6c[100];		// 0xa6c  "UpDown.Png" ("switch.png")
-	char				f_ad0[100];		// 0xad0  "AvailSoundName" ("none")
-	int					f_b34;			// 0xb34  "NewTaskState" (0; not used)
-	int					f_b38;			// 0xb38  "Toggle" (-1): the state passed on
-	float				f_b3c;			// 0xb3c  reset timer (0)
-	float				f_b40;			// 0xb40  "ResetTime" (4)
-	float				f_b44;			// 0xb44  "Radius" (150)
-
-	private:
-	bool HasColour(void) const { return f_924 != -1.0f || f_928 != -1.0f || f_92c != -1.0f; }	// (bit compares in the original)
+	float				f_6bc;			// 0x6bc  "Red" (1)
+	float				f_6c0;			// 0x6c0  "Green" (0.1)
+	float				f_6c4;			// 0x6c4  "Blue" (0.1)
+	int					f_6c8;			// 0x6c8  available (0)
+	int					f_6cc;			// 0x6cc  "ButtonAvailable" (0)
+	int					f_6d0;			// 0x6d0  "NASound" (-1; not used)
+	int					f_6d4;			// 0x6d4  "AvailSound" (-1: none): sound index played on a press
+	char				f_6d8[100];		// 0x6d8  "ActivateButton" ("none"): tag of the object pressed
+	char				f_73c[100];		// 0x73c  "Down.ase"
+	char				f_7a0[100];		// 0x7a0  "Up.ase"
+	char				f_804[100];		// 0x804  "UpDown.Png" ("switch.png")
+	int					f_868;			// 0x868  "NewTaskState" (0; not used)
+	int					f_86c;			// 0x86c  "Toggle" (-1): the state passed on
+	float				f_870;			// 0x870  reset timer (0)
 };

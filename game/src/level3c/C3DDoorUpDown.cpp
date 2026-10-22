@@ -1,5 +1,4 @@
-/*  C3DDoorUpDown - see C3DDoorUpDown.h. Reconstructed from Neutron.exe 0x4174f0..N2:0x42df20
-    (and the shared N2:0x47fc20). */
+/*  C3DDoorUpDown - see C3DDoorUpDown.h. Reconstructed from Neutron.exe 0x4174f0..0x417d30. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DDoorUpDown.h"
@@ -35,7 +34,7 @@ C3DDoorUpDown::C3DDoorUpDown()								// 0x4174f0
 	v52(1);
 	v42(0);
 	v40(0);
-	v94(2);
+	v94(2);													// (BG slot 95)
 	v46(0);
 	f_924 = 1;												// ItemClosed
 	f_928 = 1;
@@ -60,7 +59,7 @@ C3DDoorUpDown::C3DDoorUpDown()								// 0x4174f0
 C3DDoorUpDown::~C3DDoorUpDown() {}							// 0x417710
 
 namespace neg {
-CGameObject *New_C3DDoorUpDown(void) { return new C3DDoorUpDown; }	// '3DUD' (0xa84 bytes)
+CGameObject *New_C3DDoorUpDown(void) { return new C3DDoorUpDown; }	// '3DUD' (0x81c bytes)
 }
 
 // --------------------------------------------------------------------------- slots
@@ -68,7 +67,7 @@ CGameObject *New_C3DDoorUpDown(void) { return new C3DDoorUpDown; }	// '3DUD' (0x
 void C3DDoorUpDown::InitObject(void)						// 0x4177c0
 {
 	Log("InitObject()");
-	C3DAnimated::InitObject();								// N2:0x41b0a0
+	C3DAnimated::InitObject();								// 0x40d3c0
 	RegisterProperty("ItemClosed",     &f_924, PROP_LONG,  0);
 	RegisterProperty("Next",           f_92c,  PROP_ALPHA, 0);
 	RegisterProperty("DoorSpeed",      &f_994, PROP_FLOAT, 0);
@@ -99,19 +98,11 @@ void C3DDoorUpDown::AddTouching(CGameObject *other)			// 0x4178c0
 	if (other->NameContains((char *)"C3DJIMMY") && f_a74 != 0 && f_990 == 0) v268(0);
 }
 
-unsigned char C3DDoorUpDown::v231(CGameObject *other)		// N2:0x47fc20
-{
-	if (g_camera == other) return 1;
-	const int id = other->m_object_id;
-	return id == '3JIM' || id == '3ENE' || id == '3GOD' || id == '3WBL';
-}
-
 // Moving: y = start + OpenAmount * (the fraction of the way open). Stopped open: close after
 // OpenTime.
 void C3DDoorUpDown::Process(float dt)						// 0x417930
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DAnimated::Process(dt);								// N2:0x41c120
+	C3DAnimated::Process(dt);								// 0x40e050 (no pause check, unlike Negatron's)
 	if (f_990 > 0)											// 0x48d914
 	{
 		f_990 = f_990 - dt;
@@ -120,7 +111,7 @@ void C3DDoorUpDown::Process(float dt)						// 0x417930
 			f_990 = 0;
 			StopGameSound(f_a78, false);					// 0x458a00
 			f_a78 = -1;
-			PlayGameSound3DNoDoppler(this, -1, std::string("door closing"), false);	// 0x458a40 (also when it opened)
+			PlayGameSound3DIndex(this, -1, 0x3a, false);		// 0x4589c0
 		}
 		const float t = f_990 / f_994;
 		float p[4];
@@ -146,16 +137,16 @@ void C3DDoorUpDown::Process(float dt)						// 0x417930
 
 void C3DDoorUpDown::v260(void)								// 0x417c50
 {
-	C3DAnimated::v260();									// N2:0x41cec0
-	InitAnim();												// element +0x110
-	CreateAnim((char *)"RAY", f_9ac);						// +0xe0
-	CreateTexture(f_a10, 0);								// +0xfc
-	ApplyTexture(f_590, 0);									// +0x100
-	v67(40.0f);												// CGameObject +0x10c: radius
-	ev58((char *)"RAY", 1);									// +0xe8
+	C3DAnimated::v260();									// (BG slot 259)
+	InitAnim();												// element +0x108
+	CreateAnim((char *)"HIRAY", f_9ac);						// +0xd8
+	CreateTexture(f_a10, 0);								// +0xf0
+	ApplyTexture(f_590, 0);									// +0xf4
+	v67(40.0f);												// CGameObject +0x110: radius
+	ev58((char *)"RAY", 1);									// +0xe0
 }
 
-void C3DDoorUpDown::v268(int state)							// 0x417ac0
+void C3DDoorUpDown::v268(int state)							// 0x417ac0 (BG slot 266)
 {
 	if (f_990 > 0)
 	{
@@ -166,7 +157,7 @@ void C3DDoorUpDown::v268(int state)							// 0x417ac0
 	{
 		if (f_928 == state) return;
 		f_990 = f_994;
-		if (f_a78 == -1) f_a78 = PlayGameSound3DNoDoppler(this, -1, std::string("Door opening loop"), true);	// 0x458a40
+		if (f_a78 == -1) f_a78 = PlayGameSound3DIndex(this, -1, 0x3b, true);	// 0x4589c0
 	}
 	if (strcasecmp(f_92c, "none") != 0)						// 0x487c20 _stricmp
 	{
@@ -174,16 +165,15 @@ void C3DDoorUpDown::v268(int state)							// 0x417ac0
 		if (next)
 		{
 			if (next->NameContains((char *)"C3DAITRIGGER"))
-				static_cast<C3DAITrigger *>(next)->Trigger(this, 0);				// element +0xe4
+				static_cast<C3DAITrigger *>(next)->Trigger(this, 0);				// BG: the direct call 0x40c300(this)
 			else if (next->NameContains((char *)"C3DCUTSCENECAMERA"))
 			{
-				// ("Calling TC from NextState in %s": compiled-out log)
-				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xe0
+				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xd8 (BG slot 54)
 			}
 			else if (next->NameContains((char *)"C3DMULTICUTSCENE"))
 			{
 				// ("Calling MultiCutScene %s, NextTrigger=%s": compiled-out log)
-				static_cast<C3DMultiCutSceneCamera *>(next)->TriggerCallback(this, 0);	// element +0xe4
+				next->v23(this);								// BG: +0x5c, slot 23 TriggerCallback(this)
 			}
 		}
 	}
