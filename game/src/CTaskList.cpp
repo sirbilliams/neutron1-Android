@@ -27,11 +27,11 @@ CTaskList::CTaskList()
 	SetName((char *)"CTASKLIST");
 	// The game's tasks and their first states (the original inlines AddItem 0x45f8f0 for the
 	// first nine). Appended to the global list each time a CTaskList is made.
+	// Boy Genius (0x45f790): no CARLTASK / PROMOTION, and the story (SCENE) starts at 30.
 	AddTask("MOM", 0);
 	AddTask("LIBBY", 0);
 	AddTask("BENNY", 0);
-	AddTask("CARLTASK", 100);
-	AddTask("SCENE", 50);
+	AddTask("SCENE", 30);
 	AddTask("DINO", 0);
 	AddTask("CLONE", 0);
 	AddTask("KITTY1", 0);
@@ -40,7 +40,6 @@ CTaskList::CTaskList()
 	AddTask("HYDRANT1", 0);
 	AddTask("HYDRANT2", 0);
 	AddTask("REACTOR", 0);
-	AddTask("PROMOTION", 0);
 	v36(0);
 	v107(0);											// not written to a .gam
 	g_tasks_applied = 0;

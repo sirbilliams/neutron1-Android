@@ -1,10 +1,11 @@
-/*  C3DEnemy - the base of the creatures (C3DDarwinFish, C3DHumphrey, C3DGirlEatingPlant,
-    C3DDino, C3DMutantFish, C3DYokian...): a C3DPickupType that only clears two flags. (Not
-    Negatron's '3ENE' enemy.)
-    Reconstructed from Neutron.exe: constructor 0x417d50 (no factory ID), destructor 0x417e50
-    (only resets the vtables; deleting thunks 0x417e20 / 0x417ed0 / 0x417ee0 / 0x417ef0).
-    Vtables 0x499e28 (element, 95 slots) / 0x499e14 (listener) / 0x499dd8 (OMediaAnim) /
-    0x499988 (game object at +0xc0, none overridden) / 0x499978 (streamer at +0x9a4).         */
+/*  C3DEnemy - the base of Boy Genius's enemies (C3DYokian and its soldiers, C3DDarwinFish,
+    C3DGirlEatingPlant, C3DMutantFish, C3DHumphrey, C3DDino): a C3DPickupType that only names
+    itself "C3DENEMY" and clears two C3DAI flags. (Negatron's C3DEnemy, the granny Nummies and
+    ghosts, is a different class.)
+    Reconstructed from Neutron.exe: constructor 0x417d50 (no factory entry), destructor
+    0x417e50 (only resets the vtables, then ~C3DPickupType; deleting thunks 0x417e20 / 0x417ed0
+    / 0x417ee0 / 0x417ef0). Nothing overridden but the destructor; no members of its own
+    (vtordisp 0x9a0, streamer 0x9a4).                                                         */
 #pragma once
 #include "C3DPickupType.h"
 

@@ -38,20 +38,18 @@ void CLevel01DGame::InitGame(void)											// 0x44fb00
 	v107(0);												// slot 108: not written to the .gam (f_00b)
 
 	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL (no sky rotation)
-	SkyLoad(sky, "omt\\space.omt", false);				// sky element +0xe0 (BG slot 56)
-	sky->place(0.0f, 0.0f, 0.0f);
+	SkyLoad(sky, "omt\\space.omt", false);				// sky element +0xe0
+	sky->place(0.0f, 0.0f, 0.0f);							// (+0x44..+0x4c written directly)
 	sky->InitPhysics();										// (empty for a C3DSky)
-	sky->v67(1.0f);											// radius (BG +0x110)
-	sky->v152(1.0f);										// (BG +0x264)
+	sky->v67(1.0f);											// radius
+	sky->v152(1.0f);
 	sky->ev51();											// element +0xcc
 
 	InitTerrainDatabase("level1d.omt");						// element +0xe4
-	CreateTerrain();										// element +0xf4 (lit)
+	CreateTerrain();										// element +0xf4 (lit; Negatron's level1d was unlit)
 	ViewportToOrigin();
-	// Far plane 120000 and no fog (0x476910(layer, 0x800)), each set through both world-layer
-	// globals (0x509a30, 0x509a3c: the same layer).
-	g_layer_world->set_far_clip(120000.0f);					// 2002 +0xc0
-	SetLayerFog(g_layer_world, false);
+	g_layer_world->set_far_clip(120000.0f);					// 0x509a30 +0xc0, then the same through 0x509a3c
+	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
 	CaptureMouse(true);										// 0x46a400
 	// (debug log)
 }

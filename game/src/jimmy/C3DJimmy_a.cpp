@@ -508,6 +508,7 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	g_4eefd0 = -1.0f;
 	if (LevelID() == 'LV5C') ev152(1);						// element +0x260
 	else if (LevelID() == 'LV5F') ev152(0);
+	g_gametype->SetCamera(static_cast<CGameObject *>(this));	// BG 0x424472 (+0x118): Jimmy has the camera before the start points' post-load
 	v261();													// +0x414
 	if (f_d5c)
 	{

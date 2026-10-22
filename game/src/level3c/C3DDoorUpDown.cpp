@@ -165,7 +165,7 @@ void C3DDoorUpDown::v268(int state)							// 0x417ac0 (BG slot 266)
 		if (next)
 		{
 			if (next->NameContains((char *)"C3DAITRIGGER"))
-				static_cast<C3DAITrigger *>(next)->Trigger(this, 0);				// BG: the direct call 0x40c300(this)
+				static_cast<C3DAITrigger *>(next)->Trigger(this);				// BG: the direct call 0x40c300(this)
 			else if (next->NameContains((char *)"C3DCUTSCENECAMERA"))
 			{
 				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xd8 (BG slot 54)

@@ -67,7 +67,8 @@ namespace neg { void FadeObjectTrigger(CGameObject *o); }
 static void FadeObjectFire(CGameObject *next)		{ neg::FadeObjectTrigger(next); }	// objects/C3DFadeObject.cpp
 static void AITriggerFire(CGameObject *next, CGameObject *caller, unsigned char flag)
 {
-	static_cast<C3DAITrigger *>(next)->Trigger(caller, flag);			// element +0xe4
+	(void)flag;
+	static_cast<C3DAITrigger *>(next)->Trigger(caller);				// BG: the direct call 0x40c300(caller)
 }
 static void MultiCutSceneFire(CGameObject *next, CGameObject *caller, unsigned char flag)
 {

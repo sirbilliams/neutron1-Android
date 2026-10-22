@@ -6,7 +6,9 @@
                                scene) is not fired, Jimmy gets the camera and the game mode is 5
                                (Playing): his controls can be tried in a level whose story
                                sequence cannot run yet (level1d's logo intro, level5's museum
-                               cut scene whose classes do not exist yet).                     */
+                               cut scene whose classes do not exist yet).
+    NEG_TEST_SEQUENCE=1        With NEG_TEST_PLAY: leave the level as it loads (its start trigger
+                               and story sequence run, as in a new game).                     */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
@@ -29,6 +31,12 @@ void neg::TestPlayHook(const char *level)
 {
 	const char *want = getenv("NEG_TEST_PLAY");
 	if (!want || strcasecmp(want, level) != 0) return;
+	const char *seq = getenv("NEG_TEST_SEQUENCE");
+	if (seq && *seq && *seq != '0')
+	{
+		SDL_Log("NEG_TEST_PLAY: %s with its start trigger (NEG_TEST_SEQUENCE)", level);
+		return;
+	}
 	C3DJimmy *jim = Jimmy();
 	if (!jim || !g_gametype) return;
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
