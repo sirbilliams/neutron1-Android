@@ -29,10 +29,9 @@ functions. Read `docs/decomp-guide.md` (conventions) and the parts of `docs/HAND
   `lgo_slots.json`, `omt_layout.json`, `addrmap.json` (`func`: N2 -> [BG, score, why]; `data`; `insn`).
 - Negatron reference: `/home/claude/decomp/` (same files for Neutron2.exe) and the Negatron source
   `/home/claude/neutron2-android/game/src` (don't edit).
-- `r2` on PATH (radare2 6.2.4 + r2ghidra; for r2pipe scripts use `PATH=/opt/r2/bin:$PATH
-  LD_LIBRARY_PATH=/opt/r2/lib`); python pefile/capstone/unicorn.
+- python pefile/capstone/unicorn (radare2 is not installed: the `raw/*.c` decompile is enough; disassemble
+  with capstone if a function is unclear).
 - Game data: master install `/home/claude/gamefiles/bg` (omt/ gam/ ASE/ png/ + Neutron.exe, OMT2.dll).
-  The ISO: `/home/claude/gamefiles/jimmy1/bg.iso` (InstallShield `data1.cab`; unpacked in `.../jimmy1/game`).
 
 ## Hard rules
 - Never commit game files or bytes from the exe/DLLs (values are read from the player's exe at run time:
@@ -44,17 +43,18 @@ functions. Read `docs/decomp-guide.md` (conventions) and the parts of `docs/HAND
 - Commit only what builds: `git -c user.name=sirbilliams -c user.email=bravehooves@gmail.com commit`,
   message ending with a blank line and:
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_015zEU1ZTRDWHNzdA6Fa1a1r
+  Claude-Session: https://claude.ai/code/session_01UyBSMsdC2v7XcF8Ei2zVvN
 - After each commit: `git push -f origin HEAD:backup/agent-<x>`. Never push main or other branches.
 - Don't touch other agents' worktrees, build dirs, game installs or scratch. Don't run fetch-deps.sh.
 
 ## Your workspace (<x> = your letter)
-- Worktree `/home/claude/wt1/<x>` (branch `agent-<x>`, from `backup/seed`). Build:
-  `cmake -S engine -B build-<x> -DCMAKE_BUILD_TYPE=RelWithDebInfo && make -C build-<x> -j8 negatron`
+- Worktree `/home/claude/wt1/<x>` (branch `agent-<x>`, from `main`). Build:
+  `cmake -S engine -B build-<x> -DCMAKE_BUILD_TYPE=RelWithDebInfo && make -C build-<x> -j2 negatron`
+  (2 CPUs / 7 GB shared by 3 agents: never more than -j2)
   (re-run cmake after adding files). Game install `/home/claude/gamefiles/bg-<x>`; scratch
   `/home/claude/scratch1-<x>`.
-- Run from the game folder (Xvfb :99 is running):
-  `DISPLAY=:99 OMT_WINDOW_SIZE=640x480 OMT_FRAMES=60 OMT_SCREENSHOT=x.bmp timeout 60 <worktree>/build-<x>/negatron`
+- Run from the game folder, on your own display (start `Xvfb :<n> &`, n = 50 + agent number; a shared display steals focus):
+  `DISPLAY=:<n> OMT_WINDOW_SIZE=640x480 OMT_FRAMES=60 OMT_SCREENSHOT=x.bmp timeout 60 <worktree>/build-<x>/negatron`
   Success = "CLEAN EXIT". Level test: `NEG_TEST_PLAY=<Level>.gam`; scripted pad: `OMT_FAKE_PAD`.
   Which classes a level lacks: `python3 tools/decomp/gamcensus.py /home/claude/decomp1/factory.json game/src <gam>`.
 - New classes: own new files, define `New_<Class>` (overrides the factory's weak stub). Match the style
@@ -64,7 +64,8 @@ functions. Read `docs/decomp-guide.md` (conventions) and the parts of `docs/HAND
   `gh api "repos/sirbilliams/neutron1-android/actions/runs?branch=backup/agent-<x>&per_page=1" --jq '.workflow_runs[0]|.status+" "+(.conclusion//"")'`
 - Report in <= 12 lines: commits, what works, what's left (with addresses), shared files touched.
 
-## Goal of this round: the first levels playable
-Start chain (from CEditor/C2DInGameMenu): `level1d.gam` (the opening: Yokian ships, logos?) ->
-`Level1.gam` (Retroville) <-> `level1b.gam` (Jimmy's lab, via the phone booth). "Done" = a level loads
-all its objects and plays from start to exit (objectives, cut scenes, exits load the next level).
+## Goal of this round: finish the first stretch (HANDOFF "Game plan" step 1)
+Intro (level1d) -> lab (level1b) -> Neighborhood (Level1) -> Jimmy's house (level1c) fully from Neutron.exe:
+C3DGoddard, the gadgets (bubble gun, baseball, grappling hook, shrink ray beam), merry-go-round, SUV.
+"Done" = the class matches its `raw/<Class>.c`, header says "Reconstructed from Neutron.exe", no `N2:` left
+in it, and the level plays to its exit without a TODO for it in the log.
