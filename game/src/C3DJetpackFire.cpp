@@ -1,9 +1,12 @@
 /*  C3DJetpackFire - see C3DJetpackFire.h. */
 #include "C3DJetpackFire.h"
 #include "Game.h"
+#include "Bridge.h"
 #include <strings.h>
 
 using namespace neg;
+
+namespace neg { void JimmyAddEnergy(float d); }		// 0x42a920 (C3DJimmy.cpp)
 
 C3DJetpackFire::C3DJetpackFire()							// 0x421d80
 {
@@ -11,12 +14,11 @@ C3DJetpackFire::C3DJetpackFire()							// 0x421d80
 	C3DJetpackFire::InitObject();							// 0x421f00 (called directly)
 	v64(0.3f);
 	C3DObject::SetObjectID('3JFI');							// 0x462220
-	v107(0);
+	v107(0);												// +0x1b0
 	v36(0);
 	v52(0);
 	f_924 = NULL;
 	f_928 = 0;
-	f_92c = 0;
 }
 
 C3DJetpackFire::~C3DJetpackFire()							// 0x421eb0
@@ -24,33 +26,40 @@ C3DJetpackFire::~C3DJetpackFire()							// 0x421eb0
 }
 
 namespace neg {
-CGameObject *New_C3DJetpackFire(void)	{ return new C3DJetpackFire; }	// factory '3JFI' (0x938 bytes)
+CGameObject *New_C3DJetpackFire(void)	{ return new C3DJetpackFire; }	// factory '3JFI' (0x6cc bytes)
 }
 
 void C3DJetpackFire::InitObject(void)						// 0x421f00
 {
 	Log("InitObject()");
-	C3DAnimated::InitObject();								// N2:0x41b0a0
-	InitAnim();												// element +0x110
-	CreateAnim((char *)"ANIMATE", (char *)"jetpacksmallflame.ase");	// +0xe0
-	CreateAnim((char *)"OPEN", (char *)"jetpackexpand.ase");
-	// port: the original's file name is "Jetpackshrink.ase " (trailing space), which Windows
-	// drops when it opens the file.
-	CreateAnim((char *)"CLOSE", (char *)"Jetpackshrink.ase");
-	CreateAnim((char *)"STOP", (char *)"jetpack01.ase");
-	CreateTexture((char *)"jetpack.png", 0);				// +0xfc
-	ev58((char *)"STOP", 1);								// +0xe8
-	ApplyTexture(f_590, 0);									// +0x100
-	v67(20.0f);												// +0x10c
-	// (then a call to the empty 0x472970)
+	C3DAnimated::InitObject();								// 0x40d530
+	InitAnim();												// element +0x108
+	CreateAnim((char *)"HIDEFAULT", (char *)"fire.ase");	// element +0xd8
+	CreateAnim((char *)"HINONE", (char *)"fire2.ase");
+	CreateTexture((char *)"fire.png", 0);					// element +0xf0
+	ApplyTexture(f_590, 0);									// element +0xf4 (BG +0x57c)
+	v67(20.0f);												// +0x110
+	ev58((char *)"DEFAULT", 1);								// element +0xe0
 }
 
-void C3DJetpackFire::ev67(void)								// N2:0x443760
+// Every frame: on the owner's back while the burn time lasts (it uses energy), hidden otherwise;
+// landing ends the burn.
+void C3DJetpackFire::Process(float dt)						// 0x421fb0
 {
-	if (!strcasecmp(ev66(), "OPEN"))						// +0x108, _stricmp
+	if (!GameIsRunning()) return;							// 0x475ca0
+	C3DAnimated::Process(dt);								// 0x40e050
+	if (!f_924) return;
+	if (f_924->v133()) f_928 = 0;							// on the floor (+0x218)
+	f_928 -= dt;
+	if (f_928 > 0)
 	{
-		ev58((char *)"ANIMATE", 1);
-		return;
+		ShowAgain();
+		JimmyAddEnergy(-dt * 0.5f);							// 0x42a920
 	}
-	if (!strcasecmp(ev66(), "CLOSE")) HideAgain();			// element +0xdc
+	else HideAgain();
+	float p[4];
+	f_924->v195(p);											// +0x310
+	v196(p[0], p[1], p[2], p[3]);							// +0x314
+	f_924->v201(p);											// +0x328
+	v202(p[0], p[1], p[2], p[3]);							// +0x32c
 }

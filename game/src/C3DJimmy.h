@@ -1,188 +1,122 @@
-/*  C3DJimmy ('3JIM') - the player: Jimmy Neutron. A C3DPlayer (keyboard / mouse / joystick
-    movement, jump, jetpack, climbing, chase camera) plus everything only Jimmy has: his Granny
-    model and animation set, his gadgets (shrink ray, water balloons, grappling hook, bubbles,
-    burp gun, the PDA menu), health, the vehicles he can ride (rocket ship, jet pack) and the
-    level start / restart logic. The one C3DJimmy of the game is made by CreateStaticObjects
-    (CreateObject('3JIM') after the first level load) and kept in g_jimmy (N2:0x545fd0, its
-    CGameObject part).
-    Reconstructed from Neutron.exe: factory '3JIM', constructor N2:0x443830 (0x4efc bytes),
+/*  C3DJimmy ('3JIM') - the player: Jimmy Neutron. A C3DPlayer (walking, the jump and the jet
+    pack, climbing, the chase camera) plus everything only Jimmy has: his .ase animation set,
+    his gadgets (the bubble f_a14, the rocket ship f_ab0, the shrink ray f_a10, the baseballs
+    f_ab4, the grappling hook f_b0c, Goddard rides and follows), energy (g_4f83d4) and health
+    (f_a28), the PDA menu (f_a18, a C2DInGameMenu) and the level start (PostLoad).
+    The one C3DJimmy of the game is made by CreateStaticObjects (CreateObject('3JIM') after the
+    first level load) and kept in g_jimmy (its CGameObject part).
+    Reconstructed from Neutron.exe: factory '3JIM', constructor 0x422160 (0x1e7c bytes),
     destructor 0x4229e0 (deleting thunks 0x4229b0 / 0x42b280 / 0x42b290 / 0x42b2a0..0x42b2c0).
 
-    Original layout (classes.json): as C3DPlayer (element vtable 0x4a3bdc, 166 slots: C3DPlayer's
-    127 + 127..165; OMediaAnim at +0x90, vtable 0x4a3b8c; listener +0x30, vtable 0x4a3bc8;
-    CLocalGameObject at +0xc0, vtable 0x4a373c, 286 slots), own members 0xcac..0x4ef4 (C3DPlayer's
-    data ends at 0xcac), vtordisp 0x4ef4, streamer 0x4ef8.
+    Original layout (classes.json): as C3DPlayer (element vtable 0x4a3bdc, 131 slots: C3DPlayer's
+    93 + 93..130; OMediaAnim at +0x90, vtable 0x4a3b8c; listener +0x30, vtable 0x4a3bc8;
+    CLocalGameObject at +0xc0, vtable 0x4a373c, 275 slots), own members 0x9fc..0x1e74, vtordisp
+    0x1e74, streamer 0x1e78.
 
-    The constructor builds Jimmy's helpers and keeps them (not deleted by the destructor):
-      g_menu (C2DInGameMenu, the PDA), f_4c90 (CTaskList), f_cc8 C3DRocketShip, f_ccc C3DJetPack,
-      f_cc4 C3DShadow (his blob shadow), f_4c8c C3DTargetCursor, f_d4c C3DPointCursor (points at
-      the nearest pickup, n2_ev164), f_cd0[20] C3DWaterBalloon, f_d20 C3DGraplingHook,
-      f_4d00[20] / f_4d50[1] C3DMagicParticle (burp-gun / bubble sparkles, n2_ev154..n2_ev157),
-      f_d5c C3DGoddard (his dog), f_d40 C3DRadar (the HUD panel the menu shows with R),
-      f_d44 C3DASEObj (the bubble he floats in, n2_ev146 / n2_ev147).
-    Each helper is a class of its own (C3DRadar.h, C3DShadow.h, C3DJetPack.h, C3DTargetCursor.h,
-    C3DPointCursor.h, C3DWaterBalloon.h, C3DGraplingHook.h, C3DMagicParticle.h, C3DGoddard.h,
-    C3DASEObj.h); the rocket ship is C3DRocketShip.h. The constructor news them as the original
-    does; uses are NULL-checked only where the original checks.
+    Gadgets (g_4f0588 the one in use, -1 none; menu page 0 items 0..7 say which he has: type 1
+    has it, 4 has it but not usable here, 0 no). Activate (slot 93) / Deactivate (slot 94):
+      0 bubble: he floats in it (C3DBubble f_a14)      1 rocket ship (C3DRocketShip f_ab0)
+      2 power (f_1e1c / f_1e20 timers, the gadget bar) 3 the shrink ray (fired with no gadget)
+      4 Goddard rides the jeep (C3DJeep f_a30)          5 Goddard (C2DInGameMenu +0x4bc)
+      6 the baseball launcher (camera raised)           7 the grappling hook (f_b0c, the rope)
+    Item 9 of page 0 at type 2 is the PDA's "VR" page: activating any gadget then loads that
+    gadget's VR level (vr01.gam .. vr08.gam) from the phone booth.
 
-    This class is written in two parts (jimmy/C3DJimmy_a.{inc,cpp}: everything below N2:0x448b40,
-    jimmy/C3DJimmy_b.{inc,cpp}: N2:0x448b40 and above). Each part declares the slots it writes in
-    its .inc. Element-family game slots are `ev<n>` (`// ESLOT n`, n = vtable offset / 4) unless a
-    log string names them; CGameObject-family slots keep their CGameObject names (`// SLOT n`).
+    Element-family slots of Neutron.exe are named here (the base classes still use Negatron's
+    slot numbers for their ev<n> names, see C3DPlayer.h); the comments give the BG slot.
+    The PDA menu functions (BG slots 107, 116, 117, 124..127 and the free functions 0x42aff0 /
+    0x42b0b0 / 0x42b180) are agent F's, in jimmy/C3DJimmy_menu.{inc,cpp}.
     Members are f_<offset in the original object> (CGameObject-family code sees them at
-    offset - 0xc0).
-
-    Hooks: C3DPlayer.h declares neg::JimmyJetpackOff / JimmyJetpackSound / JimmyJetpackFlame /
-    JimmyActivateMenuItem weak, C3DRocketShip.h JimmyRocketShoot / JimmyGadgetShot (and others);
-    C3DJimmy.cpp defines them.                                                                 */
+    offset - 0xc0).                                                                          */
 #pragma once
 #include "C3DPlayer.h"
-#include "C3DGraplingHook.h"
 #include "C3DGoddard.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
 class CTaskList;
-// TODO(BG): Negatron-only helper classes (deleted; Neutron.exe's Jimmy has others: C3DShrinkRay,
-// C3DBubble, C3DBaseball, ...). Kept as opaque pointers until C3DJimmy is ported.
-class C3DJetPack;
-class C3DASEObj;
-class C3DMagicParticle;
-class C3DWaterBalloon;
-class C3DGrannyObj;
-class C3DPermanentSprite;
-class C3DRadar;
+class C2DInGameMenu;
 class C3DShadow;
 class C3DTargetCursor;
 class C3DPointCursor;
-class OMediaStreamOperators;
+class C3DGraplingHook;
+class C3DRocketShip;
+class C3DJeep;
 
 class C3DJimmy : public C3DPlayer
 {
 	public:
-	C3DJimmy();																// N2:0x443830
+	C3DJimmy();																// 0x422160
 	virtual ~C3DJimmy();													// 0x4229e0
-
-	// ---- Neutron.exe element slots (BG numbering)
-	virtual void ev81(void);												// ESLOT 81 0x4299d0 footstep loop on (the game's surface sound)
-	virtual void ev82(void);												// ESLOT 82 0x429a00 footstep loop off
-	int					m_step_channel;	// BG 0xa44  footstep loop channel (-1: none)
 
 #include "jimmy/C3DJimmy_a.inc"
 #include "jimmy/C3DJimmy_b.inc"
 #include "jimmy/C3DJimmy_menu.inc"
 
-	// ---- data members (object offsets). Names say what is known; "?" = not established.
-	int					f_cac;			// 0xcac  0
-	// 0xcb0..0xcbb never used
-	C3DObject			*f_cbc;			// 0xcbc  shrink-ray effect: hidden when the ray stops / out of energy (0; set elsewhere)
-	CGameObject			*f_cc0;			// 0xcc0  0 (n2_ev118 calls an empty function on it)
-	C3DShadow			*f_cc4;			// 0xcc4  C3DShadow: the blob shadow under Jimmy (n2_ev136)
-	C3DAnimated			*f_cc8;			// 0xcc8  C3DRocketShip he can fly (a C3DFlyingObject)
-	C3DAnimated			*f_ccc;			// TODO(BG): was N2 C3DJetPack (NULL now); 0xccc  C3DJetPack (a C3DFlyingObject; +0x9f0 its fire, +0x9f4 its sound)
-	C3DObject			*f_cd0[20];		// TODO(BG): was N2 C3DWaterBalloon (NULL now); 0xcd0  C3DWaterBalloon pool
-	C3DGraplingHook		*f_d20;			// 0xd20  C3DGraplingHook (n2_ev163)
-	// 0xd24 never used
-	// props on Jimmy's bones (n2_ev88), dropped by v260 (in the order d28 d2c d30 d38 d34)
-	C3DAnimated			*f_d28;			// TODO(BG): was N2 C3DGrannyObj (NULL now); 0xd28  water gun in the right hand ("newgunbase.grn")
-	C3DAnimated			*f_d2c;			// TODO(BG): was N2 C3DGrannyObj; 0xd2c  burp gun ("megaburpgun.grn")
-	C3DAnimated			*f_d30;			// TODO(BG): was N2 C3DGrannyObj; 0xd30  shades on the head ("Shades.grn")
-	C3DAnimated			*f_d34;			// TODO(BG): was N2 C3DGrannyObj; 0xd34  the PDA ("PDA.grn"; Process hides it outside cut scenes)
-	C3DObject			*f_d38;			// 0xd38  held object (the HOLD animations; ReadState clears it)
-	int					f_d3c;			// 0xd3c  0
-	CGameObject			*f_d40;			// TODO(BG): was N2 C3DRadar (NULL now); 0xd40  C3DRadar: the HUD panel (the original keeps its CGameObject part)
-	C3DAnimated			*f_d44;			// TODO(BG): was N2 C3DASEObj (NULL now); 0xd44  C3DASEObj: the bubble (energybubble.ase; the original keeps its CGameObject part)
-	int					f_d48;			// 0xd48  0
-	C3DPointCursor		*f_d4c;			// 0xd4c  C3DPointCursor (the original keeps its CGameObject part)
-	short				f_d50;			// 0xd50  next water balloon (0..19)
-	int					f_d54;			// 0xd54  0 after a shot
-	short				f_d58;			// 0xd58  0
-	C3DGoddard			*f_d5c;			// 0xd5c  C3DGoddard, Jimmy's dog (a C3DAI)
-	float				f_d60;			// 0xd60  health, 0..100 (50; n2_ev160 adds)
-	float				f_d64;			// 0xd64  0; 0.5 after leaving the jeep
-	short				f_d68;			// 0xd68  -1
-	short				f_d6a;			// 0xd6a  4
-	unsigned char		f_d6c;			// 0xd6c  0; Process shows the "SCENE" task state when set (debug)
-	unsigned char		f_d6d;			// 0xd6d  0
-	// 0xd6e..0xd6f never used
-	OMedia3DPoint		f_d70[500];		// 0xd70  ?
-	OMedia3DPoint		f_2cb0[500];	// 0x2cb0 ?
-	OMedia3DPoint		f_4bf0;			// 0x4bf0 position saved by n2_ev150 / n2_ev151
-	int					f_4c00;			// 0x4c00 the level (g_gametype ID) of f_4bf0
-	CGameObject			*f_4c04;		// 0x4c04 NULL; the C3DCheckPoint he last checked (its game object)
-	int					f_4c08;			// 0x4c08 sound channel (-1) "ropeswing" / "ropeclimb"
-	int					f_4c0c;			// 0x4c0c sound channel (-1) "water stream"
-	int					f_4c10;			// 0x4c10 sound channel (-1) "shrinkray"
-	int					f_4c14;			// 0x4c14 sound channel (-1)
-	int					f_4c18;			// 0x4c18 0 (n2_ev165: copied from the start point)
-	int					f_4c1c;			// 0x4c1c sound channel (-1)
-	int					f_4c20;			// 0x4c20 footstep sound channel (-1)
-	int					f_4c24;			// 0x4c24 sound channel (-1) "not available"
-	char				f_4c28[100];	// 0x4c28 "none"; n2_ev165: from the start point (the level music name)
-	C3DTargetCursor		*f_4c8c;		// 0x4c8c C3DTargetCursor
-	CTaskList			*f_4c90;		// 0x4c90 the task list
-	int					f_4c94;			// 0x4c94 0
-	int					f_4c98;			// 0x4c98 0
-	float				f_4c9c;			// 0x4c9c 0
-	int					f_4ca0;			// 0x4ca0 0: gesture to do when the pickup animation ends (n2_ev137)
-	unsigned char		f_4ca4;			// 0x4ca4 0: hurt by a 110..119 wall (n2_ev120; n2_ev133 flashes)
-	unsigned char		f_4ca5;			// 0x4ca5 0: shocked (n2_ev119; n2_ev133 holds him for 1 s)
-	unsigned char		f_4ca6;			// 0x4ca6 0: in water (CJimmyGame)
-	unsigned char		f_4ca7;			// 0x4ca7 0 (surface flag, CJimmyGame)
-	OMedia3DVector		f_4ca8;			// 0x4ca8
-	unsigned char		f_4cb8;			// 0x4cb8 0: hurt (n2_ev134; flashing, AddTouching ignores missiles / bots / plants)
-	OMedia3DPoint		f_4cbc;			// 0x4cbc position of the start point he came in at (n2_ev165)
-	float				f_4ccc;			// 0x4ccc 0: gadget 2 time left (20)
-	float				f_4cd0;			// 0x4cd0 0: power bar / burp gun charge (full at 20)
-	unsigned char		f_4cd4;			// 0x4cd4 0: gun pointed (cleared by a shot)
-	float				f_4cd8;			// 0x4cd8 0: aim pitch of the shots (n2_ev163)
-	float				f_4cdc;			// 0x4cdc 5: invulnerable time after a hurt
-	int					f_4ce0;			// 0x4ce0 0
-	float				f_4ce4;			// 0x4ce4 0: time since the head last hit a ceiling
-	float				f_4ce8;			// 0x4ce8 0: no shock while > 0
-	unsigned char		f_4cec;			// 0x4cec 1: flying (the jet pack started by itself, v243)
-	float				f_4cf0;			// 0x4cf0 0: its time left
-	int					f_4cf4;			// 0x4cf4 0
-	int					f_4cf8;			// 0x4cf8 1: rope: 1 swing (keys move the swing), 0 hang still
-	unsigned char		f_4cfc;			// 0x4cfc 0: grappling hook gadget selected once (12 s help shown)
-	unsigned char		f_4cfd;			// 0x4cfd 0: on the scooter (jeep): no shadow
-	unsigned char		f_4cfe;			// 0x4cfe 1 (0 while the constructor builds the helpers)
-	C3DObject			*f_4d00[20];	// TODO(BG): was N2 C3DMagicParticle (NULL now); 0x4d00 C3DMagicParticle pool (next: f_4d54)
-	C3DObject			*f_4d50[1];		// TODO(BG): was N2 C3DMagicParticle  // 0x4d50 C3DMagicParticle (next: f_4d60)
-	int					f_4d54;			// 0x4d54 next of f_4d00 (n2_ev154)
-	float				f_4d58;			// 0x4d58 0; n2_ev156 adds: sparkle time of f_4d00
-	float				f_4d5c;			// 0x4d5c 0
-	int					f_4d60;			// 0x4d60 next of f_4d50 (n2_ev155)
-	float				f_4d64;			// 0x4d64 0; n2_ev157 adds: sparkle time of f_4d50
-	float				f_4d68;			// 0x4d68 0
-	OMedia3DVector		f_4d6c;			// 0x4d6c n2_ev157: sparkle position (of f_4d50)
-	unsigned char		f_4d7c;			// 0x4d7c 0: "bNoPhysics" (driving the crane, saved; n2_ev165 clears it)
-	OMedia3DPoint		f_4d80;			// 0x4d80 (0, 0, 0)
-	unsigned char		f_4d90;			// 0x4d90 0: counts as on the floor (v133)
-	int					f_4d94;			// 0x4d94 0 (v266: 0, 15; saved)
-	int					f_4d98;			// 0x4d98 sound channel (-1) "slide"
-	float				f_4d9c;			// 0x4d9c 5000
-	float				f_4da0;			// 0x4da0 0 bubble: time it lasts (n2_ev147); 0 when a LADDER / FENCE climb starts
-	float				f_4da4;			// 0x4da4 0 bubble: time left (n2_ev146); invulnerable while > 0 (saved)
-	float				f_4da8;			// 0x4da8 0.35 bubble alpha
-	int					f_4dac;			// 0x4dac 0: "ResetWhenDamaged" (saved)
-	float				f_4db0;			// 0x4db0 -900: "FallSpeedDamage" (saved)
-	unsigned char		f_4db4;			// 0x4db4 0: falling fast ("landing" sound)
-	unsigned char		f_4db8;			// 0x4db8 0: hanging on the rope (no shadow, no jet pack)
-	OMedia3DPoint		f_4dbc[10];		// 0x4dbc rope anchor points ([f_4e78])
-	float				f_4e5c;			// 0x4e5c 0: first rope length
-	float				f_4e60;			// 0x4e60 0: rope length now
-	float				f_4e64;			// 0x4e64 0: swing speed x
-	float				f_4e68;			// 0x4e68 0: swing speed z
-	float				f_4e6c;			// 0x4e6c 0: time on the rope
-	float				f_4e70;			// 0x4e70 anchor height above us - 100 / 200
-	float				f_4e74;			// 0x4e74 longest rope
-	short				f_4e78;			// 0x4e78 0: current rope anchor
-	float				f_4e7c;			// 0x4e7c 0: time the camera pitch holds after aiming (3)
-	char				f_4e80[100];	// 0x4e80 "": pickup animation waiting for the floor (ev58; Process plays it)
-	float				f_4ee4;			// 0x4ee4 0: shot repeat timer (0.15)
-	unsigned char		f_4ee8;			// 0x4ee8 0: action ignored until released
-	CGameObject			*f_4ef0;		// 0x4ef0 the target Goddard shows (C3DAITrigger "ShowTarget")
+	// ---- data members (object offsets). Names say what is known.
+	int					f_9fc;			// 0x9fc  0
+	C3DAnimated			*f_a10;			// 0xa10  C3DShrinkRay: the ray's effect (element; shown while firing)
+	C3DObject			*f_a14;			// 0xa14  C3DBubble (element; +0x614 rising, +0x615 on, +0x616 popping)
+	C2DInGameMenu		*f_a18;			// 0xa18  the PDA menu (also g_menu)
+	short				f_a0c;			// 0xa0c  0
+	C3DGoddard			*f_a1c;			// 0xa1c  Goddard (made by PostLoad; element)
+	float				f_a20;			// 0xa20  0 (0.5 when a gadget ends)
+	short				f_a24;			// 0xa24  4
+	short				f_a26;			// 0xa26  -1
+	float				f_a28;			// 0xa28  health 0..100 (50; slot 115 adds)
+	C3DShadow			*f_a2c;			// 0xa2c  his blob shadow (element)
+	C3DJeep				*f_a30;			// 0xa30  the scooter Goddard rides (gadget 4; made by PostLoad; element)
+	int					f_a34;			// 0xa34  sound channel (-1): the shrink ray
+	int					f_a38;			// 0xa38  music channel (-1): the start point's music
+	int					f_a3c;			// 0xa3c  sound channel (-1): the jet pack
+	int					f_a40;			// 0xa40  sound channel (-1): the bubble
+	int					f_a44;			// 0xa44  sound channel (-1): footsteps
+	int					f_a48;			// 0xa48  sound channel (-1): "not available"
+	char				f_a4c[100];		// 0xa4c  "none": the music database of the start point
+	C3DRocketShip		*f_ab0;			// 0xab0  the rocket ship (gadget 1; element)
+	C3DObject			*f_ab4[20];		// 0xab4  C3DBaseball pool (elements)
+	short				f_b04;			// 0xb04  next baseball (0..19)
+	int					f_b08;			// 0xb08  0
+	C3DGraplingHook		*f_b0c;			// 0xb0c  the grappling hook's rope (element)
+	C3DTargetCursor		*f_b14;			// 0xb14  the target cursor (element)
+	CTaskList			*f_b18;			// 0xb18  the task list
+	OMedia3DPoint		f_b1c[300];		// 0xb1c  trail of positions (slot 108; going back along it)
+	float				f_1ddc;			// 0x1ddc trail: time since the last point
+	int					f_1de0;			// 0x1de0 trail: last point (0..299)
+	float				f_1de8;			// 0x1de8 hurt / shocked animation time
+	unsigned char		f_1dec;			// 0x1dec hit (slot 89): flashing
+	unsigned char		f_1ded;			// 0x1ded splat (slot 88): flashing, then pushed back
+	OMedia3DVector		f_1df0;			// 0x1df0 splat: the push (x, y, z) and the plane's d
+	unsigned char		f_1e00;			// 0x1e00 a gadget key is held (slot 97 acts once per press)
+	unsigned char		f_1e01;			// 0x1e01 0
+	unsigned char		f_1e02;			// 0x1e02 0
+	unsigned char		f_1e03;			// 0x1e03 shocked (slot 104): flashing
+	int					f_1e04;			// 0x1e04 sound channel (-1): the grappling hook
+	int					f_1e08;			// 0x1e08 sound channel (-1): water
+	OMedia3DPoint		f_1e0c;			// 0x1e0c where he last stood on the floor / the start point
+	float				f_1e1c;			// 0x1e1c gadget 2: time left (7)
+	float				f_1e20;			// 0x1e20 gadget 2: recharging time
+	unsigned char		f_1e24;			// 0x1e24 0
+	unsigned char		f_1e26;			// 0x1e26 0
+	float				f_1e28;			// 0x1e28 0
+	float				f_1e2c;			// 0x1e2c shocked: how long (5)
+	float				f_1e30;			// 0x1e30 0
+	OMedia3DPoint		f_1e38;			// 0x1e38 checkpoint position (slots 122 / 123)
+	int					f_1e48;			// 0x1e48 checkpoint level (g_gametype +0x490)
+	unsigned char		f_1e50;			// 0x1e50 0
+	unsigned char		f_1e51;			// 0x1e51 touched the REACTOR button (no timeout sound)
+	CGameObject			*f_1e54;		// 0x1e54 the point cursor (its CGameObject part)
+	unsigned char		f_1e58;			// 0x1e58 0
+	unsigned char		f_1e59;			// 0x1e59 gadgets locked
+	float				f_1e5c;			// 0x1e5c time in the air (slot 105: landing sound when > 0.4)
+	float				f_1e60;			// 0x1e60 time he cannot be splat again
+	unsigned char		f_1e64;			// 0x1e64 0
+	float				f_1e68;			// 0x1e68 0
+	float				f_1e6c;			// 0x1e6c gadget key latch time (slot 97 waits for 0)
+	int					f_1e70;			// 0x1e70 0
+	// (f_55f, f_1e25, f_1e34, f_1e4c: in jimmy/C3DJimmy_menu.inc)
+	// port: a CGameObject member of Neutron.exe that our (Negatron-shaped) CGameObject does not have
+	unsigned char		f_55d;			// 0x55d  (CGameObject +0x49d) ghost: no collisions with AIs (gadget 2)
 };
 
 namespace neg {

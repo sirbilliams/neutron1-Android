@@ -107,7 +107,7 @@ static void AISetPatrolPoint(CGameObject *ai, const char *name)			// C3DAI +0x70
 static void CameraSlot82(CGameObject *o)
 {
 	C3DPlayer *p = o ? dynamic_cast<C3DPlayer *>(o) : NULL;
-	if (p) p->ev82();										// (C3DJimmy: stop the footstep loop)
+	if (p) p->StepSoundOff();										// (C3DJimmy: stop the footstep loop)
 }
 
 // --------------------------------------------------------------------------- construction

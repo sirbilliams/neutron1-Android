@@ -93,10 +93,10 @@ static void LoadLevelFire(CGameObject *next)		{ static_cast<CLoadLevel *>(next)-
 // The player (Jimmy: a C3DPlayer) behind a JIM1 tag.
 static C3DPlayer *PlayerOf(CGameObject *jim)		{ return jim ? dynamic_cast<C3DPlayer *>(jim) : NULL; }
 
-// N2:0x4795cf: element byte +0xa99 = 0.
+// N2:0x4795cf: element byte +0xa99 = 0 (Neutron.exe's C3DPlayer +0x7fc).
 static void JimmyClearA99(CGameObject *jim)
 {
-	if (C3DPlayer *p = PlayerOf(jim)) p->f_a99 = 0;
+	if (C3DPlayer *p = PlayerOf(jim)) p->f_7fc = 0;
 }
 
 
@@ -111,9 +111,9 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	char level[80], start[80], ret_level[100], ret_start[100];	// (stack copies, as in the original)
 	strcpy(level, ll->m_level_name);
 	strcpy(start, ll->m_start_point);
-	strcpy(ret_level, p->f_c25);
-	strcpy(ret_start, p->f_b24);
-	p->n2_ev121(level, start, ret_level, ret_start, 0);	// element +0x168 (TODO(E): Neutron.exe's slot 90)
+	strcpy(ret_level, p->f_88c);
+	strcpy(ret_start, p->f_8f0);
+	p->PlayerLoadLevel(level, start, ret_level, ret_start);	// element +0x168 (slot 90)
 	if (ll->m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
@@ -131,13 +131,14 @@ static int JeepField9c4(CGameObject *jeep)
 	return j && j->f_a84;										// the driver (object 0xa84)
 }
 
-// CJimmyGame element slot 102 (+0x198): PlayLevelMusic(jim element + 0x4c28, *(jim element + 0x4c18)).
+// CJimmyGame element slot 102 (+0x198): PlayLevelMusic(Jimmy's music database name, 0).
+// TODO(BG): check the arguments against Neutron.exe (Negatron passed +0x4c28, *(+0x4c18)).
 // (The original reads those even when there is no JIM1: a crash.)
 static void JimmyGameRestore(CGameObject *jim)
 {
 	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;
 	CJimmyGame *g = g_gametype ? dynamic_cast<CJimmyGame *>(g_gametype) : NULL;
-	if (j && g) g->PlayLevelMusic(j->f_4c28, j->f_4c18);	// port: no call without them
+	if (j && g) g->PlayLevelMusic(j->f_a4c, 0);	// port: no call without them
 }
 
 // --------------------------------------------------------------------------- construction

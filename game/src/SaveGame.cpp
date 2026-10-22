@@ -175,13 +175,13 @@ void neg::WriteTaskFile(const char *name)
 	for (int i = 0; i < 29; i++) fs << g_pickup_counts[2 * i];
 	if (C3DPlayer *p = Player(FindObjectByTag("JIM1")))
 	{
-		fs << p->f_9c8;										// +0x724 (GO +0x664)
-		fs << p->f_a18;										// +0x774
-		fs << p->f_b24;										// +0x88c
-		fs << p->f_c25;										// +0x8f0
-		fs << p->f_bdc.x;// +0x9a8..
-		fs << p->f_bdc.y;
-		fs << p->f_bdc.z;
+		fs << p->f_724;										// +0x724 (GO +0x664)
+		fs << p->f_774;										// +0x774
+		fs << p->f_88c;										// +0x88c
+		fs << p->f_8f0;										// +0x8f0
+		fs << p->f_9a8.x;// +0x9a8..
+		fs << p->f_9a8.y;
+		fs << p->f_9a8.z;
 	}
 	for (int i = 0; i < 9; i++)
 	{
@@ -309,23 +309,23 @@ bool neg::TaskGameLoad(const char *name)
 		C3DPlayer *p = Player(g_camera);
 		char s[STR_MAX];
 		fs >> s;											// +0x724 and +0x774 both get the first string
-		if (p) { strcpy(p->f_9c8, s); strcpy(p->f_a18, s); }
+		if (p) { strcpy(p->f_724, s); strcpy(p->f_774, s); }
 		fs >> s;											// (the second is read and dropped)
 		fs >> s;
-		if (p) strcpy(p->f_b24, s);							// +0x88c
+		if (p) strcpy(p->f_88c, s);							// +0x88c
 		fs >> s;
-		if (p) strcpy(p->f_c25, s);							// +0x8f0
+		if (p) strcpy(p->f_8f0, s);							// +0x8f0
 		float x, y, z;
 		fs >> x;
 		fs >> y;
 		fs >> z;
 		if (p)
 		{
-			p->f_bdc.x = x; p->f_bdc.y = y; p->f_bdc.z = z;	// +0x9a8..
+			p->f_9a8.x = x; p->f_9a8.y = y; p->f_9a8.z = z;	// +0x9a8..
 			char g[STR_MAX], st[STR_MAX];
 			strcpy(g, g_editor->m_level_name);
-			strcpy(st, p->f_9c8);
-			p->ev121(g, st, g_editor->m_level_name, p->f_9c8, 0);	// element slot 90 (+0x168) TODO(BG): no picture arg
+			strcpy(st, p->f_724);
+			p->PlayerLoadLevel(g, st, g_editor->m_level_name, p->f_724);	// element slot 90 (+0x168)
 		}
 	}
 	for (int i = 0; i < 9; i++)

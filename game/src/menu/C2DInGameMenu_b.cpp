@@ -87,8 +87,8 @@ static void PlayerGoTo(CGameObject *player, const char *game, const char *start)
 	C3DPlayer *p = player ? dynamic_cast<C3DPlayer *>(player) : NULL;
 	if (!p) return;
 	char g[100], s[100], rg[100], rs[100];
-	strcpy(g, game); strcpy(s, start); strcpy(rg, p->f_b89); strcpy(rs, p->f_9c8);
-	p->ev121(g, s, rg, rs, 0);
+	strcpy(g, game); strcpy(s, start); strcpy(rg, p->f_955); strcpy(rs, p->f_724);
+	p->PlayerLoadLevel(g, s, rg, rs);
 }
 
 // C3DJimmy element slot 94 (0x427ff0, +0x178): Jimmy back from the menu. TODO(BG): agent E's.

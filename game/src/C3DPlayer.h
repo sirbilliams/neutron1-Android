@@ -1,49 +1,46 @@
-/*  C3DPlayer - the C3DPlayerObject the player drives: keyboard / mouse / joystick movement, the
-    jump and the jetpack, climbing fences and ladders, the animation choice and the chase camera.
-    The base of C3DJimmy ('3JIM'). No factory ID of its own (InitObject sets ObjectID '3PLA').
-    Reconstructed from Neutron.exe: constructor N2:0x45ff00, destructor 0x437790 (deleting thunks
-    N2:0x460350 / 0x43b940 / 0x43b950 / 0x43b960).
+/*  C3DPlayer - the C3DAnimated the player drives: walking (keyboard arrows / joystick, mouse
+    turns), the jump and the jet pack, climbing fences and ladders, the idle animations and the
+    chase camera. The base of C3DJimmy ('3JIM'). No factory ID of its own (InitObject sets
+    ObjectID '3PLA').
+    Reconstructed from Neutron.exe: constructor 0x437280, destructor 0x437790 (deleting thunks
+    0x437710 / 0x43b940 / 0x43b950 / 0x43b960).
 
-    Original layout: as C3DPlayerObject (element vtable 0x4afb64, 127 slots: C3DPlayerObject's
-    106 + 106..126; CLocalGameObject vtable 0x4af6c4 at +0xc0), own members 0x960..0xcac,
-    vtordisp 0xcac, streamer 0xcb0. C3DJimmy puts its members from 0xcac on.
+    Original layout (classes.json): as C3DAnimated (element vtable 0x4afb64, 93 slots: C3DAnimated's
+    72 + 72..92; OMediaAnim at +0x90, vtable 0x4afb14; listener +0x30, vtable 0x4afb50;
+    CLocalGameObject at +0xc0, vtable 0x4af6c4, 275 slots), own members 0x6bc..0x9fc, vtordisp
+    0x9fc, streamer 0xa00. C3DJimmy puts its members from 0x9fc on.
 
-    Control state f_a68 (Process / v243 pick the slots by it):
-      state   Process (movement)        v243 (control + camera)
-      0       n2_ev108 walk                n2_ev109 keyboard/mouse + chase camera
-      1       n2_ev112 jump / jetpack      n2_ev110 vehicle-like steering + camera
-      2       n2_ev107 bounce              n2_ev110
-      3       (nothing)                 n2_ev111 turn on the spot + camera
-      4       n2_ev108 (swimming)          n2_ev109
-      5       n2_ev106 (glide)             n2_ev109
-    States 0, 1, 4 and 5 also pick RUN / STOP / LEFT / RIGHT / JUMP from the speed and keys.
-    While f_b20 > 0 (climbing a fence or ladder: v220 -> n2_ev114 "FENCE"/"LADDER") v243 runs the
-    climb camera instead and ends the climb (ev67 "AnimEnded" ends the animation side).
+    Control state f_7c4 (Process moves by it, v243 steers and places the camera by it):
+      state   Process (movement)          v243 (control + camera)
+      0       MoveWalk (slot 76)          ControlWalk (73): arrows / joystick, mouse x turns
+      1       MoveJump (77)               ControlFly (74): vehicle-like steering
+      2       MoveBounce (79)             ControlFly (74)
+      3       (nothing)                   ControlSit (75): turn on the spot
+    Jump state f_7e8 (MoveJump): 0 on the floor, 1 jumped (holding the key), 2 jumped (key
+    released), 3 jet pack burning (f_7f8's burn time), 4 falling after it, 5 landed.
+    Climbing: AnimEnded / PlayAnim("FENCE" / "LADDER") hold the player (g_4f83e0) for f_868
+    seconds while the camera rises for f_888 seconds; Process then puts him at the top (f_838).
 
-    Speeds: f_96c forward speed (clamped to f_968), f_960 acceleration and f_964 braking per
-    frame, f_978 turn rate (degrees / s). The camera wants to sit at v224(f_a6c) (n2_ev113 for
-    states 1-3) looking at v224(f_a7c), pulled in front of walls (n2_ev95), kept within reach
-    (n2_ev96) and moved there smoothly (n2_ev98, C3DPlayerObject).
+    The BG slots 72..92 have names here instead of ev<n>: C3DAnimated still uses Negatron's
+    slot numbers for its ev<n> names (ev72..ev93 are its own slots), so ev<n> names would clash.
+    Members are f_<offset in the original object> (CGameObject-family code sees them at
+    offset - 0xc0).
 
-    Element-family slots are `ev<n>` (`// ESLOT n`) unless a log string names them; members are
-    f_<offset in the original object> (CGameObject-family code sees them at offset - 0xc0).
-
-    Hooks into C3DJimmy: C3DPlayer calls a few things of Jimmy's (g_jimmy): its jetpack (the
-    object at C3DJimmy +0xccc) and its ESLOT 138 "ActivateMenuItem". They are declared below and
-    defined weak (doing nothing but a TODO log) in C3DPlayer.cpp; C3DJimmy.cpp defines the real
-    ones. The input tests N2:0x465750..N2:0x465ad0 are exported for C3DJimmy too.                  */
+    Also here (exported, used by other classes): Negatron's key-list tests and chase-camera
+    helpers that the not yet reconstructed users still call (C3DFlyingObject, C3DRocketShip,
+    C3DJeep, C3DGoddard, C3DMultiCutSceneCamera).                                            */
 #pragma once
 #include "C3DAnimated.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
 class OMedia3DPolygon;
-class OMediaStreamOperators;
+class C3DJetpackFire;
 
 namespace neg {
 // port: the chase-camera helpers of Negatron's C3DPlayerObject (N2:0x465010 / N2:0x464ef0 /
-// N2:0x465110 / N2:0x4651c0); Neutron.exe has no C3DPlayerObject (C3DPlayer derives from
-// C3DAnimated) and these have no match there. TODO(BG): find BG's camera code and port it.
+// N2:0x465110 / N2:0x4651c0), still used by the Negatron-derived C3DFlyingObject. CamWallPull is
+// also Neutron.exe's C3DPlayer slot 91 (0x43b820, the same code).
 float CamWallPull(C3DAnimated *self, OMedia3DVector *cam);
 float CamReach(OMedia3DVector target, OMedia3DVector *out, float max);
 void CamPlace(OMedia3DVector pos, OMedia3DVector target);
@@ -54,146 +51,117 @@ void CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVector cur
 class C3DPlayer : public C3DAnimated
 {
 	public:
-	C3DPlayer();															// N2:0x45ff00
+	C3DPlayer();															// 0x437280
 	virtual ~C3DPlayer();													// 0x437790
 
-	// ---- from Negatron's C3DPlayerObject (port: TODO(BG) - see neg::CamWallPull)
-	float n2_ev95(OMedia3DVector unused, OMedia3DVector *cam) { (void)unused; return neg::CamWallPull(this, cam); }
-	float n2_ev96(OMedia3DVector target, OMedia3DVector *out, float max) { return neg::CamReach(target, out, max); }
-	void n2_ev97(OMedia3DVector pos, OMedia3DVector target) { neg::CamPlace(pos, target); }
-	void n2_ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
-			  OMedia3DVector axis) { neg::CamMove(this, a, b, mode, cur, want, target, axis); }
-	virtual void ev80(void) {}												// ESLOT 80 0x472970 (empty; C3DJimmy 0x429910)
-	virtual void ev81(void) {}												// ESLOT 81 0x472970 (empty; C3DJimmy 0x4299d0 footstep loop on)
-	virtual void ev82(void) {}												// ESLOT 82 0x472970 (empty; C3DJimmy 0x429a00 footstep loop off)
-	virtual unsigned char ev86(void);										// ESLOT 86 0x4378d0 jump/use button (N2 C3DPlayerObject ev86 ~0.81)
-	virtual unsigned char ev87(void);										// ESLOT 87 0x42a7a0 fire button
-	virtual void n2_ev105(void);												// N2:0x465360 Jimmy is out: back to the autosave (TODO(BG))
-	virtual void WriteState(OMediaStreamOperators &s);						// (N2 C3DPlayerObject's: CLocalGameObject's)
-	virtual void ReadState(OMediaStreamOperators &s);
+	// ---- element-family slots of C3DPlayer (Neutron.exe numbering)
+	virtual OMedia3DVector RelPos(float x, float y, float z);				// ESLOT 72 0x43a5d0 position + (x,y,z) turned by (0, heading + f_6d4, roll), w = 1
+	virtual void ControlWalk(float dt);										// ESLOT 73 0x438bc0 state 0: keys / mouse, idle animations, chase camera
+	virtual void ControlFly(float dt);										// ESLOT 74 0x439900 states 1/2: steering, camera
+	virtual void ControlSit(float dt);										// ESLOT 75 0x43a120 state 3: turn on the spot, camera
+	virtual void MoveWalk(float dt);										// ESLOT 76 0x437c40 state 0 movement, pressed onto the floor
+	virtual void MoveJump(float dt);										// ESLOT 77 0x437f90 state 1: the jump and the jet pack
+	virtual void JetpackOn(int a) { (void)a; }								// ESLOT 78 0x4732a0 (empty) the jet pack starts
+	virtual void MoveBounce(float dt);										// ESLOT 79 0x4387e0 state 2: bouncing
+	virtual void JetpackOff(void) {}										// ESLOT 80 0x472970 (empty) jump / jet pack over
+	virtual void StepSoundOn(void) {}										// ESLOT 81 0x472970 (empty) RUN started
+	virtual void StepSoundOff(void) {}										// ESLOT 82 0x472970 (empty) an animation change / stop
+	virtual unsigned char FloorFarBelow(void);								// ESLOT 83 0x43a7f0 state 0 and the floor more than 70 below RelPos-ish v224(0,0,70)
+	virtual void PlayAnim(char *name);										// ESLOT 84 0x43aff0 play player animation <name> (locks, FENCE / LADDER start a climb)
+	virtual void Bounced(void) {}											// ESLOT 85 0x472970 (empty) MoveBounce hit the floor
+	virtual unsigned char KeyJump(void);									// ESLOT 86 0x4378d0 the jump keys (Insert, Shift, Num 0, right mouse, button 1)
+	virtual unsigned char KeyFire(void);									// ESLOT 87 0x42a7a0 the fire keys (Enter, Ctrl, left mouse, button 0)
+	virtual void TouchedShock(OMedia3DVector plane) { (void)plane; }		// ESLOT 88 0x475cc0 (empty) touched a wall of material 120..129
+	virtual void TouchedHurt(void) {}										// ESLOT 89 0x472970 (empty) touched a wall of material 110..119
+	virtual void PlayerLoadLevel(char *game, char *start, char *ret_game, char *ret_start);	// ESLOT 90 0x43b5a0 "PlayerLoadLevel"
+	virtual float CamPull(OMedia3DVector look, OMedia3DVector *cam);		// ESLOT 91 0x43b820 camera pulled in front of walls (1.5) or not (1)
+	virtual void ResetCamera(void);											// ESLOT 92 0x437740 the camera offsets
 
-	// ---- element-family slots
-	virtual void ev67(void);												// ESLOT 67  N2:0x4639b0 "AnimEnded": FENCE / LADDER / FULLSTOP / SPLAT / HIT done
-	virtual void n2_ev106(float dt);											// ESLOT 106 N2:0x460940 state 5 movement (turns twice as fast; jumps through Jimmy)
-	virtual void n2_ev107(float dt);											// ESLOT 107 N2:0x461640 state 2 movement: bounce ("bubble boing")
-	virtual void n2_ev108(float dt);											// ESLOT 108 0x437c40 state 0/4 movement: walk, side step f_b0c, held to the floor
-	virtual void n2_ev109(float dt);											// ESLOT 109 N2:0x461b50 state 0/4/5 control (speed, turn, BACK) + chase camera
-	virtual void n2_ev110(float dt);											// ESLOT 110 N2:0x463140 state 1/2 control (steer, mouse y = throttle) + camera
-	virtual void n2_ev111(float dt);											// ESLOT 111 N2:0x462b70 state 3: turn only + camera
-	virtual void n2_ev112(float dt);											// ESLOT 112 N2:0x461010 state 1 movement: jump, or fly (jetpack: gadget 3 or g_flag_545e54)
-	virtual OMedia3DVector n2_ev113(float x, float y, float z);				// ESLOT 113 0x43a5d0 position + (x,y,z) turned by (0, heading + f_978, roll), w = 1
-	virtual void n2_ev114(char *name);											// ESLOT 114 0x43aff0 play player animation <name> (rules: locks, FENCE/LADDER start a climb)
-	virtual void n2_ev115(void) {}												// ESLOT 115 0x472970 (empty) before RUN starts
-	virtual void n2_ev116(void) {}												// ESLOT 116 0x472970 (empty) an animation change / stop
-	virtual unsigned char n2_ev117(void);										// ESLOT 117 0x43a7f0 state 0 and the floor more than 70 below v224(0,0,70)
-	virtual void n2_ev118(void) {}												// ESLOT 118 0x472970 (empty) bounced on the floor (n2_ev107)
-	virtual void n2_ev119(OMedia3DVector plane) { (void)plane; }				// ESLOT 119 0x475cc0 (empty) touched a wall of material 120..129
-	virtual void n2_ev120(void) {}												// ESLOT 120 0x472970 (empty) touched a wall of material 110..119
-	virtual void n2_ev121(char *game, char *start, char *ret_game, char *ret_start, int picture);	// ESLOT 121 N2:0x4648a0 "PlayerLoadLevel"
-	virtual void n2_ev122(void);												// ESLOT 122 N2:0x460380 reset the camera offsets
-	virtual void n2_ev123(float k, OMedia3DVector off, OMedia3DVector look, float dt);	// ESLOT 123 N2:0x462de0 scripted camera: towards n2_ev113(off), looking at v224(look)
-	virtual void n2_ev124(float dt);											// ESLOT 124 N2:0x4629c0 camera shake (f_bf8 seconds, f_c00 strength)
-	virtual void n2_ev125(char *start);										// ESLOT 125 N2:0x464840 f_9c8 = start point
-	virtual void n2_ev126(char *game);											// ESLOT 126 N2:0x464870 f_c25 = game file to return to
+	// Negatron names still used by the not yet reconstructed menu (C2DInGameMenu_b / _c).
+	unsigned char ev103(void) { return KeyJump(); }
+	unsigned char ev104(void) { return KeyFire(); }
 
-	// ---- CGameObject-family overrides
+	// ---- element-family overrides
+	virtual void ev67(void);												// ESLOT 65 0x43a900 "AnimEnded": FENCE / LADDER / SPLAT / HIT done
+
+	// ---- CGameObject-family overrides (Negatron slot names; BG numbers in the comments)
 	virtual void InitObject(void);											// SLOT 7   0x437830 "StartPoint", ObjectID '3PLA', InitPhysics
 	virtual void ResetObject(void);											// SLOT 10  0x437890
-	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 220 0x43aa40 wall contact: start climbing a fence (material 60..69) / ladder (180)
-	virtual void Process(float dt);											// SLOT 240 N2:0x460510
-	virtual void v243(float dt);											// SLOT 243 N2:0x4618d0 control + camera (by f_a68), or the climb camera
-	virtual void RotateToDest(float dt);									// SLOT 246 0x43a420 rates 4.5 / 3.7 / 4.5
-	virtual void v258(void);												// SLOT 258 0x41afb0 (CLocalGameObject's)
-	virtual void v260(void);												// SLOT 260 0x43a750 + f_c20 = "C3DHERMAN"
-	virtual void v261(void);												// SLOT 261 N2:0x4637f0 stop (speed 0, velocity 0, n2_ev116)
-	virtual void v262(CGameObject *other, float dist);						// SLOT 262 0x43a790 C3DGODDARD stops us instead of pushing
-	virtual void v271(void);												// SLOT 271 N2:0x461b20 power-up over: f_968 = 600
+	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// BG SLOT 221 0x43aa40 wall contact: climb a fence (material 60..69) / ladder (180)
+	virtual void Process(float dt);											// BG SLOT 241 0x437940
+	virtual void v243(float dt);											// BG SLOT 243 0x438a60 control + camera (by f_7c4), or the climb camera
+	virtual void RotateToDest(float dt);									// BG SLOT 246 0x43a420 rates 4.5 / 3.7 / 4.5
+	virtual void v261(void);												// BG SLOT 260 0x43a750 stop (speed 0, velocity 0, StepSoundOff)
+	virtual void v262(CGameObject *other, float dist);						// BG SLOT 261 0x43a790 C3DGODDARD stops us instead of pushing
 
-	// ---- data members (object offsets; the gaps are never used)
-	float				f_930;			// N2 C3DPlayerObject 0x930  1.0 (TODO(BG): offsets)
-	int					f_934;			// N2 C3DPlayerObject 0x934  -1; != -1 while a cut scene has replaced our animation
-	char				f_938[40];		// N2 C3DPlayerObject 0x938  the animation to go back to after the cut scene
-	float				f_960;			// 0x960  acceleration per frame (30)
-	float				f_964;			// 0x964  braking per frame (50)
-	float				f_968;			// 0x968  top speed (600; 1000 with power-up 0 (g_power_timers[0]), 1200 flying)
-	float				f_96c;			// 0x96c  forward speed (v154 gets it every frame)
-	float				f_970;			// 0x970  35
-	float				f_974;			// 0x974  0
-	float				f_978;			// 0x978  turn rate, degrees / s (+ left)
-	float				f_97c;			// 0x97c  turn rate the movement used (side slip)
-	float				f_980;			// 0x980  heading at ResetObject
-	int					f_984;			// 0x984  1
-	unsigned char		f_988;			// 0x988  driving forward this frame
-	unsigned char		f_989;			// 0x989  braking this frame (n2_ev110)
-	unsigned char		f_98a;			// 0x98a  turning by keys (f_978 eases back to 0 after)
-	unsigned char		f_98b;			// 0x98b  0
-	int					f_9b4;			// 0x9b4  0
-	OMedia3DPoint		f_9b8;			// 0x9b8  camera position this frame (n2_ev109 cur)
-	char				f_9c8[80];		// 0x9c8  "StartPoint" ("none")
-	char				f_a18[80];		// 0xa18  start point to return to ("none")
-	short				f_a68;			// 0xa68  control state (see above)
-	OMedia3DPoint		f_a6c;			// 0xa6c  camera offset (0, 200, -300) (n2_ev122)
-	OMedia3DPoint		f_a7c;			// 0xa7c  camera look offset (0, 80, 0)
-	short				f_a8c;			// 0xa8c  jump: 1 in the air after a jump (5: C3DJimmy), 0 landed
-	float				f_a90;			// 0xa90  pitch when accelerating (n2_ev110: -2; -10 in state 2)
-	float				f_a94;			// 0xa94  pitch when braking (2; 10)
-	unsigned char		f_a98;			// 0xa98  0
-	unsigned char		f_a99;			// 0xa99  1; 0 once PlayerLoadLevel ran
-	int					f_a9c;			// 0xa9c  0
-	OMedia3DPoint		f_aa0;			// 0xaa0  (0, 0, 0)
-	OMedia3DVector		f_ab0;			// 0xab0
-	float				f_ac0;			// 0xac0  0
-	unsigned char		f_ac4;			// 0xac4  0
-	short				f_ac6;			// 0xac6  turn animation: -1 LEFT, 1 RIGHT, 0 none
-	int					f_ac8;			// 0xac8  0
-	float				f_acc;			// 0xacc  0
-	float				f_ad0;			// 0xad0  time since the last climb started (+= dt; v220 needs > 0.5)
-	OMedia3DPoint		f_ad4;			// 0xad4  where a climb ends (v224(0, 260, 70) fence, (0, 630, 75) ladder)
-	float				f_ae4;			// 0xae4  mouse x, summed
-	float				f_ae8;			// 0xae8  camera height / pitch adjust (10; Action + Go/Back or mouse y with gadget 6/10)
-	unsigned char		f_aec;			// 0xaec  going backwards this frame (n2_ev109)
-	unsigned char		f_aed;			// 0xaed  camera frozen (no FALL, no shake / scripted moves)
-	OMedia3DVector		f_af0;			// 0xaf0  (1.4, 1, 1.4) (n2_ev122); its w (0xafc) is the camera axis w
-	unsigned char		f_b00;			// 0xb00  Back does not reverse
-	float				f_b04;			// 0xb04  climb animation time (1.55 fence, 2 ladder)
-	float				f_b08;			// 0xb08  0; C3DJimmy n2_ev136: distance from Jimmy to his shadow
-	float				f_b0c;			// 0xb0c  side slip of n2_ev108 (-250 left, 250 right, 0)
-	float				f_b10;			// 0xb10  0 (jetpack start)
-	float				f_b14;			// 0xb14  LEFT turn animation time left
-	float				f_b18;			// 0xb18  RIGHT turn animation time left
-	float				f_b1c;			// 0xb1c  8
-	float				f_b20;			// 0xb20  climb camera time left (1.5 fence, 2.2 ladder)
-	char				f_b24[100];		// 0xb24  start point in the next game ("none")
-	unsigned char		f_b88;			// 0xb88  0
-	char				f_b89[80];		// 0xb89  game file of the next level ("level1b.gam")
-	unsigned char		f_bd9;			// 0xbd9  keep f_bdc (PlayerLoadLevel does not store the position)
-	OMedia3DPoint		f_bdc;			// 0xbdc  position when PlayerLoadLevel ran
-	unsigned char		f_bec;			// 0xbec  0
-	float				f_bf0;			// 0xbf0  Right held (s)
-	float				f_bf4;			// 0xbf4  Left held (s)
-	float				f_bf8;			// 0xbf8  camera shake time left
-	float				f_bfc;			// 0xbfc  time to the next shake step (0.1)
-	float				f_c00;			// 0xc00  camera shake strength (1)
-	float				f_c04;			// 0xc04  dazed: no jumps / runs, mouse x reversed, longer camera reach
-	float				f_c08;			// 0xc08  mouse turns slowed to a third (> 0)
-	unsigned char		f_c0c;			// 0xc0c  0
-	float				f_c10;			// 0xc10  climb camera rise speed (120; 150 fence, 350 ladder)
-	float				f_c14;			// 0xc14  mouse y / dt (n2_ev110 throttle)
-	int					f_c18;			// 0xc18  PlayerLoadLevel: 0 plain, 1 check promotion, 2 back from it
-	int					f_c1c;			// 0xc1c  camera mode 0..3 (2, 3: 100 higher; 0: reach limit; 1: wider axis)
-	CGameObject			*f_c20;			// 0xc20  the "C3DHERMAN" object (raises the camera within 900)
-	unsigned char		f_c24;			// 0xc24  on the floor (v133) this frame
-	char				f_c25[100];		// 0xc25  game file to return to ("level1b.gam")
-	OMedia3DPoint		f_c8c;			// 0xc8c  climb camera target (rises at f_c10)
-	unsigned char		f_c9c;			// 0xc9c  other control set (mouse turns half, no mouse go, gadget 6/10 Action stops)
-	int					f_ca0;			// 0xca0  0
-	float				f_ca4;			// 0xca4  > 0: no braking when nothing is pressed
-	unsigned char		f_ca8;			// 0xca8  first-person camera this frame (too close to a wall)
+	// ---- data members (object offsets)
+	float				f_6bc;			// 0x6bc  acceleration per frame (30)
+	float				f_6c0;			// 0x6c0  braking per frame (35)
+	float				f_6c4;			// 0x6c4  top speed (600)
+	float				f_6c8;			// 0x6c8  forward speed
+	float				f_6cc;			// 0x6cc  35
+	float				f_6d0;			// 0x6d0  0
+	float				f_6d4;			// 0x6d4  turn rate, degrees / s (+ left)
+	float				f_6d8;			// 0x6d8  turn rate the movement used (side slip)
+	float				f_6dc;			// 0x6dc  heading at ResetObject
+	int					f_6e0;			// 0x6e0  1
+	unsigned char		f_6e4;			// 0x6e4  going forward this frame
+	unsigned char		f_6e5;			// 0x6e5  braking this frame (ControlFly)
+	unsigned char		f_6e6;			// 0x6e6  turning by keys this frame
+	unsigned char		f_6e7;			// 0x6e7  0
+	float				f_710;			// 0x710  heading to turn to (turning round: + 180)
+	OMedia3DPoint		f_714;			// 0x714  camera position at the start of the frame
+	char				f_724[80];		// 0x724  "StartPoint" ("none")
+	char				f_774[80];		// 0x774  start point to return to ("none")
+	short				f_7c4;			// 0x7c4  control state (see above)
+	OMedia3DPoint		f_7c8;			// 0x7c8  camera offset (0, 200, -350) (ResetCamera)
+	OMedia3DPoint		f_7d8;			// 0x7d8  camera look offset (0, 80, 0)
+	short				f_7e8;			// 0x7e8  jump state (see above)
+	float				f_7ec;			// 0x7ec  ControlFly: pitch when accelerating (-40 MoveJump, -10 MoveBounce)
+	float				f_7f0;			// 0x7f0  ControlFly: pitch when braking (10)
+	unsigned char		f_7f4;			// 0x7f4  0
+	C3DJetpackFire		*f_7f8;			// 0x7f8  the jet pack on our back (+0x6bc owner, +0x6c0 burn time)
+	unsigned char		f_7fc;			// 0x7fc  1; 0 once PlayerLoadLevel ran
+	int					f_800;			// 0x800  0
+	OMedia3DPoint		f_804;			// 0x804  camera position wanted (kept while turning round)
+	OMedia3DVector		f_814;			// 0x814  0
+	int					f_824;			// 0x824  0
+	unsigned char		f_828;			// 0x828  turning round (Back held 1.5 s)
+	short				f_82a;			// 0x82a  turn animation: -1 LEFT, 1 RIGHT, 0 none
+	int					f_82c;			// 0x82c  0
+	float				f_830;			// 0x830  time Back has been held (nothing in Neutron.exe counts it up)
+	float				f_834;			// 0x834  time (Process adds dt; a climb needs > 3, a climb sets 0)
+	OMedia3DPoint		f_838;			// 0x838  the top of the fence / ladder being climbed
+	float				f_848;			// 0x848  mouse x, summed
+	float				f_84c;			// 0x84c  camera height adjust (10; gadget 6: Up / Down)
+	unsigned char		f_850;			// 0x850  Back pressed this frame
+	unsigned char		f_851;			// 0x851  camera frozen (slow follow)
+	OMedia3DVector		f_854;			// 0x854  camera follow factors (1.4, 1, 1.4)
+	unsigned char		f_864;			// 0x864  Back does not reverse
+	float				f_868;			// 0x868  climb time left (FENCE / LADDER: 5)
+	float				f_86c;			// 0x86c  height above the shadow (C3DJimmy); jet pack: < 500 climbs
+	float				f_870;			// 0x870  side slip of MoveWalk (-1000 left, 1000 right, 0)
+	float				f_874;			// 0x874  time the jump key has been held
+	float				f_878;			// 0x878  LEFT turn animation time left
+	float				f_87c;			// 0x87c  RIGHT turn animation time left
+	unsigned char		f_880;			// 0x880  0
+	float				f_884;			// 0x884  jet pack burn time (8)
+	float				f_888;			// 0x888  climb camera time left (4 fence, 6 ladder)
+	char				f_88c[100];		// 0x88c  game file of the next level ("level1b.gam")
+	char				f_8f0[100];		// 0x8f0  start point in the next level ("none")
+	unsigned char		f_954;			// 0x954  0
+	char				f_955[80];		// 0x955  game file to return to ("level1b.gam")
+	unsigned char		f_9a5;			// 0x9a5  keep f_9a8 (PlayerLoadLevel does not store the position)
+	OMedia3DPoint		f_9a8;			// 0x9a8  position when PlayerLoadLevel ran
+	float				f_9b8;			// 0x9b8  idle time
+	char				f_9bc[60];		// 0x9bc  idle animation playing ("" none, "SCRATCH", "PLAY", "BUTTONS")
+	unsigned char		f_9f8;			// 0x9f8  0
 };
 
 namespace neg {
-// Input tests (0 or the joystick, then the key list: 0x1f5 left mouse, 0x1f4 right mouse, else
-// a key of g_keys; a key also clears the mouse movement N2:0x56aebe/N2:0x56aec0).
+// Negatron's key-list input tests (0 or the joystick, then the key list: 0x1f5 left mouse, 0x1f4
+// right mouse, else a key of g_keys). Neutron.exe's player reads the keys directly (VK codes in
+// g_keys); these remain for the Negatron-derived classes that still call them.
 bool PlayerKeyAction(void);					// N2:0x465750 joystick button 0, g_key_action
 bool PlayerKeyTurnAround(void);				// N2:0x4657c0 joystick button 8, g_key_turnaround
 bool PlayerKeySpeed(void);					// N2:0x465830 joystick button 1, g_key_speed
@@ -204,9 +172,7 @@ bool PlayerKeyLeft(void);					// N2:0x4659f0 joystick x < -0.5, g_key_turn_left
 bool PlayerKeyRight(void);					// N2:0x465a60 joystick x > 0.5, g_key_turn_right
 bool PlayerKeyCutsceneBypass(void);			// N2:0x465ad0 joystick button 0, g_key_cutscene_bypass
 
-// C3DJimmy hooks (weak here, see above). `jimmy` is g_jimmy (or the object the caller found).
-void JimmyJetpackOff(CGameObject *jimmy);					// N2:0x443370 on C3DJimmy +0xccc: flames (+0x9f0 -> +0x928) 0, stop the sound (+0x9f4)
-void JimmyJetpackSound(CGameObject *jimmy, int a);		// N2:0x4433f0 on C3DJimmy +0xccc: loop "jetpack" unless playing (a unused)
-void JimmyJetpackFlame(CGameObject *jimmy, float size);	// C3DJimmy +0xccc -> +0x9f0 (if set) -> +0x928 = size
-void JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value);	// C3DJimmy ESLOT 138 N2:0x449df0 "C3DJimmy::ActivateMenuItem()"
+// Negatron C3DJimmy hooks still called by Negatron-derived classes (C3DJeep, C3DGoddard, the
+// menu): its ESLOT 138 "ActivateMenuItem". Neutron.exe's Jimmy has no such slot; weak TODO.
+void JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value);	// N2:0x449df0
 }

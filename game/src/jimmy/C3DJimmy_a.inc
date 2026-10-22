@@ -1,34 +1,27 @@
-	// ---- C3DJimmy part A: the slots below 0x448b40 (jimmy/C3DJimmy_a.cpp)
-
-	// ---- element-family slots
-	virtual void ev60(void);												// ESLOT 60  0x4369f0 (no animation of that name) ev58("IDLE", 1)
-	virtual void n2_ev132(void);												// ESLOT 132 0x446b40 jetpack (state 1) / glide (5) over: FALL
-	virtual void n2_ev133(float dt);											// ESLOT 133 0x4473f0 hurt / stunned flashes (f_4cb8, f_4ca4), the knock-back (f_4ca5)
-	virtual void n2_ev135(float dt);											// ESLOT 135 0x446bc0 rising into a ceiling: bounce down, "HitHead"
-	virtual void n2_ev136(float dt);											// ESLOT 136 0x446d40 the shadow under Jimmy; slopes: turn and slide (f_c04)
-	virtual void n2_ev145(float dt);											// ESLOT 145 0x4468f0 gadget 2 (the power bar f_4ccc / f_4cd0)
-	virtual void n2_ev146(float dt, OMedia3DVector pos);						// ESLOT 146 0x446100 the bubble (f_d44) at pos while its time lasts, fading
-	virtual void n2_ev147(float time);											// ESLOT 147 0x446010 show the bubble for `time` s (animation by the gadget)
-	virtual void n2_ev154(void);												// ESLOT 154 0x447c50 next sparkle of f_4d00 (0..19)
-	virtual void n2_ev155(void);												// ESLOT 155 0x447c70 next sparkle of f_4d50 (only 0)
-	virtual void n2_ev156(float t, float r, float g, float b);					// ESLOT 156 0x447950 f_4d58 += t; colour of all f_4d00 sparkles
-	virtual void n2_ev157(float t, float r, float g, float b, OMedia3DVector pos);	// ESLOT 157 0x4478d0 f_4d64 += t, f_4d6c = pos; colour of f_4d50
-	virtual void n2_ev163(void);												// ESLOT 163 0x447c90 aim the grappling hook (f_d20) by the camera pitch f_ae8
-	virtual void n2_ev164(float dt);											// ESLOT 164 0x4488e0 Goddard's target; the point cursor over the nearest pickup
-	virtual void n2_ev165(CGameObject *start);									// ESLOT 165 0x445d20 enter the level at a start point
-
-	// ---- not virtual
-	void Slide(float dt);													// 0x4479b0 sliding down slopes (f_c04 / f_c08), "slide"
+	// ---- C3DJimmy part A (jimmy/C3DJimmy_a.cpp and C3DJimmy.cpp): the CGameObject-family
+	// overrides and C3DPlayer's slots. CGameObject-family slots keep our (Negatron-numbered)
+	// names; the comment gives Neutron.exe's slot.
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   0x444780 the Granny model and animations
-	virtual void UnInitObject(void);										// SLOT 8   0x444750 + close SoundEffects.omt
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x444fc0 bumped into: pendulum, balloon, missile, bots, plants, buttons
-	virtual void Process(float dt);											// SLOT 240 0x446260
-	virtual void v243(float dt);											// SLOT 243 0x447e40 control: gadgets, jetpack, landing, sliding
-	virtual void v242(float t);												// SLOT 242 0x445540 stop the shrink ray; new game: forget object states / pickups
-	virtual void v258(void);												// SLOT 258 0x445510 + become the camera
-	virtual void v260(void);												// SLOT 260 0x445740 "PostLoad": reset, go to the start point
-	virtual void v266(void);												// SLOT 266 0x4455a0 task states changed: n2_ev152 by level; "water stream"
-	virtual void v277(void);												// SLOT 277 0x447660 pause: stop the music and the loops
-	virtual void v278(void);												// SLOT 278 0x447780 resume: music and loops again
+	virtual void InitObject(void);											// SLOT 7   0x422ac0 the .ase animations, the textures
+	virtual void UnInitObject(void);										// SLOT 8   0x422a90 + close SoundEffects.omt
+	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x422d30 bumped into: rocket, sub, jeep, tank, enemies, buttons
+	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// BG SLOT 221 0x42a660 swinging: hitting a wall lets go
+	virtual void Process(float dt);											// BG SLOT 241 0x424600
+	virtual void v242(float t);												// BG SLOT 242 0x4235b0 stop the shrink ray; new game: forget object states / pickups
+	virtual void v243(float dt);											// BG SLOT 243 0x426030 control: the shot, the jet pack, landing, the cursors
+	virtual void v258(void);												// BG SLOT 257 0x423580 + become the camera
+	virtual void v260(void);												// BG SLOT 259 0x423610 "PostLoad": Goddard, the jeep, gadgets by level, the start point
+	virtual void v261(void);												// BG SLOT 260 0x42afc0 stop + StepSoundOff + "STOP"
+	virtual void v271(void);												// BG SLOT 270 0x42ae00 gadget off, the cursor off, menu blocked
+	virtual void v277(void);												// BG SLOT 272 0x425c40 pause: the music and the loops off
+	virtual void v278(void);												// BG SLOT 273 0x425db0 resume: the music and the loops again
+
+	// ---- C3DPlayer's slots
+	virtual void JetpackOn(int a);											// ESLOT 78 0x429970 the gadget bar, the jet pack sound
+	virtual void JetpackOff(void);											// ESLOT 80 0x429910 bar and sound off
+	virtual void StepSoundOn(void);											// ESLOT 81 0x4299d0 the level's footstep loop
+	virtual void StepSoundOff(void);										// ESLOT 82 0x429a00
+	virtual void Bounced(void) {}											// ESLOT 85 0x42a720 (empty)
+	virtual void TouchedShock(OMedia3DVector plane);						// ESLOT 88 0x42a7e0 SPLAT, pushed back off the wall
+	virtual void TouchedHurt(void);											// ESLOT 89 0x42a8d0 hit: flashing, energy -5, score -5

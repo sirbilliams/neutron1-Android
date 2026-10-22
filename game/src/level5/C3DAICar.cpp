@@ -59,7 +59,7 @@ void C3DAICar::AddTouching(CGameObject *other)				// 0x40aad0
 		if (other->NameContains((char *)"C3DJIMMY"))
 		{
 			C3DPlayer *j = dynamic_cast<C3DPlayer *>(other);	// (other - 0xc0)
-			if (j) j->f_a8c = 0;							// port: checked (not in jump any more)
+			if (j) j->f_7e8 = 0;							// port: checked (not in jump any more)
 		}
 	}
 	PlayGameSound(-1, std::string("horn"), false);			// 0x40acc0, 0x458b40

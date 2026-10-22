@@ -1,1313 +1,646 @@
-/*  C3DJimmy, part A: the slots below N2:0x448b40 (see C3DJimmy.h). */
-#include "../C3DJimmy.h"
-#include "../TestHooks.h"
-#include "../C3DPermanentSprite.h"
-#include "../C3DShadow.h"
-#include "../C3DPointCursor.h"
-// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
+/*  C3DJimmy part A: the CGameObject-family overrides (touching, Process, the control slot, pause /
+    resume) and C3DPlayer's slots. See C3DJimmy.h.                                               */
+#include "JimmyBG.h"
+#include "../C3DAI.h"
+#include "../yokian/C3DYokian.h"
 #include "../pickups/C3DPickupItem.h"
-#include "../C3DRocketShip.h"
-#include "../C2DInGameMenu.h"
-#include "../CJimmyGame.h"
-#include "../CTaskList.h"
-#include "../objects/C3DStartPoint.h"
-#include "../Game.h"
-#include "../Bridge.h"
-#include "../Todo.h"
-#include "../Sound.h"
-#include "../SaveGame.h"
-#include "../DatabaseCache.h"
-#include "../InterfaceElement.h"
-#include "../gen/globals.h"
-#include "../Physics.h"
-#include "../CanvasWrapper.h"
-#include "../levels/CLevel04Games.h"
-// TODO(BG): #include "../lab/C3DBot.h" (Negatron-only class, deleted)
-#include "OMediaViewPort.h"
-#include "OMedia3DShape.h"
-#include "OMedia3DPolygon.h"
-#include "OMedia3DMaterial.h"
-#include <math.h>
-#include <string.h>
-#include <strings.h>
 
 using namespace neg;
+using namespace jimmybg;
 
-// --------------------------------------------------------------------------- helpers
-
-// 0x474070: the first object of the global list whose ObjectTag matches (_stricmp).
-static CGameObject *FindObjectByTag(const char *tag)
+// 0x403c10: the screen fades (kind <k>, over <t> s, at least 0.1).
+static void FadeOut(int k, float t)
 {
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
-	return NULL;
+	g_4f8190 = k;
+	if (t < 0.1f) t = 0.1f;
+	g_4ec490 = t;
+	g_4f818c = t;
+	g_4ec494 = 0;
 }
 
-// 0x403910 (menu helper, copied as in SaveGame.cpp): item `item` of menu page `page` disabled.
-static void ClearItemState(short page, short item)
+// 0x4073b0(0): the blinking HUD sprite (0x4f8120) away.
+static void HudBlink(bool on)
 {
-	C2DInGameMenu::MenuPage *p;
-	if (item >= 0 && item < C2DInGameMenu::MENU_ITEMS && (p = C2DInGameMenu::Page(page)) != NULL)
-		p->items[item].type = 0;
+	// TODO(BG): the sprite at 0x4f8120 (hidden, its canvas released, deleted; on: made from 0x4f8124)
+	if (on || g_4f8120) NEG_TODO(0x4073b0, "HUD blink sprite on / off");
 }
 
-static CJimmyGame *JimmyGame(void)
+// --------------------------------------------------------------------------- touching
+
+// An enemy that caught Jimmy (Yokians, Humphrey, Darwin, the plants): Jimmy is shocked (energy
+// -10, score -10, 5 s), plays HIT; the enemy flees (AI state 5) <flee> units for 5 s.
+static void CaughtBy(C3DJimmy *j, C3DAI *o, float flee)
 {
-	return g_gametype ? dynamic_cast<CJimmyGame *>(g_gametype) : NULL;
-}
-
-// The running level's ID (g_gametype +0x490: its ObjectID, e.g. 'L1_A').
-static int LevelID(void)
-{
-	return static_cast<CGameObject *>(g_gametype)->m_object_id;
-}
-
-// N2:0x48fd30 (thiscall, `this` unused): count *t down by dt; true while it is still running.
-static bool CountDown(float *t, float dt)
-{
-	if (*t <= 0) return false;
-	*t -= dt;
-	if (*t > 0) return true;
-	*t = 0;
-	return false;
-}
-
-static void StopSound(int *channel)						// 0x458a00(channel, 0); channel = -1
-{
-	if (*channel != -1)
-	{
-		StopGameSound(*channel, false);
-		*channel = -1;
-	}
-}
-
-static OMedia3DVector Vec(const float p[4]) { return OMedia3DVector(p[0], p[1], p[2], p[3]); }
-
-static const float kAngleToDeg = 0.02197265625f;			// 0x48e5b4: 360 / 16384
-
-// The game's random number generator (as C3DPlayer's): 0..1000.
-static int Random1001(void)
-{
-	unsigned int *seed = g_random_seed;
-	*seed = *seed * 0x19660d + 0x7fff;
-	return ((int)((*seed >> 16) * 1001) >> 16) & 0xffff;
-}
-
-// The end (hit point) of the last ray test (0x5cfc60).
-static OMedia3DVector RayEnd(void)
-{
-	return OMedia3DVector(g_phys_ray.end.x, g_phys_ray.end.y, g_phys_ray.end.z, g_phys_ray.end.w);
-}
-
-// The material of polygon 0 of an element's shape (2002: shape +0x88 -> polygon +4).
-static OMedia3DMaterial *FirstMaterial(OMedia3DShapeElement *e)
-{
-	OMedia3DShape *sh = e->get_shape();
-	omt_PolygonList *polys = sh ? sh->get_polygons() : NULL;
-	if (!polys || polys->empty()) return NULL;				// port: the original takes polygon 0 unchecked
-	return (*polys->begin()).get_material();
-}
-
-static OMedia3DVector Position(CGameObject *o)			// vtable +0x30c
-{
-	float p[4];
-	o->v195(p);
-	return Vec(p);
-}
-
-static OMedia3DVector Velocity(CGameObject *o)			// vtable +0x2b8
-{
-	float v[4];
-	o->v174(v);
-	return Vec(v);
-}
-
-// N2:0x404f20 (menu helper, copied as in SaveGame.cpp): the type of item `item` of page `page`.
-static short GetItemState(short page, short item)
-{
-	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
-	if (p && item >= 0 && item < C2DInGameMenu::MENU_ITEMS) return p->items[item].type;
-	return 0;
-}
-
-// 0x42a920: health (g_health, 0..100) += d; under 19 "low neutron energy" once (g_4f83dc)
-// until it is over 20 again.
-static void AddHealth(float d)
-{
-	g_health = g_health + d;
-	if (g_health > 100.0f)
-	{
-		g_health = 100.0f;
-		g_4f83dc = 0;
-		return;
-	}
-	if (g_health < 0)
-	{
-		g_health = 0;
-		return;
-	}
-	if (g_health < 19.0f && g_health != 0)
-	{
-		if (!g_4f83dc)
-		{
-			PlayGameSound(-1, std::string("low neutron energy"), false);	// 0x458b40
-			g_4f83dc = 1;
-		}
-		return;
-	}
-	if (g_health > 20.0f) g_4f83dc = 0;
-}
-
-// 0x4037f0 (a menu method, `this` unused): the gadget power bar sprite g_4f8028 is 20 x
-// (1.04 * v) (in 640 x 480 units; v 0..100, negative counts as 0).
-static void SetPowerBar(float v)
-{
-	if (v < 0) v = 0;
-	if (g_4f8028)
-		g_4f8028->set_size((float)((double)(short)g_screen_w * (double)0.0015625f * 20.0),
-						   (float)((double)(short)g_screen_h * (double)0.0020833334f * v * 1.04));
-}
-
-// 0x458e40 (CLocalGameObject family): the nearest object with ObjectID id1 or id2 that is
-// active (v123) and f_140, by quick_magnitude of (o - it).
-static CGameObject *FindNearest(CGameObject *o, int id1, int id2)
-{
-	CGameObject *best = NULL;
-	float best_d = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-	{
-		CGameObject *it = *i;
-		if (!it || (it->m_object_id != id1 && it->m_object_id != id2)) continue;
-		if (!it->v123() || !it->f_140) continue;
-		OMedia3DVector a = Position(o), b = Position(it);
-		OMedia3DVector d(a.x - b.x, a.y - b.y, a.z - b.z, 0);
-		const float m = d.quick_magnitude();
-		if (!best || m < best_d)
-		{
-			best_d = m;
-			best = it;
-		}
-	}
-	return best;
-}
-
-// Members of helper classes that are not reconstructed yet (their objects are never created
-// until they are; see C3DJimmy.h).
-static void ParticleBurst(C3DObject *p, OMedia3DVector pos)	// +0x610 = 1, element slot 55 (+0xdc)(pos)
-{
-	(void)p; (void)pos;										// TODO(BG): N2 C3DMagicParticle (Negatron only)
-}
-// N2:0x4489ac: the pickup's "ShowArrow" - C3DGrannyObj +0xdb4, anything else read as a
-// C3DPickupItem (+0x914). port: other classes have none (the original reads +0x84c of them).
-static bool CursorWanted(CGameObject *pickup)
-{
-	if (pickup->NameContains((char *)"C3DGRANNY"))			// +0x18
-	{
-		return false;										// TODO(BG): N2 C3DGrannyObj (Negatron only)
-	}
-	C3DPickupItem *p = dynamic_cast<C3DPickupItem *>(pickup);
-	return p && p->m_show_arrow != 0;
-}
-static C3DObject *GoddardPointer(C3DGoddard *goddard)		// C3DGoddard +0x1b84 (its CGameObject part)
-{
-	return goddard->f_1b84 ? dynamic_cast<C3DObject *>(goddard->f_1b84) : NULL;
-}
-
-// --------------------------------------------------------------------------- element family
-
-void C3DJimmy::ev60(void)									// N2:0x4369f0
-{
-	ev58((char *)"IDLE", 1);
-}
-
-void C3DJimmy::n2_ev132(void)									// N2:0x446b40
-{
-	if (f_a68 == 1)
-	{
-		f_a8c = 0;
-		ev58((char *)"FALL", 1);
-		JimmyJetpackOff(static_cast<CGameObject *>(this));	// N2:0x443370 on f_ccc
-		return;
-	}
-	if (f_a68 == 5)
-	{
-		f_a8c = 0;
-		ev58((char *)"FALL", 1);
-		f_968 = 600.0f;
-		f_96c = f_96c * 0.5f;
-	}
-}
-
-void C3DJimmy::n2_ev146(float dt, OMedia3DVector pos)			// N2:0x446100
-{
-	if (!f_d44) return;
-	if (CountDown(&f_4da4, dt))								// N2:0x48fd30
-	{
-		f_d44->v136(0);										// +0x220
-		f_d44->v196(pos.x, pos.y, pos.z, pos.w);			// +0x310
-		float r[4];
-		v201(r);											// +0x324
-		f_d44->v202(r[0], r[1], r[2], r[3]);				// +0x328
-		if (f_4da8 > 0)
-		{
-			f_d44->ev71(f_4da8 * f_4da4 / f_4da0);			// element +0x11c
-			return;
-		}
-	}
-	f_d44->HideAgain();										// element +0xdc
-}
-
-void C3DJimmy::n2_ev147(float time)							// N2:0x446010
-{
-	// (the original calls through a NULL f_d44 when there is no bubble)
-	if (f_d44)
-	{
-		if (g_cur_gadget == 1 || g_cur_gadget == 9) f_d44->ev58((char *)"ANIM2", 1);
-		else if (g_cur_gadget == 5) f_d44->ev58((char *)"ANIM1", 1);
-		else f_d44->ev58((char *)"ANIMATE", 1);
-	}
-	f_4da8 = 0.35f;
-	f_4da0 = time;
-	f_4da4 = time;
-	if (f_d44) f_d44->ShowAgain();							// element +0xd8
-}
-
-void C3DJimmy::n2_ev154(void)									// N2:0x447c50
-{
-	if (++f_4d54 > 19) f_4d54 = 0;
-}
-
-void C3DJimmy::n2_ev155(void)									// N2:0x447c70
-{
-	if (++f_4d60 > 0) f_4d60 = 0;
-}
-
-// The colour of a C3DMagicParticle (+0x600..+0x608).
-static void SetParticleColour(C3DObject *p, float r, float g, float b)
-{
-	(void)p; (void)r; (void)g; (void)b;					// TODO(BG): N2 C3DMagicParticle (Negatron only)
-}
-
-void C3DJimmy::n2_ev156(float t, float r, float g, float b)	// N2:0x447950
-{
-	f_4d58 = t + f_4d58;
-	for (int i = 0; i < 20; i++)
-		if (f_4d00[i])
-		{
-			SetParticleColour(f_4d00[i], r, g, b);
-			f_4d5c = 0;
-		}
-}
-
-void C3DJimmy::n2_ev157(float t, float r, float g, float b, OMedia3DVector pos)	// N2:0x4478d0
-{
-	f_4d6c.x = pos.x;
-	f_4d6c.y = pos.y;
-	f_4d64 = t + f_4d64;
-	f_4d6c.z = pos.z;
-	f_4d6c.w = pos.w;
-	if (f_4d50[0])
-	{
-		SetParticleColour(f_4d50[0], r, g, b);
-		f_4d68 = 0;
-	}
-}
-
-void C3DJimmy::n2_ev165(CGameObject *start)					// N2:0x445d20
-{
-	f_4d7c = 0;
-	InitPhysics();											// +0x2c
-	float p[4], r[4];
-	start->v88(p);											// +0x160: its position
-	f_4cbc.x = p[0]; f_4cbc.y = p[1]; f_4cbc.z = p[2]; f_4cbc.w = p[3];
-	start->v88(p);
-	v196(p[0], p[1], p[2], p[3]);							// +0x310
-	start->v88(p);
-	v90(p[0], p[1], p[2]);									// +0x168
-	start->v91(r);											// +0x16c: its rotation
-	v92(r[0], r[1], r[2]);									// +0x170
-	if (f_d5c)
-	{
-		start->v88(p);
-		f_d5c->v89(p[0], p[1], p[2], *(unsigned int *)&p[3]);	// Goddard there too (+0x164)
-	}
-	start->v88(p);
-	place(p[0], p[1], p[2]);								// element +0x44
-	if (f_bd9)
-	{
-		// coming back to where PlayerLoadLevel left this level
-		f_bd9 = 0;
-		v90(f_bdc.x, f_bdc.y, f_bdc.z);
-		place(f_bdc.x, f_bdc.y, f_bdc.z);
-		f_d5c->v89(f_bdc.x, f_bdc.y, f_bdc.z, *(unsigned int *)&f_bdc.w);
-	}
-	// The view and the music of the start point (C3DStartPoint +0x600, +0x620, +0x684).
-	C3DStartPoint *sp = dynamic_cast<C3DStartPoint *>(start);
-	if (sp)
-	{
-		g_viewport->place(sp->m_viewport_pos[0], sp->m_viewport_pos[1], sp->m_viewport_pos[2]);	// +0x44
-		strcpy(f_4c28, sp->m_music_db);
-		f_4c18 = sp->m_music_index;
-	}
-	else
-	{
-		// port: v260 falls back to the "PHONEBOOTH" object, which is no start point; the original
-		// reads the same offsets of it.
-		NEG_TODO(/*N2*/0x445f77, "C3DJimmy::n2_ev165 on an object that is not a C3DStartPoint");
-	}
-}
-
-// --------------------------------------------------------------------------- CGameObject family
-
-void C3DJimmy::InitObject(void)								// 0x422ac0
-{
-	Log("C3DJimmy::InitObject()");
-	C3DPlayer::InitObject();								// 0x437830
-	InitAnim();												// element +0x108
-	// Boy Genius's Jimmy is an OMT morph model (.ase animations; Negatron's was Granny)
-	static const char *const anims[][2] = {
-		{ "HISHOOT", "jimshoot.ase" }, { "HIDRIVE", "jimdrive.ase" }, { "HIFLY", "jimfly.ase" },
-		{ "HIRUN", "jimrun.ase" }, { "HILEFT", "jimleft.ase" }, { "HIRIGHT", "jimright.ase" },
-		{ "HITALK", "jimtalk.ase" }, { "HIFALL", "jimfall.ase" }, { "HIFENCE", "jimfence.ase" },
-		{ "HISPLAT", "jimsplat.ase" }, { "HIHIT", "jimhit.ase" }, { "HISWING", "jimswing.ase" },
-		{ "HILADDER", "jimladder.ase" }, { "HIJUMP", "jimjump.ase" }, { "HISCRATCH", "jimscratch.ase" },
-		{ "HIBUTTONS", "jimButtons.ase" }, { "HIPLAY", "jimheadshrink.ase" }, { "HIBACK", "jimbackpedal.ase" },
-		{ "HISCOOT", "jimscooter.ase" }, { "HISCOOTSTOP", "Jimscooterstop.ase" }, { "HISTOP", "jimstop.ase" },
-	};
-	for (unsigned i = 0; i < sizeof(anims) / sizeof(anims[0]); i++)
-		CreateAnim((char *)anims[i][0], (char *)anims[i][1]);	// element +0xd8
-	CreateTexture((char *)"jimycarl.png", 0);				// element +0xf0
-	CreateTexture((char *)"jimyshock.png", 1);
-	ApplyTexture(f_590, 0);									// element +0xf4
-	set_shape(f_590);										// element +0xac
-	set_morph_flags(ommorf_InterpolateVertices | ommorf_InterpolateVNormals);	// element +0xb8 = 3
-	f_594 = 0;
-	ev58((char *)"RUN", 1);									// element +0xe0 (0x4eca64)
-	v197(0, 600.0f, 100.0f);								// slot 198 (+0x318)
-	place(0, 600.0f, 100.0f);								// element +0x44..+0x4c, written directly
-	// (debug log)
-}
-
-void C3DJimmy::UnInitObject(void)							// 0x422a90
-{
-	C3DAnimated::UnInitObject();							// N2:0x41ab10
-	if (g_active_sound_db)
-	{
-		CloseDatabase("SoundEffects.omt");					// 0x46aef0
-		g_active_sound_db = NULL;
-		g_sfx_db_loaded = false;
-	}
-}
-
-void C3DJimmy::v242(float t)								// 0x4235b0
-{
-	(void)t;
-	if (f_4c10 != -1)
-	{
-		StopGameSound(f_4c10, false);						// 0x458a00
-		f_4c10 = -1;
-		StopAllChannels();									// 0x47d850
-	}
-	if (g_50988a)
-	{
-		memset(g_object_states, 0, 0x1068 * sizeof(int));
-		for (int i = 0; i < 50; i++) ClearItemState(2, (short)i);	// 0x403910
-	}
-}
-
-void C3DJimmy::v258(void)									// 0x423580
-{
-	C3DPlayer::v258();										// 0x41afb0
-	g_gametype->SetCamera(static_cast<CGameObject *>(this));	// +0x124
-}
-
-void C3DJimmy::v260(void)									// N2:0x445740
-{
-	// (debug log "Calling PostLoad for C3DJimmy()")
-	f_d30 = NULL;											// (cleared before it is looked at below)
-	f_d6d = 0;
-	f_4c04 = 0;
-	f_4c94 = 0;
-	f_4c98 = 0;
-	f_4cfd = 0;
-	g_sfx_db_loaded = false;
-	g_active_sound_db = GetDatabase("SoundEffects.omt");	// 0x46a910
-	f_4ef0 = NULL;
-	// Neutron.exe's v260 (0x423610) makes Goddard here, once (Jimmy +0xa1c), and on later
-	// reloads tells him (his element +0x174). port: only the creation is ported so far (TODO(BG):
-	// port 0x423610 as a whole).
-	if (!f_d5c) f_d5c = new C3DGoddard;						// 0x41c810
-	v67(60.0f);												// +0x10c
-	v64(1.265f);											// +0x100
-	f_bec = 0;
-	g_sound_falloff = 0.02f;
-	g_N2_54a498 = 0;
-	f_4ab = 0;
-	f_4cb8 = 0;
-	f_4ca5 = 0;
-	f_4ca4 = 0;
-	PauseAnim(0);												// element +0x13c: animation not paused
-	g_music_volume = g_N2_6f7518;
-	f_4ef0 = NULL;
-	if (f_d5c) f_d5c->PauseAnim(0);
-	// drop the props on Jimmy's bones
-	C3DObject *props[5] = { f_d28, f_d2c, f_d30, f_d38, f_d34 };
-	for (int i = 0; i < 5; i++)
-		if (props[i])
-		{
-			props[i]->HideAgain();							// element +0xdc
-			n2_ev88((char *)"none", static_cast<CGameObject *>(props[i]));	// element +0x160
-		}
-	f_d20->HideAgain();
-	if (f_d44)
-	{
-		f_d44->HideAgain();
-		f_d44->v52(0);										// +0xd0
-		f_d44->v46(0);										// +0xb8
-	}
-	if (g_active_sound_db) g_sfx_db_loaded = true;
-	StopSound(&f_4c10);
-	StopSound(&f_4c24);
-	f_a8c = 0;
-	C3DPlayer::v260();										// 0x43a750
-	ev51();													// element +0xcc: texture filtering on
-	if (LevelID() == 'LV5A') g_sound_falloff = 0.09f;
-	if (LevelID() == 'LV3D') g_sound_falloff = 0.09f;
-	if (LevelID() == 'LV3A') SetTaskState("SCENE", 200);	// 0x45f990
-	if (strcasecmp(f_a18, "none") != 0) n2_ev125(f_a18);		// element +0x1f4
-
-	// the start point named by "StartPoint" (the last one of that tag)
-	CGameObject *start = NULL;
-	bool found = false;
-	if (strcasecmp(f_9c8, g_empty_string) != 0)
-	{
-		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-		{
-			CGameObject *o = *i;
-			if (o && o->NameContains((char *)"C3DSTARTPOINT") && strcasecmp(f_9c8, o->m_tag) == 0)
-			{
-				found = true;
-				start = o;
-			}
-		}
-	}
-	if (found) n2_ev165(start);								// element +0x294
-	else
-	{
-		ErrorLog("ERROR: Startpoint not found, SP=%s", f_9c8);
-		CGameObject *booth = FindObjectByTag("PHONEBOOTH");	// 0x474070
-		if (booth) n2_ev165(booth);
-		else ErrorLog("ERROR: Startpoint not found and PHONEBOOTH not found");
-	}
-
-	OMedia3DVector cam = v224(0, 200.0f, -300.0f);			// +0x380
-	g_viewport->place(cam.x, cam.y, cam.z);					// +0x44
-	if (f_d5c) f_d5c->v92(0, 0, 0);							// +0x170
-	if (f_d4c)
-	{
-		f_d4c->HideAgain();
-		f_d4c->n2_ev91(1);										// element +0x16c
-	}
-	n2_ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228: nothing in hand
-	g_N2_537634 = -1.0f;
-	g_4eefd0 = -1.0f;
-	if (LevelID() == 'LV5C') n2_ev152(1);						// element +0x260
-	else if (LevelID() == 'LV5F') n2_ev152(0);
-	g_gametype->SetCamera(static_cast<CGameObject *>(this));	// BG 0x424472 (+0x118): Jimmy has the camera before the start points' post-load
-	v261();													// +0x414
-	if (f_d5c)
-	{
-		OMedia3DVector p = v224(0, 0, -150.0f);
-		f_d5c->v89(p.x, p.y, p.z, *(unsigned int *)&p.w);	// Goddard behind Jimmy (+0x164)
-	}
-	if (f_cc8 && static_cast<C3DRocketShip *>(f_cc8)->f_9f4) f_cc8->ShowAgain();	// N2:0x445ce5: our rocket with a rider (element +0xd8)
-	if (g_menu) g_menu->ShowHudPicture(-1, false, 0, 0);	// +0x4f4
-}
-
-void C3DJimmy::v266(void)									// N2:0x4455a0
-{
-	f_4d94 = 0;
-	switch (LevelID())
-	{
-		case 'LV5F': n2_ev152(0); f_4d94 = 0; break;			// element +0x260
-		case 'LV4B': break;
-		case 'LV5C': n2_ev152(1); f_4d94 = 15; break;
-		case 'VR01': n2_ev152(2); break;
-		default: n2_ev152(0); break;
-	}
-	if (LevelID() >= 'L1_A' && LevelID() <= 'L1_C') LoadSound(std::string("water stream"));	// N2:0x4b82f0
-}
-
-void C3DJimmy::v277(void)									// 0x425c40
-{
-	C3DAnimated::v277();									// 0x40e770
-	if (CJimmyGame *g = JimmyGame()) g->StopLevelMusicKeepName();	// +0x1a0
-	if (f_4c0c != -1) StopGameSound(f_4c0c, false);			// (the channels are kept for v278)
-	g_elt_545a70.Hide();									// N2:0x40b280(0)
-	if (f_4c24 != -1) StopGameSound(f_4c24, false);
-	if (f_4c08 != -1) StopGameSound(f_4c08, false);
-	if (f_4c10 != -1)
-	{
-		StopGameSound(f_4c10, false);
-		f_4c10 = -1;
-		if (f_cbc) f_cbc->HideAgain();						// +0xdc
-	}
-	if (f_4c1c != -1) StopGameSound(f_4c1c, false);
-	if (f_4c20 != -1) StopGameSound(f_4c20, false);
-	if (f_4c14 != -1) StopGameSound(f_4c14, false);
-	if (C3DRocketShip *rs = static_cast<C3DRocketShip *>(f_cc8))	// N2:0x447736: its sounds (the channels are kept)
-	{
-		if (rs->f_123c != -1) StopGameSound(rs->f_123c, false);
-		if (rs->f_1240 != -1) StopGameSound(rs->f_1240, false);
-	}
-}
-
-void C3DJimmy::v278(void)									// N2:0x447780
-{
-	C3DAnimated::v278();									// 0x40e790
-	if (CJimmyGame *g = JimmyGame()) g->PlayLevelMusic(f_4c28, f_4c18);	// +0x198
-	if (f_4c0c != -1) f_4c0c = PlayGameSound(-1, std::string("water stream"), true);	// 0x458b40
-	if (f_4c24 != -1) f_4c24 = PlayGameSound(-1, std::string("not available"), true);
-	if (f_4c08 != -1) f_4c08 = PlayGameSound(-1, std::string("ropeswing"), false);
-	if (f_4c1c != -1) f_4c1c = PlayGameSound(-1, std::string("gravitybubble"), true);
-	if (f_4c20 != -1)
-	{
-		CJimmyGame *g = JimmyGame();
-		if (g) n2_ev153(g->m_surface_sound_next);				// element +0x264 (g_gametype +0x560)
-	}
-	if (f_cc8) NEG_TODO(/*N2*/0x447898, "C3DRocketShip +0x123c: restart its engine sound (element +0x1b0)(2)");
-}
-
-// --------------------------------------------------------------------------- the per-frame slots
-
-void C3DJimmy::n2_ev133(float dt)								// N2:0x4473f0
-{
-	if (f_4ca5)
-	{
-		// knocked back: no control for a second
-		f_4c9c = dt + f_4c9c;
-		v261();												// +0x414
-		if (f_4c9c > 1.0f)
-		{
-			f_4c9c = 0;
-			f_4ce8 = 0.5f;
-			f_4ca5 = 0;
-			if (g_camera == static_cast<CGameObject *>(this))
-			{
-				if (v133()) ev58((char *)"STOP", 1);
-				else ev58((char *)"FALL", 1);
-			}
-		}
-		return;
-	}
-	if (f_4ce8 > 0) f_4ce8 = f_4ce8 - dt;
-	if (f_4cb8)
-	{
-		// flashing (diffuse of the first polygon's material: alpha 1, r = g = k, b 1)
-		f_4c9c = dt + f_4c9c;
-		double k;
-		if (f_4c9c > f_4cdc)
-		{
-			k = 1.0;
-			f_4cb8 = 0;
-		}
-		else k = (sin((double)f_4c9c * 20.0) + 1.0) * 0.5;
-		if (f_4da0 <= 0 && f_4da4 <= 0)
-		{
-			OMedia3DMaterial *m = FirstMaterial(this);		// element +0x8c -> polygon 0
-			if (m) m->set_diffuse(OMediaFARGBColor(1.0f, (float)k, (float)k, 1.0f));
-		}
-	}
-	if (f_4ca4)
-	{
-		// the same with the morph material f_5d4[0]: alpha k, r 1, g k, b 1
-		f_4c9c = dt + f_4c9c;
-		double k;
-		if (f_4c9c > 4.0f)
-		{
-			k = 1.0;
-			f_4ca4 = 0;
-		}
-		else k = (sin((double)f_4c9c * 20.0) + 1.0) * 0.5;
-		if (f_4da0 <= 0 && f_4da4 <= 0 && f_5d4[0])
-			f_5d4[0]->set_diffuse(OMediaFARGBColor((float)k, 1.0f, (float)k, 1.0f));
-	}
-}
-
-void C3DJimmy::n2_ev135(float dt)								// N2:0x446bc0
-{
-	(void)dt;
-	OMedia3DVector p = Position(this);
-	OMedia3DVector up = p;
-	up.y = p.y + 150.0f;
-	if (!PhysicsLineBlocked(p, up, false)) return;			// 0x47c210
-	if (Velocity(this).y <= 0) return;
-	float vy = (float)(-(double)Velocity(this).y * 0.6);
-	if (vy > -85.0f) vy = -85.0f;
-	v176(Velocity(this).x, vy, Velocity(this).z);			// +0x2c0
-	if (f_4ce4 > 5.0f) PlayGameSound(-1, std::string("HitHead"), false);
-	f_4ce4 = 0;
-	n2_ev132();												// +0x210
-}
-
-void C3DJimmy::n2_ev136(float dt)								// N2:0x446d40
-{
-	if (f_4db8) return;
-	OMedia3DVector p = Position(this);
-	OMedia3DVector a(p.x, p.y + 150.0f, p.z, p.w);
-	OMedia3DVector b(p.x, a.y - 2500.0f, p.z, p.w);
-	if (!PhysicsClosestHit(a, b, false))					// 0x47c6e0
-	{
-		f_cc4->HideAgain();									// +0xd8
-		f_c04 = 0;
-		return;
-	}
-	const OMedia3DVector hit = RayEnd();
-	if (!f_cc4) return;										// (the original checks here)
-	if (!g_windowed) f_cc4->ShowAgain();					// +0xd4 (0x509a13)
-	// the shadow sits on the floor, half its height (+0x602) - 2 up
-	const float half = (float)(f_cc4->f_602 / 2 - 2);
-	p = Position(this);
-	f_cc4->v197(p.x, hit.y + half, p.z);					// +0x314
-	{
-		OMedia3DVector s = Position(f_cc4);
-		p = Position(this);
-		const float dx = s.x - p.x, dy = s.y - p.y, dz = s.z - p.z;
-		f_b08 = sqrtf(dx * dx + dy * dy + dz * dz);
-	}
-	if (f_c08 <= 0)
-	{
-		f_c08 = 0;
-		f_c04 = 0;
-		return;
-	}
-	// slopes: probe the floor ahead of Jimmy, left and right
-	OMedia3DVector l0 = v224(-5.0f, 150.0f, 30.0f), l1 = v224(-5.0f, -2500.0f, 30.0f);
-	if (!PhysicsClosestHit(l0, l1, false))
-	{
-		f_c04 = 0;
-		return;
-	}
-	const OMedia3DVector left = RayEnd();
-	OMedia3DVector r0 = v224(5.0f, 150.0f, 30.0f), r1 = v224(5.0f, -2500.0f, 30.0f);
-	if (f_c08 <= 0)
-	{
-		f_c08 = 0;
-		f_c04 = 0;
-		return;
-	}
-	if (!PhysicsClosestHit(r0, r1, false)) return;
-	const OMedia3DVector right = RayEnd();
-	OMedia3DVector low;										// the lower side
-	if (left.y == right.y) low = left;
-	else
-	{
-		if (left.y > right.y)
-		{
-			AddRotation(0, dt * -15.0f, 0);					// +0x330
-			low = right;
-		}
-		else
-		{
-			AddRotation(0, dt * 15.0f, 0);
-			low = left;
-		}
-		if (right.y + 5.0f < left.y)
-		{
-			AddRotation(0, dt * -29.0f, 0);
-			low = right;
-		}
-		else if (right.y - 5.0f > left.y)
-		{
-			AddRotation(0, dt * 29.0f, 0);
-			low = left;
-		}
-	}
-	float d = hit.y - low.y;
-	if (d > 10.0f)
-	{
-		v196(hit.x, hit.y + 70.0f, hit.z, hit.w);			// +0x310
-		f_c04 = (float)((double)d * 5.5);
-		return;
-	}
-	if (f_c08 <= 0)
-	{
-		f_c04 = 0;
-		return;
-	}
-	g_N2_5461cc = 0;
-	v196(hit.x, hit.y + 70.0f, hit.z, hit.w);
-	if (d < 0)
-	{
-		f_c04 = 0;
-		// (debug text "UPHILL %d")
-		return;
-	}
-	if (d < 10.0f) d = 10.0f;
-	f_c04 = (float)((double)d * 5.5);
-}
-
-void C3DJimmy::n2_ev145(float dt)								// N2:0x4468f0
-{
-	if (!g_menu) return;
-	if (!g_camera)
-	{
-		g_menu->HideGadgetBar();							// +0x4c8
-		return;
-	}
-	if (!g_menu->IsCurrentGadget(2)) return;				// +0x4e0
-	g_menu->ShowGadgetBar();								// +0x4c4
-	if (PlayerKeyAction() && !PlayerKeyJump() && f_4ccc == 0 && f_4cd0 == 20.0f)
-	{
-		AddHealth(-2.0f);									// 0x42a920
-		f_4ccc = 20.0f;
-		ev65(0, 6, 1);										// element +0x104
-		ev71(0.7f);											// +0x11c
-		f_4a9 = 0;
-		f_4cd0 = 0;
-	}
-	if (f_4ccc == 0)
-	{
-		f_4cd0 = dt + f_4cd0;
-		if (g_menu) SetPowerBar((float)((double)f_4cd0 * (double)0.05f * 100.0));	// 0x4037f0
-		if (f_4cd0 >= 20.0f)
-		{
-			if (g_menu) g_menu->GadgetBarFull();			// +0x4d0
-			f_4cd0 = 20.0f;
-		}
-	}
-	if (f_4ccc > 0)
-	{
-		f_4ccc = f_4ccc - dt;
-		float v = (float)((double)f_4ccc * (double)0.05f * 100.0);
-		if (v <= 0) v = 0;
-		if (g_menu) SetPowerBar(v);
-		if (f_4ccc <= 0)
-		{
-			f_4ccc = 0;
-			ev65(0, 6, 7);
-			ev71(0);
-			f_4a9 = 1;
-			if (g_menu) g_menu->GadgetBarEmpty();			// +0x4cc
-			return;
-		}
-		if (f_4ccc <= 3.0f)
-		{
-			// the last 3 s it blinks
-			if ((int)((double)f_4ccc * 5.0) % 2 != 0) ev65(0, 6, 7);	// _ftol
-			else ev65(0, 6, 1);
-		}
-	}
-}
-
-void C3DJimmy::n2_ev163(void)									// N2:0x447c90
-{
-	if (f_ae8 > 35.0f) f_ae8 = 35.0f;
-	if (f_ae8 < -15.0f) f_ae8 = -15.0f;
-	OMedia3DVector p = Position(this);
-	const float ax = p.x, ay = p.y + 80.0f, az = p.z;
-	OMedia3DVector t = v224(0, f_ae8 + 80.0f, 45.0f);
-	OMedia3DVector d(t.x - ax, t.y - ay, t.z - az, 0);
-	omt_Angle rx, ry;
-	d.angles(rx, ry);										// OMedia3DVector::angles
-	f_d20->v203((float)rx * kAngleToDeg, (float)ry * kAngleToDeg, 0);	// +0x32c
-	OMedia3DVector at = v224(24.0f, 14.0f, 32.0f);
-	f_d20->v196(at.x, at.y, at.z, at.w);					// +0x310
-	f_d20->ShowAgain();										// +0xd8
-	f_c9c = 1;
-	f_4cd8 = f_ae8;
-}
-
-void C3DJimmy::n2_ev164(float dt)								// N2:0x4488e0
-{
-	if (f_4ef0)
-	{
-		n2_ev149(dt, f_4ef0, GoddardPointer(f_d5c));			// element +0x254
-	}
-	CGameObject *o = FindNearest(static_cast<CGameObject *>(this), '3PIC', '3GRO');	// 0x458e40
-	if (!o)
-	{
-		if (f_d48 && f_d5c)
-		{
-			C3DObject *gp = GoddardPointer(f_d5c);
-			if (gp) gp->HideAgain();						// +0xdc
-		}
-		f_d48 = 0;
-	}
-	else
-	{
-		OMedia3DVector a = Position(o), b = Position(this);
-		const float dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
-		const float d = sqrtf(dx * dx + dy * dy + dz * dz);
-		if (d < 950.0f)
-		{
-			if (CursorWanted(o))
-			{
-				if (f_d4c)									// (checked in the original)
-				{
-					f_d4c->ev71((float)(1.0 - (double)d * (double)0.0010526316f));	// +0x11c: fades with distance
-					OMedia3DVector q = Position(o);
-					f_d4c->v196(q.x, q.y, q.z, q.w);		// +0x310
-					f_d4c->AddRotation(0, dt * -100.0f, 0);	// +0x330
-					f_d4c->ShowAgain();						// +0xd8
-				}
-				return;
-			}
-		}
-	}
-	if (f_d4c) f_d4c->HideAgain();							// +0xdc (checked in the original)
-}
-
-void C3DJimmy::Slide(float dt)								// N2:0x4479b0
-{
-	if (f_c04 <= 0 && f_c08 <= 0)
-	{
-		StopSound(&f_4d98);
-		return;
-	}
-	if (f_c08 > 0)
-	{
-		f_c08 = f_c08 - dt;
-		if (f_c08 <= 0) f_c08 = 0;
-	}
-	if (!v133())
-	{
-		v178(0, -5500.0f, 0);								// +0x2c8
-		StopSound(&f_4d98);
-		return;
-	}
-	v136(1);												// +0x220
-	if (f_c04 > 0)
-	{
-		v178(0, -5500.0f, 0);
-		if (f_4d98 == -1)
-		{
-			n2_ev116();										// +0x1d0
-			ev58((char *)"SLIDE", 1);
-			f_4d98 = PlayGameSound(-1, std::string("slide"), true);
-		}
-		if (g_flag_545e54) f_ccc->HideAgain();				// +0xdc
-	}
-	else
-	{
-		StopSound(&f_4d98);
-		f_96c = f_96c - 10.0f;
-		if (f_96c < 0) f_96c = 0;
-		if (g_flag_545e54) f_ccc->ShowAgain();				// +0xd8
-	}
-	const float top = f_968 * 2.7f;
-	// (debug text "%d" of f_96c)
-	if (f_96c < top)
-	{
-		if (f_c08 > 0) f_96c = f_c04 * 4.5f + f_96c;
-		if (f_96c <= 0)
-		{
-			f_96c = 0;
-			StopSound(&f_4d98);
-		}
-		if (f_96c > top) f_96c = top;
-	}
+	j->Shock(-10.0f, -10, 5.0f);							// element +0x1a0
+	j->PlayAnim((char *)"HIT");								// element +0x150 (0x4ef2e4)
+	o->ev73(5);											// its element +0x124
+	o->m_flee_dist = flee;										// BG +0x940
 }
 
 void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 {
+	// (debug log "Enter Jimmt::Touched %s")
 	CGameObject::AddTouching(other);						// 0x470a90
-	if (other->NameContains((char *)"C3DPENDULUM"))
+	C3DAI *ai = dynamic_cast<C3DAI *>(other);
+	if (other->NameContains((char *)"C3DPENDULUM"))			// vtable +0x18
 	{
-		const int l = LevelID();
-		if (l == 'L1_A' || l == 'L1_B' || l == 'L1_C') return;
-		n2_ev134(-10.0f, -10, 5.0f, 1);						// element +0x218
+		TouchedHurt();										// element +0x164
 		return;
 	}
-	if (other->NameContains((char *)"C3DWATERBALLOON"))
+	if (other->NameContains((char *)"C3DROCKETSHIP"))
 	{
-		other->v132(0);										// +0x210
-		other->v136(0);										// +0x220
-		C3DSprite *s = dynamic_cast<C3DSprite *>(other);
-		if (s) s->HideAgain();								// element +0xd8
+		if (!f_ab0)
+		{
+			f_ab0 = dynamic_cast<C3DRocketShip *>(other);
+			other->f_00b = 0;								// (element 0xcb)
+			g_gametype->SetCamera(other);					// +0x118
+			if (f_ab0) f_ab0->f_9f4 = this;					// BG +0x740: the rider
+			ev58((char *)"DRIVE", 1);						// element +0xe0
+			StepSoundOff();									// element +0x148
+			g_4f0588 = 1;
+			if (f_a18)
+			{
+				SetItemType(0, 1, 1);
+				ActivateGadget(1);							// element +0x174
+			}
+		}
+		return;
+	}
+	if (other->NameContains((char *)"C3DSUB"))
+	{
+		// port: BG +0x1de4 (the sub ridden) has no member here (no C3DSub yet); it is set and used
+		// only by this branch (the sub's +0x740 = the rider).
+		NEG_TODO(0x422e60, "C3DJimmy touched a C3DSUB: get in (no C3DSub class yet)");
+		return;
+	}
+	if (other->NameContains((char *)"C3DJEEP"))
+	{
+		JetpackFall();										// element +0x1e0
+		g_gametype->SetCamera(other);
+		if (C3DJeep *jeep = dynamic_cast<C3DJeep *>(other)) jeep->f_a84 = this;	// BG +0x69c: the driver
+		Hide(f_a2c);										// the shadow
+		Link(GO(f_a30));									// +0x3a8
+		ev58((char *)"SCOOT", 1);
+		StepSoundOff();
+		return;
+	}
+	if (other->NameContains((char *)"C3DTANK"))
+	{
+		g_gametype->SetCamera(other);
+		NEG_TODO(0x423030, "C3DJimmy touched a C3DTANK: the tank's +0x69c = Jimmy (no C3DTank yet)");
+		ev58((char *)"FLY", 1);								// (0x4eca60)
+		return;
+	}
+	if (other->NameContains((char *)"C3DBASEBALL"))
+	{
+		other->v132(0);										// +0x214
+		other->v136(0);										// +0x224
+		if (C3DObject *e = Elem(other)) e->hide(true);		// element +0x58
 		return;
 	}
 	if (other->NameContains((char *)"C3DMISSILE"))
 	{
-		if (f_4cb8) return;
-		n2_ev134(-10.0f, -10, 5.0f, 1);
-		v261();												// +0x414
-		n2_ev116();											// +0x1d0
-		PlayGameSound(-1, std::string("YokianBump"), false);	// 0x458b40
+		if (f_1e03) return;
+		Shock(-10.0f, -10, 5.0f);
+		v261();												// +0x410
+		StepSoundOff();
+		PlayGameSoundIndex(-1, 0x2a, false);
 		return;
 	}
-	if (other->NameContains((char *)"C3DGIRLEATINGPLANT") || other->NameContains((char *)"C3DDARWIN"))
+	const bool plant = other->NameContains((char *)"C3DGIRLEATINGPLANT");
+	if (plant || other->NameContains((char *)"C3DDARWIN"))
 	{
-		// their members (+0xc40 stunned; knocked back: element slot 107 (5), +0xc10 = 500,
-		// +0xc3c = 5): C3DAI is not reconstructed yet, so none can be met.
-		NEG_TODO(0x42348a, "C3DJimmy::AddTouching: plant / Darwin members (+0xc40, +0xc10, +0xc3c, element slot 107)");
-		if (f_4cb8) return;
+		if (!ai || ai->m_state_locked || f_1e03) return;				// BG +0x970: its state locked
 		if (strcasecmp(other->m_tag, "LIBBYPLANT") == 0) return;
-		n2_ev134(-10.0f, -10, 5.0f, 1);
-		n2_ev114((char *)"HIT");								// +0x1c8
+		CaughtBy(this, ai, 500.0f);
+		ai->m_flee_time = 5.0f;									// BG +0x96c
 		v261();
-		n2_ev116();
-		PlayGameSound(-1, std::string("YokianBump"), false);
+		StepSoundOff();
+		PlayGameSoundIndex(-1, 0x2a, false);
 		return;
 	}
-	if (other->NameContains((char *)"C3DBOT"))
+	if (other->NameContains((char *)"C3DYOKIANSPY") || other->NameContains((char *)"C3DYOKIANGUARD") ||
+		other->NameContains((char *)"C3DYOKIANSOLDIER"))
 	{
-		if (f_a68 == 2) return;
-#if 0	// TODO(BG): C3DBot is Negatron only
-		C3DBot *bot = dynamic_cast<C3DBot *>(other);		// N2:0x44512a (port: the original subtracts 0xc0 without looking)
-		if (!bot) return;
-		if (bot->m_state_locked) return;								// state locked
-		if (f_4cb8)											// we are hurt: an unstunned bot only backs off
-		{
-			if (bot->f_1b50 > 0) return;
-			bot->ev73(5);									// flee ...
-			bot->m_flee_dist = 1500.0f;							// ... beyond 1500
-			bot->m_flee_time = 5.0f;								// for 5 s
-			return;
-		}
-		if (bot->m_state != 0 && bot->m_state != 11) return;	// only an attacking bot hurts
-		if (bot->f_1b50 > 0) return;						// stunned
-		bot->ev73(5);
-		bot->m_flee_dist = 1500.0f;
-		bot->m_flee_time = 10.0f;
-		if (f_8a7) return;
-		n2_ev134(-2.0f, -1, 3.0f, 1);
-		n2_ev114((char *)"HIT");
+		if (f_7c4 == 2 || !ai || ai->m_state_locked || f_1e03 || ai->m_state != 0) return;	// BG +0x6c8: attacking
+		CaughtBy(this, ai, 1500.0f);
+		ai->m_flee_time = 5.0f;
 		v261();
-		n2_ev116();
-		PlayGameSound(-1, std::string("YokianBump"), false);
-#endif
+		StepSoundOff();
+		PlayGameSoundIndex(-1, 0x2a, false);
+		C3DYokian *y = dynamic_cast<C3DYokian *>(other);
+		if (y && y->m_loop_sound != -1)						// BG +0x9b4
+		{
+			StopGameSound(y->m_loop_sound, false);
+			y->m_loop_sound = -1;
+		}
 		return;
 	}
-	if (other->NameContains((char *)"C3DHUMPHREY")) return;
+	if (other->NameContains((char *)"C3DHUMPHREY"))
+	{
+		if (f_7c4 == 2 || !ai || ai->m_state_locked || f_1e03 || ai->m_state != 0) return;
+		CaughtBy(this, ai, 1500.0f);
+		ai->m_flee_time = 5.0f;
+		v261();
+		StepSoundOff();
+		PlayGameSoundIndex(-1, 0x2a, false);
+		return;
+	}
 	if (other->NameContains((char *)"C3DBUTTON"))
 	{
-		if (strcasecmp(other->m_tag, "REACTOR") != 0) return;
-		f_d6d = 1;
-		if (LevelID() == 'LV4B')
+		if (strcasecmp(other->m_tag, "REACTOR") == 0)
 		{
-			CLevel04BGame *g = dynamic_cast<CLevel04BGame *>(g_gametype);
-			if (g) g->f_688 = 1;
+			f_1e51 = 1;
+			if (g_gametype->m_object_id == 'LV4B') NEG_TODO(0x423244, "CGameType +0x5bc = 1 (LV4B reactor)");
 		}
 		return;
 	}
 	if (other->NameContains((char *)"C3DAITRIGGER"))
 	{
-		// (the original compares Jimmy's own tag, not the trigger's)
-		if (strcasecmp(m_tag, "DEACTIVATE") != 0) return;
-		n2_ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228
+		// QUIRK: compares Jimmy's own tag (edi + 0x3a0), not the trigger's
+		if (strcasecmp(m_tag, "DEACTIVATE") == 0) DeactivateGadget();	// element +0x178
 		return;
 	}
-	if (other->NameContains((char *)"C3DLOADLEVEL"))
+	if (other->NameContains((char *)"C3DLOADLEVEL") && g_4eefd0 > 0)
 	{
-		if (!(g_4eefd0 > 0)) return;
+		// leaving the level stops its timer
 		g_4eefd0 = -1.0f;
-		if (g_menu) g_menu->v316(false);					// +0x4f0
+		MenuShowHud(f_a18, false);							// +0x4b4
 	}
+	// (debug log "Leave Jimmy::Touch")
 }
 
-void C3DJimmy::Process(float dt)							// N2:0x446260
+// --------------------------------------------------------------------------- Process / control
+
+void C3DJimmy::Process(float dt)							// 0x424600
 {
-	TestPosLog(this, dt);									// port: test hook (NEG_TEST_POSLOG)
-	if (g_gametype->IsPaused()) return;						// +0x114
-	if (f_d34 && g_game_state != 3)
-	{
-		f_d34->HideAgain();									// +0xdc
-		f_d34->v136(0);										// +0x220
-	}
-	g_N2_54a400 = g_N2_54a400 + dt;
-	g_N2_545f30 = 0;
-	// sparkles of f_4d50
-	if (f_4d64 > 0)
-	{
-		f_4d64 = f_4d64 - dt;
-		f_4d68 = f_4d68 - dt;
-		if (f_4d64 <= 0) f_4d64 = 0;
-		else
-		{
-			n2_ev155();										// element +0x26c
-			if (f_4d50[f_4d60])
-			{
-				const int r1 = Random1001(), r2 = Random1001();
-				if (g_camera)
-				{
-					OMedia3DVector at = g_camera->v224(
-						(float)(((double)r1 * (double)0.001f - 0.5) * 10.0 + f_4d6c.x),
-						(float)(((double)r2 * (double)0.001f - 0.5) * 10.0 + f_4d6c.y),
-						f_4d6c.z);
-					ParticleBurst(f_4d50[f_4d60], at);
-				}
-			}
-		}
-	}
-	// sparkles of f_4d00 (note: < 0 here, <= 0 above)
-	if (f_4d58 > 0)
-	{
-		f_4d58 = f_4d58 - dt;
-		f_4d5c = f_4d5c - dt;
-		if (f_4d58 < 0) f_4d58 = 0;
-		else
-		{
-			n2_ev154();										// element +0x268
-			if (f_4d00[f_4d54])
-			{
-				const int r1 = Random1001(), r2 = Random1001();
-				if (g_camera)
-				{
-					OMedia3DVector at = g_camera->v224(
-						(float)(((double)r1 * (double)0.001f - 0.5) * 100.0),
-						(float)(((double)r2 * (double)0.001f - 0.5) * 100.0 + 10.0),
-						-40.0f);
-					ParticleBurst(f_4d00[f_4d54], at);
-				}
-			}
-		}
-	}
+	g_4f8408 += dt;
 	if (!g_camera)
 	{
-		if (f_4da4 > 0)
+		// not the camera (a cut scene): the cursors and the shrink ray off
+		Hide(Elem(f_1e54));
+		MenuGadgetTimerOff(f_a18);							// +0x4c4
+		f_1e34 = 0;
+		if (f_a34 != -1)
 		{
-			f_4da4 = 0;
-			if (f_d44) f_d44->HideAgain();					// (unchecked in the original)
+			StopChannel(f_a34, false);						// 0x47d7a0
+			f_a34 = -1;
+			Hide(f_a10);
 		}
-		if (f_4c10 != -1)
+		if (f_a3c != -1)
 		{
-			StopChannel(f_4c10, false);						// 0x47d7a0
-			f_4c10 = -1;
-			if (f_cbc) f_cbc->HideAgain();
+			StopChannel(f_a3c, false);
+			f_a3c = -1;
 		}
 	}
-	if (v133())
+	if (v133())												// on the floor (+0x218)
 	{
-		// landed: play the animation asked for while in the air
-		if (strcasecmp(f_4e80, g_empty_string) != 0)
+		if (g_4f0588 == 0)
 		{
-			ev58(f_4e80, 1);
-			strcpy(f_4e80, g_empty_string);
+			v152(160.0f);									// +0x264
+			ev58((char *)"STOP", 1);						// element +0xe0
 		}
-		v152(60.0f);										// +0x260
+		else v152(60.0f);
 	}
-	if (f_d6c) DrawText(20, 240, 'MED', "%d", GetTaskState("SCENE"));	// N2:0x4a0f60 / 0x45fea0
-	f_4ce4 = dt + f_4ce4;
+	if (f_1e50) DrawText(0x14, 0xf0, 'DEM', "%d", GetTaskState("SCENE"));	// (debug: the SCENE task)
+	if (f_a18 && g_4f8181)
+	{
+		// the PDA is open
+		if (MenuPageShown(f_a18) != 2) return;				// +0x4a8
+		MenuHideSelected(f_a18);							// +0x460
+		return;
+	}
+	ScorePopup(dt);											// element +0x208
+	if (f_1e6c > 0)
+	{
+		f_1e6c -= dt;
+		if (f_1e6c <= 0)
+		{
+			// out of energy: the level starts again
+			f_1e6c = 0;
+			PauseAnim(0);										// element +0x11c
+			if (f_a1c) f_a1c->PauseAnim(0);
+			DeactivateGadget();								// element +0x178
+			DrawText(0x3c, 0x39, 'GIB', "%6.0d", g_score);	// (0x4ec714)
+			neg::RequestTask("RestartLevel.tsk");				// 0x460e70
+			if (f_a18) MenuGadgetBarHide(f_a18);			// +0x488
+			return;
+		}
+	}
+	if (g_4f83d4 <= 0)
+	{
+		const int id = g_gametype->m_object_id;
+		if (((id >= 'LEV6' && id <= 'LEV7') || id == 'LV4B' || (id >= 'LV5A' && id <= 'LV5B') || id == 'LV6A') &&
+			f_1e6c == 0)
+		{
+			StopAllChannels();								// 0x47d850
+			FadeOut(4, 6.0f);								// 0x403c10
+			FreezeGame(true);								// g_gametype +0x168
+			PauseAnim(1);
+			if (f_a1c) f_a1c->PauseAnim(1);
+			f_1e6c = 10.8f;
+			PlayGameSoundIndex(-1, 0xe5, false);
+		}
+	}
+	f_1e5c += dt;
 	if (g_509a12)
 	{
+		// (debug: the number of objects shown)
 		int n = 0;
 		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-			if ((*i)->v135()) n++;							// +0x21c
+			if ((*i)->v135()) n++;							// +0x220
 		DrawText(0x123, 100, 'TIME', "%.4d", n);
 	}
-	if (f_4cec && f_4cf0 > 0)
+	if (f_1e64 && f_1e68 > 0)
 	{
-		f_4cf0 = f_4cf0 - dt;
-		if (f_4cf0 <= 0) f_4cf0 = 0;
+		f_1e68 -= dt;
+		if (f_1e68 <= 0) f_1e68 = 0;
 	}
-	if (Velocity(this).y > 0) n2_ev135(dt);					// element +0x21c
-	if (!f_4cfd) n2_ev136(dt);									// element +0x220
-	if (!v133() && f_4ca6) n2_ev129();							// element +0x204
-	C3DPlayer::Process(dt);									// N2:0x460510
-	n2_ev145(dt);												// element +0x244
+	if (g_4eefc8 >= 0)
+	{
+		// a stopwatch counting up (minutes, seconds, hundredths)
+		g_4eefc8 += dt;
+		MenuShowHud(f_a18, true);
+		const int m = (int)(g_4eefc8 * (1.0f / 60.0f));
+		const int s = (int)((float)(m * 60) - g_4eefc8);
+		const int h = (int)((g_4eefc8 - (float)(int)g_4eefc8) * 100.0f);
+		DrawText(0x10f, 0xf, 'TIME', "%.2d", m);
+		DrawText(0x133, 0xf, 'TIME', "%.2d", s);
+		DrawText(0x157, 0xf, 'TIME', "%.2d", h);
+		if (g_4eefcc > 0) DrawText(0x217, 0x1e, 'TIME', "%3d", (int)g_4eefcc);
+	}
+	if (g_4eefd0 >= 0)
+	{
+		// a countdown: the alarm at 0
+		if (g_camera && !f_1e51)
+		{
+			g_4eefd0 -= dt;
+			if (g_4eefd0 < 0) PlayGameSoundIndex(-1, 0x5b, false);
+		}
+		const int m = (int)(g_4eefd0 * (1.0f / 60.0f));
+		const int s = (int)((float)(m * 60) - g_4eefd0);
+		const int h = (int)((g_4eefd0 - (float)(int)g_4eefd0) * 100.0f);
+		DrawText(0x10f, 0xf, 'TIME', "%.2d", m);
+		DrawText(0x133, 0xf, 'TIME', "%.2d", s);
+		DrawText(0x157, 0xf, 'TIME', "%.2d", h);
+	}
+	else if (g_gametype->m_object_id == 'LV4B')
+	{
+		g_4eefd0 -= dt;
+		if (g_4eefd0 < -8.0f) neg::RequestTask("RestartLevel.tsk");	// 8 s after the time ran out
+	}
+	if (Vel(this).y > 0) HeadHit();							// element +0x1a4: rising
+	PlaceShadow(dt);										// element +0x1a8
+	if (!v133() && f_1e01) LeaveWater();					// element +0x194
+	C3DPlayer::Process(dt);									// 0x437940
+	PowerGadget(dt);										// element +0x1c8
 	if (v133())
 	{
-		OMedia3DVector p = Position(this);
-		f_4cbc.x = p.x; f_4cbc.y = p.y; f_4cbc.z = p.z; f_4cbc.w = p.w;
+		OMedia3DVector p = Pos(this);
+		f_1e0c.set(p.x, p.y, p.z, p.w);
 	}
-	n2_ev133(dt);												// element +0x214
-	if (f_d5c && f_d5c->f_1b5c == 4 && f_d5c->m_time > 9.0f)	// Goddard in front for 9 s: back beside us
+	HurtFlash(dt);											// element +0x1b4
+	Trail(dt);												// element +0x1b0
+	if (f_a1c && f_a1c->f_1b5c == 4 && f_a1c->m_time > 9.0f)	// Goddard: BG +0x9a0 side, +0x6bc time there
 	{
-		f_d5c->m_time = 0;
-		if (f_d5c->f_1b5e == 1) { f_d5c->ev144(2); return; }	// element +0x240
-		if (f_d5c->f_1b5e == 3) { f_d5c->ev144(0); return; }
+		f_a1c->m_time = 0;
+		if (f_a1c->f_1b5e == 1) { f_a1c->ev144(2); return; }	// BG +0x9a2, element +0x17c
+		if (f_a1c->f_1b5e == 3) f_a1c->ev144(0);
 	}
-	if (f_4d7c) C3DAnimated::Process(dt);					// N2:0x41c120
 }
 
-void C3DJimmy::v243(float dt)								// N2:0x447e40
+void C3DJimmy::v243(float dt)								// 0x426030
 {
-	if (f_aed) return;
-	if (g_gametype->IsPaused()) return;
-	if (f_4d7c)
-	{
-		if (!f_4cb8) return;
-		f_4cb8 = 0;
-		if (GetItemState(2, 20)) return;					// N2:0x404f20
-		OMedia3DMaterial *m = FirstMaterial(this);
-		if (m) m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));
-		return;
-	}
-	if (!g_camera) return;
-	if (g_N2_54a498) return;
-	if (f_a68 == 4) g_N2_5461cc = 0;
-	if (f_4ca5) return;
-	Slide(dt);												// N2:0x4479b0
-	C3DPlayer::v243(dt);									// N2:0x4618d0
-	n2_ev146(dt, Position(this));								// element +0x248
-	if (n2_ev140(dt)) return;									// element +0x230
+	if (g_4f8198) return;									// 0x407060: paused
+	if (!GameIsRunning() || !g_camera || g_4f8430 || f_1ded) return;
+	C3DPlayer::v243(dt);									// 0x438a60
+	if (GrappleSwing()) return;								// element +0x188
 	if (!v133())
 	{
-		// in the air
-		if (Velocity(this).y < -200.0f) f_4db4 = 1;
-		if (f_4cfe && !f_4db8)
+		// in the air: the jet pack starts by itself when falling fast (with it in the menu)
+		if (f_880 && !g_4f8210 && g_4f0588 != 0)
 		{
-			if (Velocity(this).y < f_4db0)
+			if (Vel(this).y < -900.0f)
 			{
-				if (GetItemState(0, 3) == 1)
+				if (ItemType(0, 3) == 1)
 				{
-					// falling fast with the jet pack: it starts by itself
-					JimmyJetpackFlame(static_cast<CGameObject *>(this), 3.0f);	// f_ccc +0x9f0 -> +0x928
-					n2_ev114((char *)"FLY");							// +0x1c8
-					JimmyJetpackSound(static_cast<CGameObject *>(this), 1);		// "jetpack" on f_ccc +0x9f4
-					f_4cec = 1;
-					f_4cf0 = 5.0f;
+					if (f_7f8) f_7f8->f_928 = 3.0f;			// its burn time
+					PlayAnim((char *)"FLY");
+					if (f_a3c == -1) f_a3c = PlayGameSoundIndex(-1, 1, true);
+					f_1e64 = 1;
+					f_1e68 = 5.0f;
 					ev58((char *)"FLY", 1);
-					f_a8c = 5;
-					v178(0, 100.0f, 0);								// +0x2c8
-					f_a68 = 1;
+					f_7e8 = 5;
+					v178(0, 100.0f, 0);						// +0x2cc
+					f_7c4 = 1;
 				}
-				else if (Velocity(this).y < f_4db0) g_N2_5461cc = 1;
+				else if (Vel(this).y < -1100.0f) f_1e58 = 1;	// a long fall
 			}
-			else if (f_4cec && f_4cf0 == 0)
+			else if (f_1e64 && f_1e68 == 0)
 			{
-				f_4cec = 0;
-				JimmyJetpackOff(static_cast<CGameObject *>(this));	// N2:0x443370
-				f_a8c = 0;
+				f_1e64 = 0;
+				JetpackOff();								// element +0x140
+				f_7e8 = 0;
 				ev58((char *)"FALL", 1);
+				if (f_7f8) f_7f8->f_928 = 0;
 			}
 		}
 	}
-	else if (!g_menu->IsCurrentGadget(3))
+	else if (f_1e58)
 	{
-		// on the floor
-		if (!g_N2_5461cc)
+		// landed after a long fall: hurt
+		f_1e58 = 0;
+		PlayGameSoundIndex(-1, 0xc0, false);
+		Shock(-10.0f, -10, 5.0f);							// element +0x1a0
+	}
+	if (f_7c4 == 2)
+	{
+		// in the bubble: it uses energy; it follows Jimmy, towards the camera
+		AddEnergy(dt * -0.5f);								// 0x42a920
+		if (g_4f83d4 <= 0) DeactivateGadget();
+		OMedia3DVector p = Pos(this);
+		OMedia3DVector d(p.x - g_viewport->getx(), (p.y + 100.0f) - g_viewport->gety(), p.z - g_viewport->getz(), 0);
+		const float inv = 1.0f / d.quick_magnitude();
+		d.x *= inv; d.y *= inv; d.z *= inv;
+		if (f_a14)
 		{
-			if (f_4db4)
-			{
-				PlayGameSound(-1, std::string("landing"), false);
-				f_4db4 = 0;
-			}
-		}
-		else if (g_N2_54a448 > 0)
-		{
-			// jump power-up: bounce
-			if (g_N2_54a448 < 3.0f) v162(0, g_N2_54a448 * 233.33333f, 0);	// +0x288
-			else v162(0, 175.0f, 0);
-			PlayGameSound(-1, std::string("boing"), false);
-			v176(0, 0, 0);											// +0x2c0
-			g_N2_5461cc = 0;
-		}
-		else if (f_c08 == 0 && f_a68 != 4)
-		{
-			// landed from too high
-			f_4db4 = 0;
-			g_N2_5461cc = 0;
-			PlayGameSound(-1, std::string("pain ahhouch"), false);
-			if (f_4dac) n2_ev134(-300.0f, -10, 5.0f, 1);
-			else n2_ev134(-10.0f, -10, 5.0f, 1);
+			OMedia3DVector q = Pos(this);
+			GO(f_a14)->v197(q.x - d.x * 80.0f, (q.y + 50.0f) - d.y * 80.0f, q.z - d.z * 80.0f);	// +0x318
 		}
 	}
-	if (f_a68 == 2)
+	GoddardHeals(dt);										// element +0x1bc
+	// the point cursor over the nearest pickup
+	CGameObject *pick = FindNearest(this, '3PIC');			// 0x458e40
+	C3DAnimated *cur = dynamic_cast<C3DAnimated *>(f_1e54);
+	if (!pick) Hide(cur);
+	else
 	{
-		AddHealth(dt * -0.5f);								// 0x42a920
-		OMedia3DVector p = Position(this);
-		OMedia3DVector d(p.x - g_viewport->getx(), p.y + 100.0f - g_viewport->gety(), p.z - g_viewport->getz(), 0);
-		const float k = 1.0f / d.quick_magnitude();
-		d.x = k * d.x;
-		d.y = k * d.y;
-		d.z = k * d.z;
-		if (f_cc0)
+		const float d = Dist(Pos(pick), Pos(this));
+		if (d >= 850.0f) Hide(cur);
+		else if (dynamic_cast<C3DPickupItem *>(pick) && static_cast<C3DPickupItem *>(pick)->f_760)	// its BG +0x6a0 (CGameObject part)
 		{
-			p = Position(this);
-			f_cc0->v197(p.x - d.x * 80.0f, p.y + 50.0f - d.y * 80.0f, p.z - d.z * 80.0f);	// +0x314
+			if (cur)
+			{
+				cur->ev71(1.0f - d * 0.0011764705f);		// element +0x114: fading with the distance
+				OMedia3DVector q = Pos(pick);
+				GO(cur)->v196(q.x, q.y, q.z, q.w);
+				GO(cur)->AddRotation(0, dt * -100.0f, 0);	// +0x334
+				Show(cur);
+			}
 		}
 	}
-	n2_ev159(dt);												// element +0x27c
-	n2_ev164(dt);												// element +0x290
-	if (g_menu->IsCurrentGadget(10))
+	if (!KeyFire() && !KeyPressed(0x0d))					// 0x42a7a0, 0x46a3e0(Enter)
 	{
-		// gadget 10 recharges by the skill setting
-		switch (g_difficulty)
+		// the fire keys up: the shot over
+		Hide(MenuShotSprite(f_a18));						// menu +0x4e4
+		f_1e25 = 0;
+		if (f_1e26)
 		{
-			case 0: f_4cd0 = dt + dt + f_4cd0; break;
-			case 1: f_4cd0 = dt * 1.5f + f_4cd0; break;
-			case 2: f_4cd0 = dt + f_4cd0; break;
+			PlayGameSoundIndex(-1, 10, false);
+			StepSoundOff();
+			ThrowBaseball(0, 80.0f, 50.0f, f_1e28);			// element +0x180
+			f_b08 = 0;
+			f_1e26 = 0;
+			AddEnergy(-1.0f);
 		}
-		if (f_4cd0 >= 20.0f) f_4cd0 = 20.0f;
-		const float v = (float)((double)f_4cd0 * (double)0.05f * 100.0);
-		if (g_menu) SetPowerBar(v);							// 0x4037f0
-	}
-	if (PlayerKeyAction() && !PlayerKeyJump())
-	{
-		if (g_4f83e0) return;
-		if (f_4ee8) return;
-		if (g_menu->IsCurrentGadget(6) || g_menu->IsCurrentGadget(10)) f_96c = 0;
-		if (n2_ev158(dt)) return;								// element +0x278
-		if (g_menu->IsCurrentGadget(4)) return;
-		if (v133())
+		if (f_a34 != -1)
 		{
-			f_4e7c = 3.0f;
-			if (g_N2_54a438 > 0)
-			{
-				n2_ev163();									// element +0x28c
-				bool again = true;
-				if (f_4ee4 > 0)
-				{
-					f_4ee4 = f_4ee4 - dt;
-					if (f_4ee4 > 0) again = false;
-					else n2_ev144();							// element +0x240
-				}
-				if (again) f_4ee4 = 0.15f;
-			}
-			if (n2_ev77((char *)"SHOOT")) return;				// element +0x134
-			if (!g_menu->IsCurrentGadget(6) && !g_menu->IsCurrentGadget(10)) return;
-			n2_ev116();
-			if (!f_4cd4)
-			{
-				f_4cd4 = 1;
-				n2_ev116();
-				return;
-			}
-			n2_ev163();
-			ev58((char *)"POINT", 1);
-			return;
+			StopGameSound(f_a34, false);
+			f_a34 = -1;
 		}
-		if (!g_menu->IsCurrentGadget(2) && GetItemState(0, 3) == 1)
+		if (f_a48 != -1)
 		{
-			// the shrink ray, in the air
-			if (f_4c10 == -1)
-			{
-				if (strcasecmp(ev66(), "FALL") == 0) return;	// element +0x108
-				f_4c10 = PlayGameSound(-1, std::string("shrinkray"), true);
-				n2_ev116();
-				return;
-			}
-			if (strcasecmp(ev66(), "FALL") != 0) return;
-			StopSound(&f_4c10);
-			if (f_cbc) f_cbc->HideAgain();					// (unchecked in the original)
-			return;
+			StopGameSound(f_a48, false);
+			f_a48 = -1;
 		}
-		f_4ee8 = 0;
+		if (f_6c8 < 10.0f && strcasecmp(GetAnim(), "HISHOOT") == 0) StepSoundOff();	// element +0xe8
+		Hide(f_a10);
 		return;
 	}
-	f_c9c = 0;
-	if (g_N2_54a438 > 0 && f_d20) f_d20->HideAgain();
-	if (f_4e7c > 0) f_4e7c = f_4e7c - dt;
-	if (f_4e7c <= 0)
+	if (f_1e25 || g_4f8182 || g_4f0588 == 0) return;
+	f_6c8 = 0;
+	if (GrappleFire(dt)) return;							// element +0x1c0
+	if (OutOfEnergy(dt)) return;							// element +0x1c4
+	if (g_4f0588 == 4) return;
+	if (v133())
 	{
-		// the camera pitch eases back
-		f_4e7c = 0;
-		if (f_ae8 > 0)
+		// (debug log "MEBTEMP calling SHOOT")
+		ev58((char *)"SHOOT", 1);
+		StepSoundOff();
+		Show(MenuShotSprite(f_a18));
+		if (g_4f0588 == 6)
 		{
-			f_ae8 = f_ae8 - dt * 10.0f;
-			if (f_ae8 <= 0) f_ae8 = 0;
+			// the baseball launcher: aim with the camera height, throw when the key is let go
+			DrawText(0x11e, (short)(int)((45.0f - f_1e28) * 4.3 + 100.0), 'TIME', "% .2d", (int)f_1e28);	// the aim, beside its bar
+			Show(MenuShotSprite(f_a18));
+			if (!f_1e26)
+			{
+				f_1e26 = 1;
+				StepSoundOff();
+			}
+			else
+			{
+				if (f_84c > 45.0f) f_84c = 45.0f;
+				if (f_84c < 0) f_84c = 0;
+				OMedia3DVector p = Pos(this);
+				OMedia3DVector a = v224(0, f_84c + 80.0f, 45.0f);
+				OMedia3DVector d(a.x - p.x, a.y - (p.y + 80.0f), a.z - p.z, 0);
+				omt_Angle ax, ay;
+				d.angles(ax, ay);							// (the angles are not used)
+				f_1e28 = f_84c;
+			}
+			goto shoot_end;
 		}
-		if (f_ae8 < 0)
-		{
-			f_ae8 = dt * 10.0f + f_ae8;
-			if (f_ae8 >= 0) f_ae8 = 0;
-		}
+		if (g_4f0588 == 2 || ItemType(0, 3) != 1) goto not_available;
+		if (f_a34 != -1) goto shoot_end;
 	}
-	if (f_4cd4) n2_ev144();
-	StopSound(&f_4c10);
-	StopSound(&f_4c24);
-	if (f_96c < 10.0f && n2_ev77((char *)"SHOOT")) n2_ev116();
-	if (f_cbc) f_cbc->HideAgain();
+	else
+	{
+		if (g_4f0588 == 2 || ItemType(0, 3) != 1) goto not_available;
+		if (f_a34 != -1)
+		{
+			if (strcasecmp(ev66(), "FALL") != 0) goto shoot_end;
+			if (f_a34 != -1)
+			{
+				StopGameSound(f_a34, false);
+				f_a34 = -1;
+			}
+			Hide(f_a10);
+			return;
+		}
+		if (strcasecmp(ev66(), "FALL") == 0) return;
+	}
+	// the shrink ray's sound
+	f_a34 = PlayGameSoundIndex(-1, 0, true);
+	StepSoundOff();
+	goto shoot_end;
+not_available:
+	PlayGameSoundIndex(-1, 0x75, false);
+	f_1e25 = 1;
+shoot_end:
+	if (g_4f0588 != 4) ShrinkRay(dt);						// element +0x1b8
+}
+
+void C3DJimmy::v242(float t)								// 0x4235b0
+{
+	(void)t;
+	if (f_a34 != -1)
+	{
+		StopGameSound(f_a34, false);						// 0x458a00
+		f_a34 = -1;
+		StopAllChannels();									// 0x47d850
+	}
+	if (g_50988a)
+	{
+		// a new game: forget the object states and the pickups
+		memset(g_4f8438, 0, 0x1068 * sizeof(int));
+		for (int i = 0; i < 29; i++) ClearItem(2, (short)i);	// 0x403910
+	}
+}
+
+void C3DJimmy::v258(void)									// 0x423580
+{
+	C3DPlayer::v258();										// (C3DFlyingObject's 0x41afb0 in the original)
+	g_gametype->SetCamera(static_cast<CGameObject *>(this));	// +0x118
+}
+
+void C3DJimmy::v261(void)									// 0x42afc0
+{
+	C3DPlayer::v261();										// 0x43a750
+	StepSoundOff();											// element +0x148
+	PlayAnim((char *)"STOP");								// element +0x150
+}
+
+void C3DJimmy::v271(void)									// 0x42ae00
+{
+	DeactivateGadget();										// element +0x178
+	f_1e25 = 1;
+	g_4f8182 = 1;
+}
+
+void C3DJimmy::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	// 0x42a660
+{
+	if (g_4f0588 == 7 && g_4f8210)
+	{
+		// swinging on the rope: a wall hit fast lets go
+		OMedia3DVector plane(a, b, c, d);					// (0x409f60: a copy)
+		C3DPlayer::v220(a, b, c, d, poly);					// 0x43aa40
+		const float sz = g_4f82c0 * g_4f82c0, sx = g_4f82bc * g_4f82bc;
+		g_4f82bc = 0;
+		g_4f82c0 = 0;
+		if (sqrtf(sx + sz) > 6.0f)							// 0x49d5b4
+		{
+			GrappleRelease();								// element +0x204
+			f_1e25 = 1;
+		}
+		return;
+	}
+	C3DPlayer::v220(a, b, c, d, poly);
+}
+
+void C3DJimmy::v277(void)									// 0x425c40
+{
+	C3DAnimated::v277();									// 0x40e770
+	if (strcasecmp(f_a4c, "none") != 0 && g_696004)
+	{
+		StopChannel(f_a38, false);							// 0x47d7a0
+		if (strcasecmp(f_a4c, "none") != 0) CloseDatabase(f_a4c);	// 0x46aef0
+		g_696004 = NULL;
+		f_a38 = -1;
+	}
+	if (f_1e08 != -1) StopGameSound(f_1e08, false);			// (the channels are kept for v278)
+	HudBlink(false);										// 0x4073b0(0)
+	if (f_a48 != -1) StopGameSound(f_a48, false);
+	if (f_1e04 != -1) StopGameSound(f_1e04, false);
+	if (f_a34 != -1)
+	{
+		StopGameSound(f_a34, false);
+		f_a34 = -1;
+		Hide(f_a10);
+		f_1e25 = 1;
+	}
+	if (f_a40 != -1) StopGameSound(f_a40, false);
+	if (f_a3c != -1) StopGameSound(f_a3c, false);
+	if (f_a44 != -1) StopGameSound(f_a44, false);
+	if (f_a38 != -1) StopGameSound(f_a38, false);
+	if (f_ab0 && f_ab0->f_123c != -1) StopGameSound(f_ab0->f_123c, false);	// BG +0xf88: its engine
+}
+
+void C3DJimmy::v278(void)									// 0x425db0
+{
+	C3DAnimated::v278();									// 0x40e790
+	if (strcasecmp(f_a4c, "none") != 0)
+	{
+		g_696004 = GetDatabase(f_a4c);						// 0x46a910
+		if (g_696004) f_a38 = PlayMusic(g_696004, -1, 0, true);	// 0x47d710
+	}
+	if (f_1e08 != -1) f_1e08 = PlayGameSoundIndex(-1, 0x33, true);	// TODO(BG): check the sound ids (the args are not in the decompilation)
+	if (f_a48 != -1) f_a48 = PlayGameSound(-1, std::string("not available"), true);	// 0x458b40
+	if (f_1e04 != -1) f_1e04 = PlayGameSoundIndex(-1, 0x22, true);
+	if (f_a40 != -1) f_a40 = PlayGameSoundIndex(-1, 2, true);
+	if (f_a3c != -1) f_a3c = PlayGameSoundIndex(-1, 1, true);
+	if (f_a44 != -1) f_a44 = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound, true);	// the level's footsteps (+0x54c)
+	if (f_ab0 && f_ab0->f_123c != -1)
+	{
+		f_ab0->f_123c = -1;
+		f_ab0->ev108(2);									// its element +0x128: the engine sound
+	}
+}
+
+// --------------------------------------------------------------------------- C3DPlayer's slots
+
+void C3DJimmy::JetpackOn(int a)								// 0x429970
+{
+	C3DPlayer::JetpackOn(a);								// (the empty 0x4732a0)
+	MenuGadgetBarShow(f_a18);								// +0x484
+	if (f_a3c == -1) f_a3c = PlayGameSoundIndex(-1, 1, true);
+}
+
+void C3DJimmy::JetpackOff(void)								// 0x429910
+{
+	f_1e64 = 0;
+	f_1e68 = 0;
+	if (g_4f0588 != 2) MenuGadgetBarHide(f_a18);			// +0x488
+	if (f_a3c != -1)
+	{
+		StopGameSound(f_a3c, false);
+		f_a3c = -1;
+	}
+}
+
+void C3DJimmy::StepSoundOn(void)							// 0x4299d0
+{
+	if (f_a44 == -1) f_a44 = PlayGameSoundIndex(-1, static_cast<CJimmyGame *>(g_gametype)->m_surface_sound, true);	// the level's footsteps (+0x54c)
+}
+
+void C3DJimmy::StepSoundOff(void)							// 0x429a00
+{
+	if (f_a44 != -1)
+	{
+		StopGameSound(f_a44, false);
+		f_a44 = -1;
+	}
+}
+
+void C3DJimmy::TouchedShock(OMedia3DVector plane)			// 0x42a7e0
+{
+	if (f_1e60 > 0 || f_1ded) return;
+	PlayAnim((char *)"SPLAT");
+	f_1ded = 1;
+	f_1de8 = 0;
+	f_1df0 = plane;
+	f_6c8 = 0;
+	AddEnergy(-5.0f);										// 0x42a920
+	ScoreAdd(-5);											// 0x42adc0
+	PlayGameSoundIndex(-1, 0x25, false);
+}
+
+void C3DJimmy::TouchedHurt(void)							// 0x42a8d0
+{
+	if (f_1dec || g_4f0588 == 0) return;					// (not in the bubble)
+	f_1dec = 1;
+	f_1de8 = 0;
+	AddEnergy(-5.0f);
+	ScoreAdd(-5);
+	JetpackFall();											// element +0x1e0
 }

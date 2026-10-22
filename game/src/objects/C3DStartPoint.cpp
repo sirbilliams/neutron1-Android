@@ -35,16 +35,16 @@ static C3DPlayer *Player(CGameObject *o)	{ return o ? dynamic_cast<C3DPlayer *>(
 static const char *PlayerStartPoint(CGameObject *player)
 {
 	C3DPlayer *p = Player(player);
-	return p ? p->f_9c8 : "";
+	return p ? p->f_724 : "";
 }
 static unsigned char PlayerReturnFlag(CGameObject *player)
 {
 	C3DPlayer *p = Player(player);
-	return p ? p->f_b88 : 0;
+	return p ? p->f_954 : 0;
 }
 static void PlayerClearReturnFlag(CGameObject *player)
 {
-	if (C3DPlayer *p = Player(player)) p->f_b88 = 0;
+	if (C3DPlayer *p = Player(player)) p->f_954 = 0;
 }
 
 // --------------------------------------------------------------------------- construction

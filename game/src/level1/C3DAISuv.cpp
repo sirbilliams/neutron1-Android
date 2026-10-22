@@ -30,7 +30,7 @@ static CGameObject *FindObjectByTag(const char *tag)
 static const char *StartPointOf(CGameObject *jim)
 {
 	C3DPlayer *p = dynamic_cast<C3DPlayer *>(jim);
-	return p ? p->f_9c8 : NULL;
+	return p ? p->f_724 : NULL;
 }
 
 // The driver of the jeep (+0x69c of its element) / rocket ship (+0x740; +0x69c checked):

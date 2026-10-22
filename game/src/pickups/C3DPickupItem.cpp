@@ -1,6 +1,7 @@
 /*  C3DPickupItem - see C3DPickupItem.h. Reconstructed from Neutron.exe 0x4358b0..0x436970. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
+#include "../C3DJimmy.h"
 #include "C3DPickupItem.h"
 #include "../C2DInGameMenu.h"
 #include "../CGameType.h"
@@ -122,7 +123,7 @@ static void OpenInGameMenu(int page)
 }
 
 // Jimmy's element slots used by the tagged pickups (C3DJimmy is reconstructed elsewhere).
-static void JimmySlot122(CGameObject *jim)	{ (void)jim; NEG_TODO(0x42af00, "C3DJimmy element +0x1e8"); }
+static void JimmySlot122(CGameObject *jim)	{ if (C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL) j->SaveCheckpoint(); }	// element +0x1e8
 static void JimmySelect(CGameObject *jim, short gadget)	{ (void)jim; (void)gadget; NEG_TODO(0x428d50, "C3DJimmy element +0x174: select a gadget"); }
 static void JimmySlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element +0x178"); }
 

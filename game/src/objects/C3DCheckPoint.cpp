@@ -125,6 +125,9 @@ void C3DCheckPoint::WriteState(OMediaStreamOperators &s)	// N2:0x427510
 	s << m_always_autosave;
 }
 
+// The checkpoint Jimmy last touched (Negatron kept it in Jimmy +0x4c04).
+static CGameObject *s_last_checkpoint = NULL;
+
 // N2:0x4274a0: Jimmy's checkpoint sends Goddard again.
 void C3DCheckPoint::ReadState(OMediaStreamOperators &s)
 {
@@ -134,7 +137,7 @@ void C3DCheckPoint::ReadState(OMediaStreamOperators &s)
 	m_checked = checked;
 	CGameObject *jim = FindObjectByTag("JIM1");
 	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// (JIM1 game object +0x4b44)
-	if (j && j->f_4c04 == static_cast<CGameObject *>(this)) SendGoddard();	// element +0xdc
+	if (j && s_last_checkpoint == static_cast<CGameObject *>(this)) SendGoddard();	// element +0xdc
 	s >> m_always_autosave;
 }
 
@@ -150,11 +153,10 @@ void C3DCheckPoint::Touched(CGameObject *who)
 	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// port: the original writes into any JIM1
 	if (j)
 	{
-		j->f_4c04 = static_cast<CGameObject *>(this);		// game object +0x4b44
+		s_last_checkpoint = static_cast<CGameObject *>(this);	// port: Negatron's Jimmy +0x4b44 (TODO(BG): no such member in Neutron.exe's Jimmy)
 		float r[4];
 		jim->v201(r);										// +0x324: his rotation
-		j->f_4d80.x = r[0]; j->f_4d80.y = r[1]; j->f_4d80.z = r[2]; j->f_4d80.w = r[3];
-		if (m_camera_type != -1) j->f_c1c = m_camera_type;
+		(void)r;											// TODO(BG): Negatron's Jimmy +0x4d80 rotation / +0xc1c camera type
 		float pos[4], rot[4], p[4];
 		who->v195(pos);										// +0x30c: where who is
 		v195(p);
@@ -167,19 +169,18 @@ void C3DCheckPoint::Touched(CGameObject *who)
 		}
 		if (m_reset_when_damaged != -1)
 		{
-			j->f_4dac = m_reset_when_damaged;
+			// TODO(BG): Negatron's Jimmy +0x4dac
 			// (debug log "MEBTEMP ResetWhenDamaged= %d")
 		}
 		if (m_fall_speed_damage != -1.0f)
 		{
 			// (debug logs "MEBTEMP 1 / 2 FallSpeedDamage= %d")
-			j->f_4db0 = m_fall_speed_damage;
+			// TODO(BG): Negatron's Jimmy +0x4db0
 		}
 		SaveTask("autosave.tsk");							// N2:0x4983f0
 		who->v202(rot[0], rot[1], rot[2], rot[3]);			// back as it was
 		who->v196(pos[0], pos[1], pos[2], pos[3]);
-		j->f_4c98 = 0;										// game object +0x4bd8
-		j->f_4c94 = 0;										// +0x4bd4
+		// (Negatron's Jimmy +0x4c98 / +0x4c94 = 0: TODO(BG))
 		g_N2_5461cc = 0;
 		if (m_checkpoint_num != -1) g_checkpoint_num = m_checkpoint_num;
 	}

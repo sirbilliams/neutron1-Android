@@ -33,7 +33,7 @@ static void JimmyLoadLevel(C3DPlayer *p, const char *level, const char *start, c
 {
 	char l[100], s[100], rl[100], rs[100];
 	strcpy(l, level); strcpy(s, start); strcpy(rl, ret_level); strcpy(rs, ret_start);
-	p->n2_ev121(l, s, rl, rs, 0);							// TODO(E): Neutron.exe's slot 90 (4 strings)
+	p->PlayerLoadLevel(l, s, rl, rs);						// element slot 90 (+0x168)
 }
 
 // C3DJimmy element slots 94 (+0x178: put the item in hand away) and 95 (+0x17c). Weak: C3DJimmy
@@ -137,14 +137,14 @@ void CLoadLevel::ev55(CGameObject *who, char *game, char *start)
 	C3DPlayer *p = PlayerOf(who);
 	if (g_camera)
 	{
-		if (p) p->f_a99 = 0;								// +0x7fc
+		if (p) p->f_7fc = 0;								// +0x7fc
 		g_editor->f_7f8 = 1;
 	}
 	StopAllChannels();										// 0x47d850
 	if (p)
 	{
-		strcpy(p->f_9c8, start);							// +0x724
-		strcpy(p->f_a18, start);							// +0x774
+		strcpy(p->f_724, start);							// +0x724
+		strcpy(p->f_774, start);							// +0x774
 	}
 	// (debug log "Calling LoadLevel with startpoint %s for %s touched by %s")
 	ev54();
@@ -152,7 +152,7 @@ void CLoadLevel::ev55(CGameObject *who, char *game, char *start)
 	if (g_camera && g_camera->NameContains((char *)"C3DJIMMY"))
 	{
 		neg::JimmyElementSlot95(g_camera);					// element +0x17c
-		if (C3DPlayer *c = PlayerOf(g_camera)) c->ev82();	// element +0x148
+		if (C3DPlayer *c = PlayerOf(g_camera)) c->StepSoundOff();	// element +0x148
 	}
 	if (m_sound_index != -1) SetChannelVolume((short)PlaySoundIndex(-1, m_sound_index, false), g_sfx_volume);	// 0x47d390, 0x47dc80
 }
@@ -200,9 +200,9 @@ void CLoadLevel::AddTouching(CGameObject *other)
 	{
 		// "MENTEMP hit a RETURN loadpoint returning"
 		neg::JimmyElementSlot94(other);						// element +0x178
-		p->f_b88 = 1;										// +0x954
-		p->f_bd9 = 1;										// +0x9a5
-		JimmyLoadLevel(p, p->f_c25, p->f_b24, p->f_c25, p->f_b24);	// element +0x168
+		p->f_954 = 1;										// +0x954
+		p->f_9a5 = 1;										// +0x9a5
+		JimmyLoadLevel(p, p->f_88c, p->f_8f0, p->f_88c, p->f_8f0);	// element +0x168
 		if (m_sound_index != -1) SetChannelVolume((short)PlaySoundIndex(-1, m_sound_index, false), g_sfx_volume);
 		other->v176(0.0f, 0.0f, 0.0f);						// vtable +0x2c4: stop
 		return;
@@ -216,7 +216,7 @@ void CLoadLevel::AddTouching(CGameObject *other)
 			break;
 	}
 	ev54();													// element +0xd8
-	JimmyLoadLevel(p, m_level_name, m_start_point, p->f_b89, p->f_9c8);
+	JimmyLoadLevel(p, m_level_name, m_start_point, p->f_955, p->f_724);
 	if (m_sound_index != -1) SetChannelVolume((short)PlaySoundIndex(-1, m_sound_index, false), g_sfx_volume);
 	if (m_fade_type != -1)
 	{
