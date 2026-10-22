@@ -577,7 +577,7 @@ void OMediaGLCanvas::create_subimage(OMediaCanvas *canv, int w, int h, bool new_
 	}
 
 	src->unlock();
-	delete temp_buffer;
+	delete [] temp_buffer;			// (allocated with new [])
 	delete hd_resampled;
 	if (ks) glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

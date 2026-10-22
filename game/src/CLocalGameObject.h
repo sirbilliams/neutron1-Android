@@ -19,7 +19,7 @@ class CLocalGameObject : public CGameObject
 	virtual void ResetObject(void);											// SLOT 10 0x4587f0
 	virtual void InitPhysics(void);											// SLOT 11 0x458910
 	virtual void UnInitDatabases(void);										// SLOT 13 0x458c50
-	virtual unsigned char v133(void);										// SLOT 134 N2:0x48f010
+	virtual unsigned char v133(void);										// SLOT 134 0x458960
 	virtual void AddRotation(float x, float y, float z);					// SLOT 205 0x458f90
 	virtual void Process(float dt);											// SLOT 241 0x458930
 	virtual void v265(float a, float b, float c, float d);					// SLOT 263 0x4588d0
