@@ -184,10 +184,10 @@ void CGameType::UnInitDatabases(void)										// 0x474a80
 
 void CGameType::Process(float dt)											// 0x475a70
 {
+	g_509aec = UpdateInput();												// 0x478530: the joystick poll
 	CLocalGameObject::Process(dt);
-	ev76();									// element vtable +0x130
-	if (g_camera && (!g_5099ab || g_4f641c))	// GameIsRunning() inline
-		g_camera->v243(dt);					// vtable +0x3cc
+	ev76();																	// element +0x128 (empty)
+	if (g_camera) g_camera->v243(dt);										// vtable +0x3cc
 }
 
 void CGameType::SetID(int id)												// 0x474790
@@ -430,18 +430,20 @@ void CGameType::SetTerrainLit(void)				{ ForEachTerrainShape(ApplyLight, ommlmc_
 void CGameType::SetTerrainVertexLit(void)		{ ForEachTerrainShape(ApplyLight, ommlmc_VertexColor); }	// 0x475c00 -> 0x4775f0
 void CGameType::SetTerrainUnLit(void)			{ ForEachTerrainShape(ApplyUnLit, 0); }					// 0x475c50 -> 0x477550
 
-void CGameType::PauseGame(bool pause)										// 0x475a00
+void CGameType::PauseGame(bool pause)										// 0x475a00: only logs
 {
 	Log("PauseGame(%d)", (int)pause);
+	// port: Negatron's pause flag, read by IsPaused (Neutron.exe has neither; the game stops
+	// through CJimmyGame::StopGame, slot 90). Kept until the menu (agent F) is Neutron.exe's.
 	g_game_paused = pause;
 }
 
-bool CGameType::IsPaused(void)												// 0x475a30
+bool CGameType::IsPaused(void)												// port: Negatron's N2:0x4b0a40 (no such slot in Neutron.exe)
 {
 	return g_game_paused;
 }
 
-void CGameType::ev70(void)													// N2:0x4b0a50 (InitGame clears it; C3DCar/C3DVehicle test it)
+void CGameType::ev70(void)													// 0x475a30 (BG slot 69; InitGame clears it; C3DCar/C3DVehicle test it)
 {
 	g_5099a9 = 1;
 }

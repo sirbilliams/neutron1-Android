@@ -68,7 +68,10 @@ void CAweReal::listen_to_message(omt_Message msg, void *param)
 			SDL_Log("omsg_DeActivate");
 			if (!g_minimized)
 			{
-				if (g_gametype) g_gametype->PauseGame(true);	// vtable +0x110
+				// vtable +0x110: in Neutron.exe no game type overrides it and it only logs. port: called
+				// as CGameType's, as Negatron's CJimmyGame override (still used by the menu) would
+				// really pause the game.
+				if (g_gametype) g_gametype->CGameType::PauseGame(true);
 				g_minimized = 1;
 			}
 			break;
@@ -77,7 +80,7 @@ void CAweReal::listen_to_message(omt_Message msg, void *param)
 			SDL_Log("omsg_Activate");
 			if (g_minimized)
 			{
-				if (g_gametype) g_gametype->PauseGame(false);
+				if (g_gametype) g_gametype->CGameType::PauseGame(false);
 				g_minimized = 0;
 			}
 			break;
