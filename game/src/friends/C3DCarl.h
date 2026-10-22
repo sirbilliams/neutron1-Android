@@ -1,50 +1,33 @@
-/*  C3DCarl ('3CAR') - Carl, an OMT morph friend (.ase animations, texture "carl.png"). In the
-    museum level LV5C he is the giant Carl (giantcarl*.ase) walking about: water balloons that
-    hit him in the face feed him (EAT, a hunger bar over his head), the others bounce off; once
-    fed enough (f_1f84 >= 100) he SHRINKs, and the end of SHRINK calls the CARLSHRINK trigger.
-    His walk shakes Jimmy's camera at two steps (BOOM1 / BOOM2). In LV5F he is small Carl
-    (SMALLSTOP / RUN).
-    Reconstructed from Neutron.exe: constructor N2:0x425840 (factory '3CAR', 0x1f98 bytes),
-    destructor 0x413ca0 (deleting thunks 0x413c70 / 0x414160 / 0x414170 / 0x414180).
+/*  C3DCarl ('3CAR') - Carl: a morph friend (.ase animations WALK, TALK, TELE, CHEER, INHALE,
+    STOP; texture "carl.png"), waiting (AIState 1) at speed 200, VisibleRange 500; he walks
+    where the others run. Where he shows depends on the level and the story (v267): in
+    Retroville while SCENE is 60..89, in LEV2 at 270..289, in LEV3 at 380..389, in the lab
+    (LV1B) up to 59 (from 31 at "CARLESC3", state 6), in LV4A from 500, elsewhere always.
+    Talking to him (ev145): SCENE 50 -> 60, 65 -> 70 (and he moves to "CARL8"), 270 -> 280.
+    Reconstructed from Neutron.exe: constructor 0x413af0 (factory '3CAR', 0xbb0 bytes),
+    destructor 0x413ca0 ("Delete C3DCarl" (debug log), then ~C3DFriends; deleting thunks
+    0x413c70 / 0x414160 / 0x414170 / 0x414180).
 
-    Original layout: as C3DFriends (element vtable 0x495804, 147 slots: 58, 67, 69 overridden;
-    listener 0x4957f0; OMediaAnim 0x4957b4; CLocalGameObject vtable 0x495364 at +0xc0), own
-    members 0x1d74..0x1f8c, vtordisp 0x1f90, streamer 0x1f94.
-
-    Element-family slots are `ev<n>` (`// ESLOT n`); members are f_<offset in the original
-    object> (CGameObject-family code of the original sees them at offset - 0xc0).            */
+    Original layout: as C3DFriends (element vtable 0x495804, 98 slots, 67 and 96 overridden;
+    listener 0x4957f0; OMediaAnim 0x4957b4; CLocalGameObject vtable 0x495364 at +0xc0: 7, 8,
+    259, 264, 265 overridden), no members of its own. Slot 259 is 0x42d010, a jump to
+    C3DAI's. Element slots are named by their Negatron numbers (67 = ev69, 96 = ev145).      */
 #pragma once
 #include "C3DFriends.h"
-#include "../InterfaceElement.h"
 
 class C3DCarl : public C3DFriends
 {
 	public:
-	C3DCarl();																// N2:0x425840
+	C3DCarl();																// 0x413af0
 	virtual ~C3DCarl();														// 0x413ca0
 
 	// ---- element-family slots
-	virtual void ev58(char *name, unsigned char loop);						// ESLOT 58 N2:0x4268f0 GROW / KONG / WALK move the shadow away
-	virtual void ev67(void);												// ESLOT 67 N2:0x4267e0 animation ended: WALK again, SHRINK -> CARLSHRINK
-	virtual void ev69(void);												// ESLOT 69 N2:0x425be0 load the morph animations and the texture (once)
+	virtual void ev69(void);												// ESLOT 67  0x413d60 load the animations and the texture (once)
+	virtual void ev145(void);												// ESLOT 96  0x413e50 talked to: the next SCENE step
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   0x418290
+	virtual void InitObject(void);											// SLOT 7   0x415090
 	virtual void UnInitObject(void);										// SLOT 8   0x413d30
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x425e90 water balloons: eat or bounce
-	virtual void Process(float dt);											// SLOT 240 N2:0x426380 steps, the hunger bar
-	virtual void v260(void);												// SLOT 260 N2:0x425da0 properties loaded
-	virtual void v266(void);												// SLOT 266 0x419aa0
-	virtual void v267(int level);											// SLOT 267 N2:0x425e60 C3DAnimated's, then ev70(1)
-	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x4269e0 + f_1f84
-	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x4269b0 + f_1f84
-
-	// ---- data members (object offsets)
-	unsigned char		f_1d74;			// 0x1d74 BOOM1 done this walk cycle (shake at 0.35 s)
-	unsigned char		f_1d75;			// 0x1d75 BOOM2 done this walk cycle (shake at 1.7 s)
-	CGameObject			*f_1d78;		// 0x1d78 "JIM1" (v260): whose camera the steps shake
-	InterfaceElt		f_1d7c;			// 0x1d7c hunger bar frame (screens canvas 411)
-	InterfaceElt		f_1e80;			// 0x1e80 hunger bar (screens canvas 359, width f_1f84 / 2)
-	float				f_1f84;			// 0x1f84 how much he has eaten (100: SHRINK)
-	float				f_1f88;			// 0x1f88 time left eating (8 s), the bar shows meanwhile
+	virtual void v266(void);												// SLOT 264 0x413eb0 task state; at SCENE 70 to "CARL8"
+	virtual void v267(int level);											// SLOT 265 0x413f30 shown by level and SCENE
 };
