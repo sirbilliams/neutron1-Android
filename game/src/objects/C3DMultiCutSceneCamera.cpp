@@ -18,6 +18,9 @@
 #pragma GCC diagnostic pop
 #include "OMediaViewPort.h"
 #include <stdint.h>
+#include <stdlib.h>
+#include <SDL.h>
+#include "../SaveGame.h"
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -238,6 +241,7 @@ void C3DMultiCutSceneCamera::Process(float dt)
 void C3DMultiCutSceneCamera::TriggerCamera(void)
 {
 	// (debug log "TC %s")
+	if (getenv("NEG_TRIGGER_TRACE")) SDL_Log("[trigger] TC %s (SCENE=%d)", m_tag, GetTaskState("SCENE"));	// port
 	m_shot = 0;
 	if (m_deactivate_inv)
 	{

@@ -305,7 +305,9 @@ void C3DJimmy::v260(void)									// 0x423610
 				f_7f8->link_layer(g_layer_world);				// element +0x34
 				f_7f8->InitPhysics();
 			}
-			OMedia3DVector p = Pos(sp);
+			float sp4[4];
+			sp->v88(sp4);										// +0x164: its (loaded) position
+			OMedia3DVector p(sp4[0], sp4[1], sp4[2], sp4[3]);
 			f_1e0c.set(p.x, p.y, p.z, p.w);
 			v196(p.x, p.y, p.z, p.w);							// +0x314
 			v90(p.x, p.y, p.z);									// +0x16c

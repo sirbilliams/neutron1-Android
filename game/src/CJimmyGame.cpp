@@ -281,6 +281,8 @@ void CJimmyGame::Process(float dt)											// N2:0x484260
 	}
 	if (g_voice_channel != -1 && !IsChannelPlaying(g_voice_channel)) g_voice_channel = -1;
 	UpdateTimers(dt);														// element +0x17c
+	// 0x44df80 (Boy Genius): last, Jimmy's gadget keys and PDA menu input (his element slot 128)
+	if (C3DJimmy *j = g_4f83d8 ? dynamic_cast<C3DJimmy *>(g_4f83d8) : NULL) j->ProcessGadgets(dt);
 }
 
 // N2:0x484640: per frame while the editor is editing (CGameObject::v4): no fog, grey clear colour,

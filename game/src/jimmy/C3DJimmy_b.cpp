@@ -19,7 +19,7 @@ void JimmyStopLoopSound(C3DJimmy *j)			{ j->StepSoundOff(); }			// slot 82
 void JimmySelectGadget(C3DJimmy *j, short g)	{ j->ActivateGadget(g); }		// slot 93
 void JimmyLeaveMenu(C3DJimmy *j)				{ j->DeactivateGadget(); }		// slot 94
 short JimmyMove7e8(C3DJimmy *j)				{ return j->f_7e8; }
-void JimmyHideA10(C3DJimmy *j)					{ if (j->f_a10) j->f_a10->HideAgain(); }
+void JimmyHideA10(C3DJimmy *j)					{ if (j->f_a10) Hide(j->f_a10); }
 }
 
 // The bubble (C3DBubble, Jimmy's f_a14; agent: not reconstructed yet, element +0x614..0x616).
