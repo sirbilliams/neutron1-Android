@@ -1,6 +1,6 @@
 /*  The game types of the level 3 maps:
         CLevel03Game   'LEV3'  level3.gam   level3.omt unlit, blue fog
-        CLevel03AGame  'LV3A'  level3a.gam  level3A.omt lit, a blue sky that is hidden, light blue fog
+        CLevel03AGame  'LV3A'  level3a.gam  level3A.omt lit, sky "nightsky", dark fog
         CLevel03BGame  'LV3B'  level3b.gam  level3B.omt lit, blue fog
         CLevel03CGame  'LV3C'  level3c.gam  level3c.omt unlit, sky "skylevel5", grey fog
         CLevel03DGame  'LV3D'  level3d.gam  level3D.omt unlit, grey fog

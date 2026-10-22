@@ -14,9 +14,9 @@ class C3DSpriteType : public C3DSprite
 	virtual ~C3DSpriteType();												// SLOT 0  0x441a60 (thunks 0x441b90 / 0x441a30 / 0x441ba0)
 
 	virtual void AddTouching(CGameObject *other);										// SLOT 16 0x43cf10 (= CGameObject's)
-	virtual void Process(float dt);											// SLOT 240 0x40ff40 (= C3DSprite's)
-	virtual void v242(float t);												// SLOT 242 N2:0x473570 show again
-	virtual void v260(void);												// SLOT 260 0x464810 (re)load the sprite canvas, canvas flags 1
+	virtual void Process(float dt);											// SLOT 241 0x40ff40 (= C3DSprite's)
+	virtual void v242(float t);												// SLOT 242 0x441aa0 shows a hidden sprite again
+	virtual void v260(void);												// SLOT 259 0x441ac0 (re)load the sprite canvas, canvas flags 3
 	virtual void v282(OMediaMatrix_4x4 &m, float *w, float *h);				// SLOT 282 N2:0x473630 layer's projection matrix
 
 #include "gen/C3DSpriteType_slots.inc"

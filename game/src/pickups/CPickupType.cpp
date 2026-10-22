@@ -48,7 +48,7 @@ void CPickupType::v242(float t)								// 0x45f280
 
 void CPickupType::v260(void)								// 0x45f1f0
 {
-	C3DSpriteType::v260();									// 0x464810
+	C3DSprite::v260();									// 0x464810
 	CJimmyGame *g = static_cast<CJimmyGame *>(g_gametype);	// every level game type is one
 	m_pickup_index = g->NextPickupIndex();					// element +0x160
 	// (debug log "PostLoad::PI=%d")

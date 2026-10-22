@@ -113,7 +113,7 @@ void C3DStartPoint::Process(float dt)
 	if (!o->NameContains((char *)"C3DTRIGGERTYPE")) return;
 	g_gametype->SetCamera(NULL);							// element +0x118
 	// port: the original's slot (element +0xd4) takes the name only; C3DTriggerType still has Negatron's flag
-	static_cast<C3DTriggerType *>(o)->CallNextTrigger(m_start_trigger, 0);
+	static_cast<C3DTriggerType *>(o)->CallNextTrigger(m_start_trigger);
 }
 
 void C3DStartPoint::v258(void)								// 0x442700

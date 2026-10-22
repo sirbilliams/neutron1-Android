@@ -267,7 +267,7 @@ void C3DDino::AddTouching(CGameObject *other)				// N2:0x42c4e0 (does not call t
 	}
 	f_1d78 = 0.3f;											// shock flash
 	C3DSprite *ball = dynamic_cast<C3DSprite *>(other);		// (other - 0xc8)
-	if (ball) ball->HideAgain();							// element +0xd8 (port: checked)
+	if (ball) ball->hide(true);								// element +0x58 (port: checked)
 	PlayGameSound(-1, std::string("SPLASH"), false);		// 0x40acc0, 0x458b40
 	PlayGameSound(-1, std::string("balloon pop"), false);
 	other->v132(0);											// +0x210
@@ -356,7 +356,7 @@ void C3DDino::Process(float dt)								// N2:0x42c850
 					C3DJimmy *j = Jimmy();					// g_jimmy - 0xc0 (not checked)
 					(void)j;	// TODO(BG): N2 hid C3DJimmy +0xd40 (C3DRadar) here
 					C3DTriggerType *trig = dynamic_cast<C3DTriggerType *>(t2);	// (t2 - 0xc8)
-					if (trig) trig->CallNextTrigger("KILLDINOS", 0);	// element +0xdc
+					if (trig) trig->CallNextTrigger("KILLDINOS");	// element +0xdc
 				}
 			}
 		}

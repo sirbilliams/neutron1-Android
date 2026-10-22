@@ -78,7 +78,7 @@ void C3DCheckPoint::InitObject(void)						// 0x414aa0
 
 void C3DCheckPoint::AddTouching(CGameObject *other)			// N2:0x426fb0
 {
-	C3DSpriteType::AddTouching(other);						// 0x43cf10
+	CGameObject::AddTouching(other);						// 0x43cf10
 	if (other != g_camera) return;
 	if (g_game_mode == 5)									// playing
 	{
@@ -96,12 +96,12 @@ unsigned char C3DCheckPoint::v231(CGameObject *other)		// N2:0x43d610
 
 void C3DCheckPoint::Process(float dt)						// N2:0x426fa0
 {
-	C3DSpriteType::Process(dt);								// 0x40ff40
+	C3DSprite::Process(dt);								// 0x40ff40
 }
 
 void C3DCheckPoint::v260(void)								// N2:0x427470
 {
-	C3DSpriteType::v260();									// 0x464810
+	C3DSprite::v260();									// 0x464810
 	v67((float)m_sprite_size);								// +0x10c
 	m_checked = 0;
 	g_checkpoint_num = 0;									// N2:0x545f38

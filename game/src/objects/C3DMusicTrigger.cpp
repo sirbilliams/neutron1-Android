@@ -72,7 +72,7 @@ void C3DMusicTrigger::InitObject(void)						// 0x431c50
 
 void C3DMusicTrigger::AddTouching(CGameObject *other)		// 0x431dc0
 {
-	C3DSpriteType::AddTouching(other);						// 0x43cf10
+	CGameObject::AddTouching(other);						// 0x43cf10
 	if (other == g_camera) Trigger();						// element +0xe0
 }
 
@@ -84,7 +84,7 @@ unsigned char C3DMusicTrigger::v231(CGameObject *other)		// N2:0x45ce70
 
 void C3DMusicTrigger::v260(void)							// 0x431d80
 {
-	C3DSpriteType::v260();									// 0x464810
+	C3DSprite::v260();									// 0x464810
 	if (m_touch_activated == 0) v136(0);					// +0x220
 	if (m_touch_activated == 1) v136(1);
 }

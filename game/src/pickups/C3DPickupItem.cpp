@@ -304,7 +304,7 @@ void C3DPickupItem::AddTouching(CGameObject *other)			// 0x435ce0
 		AddPoints(m_point_value);							// 0x42adc0
 		v136(0);
 	}
-	if (strcasecmp(m_next_trigger, "none") != 0) CallNextTrigger(m_next_trigger, 0);	// element +0xd4
+	if (strcasecmp(m_next_trigger, "none") != 0) CallNextTrigger(m_next_trigger);	// element +0xd4
 	if (!m_is_ambient)
 	{
 		if (m_times_to_trigger != -1 && m_times_triggered >= m_times_to_trigger) return;

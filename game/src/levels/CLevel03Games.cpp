@@ -61,17 +61,22 @@ void CLevel03AGame::InitGame(void)											// 0x451890
 	CJimmyGame::InitGame();
 	InitTerrainDatabase("level3A.omt");
 	v107(0);
-	CreateTerrain();										// element +0xf4 (lit)
-	m_sky = CreateSky();
-	SkyLoad(m_sky, "omt\\bluesky3.omt", false);				// sky element +0xe8
-	m_sky->place(0.0f, 0.0f, 0.0f);
-	m_sky->InitPhysics();									// (empty for a C3DSky)
-	m_sky->v67(1.0f);										// radius
-	m_sky->v152(1.0f);
-	m_sky->ev51();											// element +0xcc
-	m_sky->HideAgain();										// element +0xdc: the sky is not drawn
+	CreateTerrain();										// element +0xf8 (lit)
+	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL
+	SkyLoad(sky, "omt\\nightsky.omt", false);				// sky element +0xe0
+	sky->place(0.0f, 0.0f, 0.0f);
+	sky->InitPhysics();										// (empty for a C3DSky)
+	sky->v67(1.0f);											// radius
+	sky->v152(1.0f);
+	sky->ev51();											// element +0xcc
 	ViewportToOrigin();
-	SetFog(0.3f, 0.76f, 0.85f, 0.0f, 500.0f, 9500.0f, 11500.0f, true);
+	const OMediaFARGBColor c = RGBA(0.1f, 0.1f, 0.1f, 0.0f);
+	g_layer_clear->set_fog_color(c);						// 0x509a38 (no clear colour here)
+	WorldFog(g_layer_world, c, 80000.0f, 30000.0f, 71000.0f);	// (0x509a3c)
+	// port: the fog values SetFog keeps for the focus-regained refog (the original leaves them unset).
+	m_fog_color[0] = 0.1f; m_fog_color[1] = 0.1f; m_fog_color[2] = 0.1f; m_fog_color[3] = 0.0f;
+	m_fog_start = 30000.0f; m_fog_end = 71000.0f; m_far_clip = 80000.0f;
+	m_fog_restore[0] = m_fog_start; m_fog_restore[1] = m_fog_end; m_fog_restore[2] = m_far_clip;
 	CaptureMouse(true);
 }
 

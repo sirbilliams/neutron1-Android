@@ -71,7 +71,7 @@ void C3DBalloon::AddTouching(CGameObject *other)			// 0x40f9b0
 	}
 	if (!other->NameContains((char *)"C3DBASEBALL") && !other->NameContains((char *)"C3DROCKET"))
 		return;
-	HideAgain();											// element +0xd8
+	hide(true);												// element +0x58 (slot 22)
 	int bonus = 0;
 	if (g_camera)
 	{
