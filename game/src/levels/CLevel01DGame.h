@@ -1,12 +1,15 @@
-/*  CLevel01DGame ('LV1D') - the game type of level1d.gam, Retroville by night: the first level a
-    new game loads. Sky "skylevel1d", terrain level1d.omt unlit, black fog from 120000.
+/*  CLevel01DGame ('LV1D') - the game type of level1d.gam, the opening in space (the Yokian
+    fleet): the first level a new game loads. Sky "omt\\space.omt", terrain level1d.omt (lit),
+    far plane 120000, no fog. Its cut-scene chain (ZOOM1 .. bt1f) ends in the CLoadLevel
+    GOTOLAB: level1b.gam (Jimmy's lab) at STARTEXP.
     Reconstructed from Neutron.exe: constructor 0x44f920, destructor 0x44fa40 (deleting
     thunks 0x44fcb0 / 0x44fa10 / 0x44fcc0), vtables 0x4c48b0 (element) / 0x4c489c / 0x4c444c
     (game object) / 0x4c443c. 0x68c bytes: CJimmyGame's layout, no members of its own.
 
     The constructor of every level game type does the same: name, InitObject (which runs
     InitGame through the vtable), the level's 4cc and the pickup index base (NextPickupIndex).
-    It sets the base after InitGame, so its value wins over CJimmyGame::InitGame's 100.      */
+    It sets the base after InitGame, so its value wins over CJimmyGame::InitGame's 100.
+    Verified against Boy Genius (InitGame ported).                                            */
 #pragma once
 #include "../CJimmyGame.h"
 

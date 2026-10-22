@@ -38,17 +38,20 @@ void CLevel01DGame::InitGame(void)											// 0x44fb00
 	v107(0);												// not written to the .gam (f_00b)
 
 	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL (no sky rotation)
-	SkyLoad(sky, "omt\\skylevel1d.omt", false);				// sky element +0xe8
+	SkyLoad(sky, "omt\\space.omt", false);				// sky element +0xe0 (BG slot 56)
 	sky->place(0.0f, 0.0f, 0.0f);
 	sky->InitPhysics();										// (empty for a C3DSky)
-	sky->v67(1.0f);											// radius
-	sky->v152(1.0f);
+	sky->v67(1.0f);											// radius (BG +0x110)
+	sky->v152(1.0f);										// (BG +0x264)
 	sky->ev51();											// element +0xcc
 
 	InitTerrainDatabase("level1d.omt");						// element +0xe4
-	CreateTerrainUnLit();									// element +0xf8
+	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 1.0f, 120000.0f, 130000.0f, 130000.0f, true);	// element +0x194
+	// Far plane 120000 and no fog (0x476910(layer, 0x800)), each set through both world-layer
+	// globals (0x509a30, 0x509a3c: the same layer).
+	g_layer_world->set_far_clip(120000.0f);					// 2002 +0xc0
+	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);										// 0x46a400
 	// (debug log)
 }

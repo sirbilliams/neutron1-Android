@@ -79,7 +79,7 @@ void CLevel01AGame::InitGame(void)											// 0x44f0e0
 
 // --------------------------------------------------------------------------- CLevel01BGame 'LV1B'
 
-CLevel01BGame::CLevel01BGame()												// 0x450000
+CLevel01BGame::CLevel01BGame()												// 0x44f300
 {
 	static char name[] = "CLEVEL01AGAME";		// sic: level 1a's name
 	SetName(name);
@@ -99,10 +99,13 @@ void CLevel01BGame::InitGame(void)											// 0x44f4b0
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);
-	InitTerrainDatabase("level1b.omt");
-	CreateTerrainUnLit();
+	InitTerrainDatabase("level1b.omt");					// element +0xe4
+	CreateTerrainTinted(1.0f, 1.0f, 1.0f, 1.0f);			// element +0x158 (BG slot 86)
 	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 1.0f, 10000.0f, 12000.0f, 12000.0f, true);
+	// Far plane 10000 (through both world-layer globals), fog off (through 0x509a3c only: the
+	// same layer).
+	g_layer_world->set_far_clip(10000.0f);					// 2002 +0xc0
+	SetLayerFog(g_layer_world, false);						// 0x476910(layer, 0x800)
 	CaptureMouse(true);
 }
 
