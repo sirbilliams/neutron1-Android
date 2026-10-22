@@ -173,7 +173,7 @@ void C3DYokDoor::v268(int state)							// 0x44a2a0 (BG slot 266)
 				static_cast<C3DAITrigger *>(next)->Trigger(this);				// BG: the direct call 0x40c300(this)
 			else if (next->NameContains((char *)"C3DCUTSCENECAMERA"))
 			{
-				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xd8 (BG slot 54)
+				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera();			// element +0xd8 (BG slot 54)
 			}
 		}
 	}

@@ -79,7 +79,8 @@ static void MultiCutSceneFire(CGameObject *next, CGameObject *caller, unsigned c
 }
 static void CutSceneCameraFire(CGameObject *next, unsigned char flag)
 {
-	static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(flag);		// element +0xe0
+	static_cast<C3DCutSceneCamera *>(next)->TriggerCamera();			// element +0xd8 (BG slot 54)
+	(void)flag;
 }
 // C3DFlyingCamera is a C3DObject (CGameObject at +0xc0): element slot 144 (+0x240).
 namespace neg { void FlyingCameraTrigger(CGameObject *o); }
