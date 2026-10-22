@@ -384,7 +384,7 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 	// first animation: a new morph definition, the next ones add a sequence to it
 	OMedia3DShapeConverter::set_anim_conv_mode_mode(first ? omc3danconv_AlwaysCreateNewMorphAnimDef : omc3danconv_AddSequence);
 	OMedia3DShapeConverter::set_object_convert_mode(omc3doconv_OneShapePerGroup);
-	m_db->generate_from_stream(fs, name[0] == 'L' ? f_58c : f_590);	// database vtable +0x2c: "LOW..." into the LOW shape
+	m_db->generate_from_stream(fs, name[0] == 'L' && f_58c ? f_58c : f_590);	// database vtable +0x2c; port: "LOW..." into the full shape while the LOW one (f_58c) is NULL
 	if (first) m_db->set_dbsize_dirty();					// +0x4c
 	fs.close();
 	// The original reads related_morphdefs[0] whether or not this file made a morph definition.
@@ -446,7 +446,7 @@ void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 	if (f_594 == 0 || f_594 == 1)
 	{
 		const float r = v151();								// the shape change below resets the radius
-		OMedia3DShapeElement::set_shape(f_594 == 0 ? f_590 : f_58c);
+		OMedia3DShapeElement::set_shape(f_594 == 0 || !f_58c ? f_590 : f_58c);	// port: the LOW shape is never loaded (NULL): the full one
 		FitToShape();										// element +0xc8
 		if (f_124 != 2) v152(r);							// not a box: keep the radius
 		strcpy(buf, f_594 == 0 ? "HI" : "LOW");				// 0x4ed3dc / 0x4ed3e0

@@ -102,11 +102,17 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   saves + CTaskList, C3DPlayer, C3DJimmy (+ jimmy/C3DJimmy_menu.cpp), both cut-scene cameras, the
   Yokians, lab and Level1 object classes (agents C/D lists in git log).
 - **Open (next session):**
-  - gen CGameObject::v197 (slot 198, 0x472330) drops z: ~30 callers (shadows, rocket, friends).
   - C3DGoddard is still Negatron logic (BG 0x41c810.., decompiled notes were in scratch).
   - C3DBubble, C3DBaseball, grappling hook swing/fire, merry-go-round / SUV slot 94.
   - The lab's black ball (Bill's screenshot); verify the scooter stays hidden after the intro.
-  - C3DObject; level game types sweep (VR03-VR08 missing); the .ase loader for the model viewer.
+  - C3DObject; the .ase loader for the model viewer.
+  - Level game types (agent A's comparison, nothing changed yet): wrong code in LV1C, LV1E (terrain,
+    sky), LEV2, LV2B (fog), LEV3, LV3A-E, LV4A, LV4B (fog + fog-sweep Process), LV4C (terrain call);
+    VR01 = VR02 with vr01.omt; VR03-08 = VR02 copies with vrNN.omt (pickup bases 3300-3800); wrong
+    pickup-index bases: LV1E 600, LEV5 2700, LV6A/LEV6/LEV7 2800/2900/3000, VR01-08 3100 + 100 each.
+    Remove Negatron-only L1_A/B/C, L5B1, LV5C, LV5F, LPRO; fog set inline (not CJimmyGame::SetFog);
+    regenerate gen/CLocalGameObject_* (still Negatron addresses).
+  - v197: A says the generated code already sets x, y, z (E's report may be stale): verify.
   - Exit-time use-after-free in C2DInGameMenu's destructor; OMT shape reader new[]/delete.
   - APK is signed with a one-off key until Bill adds NEG_KEYSTORE_B64 / NEG_KEYSTORE_PASSWORD to
     this repo's secrets (same values as neutron2-android).
