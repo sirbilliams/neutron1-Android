@@ -30,10 +30,20 @@ void CLevel03Game::InitGame(void)											// 0x452c20
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);												// not written to the .gam (f_00b)
+	LocalSky("omt\\nightsky.omt");							// a local: m_sky stays NULL
 	InitTerrainDatabase("level3.omt");
-	CreateTerrainUnLit();
+	v107(0);												// (again)
+	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
-	SetFog(0.05f, 0.227f, 0.533f, 0.0f, 500.0f, 10000.0f, 11500.0f, true);
+	const OMediaFARGBColor c = RGBA(0.24f, 0.56f, 0.75f, 0.0f);
+	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
+	g_layer_world->set_far_clip(40000.0f);					// 0x509a30
+	g_layer_world->set_fog_color(c);
+	g_layer_world->set_far_clip(40000.0f);					// 0x509a3c
+	g_layer_world->set_fog_color(c);
+	SetLayerFog(g_layer_clear, false);						// 0x476910(layer, 0x800)
+	SetLayerFog(g_layer_world, false);						// (0x509a3c)
+	SetLayerFog(g_layer_world, false);						// (0x509a30)
 	CaptureMouse(true);
 }
 
@@ -61,22 +71,33 @@ void CLevel03AGame::InitGame(void)											// 0x451890
 	CJimmyGame::InitGame();
 	InitTerrainDatabase("level3A.omt");
 	v107(0);
-	CreateTerrain();										// element +0xf8 (lit)
-	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL
-	SkyLoad(sky, "omt\\nightsky.omt", false);				// sky element +0xe0
-	sky->place(0.0f, 0.0f, 0.0f);
-	sky->InitPhysics();										// (empty for a C3DSky)
-	sky->v67(1.0f);											// radius
-	sky->v152(1.0f);
-	sky->ev51();											// element +0xcc
+	CreateTerrainUnLit();									// element +0xf8
+	LocalSky("omt\\nightsky.omt");
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.1f, 0.1f, 0.1f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 0x509a38 (no clear colour here)
-	WorldFog(g_layer_world, c, 80000.0f, 30000.0f, 71000.0f);	// (0x509a3c)
-	// port: the fog values SetFog keeps for the focus-regained refog (the original leaves them unset).
-	m_fog_color[0] = 0.1f; m_fog_color[1] = 0.1f; m_fog_color[2] = 0.1f; m_fog_color[3] = 0.0f;
-	m_fog_start = 30000.0f; m_fog_end = 71000.0f; m_far_clip = 80000.0f;
-	m_fog_restore[0] = m_fog_start; m_fog_restore[1] = m_fog_end; m_fog_restore[2] = m_far_clip;
+	WorldFog(g_layer_world, c, 80000.0f, 30000.0f, 70000.0f);	// (0x509a3c)
+	CaptureMouse(true);
+}
+
+// LV3B..LV3E: one copy of the same function each, differing in the terrain database only.
+// Fog colour only (the clear layer's and both world-layer globals'), far plane 40000, fog off.
+static void InitLevel3Night(CJimmyGame *game, const char *omt)
+{
+	game->Log("InitGame()");
+	game->CJimmyGame::InitGame();
+	game->InitTerrainDatabase(omt);
+	game->v107(0);
+	game->CreateTerrain();									// element +0xf4 (lit)
+	LocalSky("omt\\nightsky.omt");
+	ViewportToOrigin();
+	const OMediaFARGBColor c = RGBA(0.14f, 0.16f, 0.75f, 0.0f);
+	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
+	g_layer_world->set_far_clip(40000.0f);					// 0x509a30
+	g_layer_world->set_fog_color(c);
+	g_layer_world->set_far_clip(40000.0f);					// 0x509a3c
+	g_layer_world->set_fog_color(c);
+	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
 	CaptureMouse(true);
 }
 
@@ -100,14 +121,7 @@ void CLevel03BGame::UnInitObject(void)	{ CGameType::UnInitObject(); }		// 0x4513
 
 void CLevel03BGame::InitGame(void)											// 0x451c50
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level3B.omt");
-	v107(0);
-	CreateTerrain();
-	ViewportToOrigin();
-	SetFog(0.05f, 0.227f, 0.533f, 0.0f, 500.0f, 5000.0f, 7000.0f, true);
-	CaptureMouse(true);
+	InitLevel3Night(this, "level3B.omt");
 }
 
 // --------------------------------------------------------------------------- CLevel03CGame 'LV3C'
@@ -130,21 +144,7 @@ void CLevel03CGame::UnInitObject(void)	{ CGameType::UnInitObject(); }		// 0x4513
 
 void CLevel03CGame::InitGame(void)											// 0x452030
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level3c.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL
-	SkyLoad(sky, "omt\\skylevel5.omt", false);
-	sky->place(0.0f, 0.0f, 0.0f);
-	sky->InitPhysics();
-	sky->v67(1.0f);
-	sky->v152(1.0f);
-	sky->ev51();
-	ViewportToOrigin();
-	SetFog(0.71f, 0.75f, 0.76f, 0.0f, 1000.0f, 7000.0f, 10000.0f, true);
-	CaptureMouse(true);
+	InitLevel3Night(this, "level3C.omt");
 }
 
 // --------------------------------------------------------------------------- CLevel03DGame 'LV3D'
@@ -167,14 +167,7 @@ void CLevel03DGame::UnInitObject(void)	{ CGameType::UnInitObject(); }		// 0x4513
 
 void CLevel03DGame::InitGame(void)											// 0x452410
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level3D.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	ViewportToOrigin();
-	SetFog(0.71f, 0.75f, 0.76f, 0.0f, 1000.0f, 9000.0f, 9100.0f, true);
-	CaptureMouse(true);
+	InitLevel3Night(this, "level3D.omt");
 }
 
 // --------------------------------------------------------------------------- CLevel03EGame 'LV3E'
@@ -195,23 +188,15 @@ CLevel03EGame::~CLevel03EGame()												// 0x4527b0
 
 void CLevel03EGame::UnInitObject(void)	{ CGameType::UnInitObject(); }		// 0x4513d0
 
-// 0x4527f0. Quirk: level 3's terrain (level3.omt), as CLevel01EGame.
-void CLevel03EGame::InitGame(void)
+void CLevel03EGame::InitGame(void)											// 0x4527f0
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level3.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	ViewportToOrigin();
-	SetFog(0.05f, 0.227f, 0.533f, 0.0f, 500.0f, 10000.0f, 11500.0f, true);
-	CaptureMouse(true);
+	InitLevel3Night(this, "level3E.omt");
 }
 
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel03Game(void)		{ return new CLevel03Game; }		// 'LEV3' (0x68c bytes)
+CGameObject *New_CLevel03Game(void)		{ return new CLevel03Game; }		// 'LEV3' (0x5c0 bytes)
 CGameObject *New_CLevel03AGame(void)	{ return new CLevel03AGame; }		// 'LV3A'
 CGameObject *New_CLevel03BGame(void)	{ return new CLevel03BGame; }		// 'LV3B'
 CGameObject *New_CLevel03CGame(void)	{ return new CLevel03CGame; }		// 'LV3C'

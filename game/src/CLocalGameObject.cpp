@@ -30,7 +30,7 @@ CLocalGameObject::CLocalGameObject()						// 0x4586f0
 	m_db_stream = NULL;
 	CGameObject::v26(1);
 	f_4bc = 0;
-	m_show_on_radar = 0;
+	m_show_on_radar = 0;									// (Negatron-only)
 	f_4c4 = 0;
 }
 
@@ -42,7 +42,7 @@ void CLocalGameObject::InitObject(void)						// 0x458820
 	CGameObject::InitObject();
 	RegisterProperty("TaskName",    m_task_name,      PROP_ALPHA, 0);
 	RegisterProperty("Debug",       &m_debug,         PROP_LONG, 0);
-	RegisterProperty("ShowOnRadar", &m_show_on_radar, PROP_LONG, 0);
+	// (Negatron also registers "ShowOnRadar" here; Neutron.exe does not)
 }
 
 void CLocalGameObject::ResetObject(void)					// 0x4587f0
@@ -84,6 +84,11 @@ void CLocalGameObject::Process(float dt)					// 0x458930
 void CLocalGameObject::v265(float a, float b, float c, float d)	// 0x4588d0
 {
 	if (v117()) v221(a, b, c, d);							// vtable +0x1d4 / +0x374
+}
+
+void CLocalGameObject::v267(int state)						// 0x458880
+{
+	f_4a0 = state;
 }
 
 void CLocalGameObject::DebugLog(const char *fmt, ...)		// 0x458c30: only when the "Debug" property is set
