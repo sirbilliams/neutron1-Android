@@ -6,6 +6,7 @@
 #include "C3DFriends.h"
 #include "../C3DShadow.h"
 #include "../Game.h"
+#include "../InterfaceElement.h"
 #include "../Globals.h"
 #include "../SaveGame.h"
 #include "../gen/globals.h"
@@ -90,6 +91,21 @@ void C3DFriends::Process(float dt)							// N2:0x436eb0
 }
 
 // --------------------------------------------------------------------------- element family
+
+// Boy Genius element slots 90 / 96 (agent D, for the friends of Level1).
+void C3DFriends::ev126(void)								// 0x41bc20
+{
+	f_96c = 3;												// (0x6c8)
+}
+
+void C3DFriends::ev145(void)								// 0x41b810
+{
+	// 0x42adc0: 100 points (Boy Genius: no difficulty scaling; the pop-up shows the award)
+	g_score += 100;
+	g_score_popup = 100;
+	g_score_popup_time = 1.2f;
+	v261();													// CGameObject +0x410
+}
 
 void C3DFriends::ev113(void)								// N2:0x436d90 (jmp N2:0x414630)
 {

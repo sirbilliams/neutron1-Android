@@ -1,5 +1,5 @@
-/*  CPickupType - see CPickupType.h. Reconstructed from Neutron.exe 0x45f040..N2:0x496fe0 (and the
-    shared v266 0x419aa0). */
+/*  CPickupType - see CPickupType.h. Reconstructed from Neutron.exe 0x45f040..0x45f3f0 (and the
+    shared v266 0x419aa0). Boy Genius shows / hides with an inline force_show / hide(true). */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CPickupType.h"
@@ -43,7 +43,7 @@ void CPickupType::InitObject(void)							// 0x45f170
 void CPickupType::v242(float t)								// 0x45f280
 {
 	C3DTriggerType::v242(t);								// 0x447a70
-	ShowAgain();											// element +0xd4
+	force_show();											// inline: hide_count (+0x70) = 1, hide(false)
 }
 
 void CPickupType::v260(void)								// 0x45f1f0
@@ -54,12 +54,12 @@ void CPickupType::v260(void)								// 0x45f1f0
 	// (debug log "PostLoad::PI=%d")
 	if (g_object_states[m_pickup_index] == 0)				// 0x4f8438
 	{
-		ShowAgain();										// element +0xd4
+		force_show();										// inline: hide_count = 1, hide(false)
 		v124(1);											// +0x1f0
 		v234();												// +0x3a8
 		return;
 	}
-	HideAgain();											// element +0xd8
+	OMediaElement::hide(true);								// element +0x58
 	v124(0);
 	v232();													// +0x3a0
 }
@@ -88,12 +88,12 @@ void CPickupType::v267(int level)
 	else show = m_exact_level == state;
 	if (show)
 	{
-		ShowAgain();
+		force_show();
 		v124(1);
 		v234();
 		return;
 	}
-	HideAgain();
+	OMediaElement::hide(true);
 	v124(0);
 	v232();
 }

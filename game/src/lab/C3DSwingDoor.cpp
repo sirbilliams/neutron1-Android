@@ -21,8 +21,8 @@ C3DSwingDoor::C3DSwingDoor()								// 0x444450
 	v46(0);
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3SWN');							// 0x462220
-	strcpy(f_92d, "doorcloset.ase");
-	strcpy(f_991, "doorcloset.png");
+	strcpy(f_92d, "doorfowl.ase");
+	strcpy(f_991, "doorfowl.png");
 	C3DSwingDoor::InitObject();								// 0x4446a0 (called directly)
 	f_9f8 = 50.0f;											// OpenSpeed
 	f_9fc = 1.8f;											// TimeToOpen
@@ -60,7 +60,7 @@ void C3DSwingDoor::InitObject(void)							// 0x4446a0
 void C3DSwingDoor::AddTouching(CGameObject *other)			// 0x444750
 {
 	CGameObject::AddTouching(other);						// 0x470a90
-	if (g_camera == other && f_a00 != 0) v268(1);			// +0x430
+	if (other->NameContains((char *)"C3DJIMMY") && f_a00 != 0) v268(1);	// +0x18, +0x428
 }
 
 void C3DSwingDoor::v268(int state)							// 0x444790
@@ -74,8 +74,7 @@ void C3DSwingDoor::v268(int state)							// 0x444790
 
 void C3DSwingDoor::Process(float dt)						// 0x4447e0
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	if (!f_924) return;
+	if (!f_924) return;										// (no pause check)
 	f_928 -= dt;
 	if (!f_92c)
 	{
@@ -103,18 +102,11 @@ void C3DSwingDoor::v260(void)								// 0x4448a0
 {
 	C3DAnimated::v260();									// N2:0x41cec0
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"RAY", f_92d);						// +0xe0
+	CreateAnim((char *)"HIRAY", f_92d);						// +0xd8 (sic: played as "RAY")
 	CreateTexture(f_991, 0);								// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	v67(40.0f);												// CGameObject +0x10c: radius
 	ev58((char *)"RAY", 1);									// +0xe8
 	v42(0);													// +0xa8
 	v40(0);													// +0xa0
-}
-
-unsigned char C3DSwingDoor::v231(CGameObject *other)		// N2:0x4752a0
-{
-	if (g_camera == other) return 1;
-	const int id = other->m_object_id;
-	return id == '3GOD' || id == '3BOT' || id == '3EPR' || id == '3JIM' || id == '3WBL';
 }

@@ -1,13 +1,9 @@
-/*  C3DPickupItem - see C3DPickupItem.h. Reconstructed from Neutron.exe N2:0x45dc00..N2:0x45fa50. */
+/*  C3DPickupItem - see C3DPickupItem.h. Reconstructed from Neutron.exe 0x4358b0..0x436970. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DPickupItem.h"
-// TODO(BG): #include "../level3a/C3DWaterPlane.h" (Negatron-only class, deleted)
-#include "../objects/C3DCorona.h"
 #include "../C2DInGameMenu.h"
-#include "../C3DJimmy.h"
-// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
-#include "../CJimmyGame.h"
+#include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../InterfaceElement.h"
 #include "../SaveGame.h"
@@ -17,9 +13,6 @@
 #include "../Todo.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
-#include "OMedia3DVector.h"
-#include "OMediaViewPort.h"
-#include "OMediaStreamOperators.h"
 #include <string.h>
 #include <strings.h>
 
@@ -35,85 +28,168 @@ static CGameObject *FindObjectByTag(const char *tag)
 	return NULL;
 }
 
-static C3DJimmy *JimmyOf(CGameObject *o)	{ return o ? dynamic_cast<C3DJimmy *>(o) : NULL; }	// (JIM1 - 0xc0)
+// 0x42a920: the neutron energy (g_health) += d, kept in 0..100 (not in the VR levels 'VR01'..
+// 'VR08'). Sound 80 when it runs out; sound 182 ("low neutron energy") once when it falls below
+// 19 (g_4f83dc remembers it until it is above 20 again).
+static void AddEnergy(float d)
+{
+	const int type = g_gametype->m_object_id;				// (+0x490 of the game type)
+	if (type >= 'VR01' && type <= 'VR08') return;
+	if (g_health > 0 && g_health + d <= 0) PlayGameSoundIndex(-1, 80, false);	// 0x458980
+	g_health += d;
+	if (g_health > 100.0f)
+	{
+		g_health = 100.0f;
+		g_4f83dc = 0;
+		return;
+	}
+	if (g_health >= 0)
+	{
+		if (g_health >= 19.0f)								// 0x4a3e90
+		{
+			if (g_health > 20.0f) g_4f83dc = 0;				// 0x495324
+			return;
+		}
+	}
+	else g_health = 0;
+	if (!g_4f83dc)
+	{
+		PlayGameSoundIndex(-1, 182, false);
+		g_4f83dc = 1;
+	}
+}
 
-// N2:0x404dd0: set the type of item `item` of menu page `page` (as in CLoadLevel.cpp). The pickups
-// come in pairs (10/21 and 31/38): giving one also gives (and counts) the other.
+// 0x42adc0: points (Boy Genius: no difficulty scaling; the "+N" pop-up shows the last award).
+static void AddPoints(int points)
+{
+	g_score += points;										// 0x4f83c0
+	if (points > 0)
+	{
+		g_score_popup = points;								// 0x4f83c4
+		g_score_popup_time = 1.2f;							// 0x4f83c8
+	}
+	if (g_score < 0) g_score = 0;
+}
+
+// 0x4038c0: set the type of item `item` (0..28) of menu page `page`.
 static void SetItemState(short page, short item, short state)
 {
-	if (item < 0 || item >= C2DInGameMenu::MENU_ITEMS) return;
+	if (item < 0 || item >= 29) return;
+	// ("Activating Item %d for %d IsActive:%d": debug log)
 	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
 	if (p) p->items[item].type = state;
-	if (page != C2DInGameMenu::MENU_PICKUPS) return;
-	C2DInGameMenu::MenuPage *pk = C2DInGameMenu::Page(C2DInGameMenu::MENU_PICKUPS);
-	if (item == 10)
-	{
-		if (!pk || !pk->items[21].type) { SetItemState(2, 21, 1); g_pickup_counts[2 * 21]++; }
-	}
-	else if (item == 21)
-	{
-		if (!pk || !pk->items[10].type) { SetItemState(2, 10, 1); g_pickup_counts[2 * 10]++; }
-	}
-	else if (item == 38)
-	{
-		if (!pk || !pk->items[31].type) { SetItemState(2, 31, 1); g_pickup_counts[2 * 31]++; }
-	}
-	else if (item == 31)
-	{
-		if (!pk || !pk->items[38].type) { SetItemState(2, 38, 1); g_pickup_counts[2 * 38]++; }
-	}
 }
 
 // 0x403910: item `item` of menu page `page` disabled.
 static void ClearItemState(short page, short item)
 {
 	C2DInGameMenu::MenuPage *p;
-	if (item >= 0 && item < C2DInGameMenu::MENU_ITEMS && (p = C2DInGameMenu::Page(page)) != NULL)
+	if (item >= 0 && item < 29 && (p = C2DInGameMenu::Page(page)) != NULL)
 		p->items[item].type = 0;
 }
 
-// N2:0x404f20: the type of item `item` of menu page `page` (0 when there is no such item).
+// 0x403950: the type of item `item` of menu page `page` (0 when there is no such item).
 static short GetItemState(short page, short item)
 {
 	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
-	if (p && item >= 0 && item < C2DInGameMenu::MENU_ITEMS) return p->items[item].type;
+	if (p && item >= 0 && item < 29) return p->items[item].type;
 	return 0;
 }
 
 static int  PickupCount(int pic)			{ return g_pickup_counts[2 * pic]; }	// 0x4061b0
 static void AddPickupCount(int pic, int n)	{ g_pickup_counts[2 * pic] += n; }		// 0x4061c0
 
-
-// N2:0x45f2eb: C3DWaterPlane game object +0x87c (f_93c, the time under water) = 3.0: the oxygen refill.
-static void WaterPlaneOxygen(CGameObject *wp)
+// 0x4061d0: queue the top-right pickup pop-up (3 s; or behind the one showing) and count it.
+static void AnnouncePickupBG(int pic, unsigned int index)
 {
-	(void)wp;	// TODO(BG): C3DWaterPlane is Negatron only
+	if (g_4f815c <= 0)
+	{
+		g_4f8158 = -1;
+		g_4f8154 = pic;
+		g_4f815c = 3.0f;
+		g_4f8160 = index;
+	}
+	else if (g_4f8154 != -1) g_4f8158 = pic;
+	g_pickup_counts[2 * pic]++;								// 0x4f7db8
 }
 
-// The power timers g_power_timers[0..9] (N2:0x54a424..): which powerup each one runs.
-enum { PT_SPEED = 0, PT_SHIELDS, PT_TRACTION, PT_SONAR, PT_XRAY, PT_RAPIDFIRE, PT_FREEZE,
-	   PT_EARTHQUAKE, PT_SPREADFIRE, PT_SPRINGSHOES };
+// 0x406f90: open the in-game menu on page `page` (cursor shown, page canvas shown, the game
+// paused through game type +0x168, g_4f8048 = page). Part of the menu (agent A's C2DInGameMenu).
+static void OpenInGameMenu(int page)
+{
+	NEG_TODO(0x406f90, "open the in-game menu on a page");
+	(void)page;
+}
+
+// Jimmy's element slots used by the tagged pickups (C3DJimmy is reconstructed elsewhere).
+static void JimmySlot122(CGameObject *jim)	{ (void)jim; NEG_TODO(0x42af00, "C3DJimmy element +0x1e8"); }
+static void JimmySelect(CGameObject *jim, short gadget)	{ (void)jim; (void)gadget; NEG_TODO(0x428d50, "C3DJimmy element +0x174: select a gadget"); }
+static void JimmySlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element +0x178"); }
+
+// 0x4365d0: the story steps of the tagged pickups.
+static void TaggedPickup(C3DPickupItem *p)
+{
+	const char *tag = p->m_tag;
+	if (strcasecmp(tag, "SHRINKRAY") == 0 && GetTaskState("SCENE") == 35)
+	{
+		if (g_camera->NameContains((char *)"C3DJIMMY")) JimmySlot122(g_camera);
+		SetTaskState("SCENE", 50);
+		SetItemState(0, 3, 1);
+		OpenInGameMenu(0);
+		if (g_camera->NameContains((char *)"C3DJIMMY")) JimmySelect(g_camera, 3);
+	}
+	if (strcasecmp(tag, "SCOOTERPART") == 0 && GetTaskState("SCENE") == 100)
+	{
+		SetTaskState("SCENE", 108);
+		SetItemState(0, 4, 1);
+		SetItemState(1, 2, 1);
+		OpenInGameMenu(1);
+	}
+	if (strcasecmp(tag, "BUBBLEPICKUP") == 0)
+	{
+		SetItemState(0, 0, 1);
+		OpenInGameMenu(10);
+	}
+	if (strcasecmp(tag, "TELEPORT2SPACE") == 0 && GetTaskState("SCENE") == 170) SetTaskState("SCENE", 172);
+	if (strcasecmp(tag, "CAVE2") == 0 && GetTaskState("SCENE") == 500) SetTaskState("SCENE", 510);
+	if (strcasecmp(tag, "PASSCARD") == 0 && GetTaskState("SCENE") == 430)
+	{
+		SetTaskState("SCENE", 460);
+		SetItemState(1, 5, 1);
+	}
+	if (strcasecmp(tag, "SEWERPART") == 0 && GetTaskState("SCENE") == 290)
+	{
+		SetTaskState("SCENE", 300);
+		SetItemState(2, 15, 1);
+		AnnouncePickupBG(15, 0);
+		CGameObject *jim = FindObjectByTag("JIM1");
+		if (jim)
+		{
+			JimmySlot94(jim);
+			g_gametype->SetCamera(jim);						// +0x118
+		}
+	}
+}
 
 // --------------------------------------------------------------------------- construction
 
-C3DPickupItem::C3DPickupItem()								// N2:0x45dc00
+C3DPickupItem::C3DPickupItem()								// 0x4358b0
 {
 	SetName((char *)"C3DPICKUPITEM");
 	Log("C3DPICKUPITEM()");
 	m_initially_active = 1;
-	m_corona = NULL;
-	C3DPickupItem::InitObject();							// (called directly, as in the original)
-	SetObjectID('3PIC');									// element slot 48
-	strcpy(m_sprite_db, "sprites.omt");
+	C3DPickupItem::InitObject();							// 0x435b80 (called directly)
+	SetObjectID('3PIC');									// 0x462d80
 	m_sprite_index = 8;
 	m_picked_up_index = -1;
 	m_required_pic_num = -1;
 	m_req_pic_num_amount = 1;
 	m_required_level = -1;
 	m_sprite_size = 50;
+	strcpy(m_sprite_db, "sprites.omt");
 	m_sound_index = -1;
 	m_need_more_sound = -1;
-	v67(100.0f);
+	v67(100.0f);											// radius
 	v46(0);
 	v52(1);
 	m_times_to_trigger = -1;
@@ -125,51 +201,26 @@ C3DPickupItem::C3DPickupItem()								// N2:0x45dc00
 	m_point_value = 0;
 	C3DSprite::InitPhysics();								// 0x464210
 	strcpy(m_activate_object, "none");
-	strcpy(m_need_more_name, "none");
-	strcpy(m_sound_name, "none");
 	m_toggle = -1;
-	f_90c = 0;
+	f_760 = 0;
 	m_pass_thru = 1;
-	m_show_arrow = 0;
-	f_008 = 1;												// element +0xd0
-	m_show_corona = 0;
-	m_red = 1.0f;
-	m_green = 1.0f;
-	m_blue = 1.0f;
-	m_respawn_time = -1.0f;
-	m_respawn_left = 0;
-	m_show_on_radar = 2;
-	m_powerup_time = 30.0f;
-	m_is_voice = 0;
-	// (an empty debug log)
+	m_show_arrow = 1;
+	f_008 = 1;
 }
 
-C3DPickupItem::~C3DPickupItem() {}							// 0x435ae0 (the corona is left to DeleteAllObjects)
+C3DPickupItem::~C3DPickupItem() {}							// 0x435ae0
 
 namespace neg {
-CGameObject *New_C3DPickupItem(void) { return new C3DPickupItem; }	// '3PIC' (0x944 bytes)
+CGameObject *New_C3DPickupItem(void) { return new C3DPickupItem; }	// '3PIC' (0x774 bytes)
 }
-
-// Shown again (not as the picked-up canvas 106), with the corona when it may be picked up.
-// (Inlined many times in the original.)
-#define SHOW_WITH_CORONA()														\
-	do {																		\
-		if (m_sprite_index != 106)												\
-		{																		\
-			ShowAgain();									/* element +0xd4 */	\
-			if (m_corona && CanPickUp()) m_corona->ShowAgain();	/* +0xe4 */		\
-		}																		\
-	} while (0)
 
 // --------------------------------------------------------------------------- CGameObject family
 
 void C3DPickupItem::InitObject(void)						// 0x435b80
 {
-	CPickupType::InitObject();
+	CPickupType::InitObject();								// 0x45f170
 	RegisterProperty("SoundIndex", &m_sound_index, PROP_LONG, 0);
-	RegisterProperty("SoundName", m_sound_name, PROP_ALPHA, 0);
 	RegisterProperty("NeedMoreSound", &m_need_more_sound, PROP_LONG, 0);
-	RegisterProperty("NeedMoreName", m_need_more_name, PROP_ALPHA, 0);
 	RegisterProperty("TimesToTrigger", &m_times_to_trigger, PROP_LONG, 0);
 	RegisterProperty("Radius", &f_034, PROP_FLOAT, 0);
 	RegisterProperty("IsAmbient", &m_is_ambient, PROP_LONG, 0);
@@ -181,455 +232,188 @@ void C3DPickupItem::InitObject(void)						// 0x435b80
 	RegisterProperty("ActivateObject", m_activate_object, PROP_ALPHA, 0);
 	RegisterProperty("PassThru", &m_pass_thru, PROP_LONG, 0);
 	RegisterProperty("ShowArrow", &m_show_arrow, PROP_LONG, 0);
-	RegisterProperty("ShowCorona", &m_show_corona, PROP_LONG, 0);
-	RegisterProperty("Red", &m_red, PROP_FLOAT, 0);
-	RegisterProperty("Green", &m_green, PROP_FLOAT, 0);
-	RegisterProperty("Blue", &m_blue, PROP_FLOAT, 0);
-	RegisterProperty("RespawnTime", &m_respawn_time, PROP_FLOAT, 0);
-	RegisterProperty("PowerupTime", &m_powerup_time, PROP_FLOAT, 0);
-	RegisterProperty("IsVoice", &m_is_voice, PROP_LONG, 0);
 }
 
 void C3DPickupItem::ResetObject(void)						// 0x435b20
 {
 	CLocalGameObject::ResetObject();						// 0x4587f0
-	v107(1);												// +0x1ac
+	v107(1);												// +0x1b0
 	const int i = m_pickup_index;
-	if (i > -1 && i < 4200 && g_object_states[i] == 0) SHOW_WITH_CORONA();
+	if (i >= 0 && i < 4200 && g_object_states[i] == 0 && m_sprite_index != 0x6a)
+		force_show();										// inline: hide_count = 1, hide(false)
 }
 
-// 0x435ce0: picked up by the camera.
-void C3DPickupItem::AddTouching(CGameObject *other)
+// Toggle the objects named by ActivateObject and ToggleObject (their NextState, +0x428).
+static void ToggleNamed(const char *name, int toggle)
 {
-	C3DSpriteType::AddTouching(other);						// 0x43cf10
-	// (debug log "Picked up a %s")
+	if (strcasecmp(name, "none") == 0) return;
+	CLocalGameObject *o = dynamic_cast<CLocalGameObject *>(FindObjectByTag(name));
+	if (o) o->v268(toggle);									// (every level object is one)
+}
+
+void C3DPickupItem::AddTouching(CGameObject *other)			// 0x435ce0
+{
+	CGameObject::AddTouching(other);						// 0x470a90
+	// ("Picked up a %s": debug log)
 	if (other != g_camera) return;
 	if (other->NameContains((char *)"C3DGODDARD") && strcasecmp(m_tag, "SEWERPART") != 0 &&
-		strcasecmp(m_next_trigger, "none") != 0) return;	// Goddard only picks up sewer parts of trigger pickups
-	const int i = m_pickup_index;
-	if (i >= 4200)
-		ErrorLog("ERROR: OVER max pickup items in C3DPickupItem");
-	else if (i > 0)											// saved in the object states
+		strcasecmp(m_next_trigger, "none") != 0) return;
+	const int idx = m_pickup_index;
+	if (idx >= 4200)
+		ErrorLog("ERROR: OVER max pickup items in C3DPickupItem");	// (debug log in the original)
+	else if (idx < 1)
 	{
-		if (g_object_states[i] != 0) return;
-		// (debug log "1 %d")
-		if (!CanPickUp()) return;							// element +0xe4
-		if (m_picked_up_index != -1)						// it stays, looking different
+		if (idx == 0)
 		{
-			if (m_respawn_time < 0) g_object_states[i] = 2;
+			if (m_pic_number >= 0) SetItemState(2, (short)m_pic_number, 1);	// 0x4038c0
+			ToggleNamed(m_activate_object, m_toggle);
+			ToggleNamed(m_toggle_object, m_toggle);
+			OMediaElement::hide(true);						// +0x58
+			v124(0);										// +0x1f4
+			v136(0);										// +0x224
+		}
+	}
+	else
+	{
+		if (g_object_states[idx] != 0) return;
+		if (!CanPickUp()) return;							// element +0xd8
+		if (m_picked_up_index == -1)
+		{
+			g_object_states[idx] = 1;
+			OMediaElement::hide(true);
+			v136(0);
+		}
+		else
+		{
+			g_object_states[idx] = 2;
 			OMediaDataBase *db = GetDatabase(m_sprite_db);	// 0x46a910
 			if (db)
 			{
 				InitSpriteID(db, m_picked_up_index, (float)m_sprite_size);	// element +200
-				SHOW_WITH_CORONA();
-				// (the original also has a branch calling slot +0xd4 of NULL when there is no
-				// corona; it cannot be reached)
+				if (m_sprite_index != 0x6a) force_show();
 			}
 		}
-		else
+		ToggleNamed(m_activate_object, m_toggle);
+		ToggleNamed(m_toggle_object, m_toggle);
+		if (m_pic_number >= 0 && m_pic_number < 29)
 		{
-			if (m_respawn_time < 0) g_object_states[i] = 1;
-			HideAgain();									// element +0xd8
-			v136(0);										// +0x220
-			if (m_corona) m_corona->HideAgain();
+			SetItemState(2, (short)m_pic_number, 1);
+			AnnouncePickupBG(m_pic_number, (unsigned int)m_pickup_index);	// 0x4061d0
 		}
-		CGameObject *o;
-		if (strcasecmp(m_activate_object, "none") != 0 && (o = FindObjectByTag(m_activate_object)) != NULL)
-			static_cast<CLocalGameObject *>(o)->v268(m_toggle);	// +0x430
-		if (strcasecmp(m_toggle_object, "none") != 0 && (o = FindObjectByTag(m_toggle_object)) != NULL)
-			static_cast<CLocalGameObject *>(o)->v268(m_toggle);
-		if (m_pic_number >= 0 && m_pic_number < 50)			// a pickup of the menu
-		{
-			if (m_is_voice && !IsChannelPlaying(g_voice_channel))	// 0x47d890, 0x4eefd8
-				g_voice_channel = PlayGameSound(-1, std::string(m_sound_name), false);	// 0x458b40
-			SetItemState(2, (short)m_pic_number, 1);		// N2:0x404dd0
-			AnnouncePickup(m_pic_number, m_pickup_index);	// N2:0x408f80
-		}
-		else if (m_is_voice && !IsChannelPlaying(g_voice_channel))
-			g_voice_channel = PlayGameSound(-1, std::string(m_sound_name), false);
-		if (g_object_states[m_pickup_index] > 2)
-			ErrorLog("ERROR: Pickup item %d has been used %d times", m_pickup_index, g_object_states[m_pickup_index]);
+		// (> 2: "ERROR: Pickup item %d has been used %d times", debug log)
 	}
-	else if (i == 0)										// not saved
+	TaggedPickup(this);										// 0x4365d0
+	if (m_point_value > 0 && (m_times_to_trigger == -1 || m_times_triggered < m_times_to_trigger))
 	{
-		if (m_pic_number >= 0) SetItemState(2, (short)m_pic_number, 1);
-		CGameObject *o;
-		if (strcasecmp(m_activate_object, "none") != 0 && (o = FindObjectByTag(m_activate_object)) != NULL)
-			static_cast<CLocalGameObject *>(o)->v268(m_toggle);
-		if (strcasecmp(m_toggle_object, "none") != 0 && (o = FindObjectByTag(m_toggle_object)) != NULL)
-			static_cast<CLocalGameObject *>(o)->v268(m_toggle);
-		HideAgain();
-		v124(0);											// +0x1f0
-		v136(0);
-		if (m_corona) m_corona->HideAgain();
-	}
-	// (i < 0: on to the rest)
-
-	Powerup();												// element +0xe0
-	if (m_respawn_time > 0) m_respawn_left = m_respawn_time;
-	if (m_point_value > 0 && (m_times_to_trigger == -1 || m_times_to_trigger > m_times_triggered))
-	{
-		AddScore(m_point_value);							// N2:0x482b50
+		AddPoints(m_point_value);							// 0x42adc0
 		v136(0);
 	}
-	if (strcasecmp(m_next_trigger, "none") != 0) CallNextTrigger(m_next_trigger, 0);	// element +0xdc
-	if (m_is_ambient == 0)
+	if (strcasecmp(m_next_trigger, "none") != 0) CallNextTrigger(m_next_trigger, 0);	// element +0xd4
+	if (!m_is_ambient)
 	{
-		if (m_times_to_trigger != -1 && m_times_to_trigger <= m_times_triggered) return;
+		if (m_times_to_trigger != -1 && m_times_triggered >= m_times_to_trigger) return;
 		m_times_triggered++;
-		if (m_sound_index != -1)
-		{
-			if (!m_is_voice) PlayGameSoundIndex(-1, m_sound_index, false);	// 0x458980
-		}
-		else if (!m_is_voice) PlayGameSound(-1, std::string(m_sound_name), false);
+		if (m_sound_index == -1) return;
+		if (!IsChannelPlaying(g_4eefd8))					// 0x47d890: the pickup sound channel
+			g_4eefd8 = PlayGameSoundIndex(-1, m_sound_index, false);	// 0x458980
 	}
 	else if (m_sound_index != -1 && m_ambient_channel != -1)
 		StopGameSound(m_ambient_channel, false);			// 0x458a00
 }
 
-unsigned char C3DPickupItem::v231(CGameObject *other)		// N2:0x43d610
+void C3DPickupItem::Process(float dt)						// 0x436550
 {
-	return g_camera == other;
+	C3DSprite::Process(dt);									// 0x463090
+	if (!m_is_ambient || m_ambient_started) return;
+	m_ambient_started = 1;
+	if (m_sound_index == -1) return;
+	if (m_ambient_channel != -1) StopGameSound(m_ambient_channel, false);	// 0x458a00
+	m_ambient_channel = PlayGameSound3DIndex(this, -1, m_sound_index, true);	// 0x4589c0
 }
 
-// N2:0x45eda0: starts the ambient sound once; keeps the corona between us and the viewport (10
-// units behind us); counts the respawn time down, then reloads (v260).
-void C3DPickupItem::Process(float dt)
-{
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DSpriteType::Process(dt);								// 0x40ff40
-	if (m_is_ambient && !m_ambient_started)
-	{
-		m_ambient_started = 1;
-		if (m_sound_index != -1)
-		{
-			if (m_ambient_channel != -1) StopGameSound(m_ambient_channel, false);
-			m_ambient_channel = PlayGameSound3DIndex(this, -1, m_sound_index, true);	// 0x4589c0
-		}
-	}
-	if (m_show_corona == 1 && m_corona)
-	{
-		const float vx = g_viewport->getx(), vy = g_viewport->gety(), vz = g_viewport->getz();	// +0x44..
-		float p[4];
-		v195(p);											// +0x30c
-		OMedia3DVector d(vx - p[0], vy - p[1], vz - p[2]);
-		d.w = 0;
-		const float inv = 1.0f / d.quick_magnitude();		// 0x48d924
-		d.x = inv * d.x; d.y = inv * d.y;
-		const float z = inv * d.z;
-		d.x = d.x * 10.0f; d.y = d.y * 10.0f; d.z = z * 10.0f;	// 0x48e5ec
-		v195(p);
-		m_corona->v196(p[0] - d.x, p[1] - d.y, p[2] - d.z, p[3]);	// +0x310
-	}
-	if (m_respawn_left > 0)
-	{
-		m_respawn_left -= dt;
-		if (m_respawn_left <= 0)
-		{
-			m_respawn_left = 0;
-			v260();											// +0x410
-		}
-	}
-}
-
-// N2:0x45ea00: (re)load: the corona (once, not in a window), then shown unless collected (or as
-// PickedUpIndex when it was picked up and stays), InitallyActive 0 hides it, SyncWithMenu.
-void C3DPickupItem::v260(void)
+void C3DPickupItem::v260(void)								// 0x436200
 {
 	CPickupType::v260();									// 0x45f1f0
-	// (debug logs "PostLoad::PI=%d", "%s   %f %f  %f" of the position)
-	if (m_show_corona == 1)
+	// ("%s   %f %f  %f": tag and position, debug log)
+	const int idx = m_pickup_index;
+	if (idx >= 0 && idx < 4200)
 	{
-		// (debug logs "MEBTEMP showcorona=1", "MEBTEMP Allocating corona=1")
-		if (!m_corona && !g_windowed)						// 0x509a13
-			m_corona = new C3DCorona;						// 0x694 bytes
-		if (m_corona)
+		const int st = idx == 0 ? 0 : g_object_states[idx];
+		if (st == 0)
 		{
-			m_corona->v107(0);								// +0x1ac
-			m_corona->m_sprite_size = m_sprite_size * 2;
-			m_corona->m_sprite_index = 194;
-			m_corona->m_red = m_red;
-			m_corona->m_green = m_green;
-			m_corona->m_blue = m_blue;
-			float p[4];
-			v195(p);
-			unsigned int w;
-			memcpy(&w, &p[3], sizeof w);
-			m_corona->v89(p[0], p[1], p[2], w);				// +0x164: placed there
-			m_corona->v260();								// +0x410
-		}
-	}
-	const int i = m_pickup_index;
-	if (i > -1 && i < 4200)
-	{
-		const int state = i == 0 ? 0 : g_object_states[i];
-		if (state == 0)
-		{
-			SHOW_WITH_CORONA();
+			if (m_sprite_index != 0x6a) force_show();
 			v136(1);
 		}
-		else if (m_picked_up_index != -1 && state == 2)
+		else if (m_picked_up_index != -1 && st == 2)
 		{
-			OMediaDataBase *db = GetDatabase(m_sprite_db);
+			OMediaDataBase *db = GetDatabase(m_sprite_db);	// 0x46a910
 			if (db)
 			{
-				InitSpriteID(db, m_picked_up_index, (float)m_sprite_size);
-				SHOW_WITH_CORONA();
+				InitSpriteID(db, m_picked_up_index, (float)m_sprite_size);	// element +200
+				if (m_sprite_index != 0x6a) force_show();
 			}
 		}
 	}
 	if (m_initially_active == 0)
 	{
-		v232();												// +0x3a0
-		HideAgain();
+		v232();												// +0x3a4
+		OMediaElement::hide(true);
 		v136(0);
-		if (m_corona) m_corona->HideAgain();
 	}
-	SyncWithMenu();											// element +0xec
+	switch (m_sprite_index)									// the menu item of the known sprites
+	{
+		case 0x46:							m_pic_number = 5;	return;
+		case 0x47: case 0x48: case 0x57:	m_pic_number = 8;	return;
+		case 0x49:							m_pic_number = 7;	return;
+		case 0x4a:							m_pic_number = 23;	return;
+		case 0x68: case 0x6b:				m_pic_number = 4;	return;
+		case 0x6a:							OMediaElement::hide(true);	return;
+		case 0x74:							m_pic_number = 27;	return;
+		case 0x75:							m_pic_number = 18;	// (sic: falls through to 3)
+		case 0x88:							m_pic_number = 3;	return;
+		case 0x8c:							m_pic_number = 21;	return;
+		case 0x8e:							m_pic_number = 19;	return;
+		case 0x98:							m_pic_number = 9;	return;
+		case 0x99: case 0x9f:				m_pic_number = 6;	return;
+		case 0x9a:							m_pic_number = 11;	return;
+	}
 }
 
-// 0x4360b0: toggled: 0 hides it; 1 brings it back (its object state cleared).
-void C3DPickupItem::v268(int state)
+void C3DPickupItem::v268(int state)							// 0x4360b0 NextState
 {
-	// (debug log "Calling NextState for %s")
+	// ("Calling NextState for %s": debug log)
 	if (state == 0)
 	{
-		HideAgain();
-		v232();
+		OMediaElement::hide(true);
+		v232();												// +0x3a4
 		v136(0);
-		if (m_corona) m_corona->HideAgain();
 		return;
 	}
 	if (state != 1) return;
-	// (debug log "NextState with %d for %s")
-	if (m_pickup_index >= 4200) return;
-	if (m_pickup_index == 0)
+	const int idx = m_pickup_index;
+	if (idx > 4199) return;
+	if (idx != 0)
 	{
-		SHOW_WITH_CORONA();
-		v234();												// +0x3a8
-		return;
+		if (idx < 0) return;								// ("ERROR: Incalid PickupIndex for %s", debug log)
+		if (g_object_states[idx] != 0) g_object_states[idx] = 0;
 	}
-	if (m_pickup_index < 0)
-	{
-		ErrorLog("ERROR: Incalid PickupIndex for %s", m_tag);	// (sic)
-		return;
-	}
-	if (g_object_states[m_pickup_index] != 0) g_object_states[m_pickup_index] = 0;
-	SHOW_WITH_CORONA();
-	v234();
+	if (m_sprite_index != 0x6a) force_show();
+	v234();													// +0x3ac
 }
 
-void C3DPickupItem::WriteState(OMediaStreamOperators &s)	// N2:0x45f980
-{
-	CLocalGameObject::WriteState(s);
-	// (debug log "test" for FREEZETIME)
-	bool collides = v135() != 0;							// +0x21c
-	s << collides;
-	s << m_respawn_left;
-}
+// --------------------------------------------------------------------------- element-family slots
 
-void C3DPickupItem::ReadState(OMediaStreamOperators &s)		// N2:0x45f880
-{
-	CLocalGameObject::ReadState(s);
-	// (debug log "test" for FREEZETIME)
-	bool collides;
-	s >> collides;
-	v136(collides);
-	if (!collides)
-	{
-		HideAgain();
-		if (m_corona) m_corona->HideAgain();
-	}
-	else
-	{
-		v234();
-		ShowAgain();
-		if (m_corona && CanPickUp()) m_corona->ShowAgain();
-	}
-	s >> m_respawn_left;
-}
-
-// --------------------------------------------------------------------------- element family
-
-// N2:0x45f120: what a pickup does by its tag (the timed powerups set their g_power_timers and
-// colour Jimmy's sparkles).
-void C3DPickupItem::Powerup(void)
-{
-	const char *tag = m_tag;
-	if (strcasecmp(tag, "PICKEDUPCRYSTAL") == 0)
-	{
-		const int s = GetTaskState("SCENE");
-		if (s == 200) SetTaskState("SCENE", 210);
-		else if (s == 220) SetTaskState("SCENE", 230);
-	}
-	if (strcasecmp(tag, "PICKEDUPKEY") == 0)
-	{
-		const int s = GetTaskState("SCENE");
-		if (s == 200) SetTaskState("SCENE", 220);
-		else if (s == 210) SetTaskState("SCENE", 230);
-	}
-	C3DJimmy *j;
-	if (strcasecmp(tag, "SPEEDUP") == 0)
-	{
-		g_power_timers[PT_SPEED] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(m_powerup_time, 1.0f, 1.0f, 0);	// element +0x270
-	}
-	if (strcasecmp(tag, "SODA") == 0)
-	{
-		g_power_timers[PT_SPEED] = 5.0f;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
-		{
-			j->ev156(5.0f, 1.0f, 1.0f, 0);
-			j->f_4cd0 = j->f_4cd0 + 8.0f;					// 0x4b1428
-		}
-	}
-	if (strcasecmp(tag, "TRACTION") == 0)
-	{
-		g_power_timers[PT_TRACTION] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(g_power_timers[PT_TRACTION], 1.0f, 0, 1.0f);
-	}
-	CGameObject *o;
-	if (strcasecmp(tag, "OXYGEN") == 0 && (o = FindObjectByTag("C3DWATERPLANE")) != NULL)
-	{
-		WaterPlaneOxygen(o);								// +0x87c = 3.0
-		PlayGameSound(-1, std::string("waterbutton1"), false);
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(10.0f, 0, 0, 1.0f);
-	}
-	if (strcasecmp(tag, "SPORKOS") == 0 && (j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
-	{
-		j->ev156(10.0f, 0, 1.0f, 0);
-		j->f_4d94 += 10;
-		if (j->f_4d94 > 100) j->f_4d94 = 100;
-	}
-	if (strcasecmp(tag, "SONAR") == 0)
-	{
-		j = JimmyOf(FindObjectByTag("JIM1"));
-		g_power_timers[PT_SONAR] = m_powerup_time;
-		if (j)
-		{
-			j->ev156(15.0f, 0, 1.0f, 0);
-			// TODO(BG): Negatron opened Jimmy's C3DRadar here (N2:0x4689d0); no such class in Neutron.exe
-		}
-	}
-	if (strcasecmp(tag, "RAPIDFIRE") == 0)
-	{
-		g_power_timers[PT_RAPIDFIRE] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(15.0f, 0.3f, 0.227f, 0.945f);
-	}
-	if (strcasecmp(tag, "SPREADFIRE") == 0)
-	{
-		g_power_timers[PT_SPREADFIRE] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL) j->ev156(15.0f, 0.3f, 0.3f, 1.0f);
-	}
-	if (strcasecmp(tag, "SHIELDS") == 0)
-	{
-		g_power_timers[PT_SHIELDS] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
-		{
-			j->ev156(15.0f, 0, 0.87f, 1.0f);
-			j->ev147(g_power_timers[PT_SHIELDS]);			// element +0x24c: the bubble
-		}
-	}
-	if (strcasecmp(tag, "FREEZETIME") == 0)
-	{
-		for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
-		{
-			CGameObject *e = *it;
-			if (!e) continue;
-			const int id = e->m_object_id;
-			if (id != '3WBL' && id != '3EPR' && id != '3VRT') e->f_430 = 0.25f;	// slowed down
-		}
-		static_cast<CJimmyGame *>(g_gametype)->StartGadgetEffect("FREEZETIME");	// element +0x1a4
-		g_enemy_time_scale = 0.25f;							// N2:0x540594
-		g_power_timers[PT_FREEZE] = m_powerup_time;
-		if ((j = JimmyOf(FindObjectByTag("JIM1"))) != NULL)
-		{
-			j->ev156(15.0f, 0.96f, 0.55f, 0.33f);
-			j->f_430 = 1.0f;								// (element +0x4f0) he is not
-		}
-	}
-	if (strcasecmp(tag, "XRAY") == 0)
-	{
-		j = JimmyOf(FindObjectByTag("JIM1"));
-		g_power_timers[PT_XRAY] = m_powerup_time;
-		static_cast<CJimmyGame *>(g_gametype)->StartGadgetEffect("XRAY");
-		if (j) j->ev156(15.0f, 0.9f, 0, 1.0f);
-	}
-	if (strcasecmp(tag, "EARTHQUAKE") == 0)
-	{
-		j = JimmyOf(FindObjectByTag("JIM1"));
-		g_power_timers[PT_EARTHQUAKE] = m_powerup_time;
-		if (j)
-		{
-			j->ev156(m_powerup_time, 1.0f, 0.2f, 0);
-			j->f_bf8 = m_powerup_time;						// camera shake time
-			j->f_c00 = 0.03f;								// and strength
-		}
-	}
-	if (strcasecmp(tag, "SPRINGSHOES") == 0)
-	{
-		j = JimmyOf(FindObjectByTag("JIM1"));
-		g_power_timers[PT_SPRINGSHOES] = m_powerup_time;
-		if (j) j->ev156(m_powerup_time - 2.0f, 1.0f, 1.0f, 1.0f);	// 0x48d954
-	}
-}
-
-// 0x436830: no RequiredPicNum, or ReqPicNumAmount of it in the pickup menu (used up; its item
-// cleared when none are left): 1. Otherwise the NeedMore sound on the voice channel: 0.
-unsigned char C3DPickupItem::CanPickUp(void)
+unsigned char C3DPickupItem::CanPickUp(void)				// 0x436830
 {
 	if (m_required_pic_num == -1) return 1;
-	if (GetItemState(2, (short)m_required_pic_num) != 0)
+	if (GetItemState(2, (short)m_required_pic_num) != 0 &&
+		m_req_pic_num_amount <= PickupCount(m_required_pic_num))
 	{
-		// (debug logs)
-		if (m_req_pic_num_amount <= PickupCount(m_required_pic_num))
-		{
-			AddPickupCount(m_required_pic_num, -m_req_pic_num_amount);
-			if (PickupCount(m_required_pic_num) < 1) ClearItemState(2, (short)m_required_pic_num);
-			return 1;
-		}
+		AddPickupCount(m_required_pic_num, -m_req_pic_num_amount);
+		if (PickupCount(m_required_pic_num) < 1) ClearItemState(2, (short)m_required_pic_num);
+		return 1;
 	}
-	if (m_need_more_sound == -1)
-	{
-		if (!IsChannelPlaying(g_voice_channel))
-			g_voice_channel = PlayGameSound(-1, std::string(m_need_more_name), false);
-	}
-	else if (!IsChannelPlaying(g_voice_channel))
-		g_voice_channel = PlayGameSoundIndex(-1, m_need_more_sound, false);
+	if (m_need_more_sound != -1 && !IsChannelPlaying(g_4eefd8))	// 0x47d890
+		g_4eefd8 = PlayGameSoundIndex(-1, m_need_more_sound, false);
 	return 0;
-}
-
-// N2:0x45e750: on: shown and colliding (unless it is waiting to respawn); off: hidden.
-void C3DPickupItem::SetActive(unsigned char on)
-{
-	if (!on)
-	{
-		HideAgain();
-		v232();
-		v136(0);
-		if (m_corona) m_corona->HideAgain();
-		return;
-	}
-	if (m_respawn_left != 0) return;
-	ShowAgain();
-	if (m_corona && CanPickUp()) m_corona->ShowAgain();
-	v234();
-	v136(1);
-}
-
-// N2:0x45efb0: a gadget powerup lying in the level (not collected) is there only while its gadget
-// is in the pickup menu.
-void C3DPickupItem::SyncWithMenu(void)
-{
-	if (g_object_states[m_pickup_index] != 0) return;
-	static const struct { const char *tag; short item; } gadgets[] = {
-		{ "SONAR", 8 }, { "RAPIDFIRE", 3 }, { "SHIELDS", 20 }, { "FREEZETIME", 18 },
-		{ "XRAY", 9 }, { "EARTHQUAKE", 2 }, { "SPEEDUP", 5 }, { "WATERGUN", 1 },
-		{ "MEGABURP", 19 }, { "SPRINGSHOES", 7 } };
-	for (unsigned k = 0; k < sizeof gadgets / sizeof gadgets[0]; k++)
-		if (strcasecmp(m_tag, gadgets[k].tag) == 0)
-		{
-			SetActive(GetItemState(2, gadgets[k].item) != 0);	// element +0xe8
-			return;
-		}
 }

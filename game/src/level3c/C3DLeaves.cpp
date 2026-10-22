@@ -1,4 +1,5 @@
-/*  C3DLeaves - see C3DLeaves.h. Reconstructed from Neutron.exe 0x42c6f0..0x42cd40. */
+/*  C3DLeaves - see C3DLeaves.h. Reconstructed from Neutron.exe 0x42c6f0..0x42cd30 (Boy Genius: the leaves sound is
+    sound 177 by index, and Process has no pause check). */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DLeaves.h"
@@ -71,7 +72,7 @@ void C3DLeaves::AddTouching(CGameObject *other)				// 0x42c9b0
 	if (m_falling) return;
 	if (!other->NameContains((char *)"C3DJIMMY") && !other->NameContains((char *)"C3DBASEBALL")) return;
 	m_fall_time = 7.0f;
-	m_channel = PlayGameSound(-1, std::string("leaves"), false);	// 0x458b40
+	m_channel = PlayGameSoundIndex(-1, 177, false);			// 0x458980 (Negatron: by name, "leaves")
 	m_falling = 1;
 	v132(1);
 	v120(1);
@@ -82,7 +83,6 @@ void C3DLeaves::AddTouching(CGameObject *other)				// 0x42c9b0
 
 void C3DLeaves::Process(float dt)							// 0x42ca80
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
 	C3DSprite::Process(dt);									// 0x463090
 	m_time = dt + m_time;
 	m_wait = m_wait - dt;
