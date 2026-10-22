@@ -8,6 +8,8 @@
 #include "../Game.h"
 #include "../Sound.h"
 #include "../Todo.h"
+#include "../C3DJimmy.h"
+#include "../JimmySlots.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include "OMedia3DShape.h"
@@ -40,12 +42,27 @@ static bool ActionPressed(void)
 // Jimmy's state the merry-go-round sets (C3DJimmy fields, original offsets from his element).
 static void JimmyRideState(CGameObject *jim, bool on)
 {
-	(void)jim; (void)on;
-	// on:  +0x7c4 (short) = 3, +0x880 = 0, his sound channel +0xa3c stopped (-1), +0x1e59 = 1
-	// off: +0x1e25 = 0, +0x880 = 1, +0x7c4 = 1, +0x1e59 = 0
-	NEG_TODO(0x42e760, "C3DJimmy ride state (merry-go-round)");
+	C3DJimmy *j = dynamic_cast<C3DJimmy *>(jim);
+	if (!j) return;
+	if (on)
+	{
+		j->f_7c4 = 3;										// +0x7c4 (short): control state 3
+		j->f_880 = 0;										// +0x880
+		if (j->f_a3c != -1)									// +0xa3c: the jet pack's sound channel
+		{
+			StopChannel(j->f_a3c, false);					// 0x47d7a0
+			j->f_a3c = -1;
+		}
+		j->f_1e59 = 1;										// +0x1e59 (game object +0x1d99): gadgets locked
+	}
+	else
+	{
+		j->f_1e25 = 0;										// +0x1e25
+		j->f_880 = 1;										// +0x880
+		j->f_7c4 = 1;										// +0x7c4
+		j->f_1e59 = 0;										// +0x1e59
+	}
 }
-static void JimmySlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element +0x178"); }
 
 // --------------------------------------------------------------------------- construction
 
@@ -87,7 +104,7 @@ void C3DMerryGo::AddTouching(CGameObject *other)			// 0x42e760
 {
 	CGameObject::AddTouching(other);						// 0x470a90
 	if (!other->NameContains((char *)"C3DJIMMY")) return;	// +0x18
-	JimmySlot94(other);										// his element +0x178
+	JimmyElementSlot94(other);								// his element +0x178 (0x427ff0)
 	f_6c0 = 1;
 	f_6bc = other;
 	v136(0);												// +0x224

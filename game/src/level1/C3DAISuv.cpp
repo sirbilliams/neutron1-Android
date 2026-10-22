@@ -11,6 +11,8 @@
 #include "../SaveGame.h"
 #include "../Sound.h"
 #include "../Todo.h"
+#include "../JimmySlots.h"
+#include "C3DJeep.h"
 #pragma GCC diagnostic pop
 #include "OMedia3DShape.h"
 #include <string.h>
@@ -33,16 +35,21 @@ static const char *StartPointOf(CGameObject *jim)
 	return p ? p->f_724 : NULL;
 }
 
-// The driver of the jeep (+0x69c of its element) / rocket ship (+0x740; +0x69c checked):
-// Negatron's C3DJeep / C3DRocketShip layouts differ (TODO(BG)).
-static CGameObject *DriverOf(CGameObject *vehicle)
+// The driver of the jeep: BG +0x69c of its element, the member C3DJimmy sets when he gets on (f_a84 here).
+static CGameObject *JeepDriver(CGameObject *vehicle)
 {
-	(void)vehicle;
-	NEG_TODO(0x40b4f0, "the driver of the jeep / rocket ship an SUV hit");
-	return NULL;
+	C3DJeep *jeep = dynamic_cast<C3DJeep *>(vehicle);
+	return jeep ? jeep->f_a84 : NULL;
 }
 
-static void JimmySlot94(CGameObject *jim)	{ (void)jim; NEG_TODO(0x427ff0, "C3DJimmy element +0x178"); }
+// The rocket ship: BG tests a member at +0x69c of its element (not yet mapped: C3DRocketShip is still
+// Negatron's layout) and takes the start point from the rider at +0x740 (f_9f4).
+static CGameObject *RocketDriver(CGameObject *vehicle)
+{
+	(void)vehicle;
+	NEG_TODO(0x40b4f0, "the rocket ship an SUV hit: its +0x69c member / rider +0x740");
+	return NULL;
+}
 
 C3DAISuv::C3DAISuv()										// 0x40b1b0
 {
@@ -98,30 +105,24 @@ void C3DAISuv::AddTouching(CGameObject *other)				// 0x40b4f0
 		m_dest = NULL;										// no destination
 		m_go_time = 10.0f;
 	}
+	// BG: the camera object being the jeep / rocket ship with a driver, else Jimmy himself (a jeep or
+	// rocket ship without a driver falls through to the Jimmy test, which then fails: nothing happens).
 	CGameObject *driver = NULL;
-	bool hit = false;
 	if (other->NameContains((char *)"C3DJEEP") && g_camera && g_camera == other)
+		driver = JeepDriver(other);
+	if (!driver && other->NameContains((char *)"C3DROCKETSHIP") && g_camera && g_camera == other)
+		driver = RocketDriver(other);
+	if (!driver)
 	{
-		hit = true;
-		driver = DriverOf(other);
-	}
-	else if (other->NameContains((char *)"C3DROCKETSHIP") && g_camera && g_camera == other)
-	{
-		hit = true;
-		driver = DriverOf(other);
-	}
-	else if (other->NameContains((char *)"C3DJIMMY") && g_camera)
-	{
-		hit = true;
+		if (!other->NameContains((char *)"C3DJIMMY") || !g_camera) return;
 		if (g_camera != other)
 		{
-			JimmySlot94(other);								// his element +0x178
+			JimmyElementSlot94(other);						// his element +0x178 (0x427ff0)
 			g_gametype->SetCamera(other);					// +0x118
 		}
 		driver = other;
 	}
-	if (!hit) return;
-	const char *start = driver ? StartPointOf(driver) : NULL;
+	const char *start = StartPointOf(driver);
 	char name[92];
 	CGameObject *sp = NULL;
 	if (start)
