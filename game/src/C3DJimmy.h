@@ -37,16 +37,18 @@
     C3DJimmy.cpp defines them.                                                                 */
 #pragma once
 #include "C3DPlayer.h"
-#include "C3DJetPack.h"
-#include "C3DASEObj.h"
-#include "C3DMagicParticle.h"
-#include "C3DWaterBalloon.h"
 #include "C3DGraplingHook.h"
 #include "C3DGoddard.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
 class CTaskList;
+// TODO(BG): Negatron-only helper classes (deleted; Neutron.exe's Jimmy has others: C3DShrinkRay,
+// C3DBubble, C3DBaseball, ...). Kept as opaque pointers until C3DJimmy is ported.
+class C3DJetPack;
+class C3DASEObj;
+class C3DMagicParticle;
+class C3DWaterBalloon;
 class C3DGrannyObj;
 class C3DPermanentSprite;
 class C3DRadar;
@@ -70,20 +72,20 @@ class C3DJimmy : public C3DPlayer
 	C3DObject			*f_cbc;			// 0xcbc  shrink-ray effect: hidden when the ray stops / out of energy (0; set elsewhere)
 	CGameObject			*f_cc0;			// 0xcc0  0 (ev118 calls an empty function on it)
 	C3DShadow			*f_cc4;			// 0xcc4  C3DShadow: the blob shadow under Jimmy (ev136)
-	C3DPlayerObject		*f_cc8;			// 0xcc8  C3DRocketShip he can fly (a C3DFlyingObject)
-	C3DJetPack			*f_ccc;			// 0xccc  C3DJetPack (a C3DFlyingObject; +0x9f0 its fire, +0x9f4 its sound)
-	C3DWaterBalloon		*f_cd0[20];		// 0xcd0  C3DWaterBalloon pool
+	C3DAnimated			*f_cc8;			// 0xcc8  C3DRocketShip he can fly (a C3DFlyingObject)
+	C3DAnimated			*f_ccc;			// TODO(BG): was N2 C3DJetPack (NULL now); 0xccc  C3DJetPack (a C3DFlyingObject; +0x9f0 its fire, +0x9f4 its sound)
+	C3DObject			*f_cd0[20];		// TODO(BG): was N2 C3DWaterBalloon (NULL now); 0xcd0  C3DWaterBalloon pool
 	C3DGraplingHook		*f_d20;			// 0xd20  C3DGraplingHook (ev163)
 	// 0xd24 never used
 	// props on Jimmy's bones (ev88), dropped by v260 (in the order d28 d2c d30 d38 d34)
-	C3DGrannyObj		*f_d28;			// 0xd28  water gun in the right hand ("newgunbase.grn")
-	C3DGrannyObj		*f_d2c;			// 0xd2c  burp gun ("megaburpgun.grn")
-	C3DGrannyObj		*f_d30;			// 0xd30  shades on the head ("Shades.grn")
-	C3DGrannyObj		*f_d34;			// 0xd34  the PDA ("PDA.grn"; Process hides it outside cut scenes)
+	C3DAnimated			*f_d28;			// TODO(BG): was N2 C3DGrannyObj (NULL now); 0xd28  water gun in the right hand ("newgunbase.grn")
+	C3DAnimated			*f_d2c;			// TODO(BG): was N2 C3DGrannyObj; 0xd2c  burp gun ("megaburpgun.grn")
+	C3DAnimated			*f_d30;			// TODO(BG): was N2 C3DGrannyObj; 0xd30  shades on the head ("Shades.grn")
+	C3DAnimated			*f_d34;			// TODO(BG): was N2 C3DGrannyObj; 0xd34  the PDA ("PDA.grn"; Process hides it outside cut scenes)
 	C3DObject			*f_d38;			// 0xd38  held object (the HOLD animations; ReadState clears it)
 	int					f_d3c;			// 0xd3c  0
-	C3DRadar			*f_d40;			// 0xd40  C3DRadar: the HUD panel (the original keeps its CGameObject part)
-	C3DASEObj			*f_d44;			// 0xd44  C3DASEObj: the bubble (energybubble.ase; the original keeps its CGameObject part)
+	CGameObject			*f_d40;			// TODO(BG): was N2 C3DRadar (NULL now); 0xd40  C3DRadar: the HUD panel (the original keeps its CGameObject part)
+	C3DAnimated			*f_d44;			// TODO(BG): was N2 C3DASEObj (NULL now); 0xd44  C3DASEObj: the bubble (energybubble.ase; the original keeps its CGameObject part)
 	int					f_d48;			// 0xd48  0
 	C3DPointCursor		*f_d4c;			// 0xd4c  C3DPointCursor (the original keeps its CGameObject part)
 	short				f_d50;			// 0xd50  next water balloon (0..19)
@@ -139,8 +141,8 @@ class C3DJimmy : public C3DPlayer
 	unsigned char		f_4cfc;			// 0x4cfc 0: grappling hook gadget selected once (12 s help shown)
 	unsigned char		f_4cfd;			// 0x4cfd 0: on the scooter (jeep): no shadow
 	unsigned char		f_4cfe;			// 0x4cfe 1 (0 while the constructor builds the helpers)
-	C3DMagicParticle	*f_4d00[20];	// 0x4d00 C3DMagicParticle pool (next: f_4d54)
-	C3DMagicParticle	*f_4d50[1];		// 0x4d50 C3DMagicParticle (next: f_4d60)
+	C3DObject			*f_4d00[20];	// TODO(BG): was N2 C3DMagicParticle (NULL now); 0x4d00 C3DMagicParticle pool (next: f_4d54)
+	C3DObject			*f_4d50[1];		// TODO(BG): was N2 C3DMagicParticle  // 0x4d50 C3DMagicParticle (next: f_4d60)
 	int					f_4d54;			// 0x4d54 next of f_4d00 (ev154)
 	float				f_4d58;			// 0x4d58 0; ev156 adds: sparkle time of f_4d00
 	float				f_4d5c;			// 0x4d5c 0

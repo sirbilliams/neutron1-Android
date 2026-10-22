@@ -59,7 +59,7 @@ class C3DEnemy : public C3DAI
 	int					f_1b50;			// 0x1b50 "EnemyType" (0)
 	float				f_1b54;			// 0x1b54 mummy: dead, time until it gets up (6000 s)
 	float				f_1b58;			// 0x1b58 mummy: running away, time left (20 s)
-	C3DSpriteObject		*f_1b5c;		// 0x1b5c the glow sprite (types 4..6; the original keeps its CGameObject part)
+	CGameObject			*f_1b5c;		// 0x1b5c the glow sprite (types 4..6; the original keeps its CGameObject part)
 	float				f_1b60;			// 0x1b60 energy (100)
 	float				f_1b64;			// 0x1b64 ghost: time until it speaks again (10 s)
 	// FIELD 0x1b68 0x208

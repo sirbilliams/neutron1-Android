@@ -52,8 +52,8 @@ class C3DDino : public C3DAI
 	float				f_1d64;			// 0x1d64 fall time left (8 s once out of health)
 	int					f_1d68;			// 0x1d68 "EnemyType" (0: T. rex, 3: T. rex with the fowl, else raptor)
 	int					f_1d6c;			// 0x1d6c walking sound channel (-1)
-	C3DASEObj			*f_1d70;		// 0x1d70 the shock effect (0 when windowed)
-	C3DAIGranny			*f_1d74;		// 0x1d74 the shadow (0 when windowed)
+	C3DAnimated			*f_1d70;	// TODO(BG): N2 C3DASEObj;		// 0x1d70 the shock effect (0 when windowed)
+	C3DAnimated			*f_1d74;	// TODO(BG): N2 C3DAIGranny;		// 0x1d74 the shadow (0 when windowed)
 	float				f_1d78;			// 0x1d78 shock flash time left
 	unsigned char		f_1d7c;			// 0x1d7c the shadow's blending is set
 };

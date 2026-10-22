@@ -2,7 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DAI.h"
-#include "C3DGrannyObj.h"
+// TODO(BG): #include "C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "objects/C3DPatrolPoint.h"
 #include "Game.h"
 #include "Bridge.h"
@@ -86,11 +86,6 @@ static C3DPatrolPoint *PatrolPoint(CGameObject *o)
 	return o ? dynamic_cast<C3DPatrolPoint *>(o) : NULL;
 }
 
-// The granny prop behind a CGameObject that NameContains("C3DGRANNYOBJ").
-static C3DGrannyObj *GrannyObj(CGameObject *o)
-{
-	return o ? dynamic_cast<C3DGrannyObj *>(o) : NULL;
-}
 
 // A patrol point of the type-1 network: ObjectID '3PAT', PatrolType 1 (element +0x8c4).
 static C3DPatrolPoint *NetworkPoint(CGameObject *o)
@@ -120,6 +115,9 @@ static CGameObject *VisiblePoint(CGameObject *o, int i, bool *known)
 
 C3DAI::C3DAI()												// N2:0x410b30
 {
+	f_930 = 1.0f;											// port: N2 C3DPlayerObject's constructor (TODO(BG))
+	f_934 = -1;
+	strcpy(f_938, g_4f81a8);
 	SetName((char *)"C3DAI");
 	Log("C3DAI()");
 	v64(0.3f);
@@ -454,11 +452,8 @@ void C3DAI::Process(float dt)								// N2:0x411240
 					{
 						// patrolling: put down what the point gave us (a granny prop)
 						CGameObject *o = FindObjectByTag(pp->m_attach_obj);
-						if (o && o->NameContains((char *)"C3DGRANNYOBJ"))	// port: o checked (the original calls through NULL)
-						{
-							C3DGrannyObj *g = GrannyObj(o);
-							if (g && g->f_6d0 == 1 && f_6d0 == 1) g->ev98(this, 0);	// element +0x188
-						}
+						// TODO(BG): Negatron put down a C3DGrannyObj prop here (no such class in Neutron.exe)
+						(void)o;
 					}
 					if (f_96c == 18)
 					{
@@ -624,7 +619,7 @@ void C3DAI::v258(void)										// N2:0x414380
 
 void C3DAI::v260(void)										// 0x409480
 {
-	C3DPlayerObject::v260();
+	C3DAnimated::v260();
 	f_964 = FindObjectByTag(f_a10);
 	if (f_964)
 	{
@@ -670,7 +665,7 @@ void C3DAI::v265(float a, float b, float c, float d)		// 0x4095f0
 
 void C3DAI::WriteState(OMediaStreamOperators &s)			// N2:0x415760
 {
-	C3DPlayerObject::WriteState(s);
+	CLocalGameObject::WriteState(s);	// port: N2 C3DPlayerObject's
 	float v[4], a, b, c;
 	v195(v); a = v[0];
 	v195(v); b = v[1];
@@ -702,7 +697,7 @@ void C3DAI::WriteState(OMediaStreamOperators &s)			// N2:0x415760
 
 void C3DAI::ReadState(OMediaStreamOperators &s)				// N2:0x4155e0
 {
-	C3DPlayerObject::ReadState(s);
+	CLocalGameObject::ReadState(s);	// port: N2 C3DPlayerObject's
 	float a, b, c;
 	s >> a >> b >> c;
 	v197(a, b, c);											// position
@@ -1416,11 +1411,8 @@ void C3DAI::ev137(float dt)									// N2:0x411d90
 		v176(0, 0, 0);
 		if (strcasecmp(pp->m_attach_obj, "none") == 0) return;
 		CGameObject *o = FindObjectByTag(pp->m_attach_obj);
-		if (!o || !o->NameContains((char *)"C3DGRANNYOBJ")) return;	// port: o checked (the original calls through NULL)
-		C3DGrannyObj *g = GrannyObj(o);
-		if (!g || g->f_6d0 != 1 || f_6d0 != 1) return;
-		g->ev96(this);										// element +0x180: we pick it up
-		g->f_dac = -1.0f;
+		// TODO(BG): Negatron picked up a C3DGrannyObj prop here (no such class in Neutron.exe)
+		(void)o;
 		return;
 	}
 	if (f_96c == 18)

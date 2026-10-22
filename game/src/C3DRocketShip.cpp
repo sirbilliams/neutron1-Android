@@ -1,6 +1,6 @@
 /*  C3DRocketShip - see C3DRocketShip.h. */
 #include "C3DRocketShip.h"
-#include "C3DPermanentSmoke.h"
+// TODO(BG): #include "C3DPermanentSmoke.h" (Negatron-only class, deleted)
 #include "C3DFireStrato.h"
 #include "C3DPlayer.h"										// the input tests (PlayerKey*)
 #include "Game.h"
@@ -34,84 +34,84 @@ CGameObject *New_C3DAIGranny(void);							// the factory's (gen/factory.cpp; wea
 __attribute__((weak)) unsigned char neg::JimmyHurtFlag(CGameObject *jimmy)
 {
 	(void)jimmy;
-	NEG_TODO(N2:0x44bd90, "C3DJimmy +0x4cb8 (hit flag)");
+	NEG_TODO(/*N2*/0x44bd90, "C3DJimmy +0x4cb8 (hit flag)");
 	return 0;
 }
 
 __attribute__((weak)) void neg::JimmySetHurtFlag(CGameObject *jimmy, unsigned char v)
 {
 	(void)jimmy; (void)v;
-	NEG_TODO(N2:0x44bd90, "C3DJimmy +0x4cb8 = v (hit flag)");
+	NEG_TODO(/*N2*/0x44bd90, "C3DJimmy +0x4cb8 = v (hit flag)");
 }
 
 __attribute__((weak)) void neg::JimmyHurt(CGameObject *jimmy, float energy, int points, float time, unsigned char flag)
 {
 	(void)jimmy; (void)energy; (void)points; (void)time; (void)flag;
-	NEG_TODO(N2:0x44bd90, "C3DJimmy ESLOT 134 (hurt)");
+	NEG_TODO(/*N2*/0x44bd90, "C3DJimmy ESLOT 134 (hurt)");
 }
 
 __attribute__((weak)) void neg::JimmyPain(CGameObject *jimmy)
 {
 	(void)jimmy;
-	NEG_TODO(N2:0x44bfe0, "C3DJimmy ESLOT 130 (pain sounds)");
+	NEG_TODO(/*N2*/0x44bfe0, "C3DJimmy ESLOT 130 (pain sounds)");
 }
 
 __attribute__((weak)) void neg::JimmyRocketAim(CGameObject *jimmy, float dt, OMedia3DVector pos)
 {
 	(void)jimmy; (void)dt; (void)pos;
-	NEG_TODO(N2:0x446100, "C3DJimmy ESLOT 146 (rocket aim)");
+	NEG_TODO(/*N2*/0x446100, "C3DJimmy ESLOT 146 (rocket aim)");
 }
 
 __attribute__((weak)) void neg::JimmyRocketShoot(CGameObject *jimmy, float x, float y, float z, float side, float speed,
 												 CGameObject *target, int a7, float a8)
 {
 	(void)jimmy; (void)x; (void)y; (void)z; (void)side; (void)speed; (void)target; (void)a7; (void)a8;
-	NEG_TODO(N2:0x44b090, "C3DJimmy ESLOT 148 (rocket shot)");
+	NEG_TODO(/*N2*/0x44b090, "C3DJimmy ESLOT 148 (rocket shot)");
 }
 
 __attribute__((weak)) int neg::JimmyAmmo(CGameObject *jimmy)
 {
 	(void)jimmy;
-	NEG_TODO(N2:0x46bf02, "C3DJimmy +0x4d94 (shots left)");
+	NEG_TODO(/*N2*/0x46bf02, "C3DJimmy +0x4d94 (shots left)");
 	return 0;
 }
 
 __attribute__((weak)) void neg::JimmySetAmmo(CGameObject *jimmy, int n)
 {
 	(void)jimmy; (void)n;
-	NEG_TODO(N2:0x46c10e, "C3DJimmy +0x4d94 = n (shots left)");
+	NEG_TODO(/*N2*/0x46c10e, "C3DJimmy +0x4d94 = n (shots left)");
 }
 
 __attribute__((weak)) void neg::JimmyGadgetShot(CGameObject *jimmy)
 {
 	(void)jimmy;
-	NEG_TODO(N2:0x46bf95, "C3DJimmy current gadget +0x63c/+0x640/+0x644");
+	NEG_TODO(/*N2*/0x46bf95, "C3DJimmy current gadget +0x63c/+0x640/+0x644");
 }
 
 __attribute__((weak)) int neg::AIOmtObjState(CGameObject *o)
 {
 	(void)o;
-	NEG_TODO(N2:0x46ac0d, "C3DAIOmtObj +0x1bbc");
+	NEG_TODO(/*N2*/0x46ac0d, "C3DAIOmtObj +0x1bbc");
 	return 0;
 }
 
 __attribute__((weak)) float neg::AIAttackTime(CGameObject *o)
 {
 	(void)o;
-	NEG_TODO(N2:0x46adb7, "C3DDino / C3DPtero +0x1d58");
+	NEG_TODO(/*N2*/0x46adb7, "C3DDino / C3DPtero +0x1d58");
 	return 0;
 }
 
 __attribute__((weak)) void neg::MineDetonate(CGameObject *o)
 {
 	(void)o;
-	NEG_TODO(N2:0x4521e0, "C3DMine +0x6ac = 2");
+	NEG_TODO(/*N2*/0x4521e0, "C3DMine +0x6ac = 2");
 }
 
 __attribute__((weak)) CGameObject *neg::GoddardMarker(CGameObject *goddard)
 {
 	(void)goddard;
-	NEG_TODO(N2:0x46b7f5, "C3DGoddard +0x1b80 (marker)");
+	NEG_TODO(/*N2*/0x46b7f5, "C3DGoddard +0x1b80 (marker)");
 	return NULL;
 }
 
@@ -253,6 +253,7 @@ C3DRocketShip::C3DRocketShip()								// N2:0x46a290
 	f_9f4 = NULL;
 	v44(0);
 	v50(0);
+#if 0	// TODO(BG): C3DPermanentSmoke is Negatron only
 	for (int i = 0; i < 20; i++)							// the smoke trail
 	{
 		C3DPermanentSmoke *s = new C3DPermanentSmoke;		// 0x440980 (0x624 bytes)
@@ -264,10 +265,11 @@ C3DRocketShip::C3DRocketShip()								// N2:0x46a290
 		s->HideAgain();										// element +0xd8
 		s->f_618 = 0;
 	}
+#endif
 	v36(0);
 
 	// the parachute: a Granny AI object playing the chute animations
-	f_1270 = New_C3DAIGranny();								// new C3DAIGranny (N2:0x415e00, 0x2144 bytes)
+	f_1270 = NULL;											// TODO(BG): N2 made a C3DAIGranny (Negatron only) parachute here
 	if (f_1270)
 	{
 		// port: the original writes these C3DAIGranny members directly (+0x1a90 / 0x1da8 / 0x1e0c /
@@ -369,7 +371,7 @@ void C3DRocketShip::InitPhysics(void)						// 0x42ab50
 
 void C3DRocketShip::v260(void)								// N2:0x46a840
 {
-	C3DPlayerObject::v260();								// N2:0x464ed0
+	C3DFlyingObject::v260();								// N2:0x464ed0
 	InitPhysics();											// vtable +0x2c
 	f_124c = NULL;
 	if (g_gametype->m_object_id == 'LV5C') f_124c = FindObjectByTag("C3DCARL");	// +0x490
@@ -712,6 +714,7 @@ void C3DRocketShip::Process(float dt)						// N2:0x46b140
 	if (g_gametype->IsPaused()) return;						// +0x114
 
 	// the smoke trail: one puff per frame, round the ring of 20
+#if 0	// TODO(BG): C3DPermanentSmoke is Negatron only (BG: C3DSmoke / C3DSmokePuff?)
 	C3DPermanentSmoke *s = f_9f8[f_11f0];
 	if (s)
 	{
@@ -729,6 +732,7 @@ void C3DRocketShip::Process(float dt)						// N2:0x46b140
 		else s->HideAgain();
 	}
 	f_11f0++;
+#endif
 	if (f_11f0 >= 20) f_11f0 = 0;
 
 	if (!f_9f4)
@@ -981,7 +985,7 @@ void C3DRocketShip::ev111(float dt)							// N2:0x46b7e0
 
 void C3DRocketShip::WriteState(OMediaStreamOperators &s)	// N2:0x46cc40
 {
-	C3DPlayerObject::WriteState(s);							// N2:0x4651b0
+	CLocalGameObject::WriteState(s);							// N2:0x4651b0
 	float v[4], a, b, c;
 	v195(v); a = v[0];
 	v195(v); b = v[1];
@@ -995,7 +999,7 @@ void C3DRocketShip::WriteState(OMediaStreamOperators &s)	// N2:0x46cc40
 
 void C3DRocketShip::ReadState(OMediaStreamOperators &s)		// N2:0x46cac0
 {
-	C3DPlayerObject::ReadState(s);							// N2:0x4651a0
+	CLocalGameObject::ReadState(s);							// N2:0x4651a0
 	float a, b, c;
 	s >> a >> b >> c;
 	v197(a, b, c);											// position

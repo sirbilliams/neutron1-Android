@@ -12,7 +12,7 @@
 #include "DatabaseCache.h"
 #include "Mouse.h"
 #include "CEditor.h"
-#include "CDefaultGame.h"
+#include "CMainMenu.h"
 #include "CViewPort.h"
 #include "InterfaceElement.h"
 #include "CGameObject.h"
@@ -100,7 +100,7 @@ static MenuName *Toggles(void)		{ return (MenuName *)g_editor_toggles; }	// 0x4f
 static NamedID *Catalogue(void)		{ return (NamedID *)g_object_catalogue; }	// 0x4f2928
 static NamedID *Levels(void)		{ return (NamedID *)g_level_table; }		// N2:0x53d818
 enum { MENU_MAX = 100,								// loops stop at 0x4f6090 / 0x4f6330
-	   LEVELS_MAX = (0x4f488c - N2:0x53d818) / 0x24 };	// "Load Game" stops at 0x4f488c
+	   LEVELS_MAX = 0x24 };	// TODO(BG): N2 (0x53ddb8 - 0x53d818) / 0x24; find g_level_table in Neutron.exe
 
 // --------------------------------------------------------------------------- small helpers
 
@@ -233,16 +233,16 @@ static void DeleteFile(const char *dos_path)	// KERNEL32 DeleteFileA
 using neg::CloseAllDatabases;							// 0x46b000 (DatabaseCache.cpp)
 using neg::DatabaseName;								// 0x46b0f0
 // (the savegame functions ReadTaskFile 0x460210, LoadTask N2:0x498af0, RestoreTask N2:0x498440: SaveGame.h)
-static void MenuDrawCountdown(int a, int b, int c)	{ NEG_TODO(N2:0x409d50, "C2DInGameMenu N2:0x409d50 (level-change countdown)"); (void)a; (void)b; (void)c; }
-static void CutsceneCameraPlay(CGameObject *o)	{ NEG_TODO(N2:0x4a64e2, "C3DCutSceneCamera element slot 59"); (void)o; }
+static void MenuDrawCountdown(int a, int b, int c)	{ NEG_TODO(/*N2*/0x409d50, "C2DInGameMenu N2:0x409d50 (level-change countdown)"); (void)a; (void)b; (void)c; }
+static void CutsceneCameraPlay(CGameObject *o)	{ NEG_TODO(/*N2*/0x4a64e2, "C3DCutSceneCamera element slot 59"); (void)o; }
 // C3DMultiCutSceneCamera element slot 61 (+0xf4, N2:0x4588a0): start the preview.
 static void MultiCutscenePlay(CGameObject *o)	{ static_cast<C3DMultiCutSceneCamera *>(o)->StartPreview(); }
 
 // Windows cursor (N2:0x4a38c0 / 0x46a400 / 0x46a460); the editor flies the camera with the mouse.
-static void ShowWinCursor(bool on)				{ NEG_TODO(N2:0x4a38c0, "ShowCursor"); (void)on; }
+static void ShowWinCursor(bool on)				{ NEG_TODO(/*N2*/0x4a38c0, "ShowCursor"); (void)on; }
 static void CaptureMouse(bool capture)			// 0x46a400
 {
-	if (capture && !g_N2_56aed0)
+	if (capture)
 	{
 		// (the original also hides the Windows cursor and remembers its position; the SDL layer
 		// has no visible cursor on the Thor)
@@ -303,9 +303,9 @@ CEditor::CEditor()
 	set_id('EDIT');
 	memset(f_c8, 0, sizeof(f_c8));
 
-	// The editor font: png\fontsmall.png, one character per 10-pixel row, proportional.
+	// The editor font: fontsmall.png (Negatron: png\fontsmall.png), one character per 10-pixel row, proportional.
 	{
-		OMediaFilePath path(".\\png\\fontsmall.png", 'null', 'null');
+		OMediaFilePath path("fontsmall.png", 'null', 'null');
 		OMediaFileStream fs;
 		fs.setpath(&path);
 		fs.open(omcfp_Read, false, false);
@@ -641,7 +641,7 @@ void CEditor::CheckLoadLevel(void)
 
 	Trace("before gcu");
 	ListObjects();
-	neg::CreateStaticObjects();								// N2:0x480320
+	// (Negatron called CreateStaticObjects here; Neutron.exe does not: Jimmy is in every .gam)
 	PhysicsReset();											// 0x479000
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 		if ((*i)->v127()) { Trace("Uniniting %s", (*i)->m_tag); (*i)->UnInitObject(); }

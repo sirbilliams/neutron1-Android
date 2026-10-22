@@ -35,7 +35,7 @@ void CLevel01DGame::InitGame(void)											// 0x44fb00
 {
 	Log("InitGame()");
 	CJimmyGame::InitGame();
-	v107(0);												// not written to the .gam (f_00b)
+	v107(0);												// slot 108: not written to the .gam (f_00b)
 
 	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL (no sky rotation)
 	SkyLoad(sky, "omt\\space.omt", false);				// sky element +0xe0 (BG slot 56)

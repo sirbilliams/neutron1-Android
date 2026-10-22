@@ -4,9 +4,9 @@
 #include "C3DAITrigger.h"
 #include "../C3DObject.h"
 #include "../C3DAnimated.h"
-#include "../C3DGrannyObj.h"
+// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "../C3DJimmy.h"
-#include "../level3a/C3DMiniSub.h"
+// TODO(BG): #include "../level3a/C3DMiniSub.h" (Negatron-only class, deleted)
 #include "../C3DAI.h"
 #include "../friends/C3DLibby.h"
 #include "../C2DInGameMenu.h"
@@ -131,17 +131,14 @@ static int GrannyObjFlag(CGameObject *o)									// C3DAnimated +0x6d0: 1 = Gran
 	C3DAnimated *a = Anim(o);
 	return a ? a->f_6d0 : 0;
 }
-static C3DGrannyObj *Granny(CGameObject *o)	{ return o ? dynamic_cast<C3DGrannyObj *>(o) : NULL; }
+// TODO(BG): C3DGrannyObj is Negatron only: attach / detach do nothing for now.
 static void GrannyAttach(CGameObject *holder, CGameObject *o, float detach_time)	// +0x180 (slot 96)(o), +0xdac
 {
-	C3DGrannyObj *g = Granny(holder);
-	if (!g) return;
-	g->ev96(o);
-	g->f_dac = detach_time;
+	(void)holder; (void)o; (void)detach_time;
 }
 static void GrannyDetach(CGameObject *holder, CGameObject *o)				// +0x188 (slot 98)(o, 0)
 {
-	if (C3DGrannyObj *g = Granny(holder)) g->ev98(o, 0);
+	(void)holder; (void)o;
 }
 // C3DJimmy element slot 138 (+0x228)(caller, other, item, t): hand Jimmy gadget `item` (0: put
 // it away; 1 rocket, 2 invisibility, 3 jet pack, 4 scooter, 6 water gun, 9 sub, 11 crane,
@@ -153,7 +150,7 @@ static void JimmyUseItem(CGameObject *jimmy, CGameObject *caller, CGameObject *o
 }
 static void JimmySlot105(CGameObject *jimmy)								// +0x1a4: back to the checkpoint
 {
-	C3DPlayerObject *p = jimmy ? dynamic_cast<C3DPlayerObject *>(jimmy) : NULL;
+	C3DPlayer *p = jimmy ? dynamic_cast<C3DPlayer *>(jimmy) : NULL;
 	if (p) p->ev105();
 }
 static void JimmySlot116(CGameObject *o)									// +0x1d0 of the camera
@@ -164,8 +161,8 @@ static void JimmySlot116(CGameObject *o)									// +0x1d0 of the camera
 }
 static CGameObject *JimmyJetpack(CGameObject *jimmy)						// +0xccc (element pointer)
 {
-	C3DJimmy *j = AsJimmy(jimmy);
-	return j && j->f_ccc ? static_cast<CGameObject *>(j->f_ccc) : NULL;
+	(void)jimmy;
+	return NULL;											// TODO(BG): C3DJetPack is Negatron only
 }
 static CGameObject *JimmyShownTarget(CGameObject *jimmy)					// +0x4ef0: the target Goddard points at
 {
@@ -198,14 +195,10 @@ static void LibbySlot(CGameObject *libby, bool digitize)					// C3DLibby +0x24c 
 }
 static void MinisubReset(CGameObject *sub)									// C3DMiniSub +0x5a0, +0x934, +0x938 = 0
 {
-	C3DMiniSub *m = dynamic_cast<C3DMiniSub *>(sub);
-	if (!m) return;
-	m->f_660 = 0;											// N2:0x419dba
-	m->f_9f4 = NULL;
-	m->f_9f8 = NULL;
+	(void)sub;												// TODO(BG): C3DMiniSub is Negatron only
 }
 // C2DInGameMenu helpers private to the menu module.
-static void MenuOpenHelp(float secs)		{ (void)secs; NEG_TODO(N2:0x40a0c0, "C2DInGameMenu open help"); }
+static void MenuOpenHelp(float secs)		{ (void)secs; NEG_TODO(/*N2*/0x40a0c0, "C2DInGameMenu open help"); }
 // N2:0x410540 (a C2DInGameMenu method): the end of the game: the score box (as the menu's "give up",
 // N2:0x40b2b0 case 11), then the score screen (N2:0x545f0f) counts 8 s down and starts a new game.
 static void MenuRestartGame(void)

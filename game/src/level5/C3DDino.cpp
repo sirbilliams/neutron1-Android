@@ -2,10 +2,10 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DDino.h"
-#include "../C3DAIGranny.h"
-#include "../C3DASEObj.h"
+// TODO(BG): #include "../C3DAIGranny.h" (Negatron-only class, deleted)
+// TODO(BG): #include "../C3DASEObj.h" (Negatron-only class, deleted)
 #include "../C3DJimmy.h"
-#include "../C3DRadar.h"
+// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
 #include "../C3DTriggerType.h"
 #include "../objects/C3DSoundEffect.h"
 #include "../CanvasWrapper.h"
@@ -170,44 +170,9 @@ void C3DDino::ev69(void)									// N2:0x42bb30
 		CreateAnim((char *)"STOP", (char *)"raptorstop.grn");
 		CreateAnim((char *)"SIZE", (char *)"raptorsize.grn");
 	}
-	// The shock effect (not when windowed).
-	if (!g_windowed) f_1d70 = new C3DASEObj;				// N2:0x4207e0 (0xbb0 bytes)
-	if (f_1d70)
-	{
-		C3DASEObj *s = f_1d70;
-		strcpy(s->f_924, rex ? "dinoshock.ase" : "raptorshock.ase");	// ASEWalk
-		strcpy(s->f_988, "dinoshockstop.ase");				// ASEStop
-		strcpy(s->f_ab4, "dinoshock.png");					// PNGFile
-		s->f_b7c = 1;										// DoubleSided
-		s->f_b80 = 2.0f;									// SlideXSpeed
-		s->f_b84 = 2.0f;									// SlideYSpeed
-		s->f_8a0 = 0;										// Lit
-		if (rex)
-		{
-			s->HideAgain();									// element +0xdc
-			s->v52(0);										// +0xd0
-		}
-		else
-		{
-			s->v52(0);
-			s->HideAgain();
-		}
-		s->v107(0);											// +0x1ac
-	}
+	// TODO(BG): the shock effect (N2 C3DASEObj) and shadow (N2 C3DAIGranny) are Negatron classes:
+	// none for now (f_1d70 / f_1d74 stay NULL, as when windowed).
 	f_1d78 = 0;
-	// The shadow (not when windowed).
-	if (!g_windowed) f_1d74 = new C3DAIGranny;				// N2:0x415e00 (0x2144 bytes)
-	if (f_1d74)
-	{
-		C3DAIGranny *g = f_1d74;
-		strcpy(g->f_1b50, rex ? "trexshadowbase.grn" : "raptorshadowbase.grn");	// BASEAnimation
-		strcpy(g->f_1bb4, rex ? "trexshadowmove.grn" : "raptorshadowmove.grn");	// WALKAnimation
-		strcpy(g->f_1c7c, rex ? "trexshadowstop.grn" : "raptorshadowstop.grn");	// STOPAnimation
-		g->v52(0);											// +0xd0
-		g->ShowAgain();										// element +0xd8
-		g->v107(0);											// +0x1ac
-		g->v132(0);											// +0x210
-	}
 	ev58((char *)"SIZE", 0);								// +0xe8
 	set_shape(get_shape());									// element +0xb0, +0xac
 	v67(100.0f);											// radius
@@ -389,7 +354,7 @@ void C3DDino::Process(float dt)								// N2:0x42c850
 				if (t2 && t2->NameContains((char *)"C3DTRIGGERTYPE"))
 				{
 					C3DJimmy *j = Jimmy();					// g_jimmy - 0xc0 (not checked)
-					if (j && j->f_d40) j->f_d40->Hide();	// N2:0x468aa0 (port: checked)
+					(void)j;	// TODO(BG): N2 hid C3DJimmy +0xd40 (C3DRadar) here
 					C3DTriggerType *trig = dynamic_cast<C3DTriggerType *>(t2);	// (t2 - 0xc8)
 					if (trig) trig->CallNextTrigger("KILLDINOS", 0);	// element +0xdc
 				}

@@ -6,7 +6,7 @@
 0x4f8168 ptr void* g_menu_page1
 
 # HUD sprites (OMediaCanvasElementWrapper, created by the constructor N2:0x401380)
-0x4f80fc ptr OMediaCanvasElementWrapper* g_4f80fc
+0x4f80fc ptr OMediaCanvasElementWrapper*
 0x4f7cb0 ptr OMediaCanvasElementWrapper* g_hud_health_bar          # sized/coloured by slot 310
 0x4f8028 ptr OMediaCanvasElementWrapper* g_4f8028
 # unresolved (Neutron2 address): N2:0x5446f4 ptrarray OMediaCanvasElementWrapper* g_help_icons         # [14], indexed by g_help_index

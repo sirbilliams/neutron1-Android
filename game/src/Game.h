@@ -52,7 +52,7 @@ class OMediaCanvas;
 class OMediaCanvasElement;
 
 namespace neg {
-enum { ALPHA_SPRITES = 0x226, FONT_COUNT = 6, FONT_GLYPHS = 64 };
+enum { ALPHA_SPRITES = 0xfa, FONT_COUNT = 6, FONT_GLYPHS = 64 };
 extern OMediaCanvasElement	 g_alpha[ALPHA_SPRITES];			// 0x4fc6c0  text sprite pool
 extern OMediaCanvas			*g_font[FONT_COUNT][FONT_GLYPHS];	// 0x5091e0  glyph canvases, [font][ch - ' ']
 extern unsigned short		 g_alpha_used;						// 0x5097e0

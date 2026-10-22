@@ -151,6 +151,10 @@ struct CameraConsts
 	float look_base;								// LookatVOffset - this
 };
 
+// TODO(BG): constants at Negatron addresses (N2C) read as 0. Neutron.exe's C3DMultiCutSceneCamera
+// is a smaller class (UpdateView N2:0x457d80 has no match): port it from Neutron.exe.
+#define N2C(a) 0u
+
 const CameraConsts &Consts(void)
 {
 	static CameraConsts k;
@@ -159,22 +163,22 @@ const CameraConsts &Consts(void)
 	loaded = true;
 	ExeImage x;
 	if (!x.Load()) { memset(&k, 0, sizeof k); return k; }
-	k.c0_x = x.F(N2:0x4582ba); k.c0_y = x.F(N2:0x4582c4); k.c0_z = x.F(N2:0x4582ce);
-	k.c1_x = x.F(N2:0x45805b); k.c1_y = x.F(N2:0x458065); k.c1_start = x.F(0x48d930); k.c1_rate = x.F(0x49d5e0);
-	k.c2_x = x.F(N2:0x458081); k.c2_y = x.F(N2:0x45808b); k.c2_start = x.F(0x4d5fdc); k.c2_rate = x.F(N2:0x4e560c);
-	k.c3_x = x.F(N2:0x45809d); k.c3_y = x.F(N2:0x4580a7); k.c4_x = x.F(N2:0x4580b3); k.c4_y = x.F(N2:0x4580bd);
-	k.c34_start = x.F(N2:0x4ccf18); k.c34_rate = x.F(N2:0x4ebc18);
-	k.near_min = x.F(0x48d96c); k.near_clamp = x.F(N2:0x4580ee);
-	k.c5_x = x.F(N2:0x458107); k.c5_y = x.F(N2:0x458111); k.c6_x = x.F(N2:0x45814c); k.c6_y = x.F(N2:0x458156);
-	k.c7_x = x.F(N2:0x458198); k.c7_y = x.F(N2:0x4581a2);
-	k.c567_start = x.F(0x49d5bc); k.c57_rate = x.F(N2:0x4ebc18); k.c6_rate = x.F(N2:0x4e560c);
-	k.far_max = x.F(0x49fac4); k.c57_clamp = x.F(N2:0x458138);
-	k.c8_freq = x.D(N2:0x4d2cc0); k.c8_radius = x.D(N2:0x4ebc10); k.c8_rise = x.F(N2:0x4cb1e4); k.c8_base = x.F(0x48d400);
-	k.c9_y = x.F(N2:0x458225); k.c16_y = x.F(N2:0x45825c); k.c17_y = x.F(N2:0x458290);
-	k.c12_x = x.F(N2:0x457dc0); k.c12_v = x.F(N2:0x457db6);
-	k.c13_y = x.F(N2:0x457ff2); k.c13_z = x.F(N2:0x457ffc);
-	k.c14_x = x.F(N2:0x45800b); k.c14_y = x.F(N2:0x458015); k.c14_z = x.F(N2:0x45801f);
-	k.c15_x = x.F(N2:0x45802e); k.c15_y = x.F(N2:0x458038); k.c15_z = x.F(N2:0x458042);
+	k.c0_x = x.F(N2C(0x4582ba)); k.c0_y = x.F(N2C(0x4582c4)); k.c0_z = x.F(N2C(0x4582ce));
+	k.c1_x = x.F(N2C(0x45805b)); k.c1_y = x.F(N2C(0x458065)); k.c1_start = x.F(0x48d930); k.c1_rate = x.F(0x49d5e0);
+	k.c2_x = x.F(N2C(0x458081)); k.c2_y = x.F(N2C(0x45808b)); k.c2_start = x.F(0x4d5fdc); k.c2_rate = x.F(N2C(0x4e560c));
+	k.c3_x = x.F(N2C(0x45809d)); k.c3_y = x.F(N2C(0x4580a7)); k.c4_x = x.F(N2C(0x4580b3)); k.c4_y = x.F(N2C(0x4580bd));
+	k.c34_start = x.F(N2C(0x4ccf18)); k.c34_rate = x.F(N2C(0x4ebc18));
+	k.near_min = x.F(0x48d96c); k.near_clamp = x.F(N2C(0x4580ee));
+	k.c5_x = x.F(N2C(0x458107)); k.c5_y = x.F(N2C(0x458111)); k.c6_x = x.F(N2C(0x45814c)); k.c6_y = x.F(N2C(0x458156));
+	k.c7_x = x.F(N2C(0x458198)); k.c7_y = x.F(N2C(0x4581a2));
+	k.c567_start = x.F(0x49d5bc); k.c57_rate = x.F(N2C(0x4ebc18)); k.c6_rate = x.F(N2C(0x4e560c));
+	k.far_max = x.F(0x49fac4); k.c57_clamp = x.F(N2C(0x458138));
+	k.c8_freq = x.D(N2C(0x4d2cc0)); k.c8_radius = x.D(N2C(0x4ebc10)); k.c8_rise = x.F(N2C(0x4cb1e4)); k.c8_base = x.F(0x48d400);
+	k.c9_y = x.F(N2C(0x458225)); k.c16_y = x.F(N2C(0x45825c)); k.c17_y = x.F(N2C(0x458290));
+	k.c12_x = x.F(N2C(0x457dc0)); k.c12_v = x.F(N2C(0x457db6));
+	k.c13_y = x.F(N2C(0x457ff2)); k.c13_z = x.F(N2C(0x457ffc));
+	k.c14_x = x.F(N2C(0x45800b)); k.c14_y = x.F(N2C(0x458015)); k.c14_z = x.F(N2C(0x45801f));
+	k.c15_x = x.F(N2C(0x45802e)); k.c15_y = x.F(N2C(0x458038)); k.c15_z = x.F(N2C(0x458042));
 	k.look_base = x.F(0x49d5b4);
 	return k;
 }

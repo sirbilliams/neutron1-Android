@@ -15,13 +15,13 @@
     methods of the original (v133, v220, v261, v270, v271, Read/WriteState) used offsets 0xc0
     lower, translated here.                                                                    */
 #include "../C3DJimmy.h"
-#include "../level3c/C3DHoverCycle.h"
+// TODO(BG): #include "../level3c/C3DHoverCycle.h" (Negatron-only class, deleted)
 #include "../level1/C3DJeep.h"
-#include "../level3d/C3DCraneBoom.h"
-#include "../level3a/C3DMiniSub.h"
-#include "../level5/C3DLunarLander.h"
+// TODO(BG): #include "../level3d/C3DCraneBoom.h" (Negatron-only class, deleted)
+// TODO(BG): #include "../level3a/C3DMiniSub.h" (Negatron-only class, deleted)
+// TODO(BG): #include "../level5/C3DLunarLander.h" (Negatron-only class, deleted)
 #include "../C3DRocketShip.h"
-#include "../C3DGrannyObj.h"
+// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "../C3DPermanentSprite.h"
 #include "../C3DShadow.h"
 #include "../C3DTriggerType.h"
@@ -189,8 +189,9 @@ static C3DObject *Element(CGameObject *o)
 
 // Set up one of Jimmy's Granny props (the guns, the shades, the PDA): model file, the bone it
 // sits on and the object it follows (us). Inline in the original each time.
-static void SetupProp(C3DGrannyObj *g, const char *model, const char *bone, const char *attach_to, bool v36)
+static void SetupProp(C3DAnimated *g, const char *model, const char *bone, const char *attach_to, bool v36)
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	strcpy(g->f_924, model);
 	strcpy(g->f_ca8, bone);
 	strcpy(g->f_c44, attach_to);
@@ -200,6 +201,7 @@ static void SetupProp(C3DGrannyObj *g, const char *model, const char *bone, cons
 	g->v52(0);												// +0xd0
 	g->v46(0);												// +0xb8
 	g->f_d7c = 0.5f;
+#endif
 }
 
 // --------------------------------------------------------------------------- the guns
@@ -248,6 +250,7 @@ void C3DJimmy::ev144(void)											// N2:0x448b40
 
 void C3DJimmy::ev148(float x, float y, float z, float pitch, float speed, CGameObject *target, float delay, float growth)	// N2:0x44b090
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	CGameObject *self = this;
 	const OMedia3DVector p = self->v224(x, y, z);				// +0x380 muzzle in the world
 	C3DWaterBalloon *b = f_cd0[f_d50];
@@ -274,12 +277,14 @@ void C3DJimmy::ev148(float x, float y, float z, float pitch, float speed, CGameO
 	b->f_65c = delay;
 	f_d50++;
 	if (f_d50 >= 20) f_d50 = 0;
+#endif
 }
 
 // The look of the 20 water balloons and of each one's trail sprite (C3DWaterBalloon +0x64c,
 // that sprite's CGameObject part).
-static void SetTrail(C3DWaterBalloon *b, int index, bool v136_off)
+static void SetTrail(C3DObject *b, int index, bool v136_off)
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	C3DSprite *t = b->f_64c;
 	if (!t) return;
 	t->m_sprite_index = index;									// +0x4cc of its CGameObject part
@@ -287,10 +292,12 @@ static void SetTrail(C3DWaterBalloon *b, int index, bool v136_off)
 	t->InitSpriteProperties(100.0f);							// sprite slot 52
 	if (v136_off) t->v136(0);
 	t->HideAgain();												// sprite slot 54
+#endif
 }
 
 void C3DJimmy::ev152(int kind)										// N2:0x44d9e0
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	if (kind == 0)
 	{
 		for (int i = 0; i < 20; i++)
@@ -348,6 +355,7 @@ void C3DJimmy::ev152(int kind)										// N2:0x44d9e0
 			SetTrail(b, 0x23, false);
 		}
 	}
+#endif
 }
 
 // --------------------------------------------------------------------------- energy
@@ -567,11 +575,7 @@ unsigned char C3DJimmy::ev141(float dt)								// N2:0x449050
 		}
 		return 1;
 	}
-	if (f_ccc->f_9f4 != -1)
-	{
-		StopGameSound(f_ccc->f_9f4, false);					// 0x458a00
-		f_ccc->f_9f4 = -1;
-	}
+	// TODO(BG): Negatron stopped the C3DJetPack's sound (f_ccc +0x9f4) here
 	CGameObject *self = this;
 	const OMedia3DVector pos = Position(self);
 	const OMedia3DVector up = self->v224(0.0f, 2400.0f, 2400.0f);	// +0x380
@@ -804,6 +808,7 @@ void C3DJimmy::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	/
 
 void C3DJimmy::ActivateMenuItem(CGameObject *o, CGameObject *who, short item, float value)	// N2:0x449df0
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	(void)o; (void)who;
 	CGameObject *self = this;
 	self->Log("C3DJimmy::ActivateMenuItem()");				// +0x3f8
@@ -1130,10 +1135,12 @@ void C3DJimmy::ActivateMenuItem(CGameObject *o, CGameObject *who, short item, fl
 		g_N2_5461cd = 0;
 	}
 	// (debug log)
+#endif
 }
 
 void C3DJimmy::ev139(void)											// N2:0x449450
 {
+#if 0	// TODO(BG): Negatron's gadgets (water balloons, granny props, jet pack, sub, crane ...); port BG's
 	CGameObject *self = this;
 	switch (g_menu->GetCurrentGadget())
 	{
@@ -1387,6 +1394,7 @@ void C3DJimmy::ev139(void)											// N2:0x449450
 	}
 	ShowHelpIcon(g_menu, false);
 	CloseHelp(g_menu, true);
+#endif
 }
 
 void C3DJimmy::ev137(int which)										// N2:0x44de40
@@ -1410,12 +1418,12 @@ void C3DJimmy::ev137(int which)										// N2:0x44de40
 			bool made = false;
 			if (!f_d34)
 			{
-				f_d34 = new C3DGrannyObj();						// (debug log "C3DGrannyObj")
+				// TODO(BG): N2 made the PDA prop (C3DGrannyObj "PDA.grn") here
 				made = true;
 			}
 			if (f_d34)
 			{
-				SetupProp(f_d34, "PDA.grn", "Bip01 R Hand", m_tag, true);
+				SetupProp(NULL, "PDA.grn", "Bip01 R Hand", m_tag, true);
 				if (made) f_d34->v260();
 			}
 			return;
@@ -1470,14 +1478,15 @@ static void DropAttachedProps(void)
 		CGameObject *g = *i;
 		if (g && g->m_object_id == '3GRO')
 		{
-			C3DGrannyObj *prop = dynamic_cast<C3DGrannyObj *>(g);
-			if (prop && prop->f_d88) prop->ev95(0);
+			// TODO(BG): C3DGrannyObj is Negatron only
 		}
 	}
 }
 
 void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 {
+	C3DAnimated::ev58(name, loop);							// port: (as Neutron.exe, which has no override)
+#if 0	// TODO(BG): Negatron's Granny animation chooser; Neutron.exe's Jimmy does not override slot 56
 	(void)loop;
 	char *const o = NULL;										// b..d: none
 	const float b = 0.2f;										// 0x3e4ccccd: blend of every animation
@@ -1653,6 +1662,7 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 	if (ev162(name, (char *)"IDLE")) ev86((char *)"IDLE", o, o, o, 1, b);
 	if (ev162(name, (char *)"HANGTALK")) ev86((char *)"HANGTALK", o, o, o, 1, b);
 	// (debug log "Exiting Playing Animation %s")
+#endif
 }
 
 void C3DJimmy::ev67(void)											// N2:0x44e0b0
@@ -1669,8 +1679,7 @@ void C3DJimmy::ev67(void)											// N2:0x44e0b0
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
-		if (f_d28) f_d28->ev95(0);
-		if (f_d2c) f_d2c->ev95(0);
+		// TODO(BG): N2 dropped the C3DGrannyObj props (f_d28 / f_d2c ev95) here
 		DropAttachedProps();
 		if (!g_camera) ev58((char *)"TALK", 1);
 	}
@@ -1817,7 +1826,7 @@ void C3DJimmy::v270(int old_mode, int new_mode)						// N2:0x44e590 "C3DJimmy::C
 
 void C3DJimmy::WriteState(OMediaStreamOperators &s)					// N2:0x44d860
 {
-	C3DPlayerObject::WriteState(s);
+	C3DPlayer::WriteState(s);
 	float v[4], a, b, c;
 	v195(v); a = v[0];
 	v195(v); b = v[1];
@@ -1846,7 +1855,7 @@ void C3DJimmy::WriteState(OMediaStreamOperators &s)					// N2:0x44d860
 
 void C3DJimmy::ReadState(OMediaStreamOperators &s)					// N2:0x44d670
 {
-	C3DPlayerObject::ReadState(s);
+	C3DPlayer::ReadState(s);
 	float a, b, c;
 	s >> a >> b >> c;
 	v197(a, b, c);											// position
