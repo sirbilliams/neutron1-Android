@@ -126,6 +126,28 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   /home/claude/gamefiles/bg-<x>; 2 CPUs / 7 GB: `make -j2`, at most 3 agents building. Decomp
   inputs backed up in the private negatron-gamefiles repo (decomp/bg-decomp-inputs.tar.gz).
 
+## Game plan for the next sessions (brainstormed with Bill, Oct 22)
+
+1. **Finish the first stretch** (intro -> lab -> Neighborhood -> Jimmy's house): Bill's Thor notes
+   first (Share log, photos); C3DGoddard from Neutron.exe; the lab's black ball / scooter; verify
+   v197 z; gadgets the first levels use (bubble gun, baseball, grappling hook, shrink ray beam);
+   merry-go-round, SUV. ASan desktop run before every APK.
+2. **Core clean-up, measured:** C3DObject; the level game types list above; regenerate
+   gen/CLocalGameObject_*; burn down the Negatron leftovers - track the count of `N2:`, `g_N2_`,
+   `n2_ev`, `TODO(BG)` and retarget.tsv `check` entries per session.
+3. **The story levels, in the game's order** (from the CLoadLevel exits / SCENE gates): School
+   (level2*), Downtown (level4*), Retroland (level3*), then Powerplant, Area 51, Rocket Maze, the
+   Yokian ship (level5*/6*/7) and the ending; VR01-08 bonus levels last. Per level: census ->
+   classes -> play its own trigger/task chain to the exit. One lane per level group.
+4. **Port features adapted to Boy Genius:** dual-screen panel (BG gadgets/items/map), Bill's UI
+   (BG gadget table), widescreen check, HD texture pack (texture zip for BG), Asset Viewer's .ase
+   models, launcher art per level.
+5. **Release:** signing secrets in this repo, Bill's full Thor play-through, README/CHANGELOG,
+   tag `v1.0`.
+Agents: at most 3 at once on this 2-CPU machine (make -j2): core/clean-up, Jimmy+gadgets+Goddard,
+and one level lane; short briefs (docs/agent-brief.md), merge into backup/integ, main after
+build + smoke test (+ ASan before an APK).
+
 ## Status (Oct 22, start of the port)
 
 - `game/src` is the Negatron reconstruction with addresses retargeted to `Neutron.exe`: Negatron's
