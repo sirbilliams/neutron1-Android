@@ -10,14 +10,14 @@ using namespace levels;
 
 // --------------------------------------------------------------------------- CLevel05Game 'LEV5'
 
-CLevel05Game::CLevel05Game()												// N2:0x48cb50
+CLevel05Game::CLevel05Game()												// 0x454f00
 {
 	static char name[] = "CLEVEL05GAME";
 	SetName(name);
 	Log("CLevel05Game()");
 	CGameType::InitObject();
 	CGameType::SetID('LEV5');
-	m_pickup_index_base = 2800;
+	m_pickup_index_base = 2700;
 }
 
 CLevel05Game::~CLevel05Game()												// 0x455020
@@ -30,16 +30,20 @@ void CLevel05Game::InitGame(void)											// 0x4550b0
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);												// not written to the .gam (f_00b)
+	LocalSky("omt\\skylevel5.omt");							// a local: m_sky stays NULL
 	InitTerrainDatabase("level5.omt");
-	CreateTerrainUnLit();
+	CreateTerrainUnLit();									// element +0xf8
 	ViewportToOrigin();
-	SetFog(0.584f, 0.494f, 0.356f, 0.0f, 2000.0f, 10000.0f, 12000.0f, true);
+	const OMediaFARGBColor c = RGBA(0.646f, 0.466f, 0.0f, 0.0f);
+	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
+	g_layer_clear->set_clear_color(c);						// +0x10c
+	WorldFog(g_layer_world, c, 12000.0f, 5000.0f, 10000.0f);	// (the same through 0x509a30 and 0x509a3c)
 	CaptureMouse(true);
 }
 
 // --------------------------------------------------------------------------- CLevel05AGame 'LV5A'
 
-CLevel05AGame::CLevel05AGame()												// 0x455700
+CLevel05AGame::CLevel05AGame()												// 0x4547b0
 {
 	static char name[] = "CLEVEL05AGAME";
 	SetName(name);
@@ -56,21 +60,29 @@ CLevel05AGame::~CLevel05AGame()												// 0x4548d0
 
 void CLevel05AGame::UnInitObject(void)	{ CGameType::UnInitObject(); }		// 0x4513d0
 
+// LV5A and LV5B: black fog, one copy of the function each.
+static void InitLevel5Black(CJimmyGame *game, const char *omt)
+{
+	game->Log("InitGame()");
+	game->CJimmyGame::InitGame();
+	game->InitTerrainDatabase(omt);
+	game->v107(0);
+	game->CreateTerrainUnLit();								// element +0xf8
+	ViewportToOrigin();
+	const OMediaFARGBColor c = RGBA(0.0f, 0.0f, 0.0f, 0.0f);
+	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
+	WorldFog(g_layer_world, c, 16000.0f, 6000.0f, 16000.0f);	// (the same through 0x509a30 and 0x509a3c)
+	CaptureMouse(true);
+}
+
 void CLevel05AGame::InitGame(void)											// 0x454960
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level5a.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	ViewportToOrigin();
-	SetFog(0.827f, 0.76f, 0.545f, 0.0f, 1000.0f, 10000.0f, 13000.0f, true);
-	CaptureMouse(true);
+	InitLevel5Black(this, "level5a.omt");
 }
 
 // --------------------------------------------------------------------------- CLevel05BGame 'LV5B'
 
-CLevel05BGame::CLevel05BGame()												// N2:0x48c390
+CLevel05BGame::CLevel05BGame()												// 0x454b80
 {
 	static char name[] = "CLEVEL05BGAME";
 	SetName(name);
@@ -86,108 +98,13 @@ CLevel05BGame::~CLevel05BGame()												// 0x454ca0
 
 void CLevel05BGame::InitGame(void)											// 0x454ce0
 {
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level5b.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 0.0f, 6000.0f, 16000.0f, 16000.0f, true);
-	CaptureMouse(true);
+	InitLevel5Black(this, "level5b.omt");
 }
-
-// --------------------------------------------------------------------------- CLevel05B1Game 'L5B1'
-
-CLevel05B1Game::CLevel05B1Game()											// N2:0x48c0a0
-{
-	static char name[] = "CLEVEL05B1GAME";
-	SetName(name);
-	Log("CLevel05B1Game()");
-	CGameType::InitObject();
-	CGameType::SetID('L5B1');
-	m_pickup_index_base = 2600;					// (the same as LV5B's)
-}
-
-CLevel05B1Game::~CLevel05B1Game()											// N2:0x48c1c0
-{
-}
-
-void CLevel05B1Game::InitGame(void)											// N2:0x48c200
-{
-	Log("InitGame()");
-	CJimmyGame::InitGame();
-	InitTerrainDatabase("level5b1.omt");
-	v107(0);
-	CreateTerrainUnLit();
-	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 0.0f, 6000.0f, 16000.0f, 16000.0f, true);
-	CaptureMouse(true);
-}
-
-// --------------------------------------------------------------------------- CLevel05CGame 'LV5C'
-
-CLevel05CGame::CLevel05CGame()												// N2:0x48c680
-{
-	static char name[] = "CLEVEL05CGAME";
-	SetName(name);
-	Log("CLevel05CGame()");
-	CGameType::InitObject();
-	CGameType::SetID('LV5C');
-	m_pickup_index_base = 2700;
-}
-
-CLevel05CGame::~CLevel05CGame()												// N2:0x48c7a0
-{
-}
-
-// N2:0x48c7e0. Unlike the other skies this one gets no element slot 51.
-static void InitLevel5c(CJimmyGame *game)
-{
-	game->Log("InitGame()");
-	game->CJimmyGame::InitGame();
-	game->InitTerrainDatabase("level5c.omt");
-	game->v107(0);											// not written to the .gam (f_00b)
-	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL
-	SkyLoad(sky, "omt\\skydowntown.omt", false);			// sky element +0xe8
-	sky->place(0.0f, 0.0f, 0.0f);
-	sky->InitPhysics();										// (empty for a C3DSky)
-	sky->v67(1.0f);											// radius
-	sky->v152(1.0f);
-	game->CreateTerrainUnLit();
-	ViewportToOrigin();
-	game->SetFog(0.678f, 0.83f, 0.94f, 0.0f, 18000.0f, 20000.0f, 20000.0f, true);
-	CaptureMouse(true);
-}
-
-void CLevel05CGame::InitGame(void)	{ InitLevel5c(this); }					// N2:0x48c7e0
-
-// --------------------------------------------------------------------------- CLevel05FGame 'LV5F'
-
-CLevel05FGame::CLevel05FGame()												// N2:0x48c9b0
-{
-	static char name[] = "CLEVEL05FGAME";
-	SetName(name);
-	Log("CLevel05FGame()");
-	CGameType::InitObject();
-	CGameType::SetID('LV5F');
-	m_pickup_index_base = 2700;					// (the same as LV5C's)
-}
-
-CLevel05FGame::~CLevel05FGame()												// N2:0x48cad0
-{
-}
-
-// Quirk: the exe has one function for both (N2:0x48c7e0): level 5f loads level 5c's terrain, sky
-// and fog.
-void CLevel05FGame::InitGame(void)	{ InitLevel5c(this); }
 
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel05Game(void)		{ return new CLevel05Game; }		// 'LEV5' (0x68c bytes)
+CGameObject *New_CLevel05Game(void)		{ return new CLevel05Game; }		// 'LEV5' (0x5c0 bytes)
 CGameObject *New_CLevel05AGame(void)	{ return new CLevel05AGame; }		// 'LV5A'
 CGameObject *New_CLevel05BGame(void)	{ return new CLevel05BGame; }		// 'LV5B'
-CGameObject *New_CLevel05B1Game(void)	{ return new CLevel05B1Game; }		// 'L5B1'
-CGameObject *New_CLevel05CGame(void)	{ return new CLevel05CGame; }		// 'LV5C'
-CGameObject *New_CLevel05FGame(void)	{ return new CLevel05FGame; }		// 'LV5F'
 }

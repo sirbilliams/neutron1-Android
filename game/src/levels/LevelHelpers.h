@@ -1,5 +1,5 @@
 /*  Small pieces the level game types (CLevelXXGame, game/src/levels) share: the original
-    repeats them inline in every InitGame (N2:0x486730..0x4563d0).                              */
+    repeats them inline in every InitGame (0x44f0e0..0x456050).                              */
 #pragma once
 #include "../CJimmyGame.h"
 #include "../Mouse.h"
@@ -62,7 +62,21 @@ static inline void SetLayerFog(OMediaLayer *l, bool on)	{ l->*detail::LayerFog::
 // A 2002 OMediaFARGBColor stored as r, g, b, a (layer +0xc8.. fog, +0x10c.. clear colour).
 static inline OMediaFARGBColor RGBA(float r, float g, float b, float a)	{ return OMediaFARGBColor(a, r, g, b); }
 
-// Inline in LEV6, LV6A, LEV7 and VR02, once through each world-layer global (0x509a30, then
+// The sky that most level game types create as a local of InitGame (m_sky stays NULL, so it never
+// rotates): CreateObject('3SKY'), load `file`, at the origin, radius 1 (element slots 58, 11, 67,
+// 152, 51; inline in LV1D, LV1E, LV1F, LEV3, LV3A-E, LV4A, LV4D, LEV5, LEV7).
+static inline void LocalSky(const char *file)
+{
+	C3DObject *sky = CreateSky();
+	SkyLoad(sky, file, false);								// sky element +0xe0
+	sky->place(0.0f, 0.0f, 0.0f);							// (+0x44..+0x4c written directly)
+	sky->InitPhysics();										// (empty for a C3DSky)
+	sky->v67(1.0f);											// radius
+	sky->v152(1.0f);
+	sky->ev51();											// element +0xcc
+}
+
+// Inline in most level game types, once through each world-layer global (0x509a30, then
 // 0x509a3c): the far plane, the fog range and colour, and the fog on (flags |= 0x800).
 static inline void WorldFog(OMediaLayer *world, const OMediaFARGBColor &c, float far_clip, float start, float end)
 {
