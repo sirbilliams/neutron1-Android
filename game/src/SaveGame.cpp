@@ -177,8 +177,8 @@ void neg::WriteTaskFile(const char *name)
 	{
 		fs << p->f_9c8;										// +0x724 (GO +0x664)
 		fs << p->f_a18;										// +0x774
-		fs << p->f_b24;										// +0x88c
-		fs << p->f_c25;										// +0x8f0
+		fs << p->f_c25;										// +0x88c (a game file)
+		fs << p->f_b24;										// +0x8f0 (a start point)
 		fs << p->f_bdc.x;// +0x9a8..
 		fs << p->f_bdc.y;
 		fs << p->f_bdc.z;
@@ -312,9 +312,9 @@ bool neg::TaskGameLoad(const char *name)
 		if (p) { strcpy(p->f_9c8, s); strcpy(p->f_a18, s); }
 		fs >> s;											// (the second is read and dropped)
 		fs >> s;
-		if (p) strcpy(p->f_b24, s);							// +0x88c
+		if (p) strcpy(p->f_c25, s);							// +0x88c (a game file)
 		fs >> s;
-		if (p) strcpy(p->f_c25, s);							// +0x8f0
+		if (p) strcpy(p->f_b24, s);							// +0x8f0 (a start point)
 		float x, y, z;
 		fs >> x;
 		fs >> y;

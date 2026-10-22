@@ -7,6 +7,8 @@
 #include "../CGameType.h"
 #include "../SaveGame.h"
 #include "../Globals.h"
+#include "../objects/C3DStartPoint.h"
+#include "../CViewPort.h"
 #include "../gen/globals.h"
 #include "OMediaFilePath.h"
 #include "OMediaFileStream.h"
@@ -108,24 +110,40 @@ const char *neg::StartModeChoose(char *level_name)
 void neg::StartModeLevelLoaded(void)
 {
 	++s_loads;
-	if (s_task[0] && s_loads == 1 && !AssetViewLevel())
-	{
-		RequestTask(s_task);								// 0x460e70: CTaskList loads it next frame
-		SDL_Log("NEG_START: loading %s", s_task);
-	}
-	s_task[0] = 0;
+	if (AssetViewLevel()) s_task[0] = 0;
+	if (!s_task[0] || s_loads != 1) return;
+	// The saved level is only the stage for the load (TaskGameLoad has Jimmy travel to it again,
+	// at his saved start point): its start sequence is not run, Jimmy plays at once (as
+	// NEG_TEST_PLAY does, TestHooks.cpp).
+	C3DJimmy *jim = Jimmy();
+	if (!jim || !g_gametype) return;
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (C3DStartPoint *sp = dynamic_cast<C3DStartPoint *>(*i)) sp->m_trigger_armed = 0;
+	g_gametype->SetCamera(jim);
+	SetGameMode(5);
 }
 
 void neg::StartModeFrame(void)
 {
+	// The save is loaded as the PDA's Load does: while Jimmy plays (TaskGameLoad reads his part
+	// only when he is the player; a start-up cut scene runs first).
+	if (s_task[0] && s_loads == 1 && g_hud_on && g_camera && g_camera->NameContains((char *)"C3DJIMMY"))
+	{
+		RequestTask(s_task);								// 0x460e70: CTaskList loads it next frame
+		SDL_Log("NEG_START: loading %s", s_task);
+		s_task[0] = 0;
+	}
+	if (s_loads > 1) s_task[0] = 0;
 	// port, test-only: open a page / a box, or save a slot, a while after Jimmy plays
 	static const char *menu = getenv("NEG_TEST_MENU");
 	static const char *confirm = getenv("NEG_TEST_CONFIRM");
 	static const char *save = getenv("NEG_TEST_SAVE");
 	if (!(menu && *menu) && !(confirm && *confirm) && !(save && *save)) return;
 	if (!s_loads || !g_hud_on || !g_menu) return;
-	if (++s_test_frames != 30) return;
 	C3DJimmy *j = Jimmy();
+	// TODO(BG): C3DJimmy's update calls MenuInput every frame (agent E); until then the test does
+	if (menu && *menu && j && s_test_frames > 30) j->MenuInput(g_frame_time);
+	if (++s_test_frames != 30) return;
 	if (save && *save)
 	{
 		g_save_slot = atoi(save) + 5;
