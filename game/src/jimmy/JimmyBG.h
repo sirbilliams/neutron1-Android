@@ -62,6 +62,8 @@ static inline C3DObject *Elem(CGameObject *o)		{ return o ? dynamic_cast<C3DObje
 // Hide: element +0x58 hide(true).
 template <class T> static inline void Show(T *e)	{ if (e) e->force_show(); }
 template <class T> static inline void Hide(T *e)	{ if (e) e->hide(true); }
+// (the menu's 2D elements are plain canvas elements: the menu's own Show is force_show)
+static inline void Show(OMediaCanvasElement *e)		{ if (e) e->force_show(); }
 
 // 0x42a920: energy (g_4f83d4, 0..100) += d. Not in the VR levels. "Energy out" sound 0x50 when it
 // runs out, the warning 0xb6 (once, g_4f83dc) below 20.
@@ -202,33 +204,28 @@ static unsigned int Random(void)
 	return *seed;
 }
 
-// ---- the PDA menu (C2DInGameMenu, Jimmy's f_a18). The menu class is agent F's; the slots it
-// does not have yet are TODO bridges here (BG slot numbers and addresses).
-static void MenuSlot(C2DInGameMenu *m, int off, unsigned int addr, const char *what)
-{
-	(void)m; (void)off;
-	NEG_TODO(addr, what);
-}
-static inline void MenuMark(C2DInGameMenu *m)					{ MenuSlot(m, 0x470, 0x4039e0, "C2DInGameMenu +0x470 (f_4be = 1)"); }
-static inline void MenuUnmark(C2DInGameMenu *m)					{ MenuSlot(m, 0x474, 0x4039f0, "C2DInGameMenu +0x474 (f_4be = 0)"); }
-static inline bool MenuMarked(C2DInGameMenu *m)					{ (void)m; return false; }	// TODO(BG): C2DInGameMenu +0x4be
-static inline void MenuGadgetsOff(C2DInGameMenu *m)				{ MenuSlot(m, 0x480, 0x403bf0, "C2DInGameMenu +0x480 (f_4bc = f_4c8 = 3)"); }
+// ---- the PDA menu (C2DInGameMenu, Jimmy's f_a18). The menu class is agent F's; its
+// slots are called here under their BG vtable offsets (+0x..).
+static inline void MenuMark(C2DInGameMenu *m)					{ if (m) m->v284(); }				// +0x470 0x4039e0 (f_4be = 1)
+static inline void MenuUnmark(C2DInGameMenu *m)					{ if (m) m->v285(); }				// +0x474 0x4039f0 (f_4be = 0)
+static inline bool MenuMarked(C2DInGameMenu *m)					{ return m && m->f_4be != 0; }		// C2DInGameMenu +0x4be
+static inline void MenuGadgetsOff(C2DInGameMenu *m)				{ if (m) m->v288(); }				// +0x480 0x403bf0 (f_4bc = f_4c8 = 3)
 static inline void MenuGadgetBarShow(C2DInGameMenu *m)			{ if (m) m->ShowGadgetBar(); }		// +0x484 0x4036c0
 static inline void MenuGadgetBarHide(C2DInGameMenu *m)			{ if (m) m->HideGadgetBar(); }		// +0x488 0x403700
 static inline void MenuGadgetBarEmpty(C2DInGameMenu *m)			{ if (m) m->GadgetBarEmpty(); }		// +0x48c 0x403730
 static inline void MenuGadgetBarFull(C2DInGameMenu *m)			{ if (m) m->GadgetBarFull(); }		// +0x490 0x4037a0
-static inline short MenuPageShown(C2DInGameMenu *m)				{ (void)m; NEG_TODO(0x403a10, "C2DInGameMenu +0x4a8 (f_4d4)"); return 0; }
-static inline void MenuSelectGadget(C2DInGameMenu *m, short g)	{ (void)g; MenuSlot(m, 0x4b0, 0x405fb0, "C2DInGameMenu +0x4b0 select gadget"); }
+static inline short MenuPageShown(C2DInGameMenu *m)				{ return m ? m->v298() : 0; }		// +0x4a8 0x403a10 (f_4d4)
+static inline void MenuSelectGadget(C2DInGameMenu *m, short g)	{ if (m) m->v300(g); }				// +0x4b0 0x405fb0
 static inline void MenuShowHud(C2DInGameMenu *m, bool show)		{ if (m) m->v316(show); }			// +0x4b4 0x406560
 static inline void MenuHudPicture(C2DInGameMenu *m, int id, bool show, int x, int y)	{ if (m) m->ShowHudPicture(id, show, x, y); }	// +0x4b8 0x4063e0
-static inline void MenuGoddardMode(C2DInGameMenu *m, bool on)	{ (void)on; MenuSlot(m, 0x4bc, 0x403420, "C2DInGameMenu +0x4bc Goddard sprite"); }
-static inline void MenuGadgetTimerOn(C2DInGameMenu *m)			{ MenuSlot(m, 0x4c0, 0x406650, "C2DInGameMenu +0x4c0 gadget timer sprite"); }
-static inline void MenuGadgetTimerOff(C2DInGameMenu *m)			{ MenuSlot(m, 0x4c4, 0x406590, "C2DInGameMenu +0x4c4 gadget timer sprite off"); }
-static inline void MenuMusic(C2DInGameMenu *m, int id)			{ (void)id; MenuSlot(m, 0x4e8, 0x407410, "C2DInGameMenu +0x4e8 menu music"); }
-static inline void MenuClearVR(C2DInGameMenu *m)				{ MenuSlot(m, 0x4ec, 0x407490, "C2DInGameMenu +0x4ec (items 0..43 of the VR page)"); }
-static inline void MenuShowSelected(C2DInGameMenu *m)			{ MenuSlot(m, 0x45c, 0x402f30, "C2DInGameMenu +0x45c"); }
-static inline void MenuHideSelected(C2DInGameMenu *m)			{ MenuSlot(m, 0x460, 0x4033f0, "C2DInGameMenu +0x460"); }
+static inline void MenuGoddardMode(C2DInGameMenu *m, bool on)	{ if (m) m->v303(on); }			// +0x4bc 0x403420
+static inline void MenuGadgetTimerOn(C2DInGameMenu *m)			{ if (m) m->v304(); }				// +0x4c0 0x406650
+static inline void MenuGadgetTimerOff(C2DInGameMenu *m)			{ if (m) m->v305(); }				// +0x4c4 0x406590
+static inline void MenuMusic(C2DInGameMenu *m, int id)			{ if (m) m->v314(id); }			// +0x4e8 0x407410
+static inline void MenuClearVR(C2DInGameMenu *m)				{ if (m) m->v315(); }				// +0x4ec 0x407490
+static inline void MenuShowSelected(C2DInGameMenu *m)			{ if (m) m->v279(); }				// +0x45c 0x402f30
+static inline void MenuHideSelected(C2DInGameMenu *m)			{ if (m) m->v280(); }				// +0x460 0x4033f0
 // C2DInGameMenu +0x4e4: the "shot" HUD sprite (an element; hidden / shown).
-static inline C3DObject *MenuShotSprite(C2DInGameMenu *m)		{ (void)m; return NULL; }	// TODO(BG): C2DInGameMenu +0x4e4
+static inline OMediaCanvasElement *MenuShotSprite(C2DInGameMenu *m)	{ return m ? m->f_4e4 : NULL; }	// C2DInGameMenu +0x4e4
 
 }	// namespace jimmybg

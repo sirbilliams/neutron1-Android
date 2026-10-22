@@ -7,7 +7,6 @@
 #include "Mouse.h"
 #include "C3DShadow.h"
 #include "C3DCursor.h"
-#include "C3DRocketShip.h"			// neg::GoddardMarker
 #include "CGameType.h"
 #include "Bridge.h"					// GameIsRunning
 #include "Physics.h"
@@ -201,13 +200,6 @@ C3DGoddard::~C3DGoddard()									// 0x41cbe0
 
 namespace neg {
 CGameObject *New_C3DGoddard(void)	{ return new C3DGoddard; }				// factory '3GOD' (0x9f4 bytes)
-
-// C3DRocketShip.h: Goddard's arrow towards the red neutrons (+0x9c4).
-CGameObject *GoddardMarker(CGameObject *goddard)
-{
-	C3DGoddard *g = goddard ? dynamic_cast<C3DGoddard *>(goddard) : NULL;
-	return g ? g->f_1b80 : NULL;							// (port: the original reads +0x9c4 of whatever the object is)
-}
 }
 
 // --------------------------------------------------------------------------- element slots

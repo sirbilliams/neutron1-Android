@@ -160,8 +160,11 @@ void C3DAnimated::UnInitObject(void)						// 0x40e670
 		// (debug log)
 		for (int i = 0; i < 10; i++)
 		{
-			if (f_5ac[i]) { delete f_5ac[i]; f_5ac[i] = NULL; }
+			// port: the original deletes the canvas (f_5ac) before the material (f_5d4) that
+			// still points at it; the material's destructor then reads the freed canvas.
+			// Windows' heap tolerated it, Android's allocator aborts: material first.
 			if (f_5d4[i]) { delete f_5d4[i]; f_5d4[i] = NULL; }
+			if (f_5ac[i]) { delete f_5ac[i]; f_5ac[i] = NULL; }
 		}
 		// Quirk: frees every AnimList but the last one, and f_5a4 keeps pointing at the first.
 		AnimList *a = f_5a4;
