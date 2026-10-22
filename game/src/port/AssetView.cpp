@@ -1,4 +1,4 @@
-/*  port: the Asset Viewer's level explorer and save\levels.txt - see AssetView.h. Not in the
+/*  port: the Asset Viewer's level explorer and levels.txt - see AssetView.h. Not in the
     original.                                                                                  */
 #include "AssetView.h"
 #include "Companion.h"
@@ -126,7 +126,7 @@ void Text(short x, short y, const char *s)
 
 // --------------------------------------------------------------------------- the model viewer
 // NEG_ASSET_VIEW=models: the game's own loaders show one model at a time on an empty stage (the
-// small Template.gam level, every one of its objects hidden, no sky, no fog): .grn models as a
+// small Level3B.gam level, every one of its objects hidden, no sky, no fog): .grn models as a
 // C3DGrannyObj makes them (InitModel: the bind pose), .ase as a C3DASEObj does (its first frame;
 // the texture named by the file's *BITMAP, from png\), and the 3D shapes of the .omt databases.
 
@@ -328,8 +328,8 @@ void ModelsStart(void)
 	light->set_angle(omd_Deg2Angle(-50), omd_Deg2Angle(30), 0);
 	light->set_ambient(OMediaFARGBColor(1.0f, 0.55f, 0.55f, 0.55f));
 	light->set_diffuse(OMediaFARGBColor(1.0f, 0.6f, 0.6f, 0.6f));
-	ListDir("grn", ".grn", 'g');
-	ListDir("ase", ".ase", 'a');
+	// Boy Genius: no .grn models; its .ase models need the game's own ASE loader, which the port
+	// has not reconstructed yet (TODO(BG): list ase\*.ase again then). The .omt shapes first.
 	ListDir("omt", ".omt", 'o');
 	std::sort(s_models.begin(), s_models.end(), NoCaseLess);
 	int first = 0;
@@ -441,7 +441,7 @@ const char *neg::AssetViewLevel(void)
 {
 	const char *want = getenv("NEG_ASSET_VIEW");
 	if (!want || !*want || strlen(want) >= 64) return NULL;	// (m_level_name holds 80)
-	if (!strcasecmp(want, "models")) return "Template.gam";	// the model viewer's stage
+	if (!strcasecmp(want, "models")) return "Level3B.gam";	// the model viewer's stage (Boy Genius has no Template.gam: its smallest level, four objects)
 	return want;
 }
 
@@ -581,7 +581,7 @@ void neg::WriteLevelList(void)
 	}
 	closedir(d);
 	std::sort(files.begin(), files.end());
-	FILE *f = fopen(omf_SDLResolvePath("save\\levels.txt").c_str(), "w");
+	FILE *f = fopen(omf_SDLResolvePath("levels.txt").c_str(), "w");
 	if (!f) return;
 	fputs("# gam file\tdisplay name (written by the game, see game/src/port/AssetView.h)\n", f);
 	for (size_t i = 0; i < files.size(); i++)

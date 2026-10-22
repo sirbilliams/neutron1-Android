@@ -1,24 +1,25 @@
-/*  The savegame system (save\*.tsk), the story task list, the demo levels and the texture
-    scrolling of CJimmyGame: the free functions of Neutron.exe 0x45f4c0..N2:0x4990a0.
-    Reconstructed from the decompilation; each function names its original address.
+/*  The savegame system (JimmyGame1..10.tsk, NewGame.tsk, RestartLevel.tsk in the game folder),
+    the story task list and the texture scrolling of CJimmyGame: free functions of Neutron.exe
+    0x45f4c0..0x460e70 and the save-slot helpers 0x42aff0..0x42b180. Reconstructed from the
+    decompilation; each function names its original address.
 
     A .tsk file (OMediaStreamOperators, big-endian; strings are a length byte + the chars):
-        string   version            "18:31:01" (the build time). The shipped save\*.tsk files are
-                                    placeholders with "DUMMY   ": ReadTaskFile ignores those.
-        int      level id           the game type's 4cc ('LV3E' ...)
-        string   game file          .gam of the level (g_game_file)
-        string   task file          the name it was saved under
+        int      level id           the game type's 4cc ('LV1B' ...)
         float    health             g_health
         short    lives              g_lives
         int      score              g_score
-        float    x, y, z            camera (viewport) position
-        int[50]  page 3 items       menu page 3 (level items) item types
+        int      story message      g_story_scene (the SCENE task's last message)
         int[4200] object states     g_object_states
-        int[50]  pickup counts      g_pickup_counts[2 * i]
-        per task (as many as g_tasks has): string name, int state
-        int      object count       objects saved (slot 108 set, or f_4c4)
-        per object: its slot 284 (WriteState) data, in g_objects order
-    ReadTaskFile reads up to the score and the next int (the camera x as an int).          */
+        int[29]  pickup counts      g_pickup_counts[2 * i]
+        Jimmy (when there is a "JIM1"): strings start point, return start point, next start
+        point, return game file; float x, y, z (his position)
+        int[9]   page 0 item types  (the gadgets he has)
+        int[10]  page 1 item types  (the phone booth places open)
+        int      task count, then per task: string name, int state
+    ReadTaskFile reads the header up to the story message. There is no version or placeholder:
+    the shipped NewGame.tsk is a real save (level1b.gam, Jimmy's lab) that New Game loads.
+    Loading is asynchronous: RequestTask names the file, CTaskList::Process (Jimmy's task list,
+    every frame) calls TaskGameLoad, which restores the state and has Jimmy go to the level.  */
 #pragma once
 #include <list>
 
@@ -37,32 +38,27 @@ struct Task
 extern std::list<Task *> g_tasks;							// 0x4fc5f8 (head 0x4fc5fc, count 0x4fc600)
 
 void AddTask(const char *name, int state);					// 0x45f8f0 ("AddItem")
-void SetTaskState(const char *name, int state);				// 0x45f990 (tasks and objects)
+void SetTaskState(const char *name, int state);				// 0x45f990 (tasks and objects; SCENE: the story message)
 int  GetTaskState(const char *name);						// 0x45fea0 (0 if unknown)
 
 // --------------------------------------------------------------------------- savegames
 
-// 0x460210: reads the header of save\<name> into g_save_level_id .. g_save_cam_x and
-// g_game_file. False when it is missing, cannot be opened, or is a "DUMMY   " placeholder.
-bool ReadTaskFile(const char *name);
-// N2:0x498af0: continue the game saved in save\<name> (new_level false: restored in place when it
-// is the running level, else that level is loaded and LoadGame restores it), or (new_level
-// true) start the level file <name> afresh.
+void WriteTaskFile(const char *name);						// 0x45fee0
+bool ReadTaskFile(const char *name);						// 0x460210 the header into g_save_level_id .. g_save_scene
+bool TaskGameLoad(const char *name);						// 0x4603f0 restore it, Jimmy goes to its level
+void RequestTask(const char *name);							// 0x460e70 load it next frame (CTaskList)
+void DeleteSlot(void);										// 0x42aff0 JimmyGame<g_save_slot - 5>.tsk
+void SaveSlot(void);										// 0x42b0b0
+void LoadSlot(void);										// 0x42b180
+// (C3DJimmy 0x428870 case 3, port: a function) the headers of the ten slots into g_save_slots.
+void ReadSaveSlots(void);
+
+// port: the Negatron API that callers not yet ported still use (TODO(BG): remove with them).
+// LoadTask(name, false) = RequestTask(name); LoadTask(file, true) = load the level file afresh.
+// RestoreTask and SaveTask do nothing (Boy Genius has no autosave).
 void LoadTask(const char *name, bool new_level);
-// N2:0x498440: puts the state of save\<name> into the running level (after its objects exist).
 bool RestoreTask(const char *name);
-// N2:0x498060: writes save\<name> (game state 2 "saving" while it does).
-void WriteTaskFile(const char *name);
-// N2:0x4983f0: WriteTaskFile, then back to game state 5 (C3DCheckPoint, C3DJimmy).
 void SaveTask(const char *name);
-// N2:0x498c70: after a game over: a new game from level1d.gam (autosaves deleted, items, pickups
-// and tasks reset). Nothing while the score screen (N2:0x545f0f) is up.
-void NewGameAfterGameOver(void);
-
-// --------------------------------------------------------------------------- demo
-
-// N2:0x4990a0: the next level of the demo cycle (g_demo_level), started afresh.
-void NextDemoLevel(void);
 
 // --------------------------------------------------------------------------- texture scrolling
 

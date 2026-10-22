@@ -1,551 +1,922 @@
-/*  C2DInGameMenu part a: constructor N2:0x401380, destructor 0x4029c0 (slot 0 0x4029a0 is the
-    compiler's deleting destructor around it), UnInitObject (slot 8, 0x402b40), and the
-    dat\keys.txt reader the constructor calls (N2:0x465bc0 / N2:0x465eb0 / N2:0x4660d0).
+/*  C2DInGameMenu part a: constructor 0x401430, destructor 0x4029c0, UnInitObject (slot 8), the
+    sprite helpers (275..278), the HUD bars and pictures, the menu pages (279, 280, 293..300,
+    309, 310) and the story message lines (304..307). See C2DInGameMenu.h.
 
-    The constructor opens omt\screens.omt (g_screens_db), builds the menu pages (v295), creates
-    the menu's fixed sprites (OMediaCanvasElementWrapper, all hidden), sets up the static
-    interface elements and creates the named ones (g_interface.Create), then publishes itself
-    in g_menu and reads the key bindings.
+    Sprites are OMT canvas elements on the 2D layer (0xd0-byte OMediaCanvasElements in the
+    original), placed in 640x480 space by v275 / v276. Two idioms of the original:
+      show:   `if (+0x70) { +0x70 = 1; hide(false); }`  = OMT 2.5's force_show();
+      delete: hide(true), delete its canvas (+ reset), delete the element  = FreeElt below.
+    Constants: 0x48d40c = 1/640, 0x48d408 = 1/480, 0x48d910 = 27, 0x48d918 = 1.044 (double),
+    0x48d924 = 1, 0x48d954 = 2, 0x48d400 = 50, 0x48d404 = 30.                                */
 
-    Sprite coordinates are in the game's 640x480 space; v290 (part b) places them.            */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMT headers)
 #include "../C2DInGameMenu.h"
-#include "../CanvasWrapper.h"
 #include "../Game.h"
+#include "../Globals.h"
 #include "../Todo.h"
-// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
-#include "../port/Widescreen.h"
-#include "../port/BillsUi.h"
-#include "OMediaFileStream.h"
-#include "OMediaError.h"
-#include <stdint.h>
+#include "OMediaCanvasElement.h"
+#include "OMediaCanvas.h"
+#include "OMediaDataBase.h"
+#include "OMediaLayer.h"
+#pragma GCC diagnostic pop
+
 #include <string.h>
-#include <strings.h>
-#include <stdio.h>
 
 using namespace neg;
 
-#define COUNTOF(a) ((int)(sizeof(a) / sizeof((a)[0])))
+// --------------------------------------------------------------------------- statics
+
+C2DInGameMenu::HudPic C2DInGameMenu::s_gadget_pics[8];	// 0x4f7ef0 (ten 0x18 records, 0x4010f0; eight used)
+C2DInGameMenu::HudPic C2DInGameMenu::s_msg_arrow;		// 0x4f7c40
+C2DInGameMenu::HudPic C2DInGameMenu::s_pic_4f7c98;		// 0x4f7c98
+C2DInGameMenu::HudPic C2DInGameMenu::s_pic_4f7cb8;		// 0x4f7cb8
+C2DInGameMenu::HudPic C2DInGameMenu::s_pic_4f8008;		// 0x4f8008
+C2DInGameMenu::HudPic C2DInGameMenu::s_fade_pic;		// 0x4f8100
+C2DInGameMenu::HudPic C2DInGameMenu::s_loading_pic;		// 0x4f8120
+C2DInGameMenu::HudPic C2DInGameMenu::s_pic_4f8138;		// 0x4f8138
 
 // --------------------------------------------------------------------------- helpers
 
-static unsigned int fbits(float f) { unsigned int u; memcpy(&u, &f, 4); return u; }
+static inline float ScaleX(void) { return (float)(short)g_screen_w * 0.0015625f; }	// 0x48d40c
+static inline float ScaleY(void) { return (float)(short)g_screen_h * 0.0020833334f; }	// 0x48d408
 
-// The constructor's sprite idiom: a new OMediaCanvasElementWrapper linked to `layer`.
-static OMediaCanvasElementWrapper *NewSprite(OMediaLayer *layer)
+// `new OMediaCanvasElement` linked to the 2D layer (vtable +0x34).
+static OMediaCanvasElement *NewElt(void)
 {
-	OMediaCanvasElementWrapper *s = new OMediaCanvasElementWrapper;
-	if (s) s->link_layer(layer);			// vtable +0x34 (some sites in the original skip the check)
-	return s;
+	OMediaCanvasElement *e = new OMediaCanvasElement;
+	if (e) e->link_layer(g_layer_hud2d);
+	return e;
 }
 
-// v290 (part b, 0x402d70) as every constructor call uses it: canvas `canvas_id` of the
-// screens database, scaled to the screen, placed at (x, y) in 640x480 space, z 0. From the
-// machine code its arguments are (OMediaCanvasElementWrapper *elt, float x, float y,
-// int canvas_id, float unused (always 1.0), bool scaled, float z).
-// MERGE NOTE: the generated signature of v290 cannot carry these types (the element pointer
-// is an `int` there); this is the one call to adapt once part b gives v290 its real signature.
-static void PlaceSprite(C2DInGameMenu *m, OMediaCanvasElementWrapper *s, float x, float y, int canvas_id)
+static inline void Show(OMediaCanvasElement *e)	{ e->force_show(); }
+static inline void Hide(OMediaCanvasElement *e)	{ e->hide(true); }
+
+// The delete idiom: hide, delete the canvas (it came from the database cache) and reset the
+// element, delete the element. port: the canvas is detached before its delete (OMT 2.5's
+// reset() would unlock the freed canvas).
+// port: and only while screens.omt is open (the destructor runs after UnInitObject closed it,
+// which freed the canvases).
+static bool s_db_open = false;
+
+static void FreeElt(OMediaCanvasElement *&e, bool hide_first, bool with_canvas = true)
 {
-	m->SetupSprite(s, x, y, canvas_id, 1.0f, true, 0.0f);
-}
-
-// The fields the constructor writes into a static interface element (what Create would set).
-static void SetupElt(InterfaceElt &e, short canvas_id, short x, short y)
-{
-	e.db = g_screens_db;
-	e.canvas_id = canvas_id;
-	e.x = x;
-	e.y = y;
-	e.src_blend = omblendfc_Src_Alpha;
-	e.dest_blend = omblendfc_Inv_Src_Alpha;
-	e.home_x = x;
-	e.home_y = y;
-}
-
-static void DeleteSprite(OMediaCanvasElementWrapper *s)
-{
-	if (s) delete s;						// virtual deleting destructor (through the +0x30 subobject)
-}
-
-// --------------------------------------------------------------------------- dat\keys.txt
-
-// N2:0x4660d0 "C3DPlayerObject::TextToKeys": key name -> Windows virtual-key code (500/501 for
-// the mouse buttons), 0 for KEY_NONE. The JOY_xx names of keys.txt are not in the table: they
-// log the error and give 0. That is the shipped game's behaviour (checked against the exe: it has
-// no JOY_ key names, and ErrorLog is active in release), so on Windows keys.txt's JOY_01..JOY_09
-// were dead too and the 0 ends that binding list early. The joystick reaches the game only through
-// the poll's globals (g_joy_buttons[DirectInput button number], g_joy_x / g_joy_y), which the key
-// tests read next to these lists - see Input.cpp and docs/controls.md.
-static int TextToKey(const char *name)
-{
-	static const struct { const char *name; int code; } kKeys[] = {
-		{"KEY_NONE",0}, {"LeftMouse",501}, {"RightMouse",500}, {"KEY_BACKSPACE",8}, {"KEY_TAB",9},
-		{"KEY_ENTER",13}, {"KEY_SHIFT",16}, {"KEY_CTRL",17}, {"KEY_PAUSE",19}, {"KEY_ESC",27},
-		{"KEY_SPACE",32}, {"KEY_PGUP",33}, {"KEY_PGDN",34}, {"KEY_END",35}, {"KEY_HOME",36},
-		{"KEY_LEFT",37}, {"KEY_UP",38}, {"KEY_RIGHT",39}, {"KEY_DOWN",40}, {"KEY_COMMA",188},
-		{"KEY_INS",45}, {"KEY_PERIOD",190}, {"KEY_DEL",46}, {"KEY_0",48}, {"KEY_1",49},
-		{"KEY_2",50}, {"KEY_3",51}, {"KEY_4",52}, {"KEY_5",53}, {"KEY_6",54}, {"KEY_7",55},
-		{"KEY_8",56}, {"KEY_9",57}, {"KEY_LESSTHAN",188}, {"KEY_GREATERTHAN",190}, {"KEY_A",65},
-		{"KEY_B",66}, {"KEY_C",67}, {"KEY_D",68}, {"KEY_E",69}, {"KEY_F",70}, {"KEY_G",71},
-		{"KEY_H",72}, {"KEY_I",73}, {"KEY_J",74}, {"KEY_K",75}, {"KEY_L",76}, {"KEY_M",77},
-		{"KEY_N",78}, {"KEY_O",79}, {"KEY_P",80}, {"KEY_Q",81}, {"KEY_R",82}, {"KEY_S",83},
-		{"KEY_T",84}, {"KEY_U",85}, {"KEY_V",86}, {"KEY_W",87}, {"KEY_X",88}, {"KEY_Y",89},
-		{"KEY_Z",90}, {"KEY_LEFTBRACKET",219}, {"KEY_RIGHTBRACKET",221}, {"KEY_F1",112},
-		{"KEY_F2",113}, {"KEY_F3",114}, {"KEY_F4",115}, {"KEY_F5",116}, {"KEY_F6",117},
-		{"KEY_F7",118}, {"KEY_F8",119}, {"KEY_F9",120}, {"KEY_F10",121}, {"KEY_F11",122},
-		{"KEY_F12",123}, {"KEY_PAD0",96}, {"KEY_PAD1",97}, {"KEY_PAD2",98}, {"KEY_PAD3",99},
-		{"KEY_PAD4",100}, {"KEY_PAD5",101}, {"KEY_PAD6",102}, {"KEY_PAD7",103}, {"KEY_PAD8",104},
-		{"KEY_PAD9",105}, {"KEY_PADSTAR",106}, {"KEY_PADPLUS",107}, {"KEY_PADMINUS",109},
-		{"KEY_PADDOT",110}, {"KEY_PADSLASH",111}, {"KEY_PADNUM",144}, {"KEY_TILDE",192},
-		{"KEY_BACKSLASH",220},
-	};
-	for (size_t i = 0; i < sizeof(kKeys) / sizeof(kKeys[0]); i++)
-		if (strcasecmp(kKeys[i].name, name) == 0) return kKeys[i].code;		// _stricmp
-	ErrorLog("ERROR: C3DPlayerObject::TextToKeys %s not found", name);
-	return 0;
-}
-
-static const char kKeyDelims[] = ",\n,\t,=";	// N2:0x539838 (sic: ',' three times)
-
-// N2:0x465eb0: the six key codes of one binding line, continuing the strtok of ReadKeys.
-// Returns true when the file ends early.
-static bool ReadKeyBinding(int *codes)
-{
-	for (int i = 0; i < 6; i++)
+	if (!e) return;
+	if (hide_first) e->hide(true);
+	OMediaCanvas *c = e->get_canvas();
+	if (with_canvas && c && s_db_open)
 	{
-		char *tok = strtok(NULL, kKeyDelims);
-		if (!tok) return true;
-		char name[128];
-		snprintf(name, sizeof(name), "%s", tok);		// strcpy into a 128-byte buffer in the original
-		codes[i] = TextToKey(name);
+		e->set_canvas(NULL);
+		delete c;
+		e->reset();
 	}
-	return false;
+	delete e;
+	e = NULL;
 }
 
-// N2:0x465bc0: read the key bindings from .\dat\keys.txt ("Key_Jump=KEY_ENTER, KEY_SHIFT, ...").
-// Returns true on error. Names are compared case-insensitively; unknown names are skipped
-// token by token.
-static bool ReadKeys(void)
+static void SetAlpha(OMediaCanvasElement *e, float a)
 {
-	static const struct { const char *name; int *codes; } kBindings[] = {
-		{"KEY_ClimbDown", g_key_climb_down},	{"KEY_Brake", g_key_brake},
-		{"KEY_Action", g_key_action},			{"KEY_Turnaround", g_key_turnaround},
-		{"KEY_Speed", g_key_speed},				{"KEY_Jump", g_key_jump},
-		{"KEY_Go", g_key_go},					{"KEY_Back", g_key_back},
-		{"KEY_TurnLeft", g_key_turn_left},		{"KEY_TurnRight", g_key_turn_right},
-		{"KEY_CutSceneBypass", g_key_cutscene_bypass},
-		{"KEY_DeactivateItem", g_key_deactivate_item},
-	};
-	static char buf[60000 + 1];				// on the stack in the original (_chkstk)
-
-	// _open(".\\dat\\keys.txt", O_RDONLY) / _read(60000) / _close
-	OMediaFileStream *fs = InitFileStream(".\\dat\\keys.txt");
-	if (!fs) return true;					// "open failed on input file" (debug log)
-	unsigned int n = 0;
-	try
-	{
-		n = fs->getsize();
-		if (n > 60000) n = 60000;
-		fs->read(buf, n);
-	}
-	catch (OMediaError &) { n = 0; }
-	UnInitFileStream(fs);
-	if (n == 0) return true;				// "Problem reading file menu.txt" (sic)
-
-	// _read in text mode turns CR LF into LF.
-	unsigned int m = 0;
-	for (unsigned int i = 0; i < n; i++)
-		if (!(buf[i] == '\r' && i + 1 < n && buf[i + 1] == '\n')) buf[m++] = buf[i];
-	// The original does not terminate the buffer (strtok runs on into the stack); terminated here.
-	buf[m] = 0;
-
-	for (char *tok = strtok(buf, kKeyDelims); tok; tok = strtok(NULL, kKeyDelims))
-	{
-		char name[128];
-		snprintf(name, sizeof(name), "%s", tok);		// strcpy in the original
-		for (size_t i = 0; i < sizeof(kBindings) / sizeof(kBindings[0]); i++)
-			if (strcasecmp(kBindings[i].name, name) == 0 && ReadKeyBinding(kBindings[i].codes))
-				return true;
-	}
-	return false;
+	OMediaFARGBColor c;
+	c.alpha = a; c.red = a; c.green = a; c.blue = a;	// +0x90..+0x9c all set to a
+	e->set_diffuse(c);
 }
 
-// --------------------------------------------------------------------------- N2:0x401380
+// --------------------------------------------------------------------------- HudPic
+
+// 0x403690: canvas `id` of the picture's database, its lock count taken back.
+OMediaCanvas *C2DInGameMenu::HudPic::Canvas(int id)
+{
+	OMediaCanvas *c = LoadCanvasID(db, id);					// 0x477890
+	if (c) c->db_unlock();									// lock count (+0x14) down if > 0
+	return c;
+}
+
+// 0x403490
+void C2DInGameMenu::HudPic::Show(void)
+{
+	if (elt)
+	{
+		elt->force_show();
+		return;
+	}
+	if (canvas_id < 0) return;
+	elt = NewElt();
+	if (!elt) return;
+	const float sx = ScaleX(), sy = ScaleY();
+	OMediaCanvas *c = NULL;
+	if (canvas_id != -1)
+	{
+		c = Canvas(canvas_id);
+		if (c) elt->set_size((float)c->get_width() * sy, (float)c->get_height() * sx);	// sic: x size by the y scale and back
+	}
+	elt->set_canvas(c);
+	elt->set_canvas_flags(omcanef_FreeWorldSize);
+	elt->set_auto_align(omaac_Center, omaac_Center);
+	elt->setz(0);
+	elt->setx(sx * (float)x - (float)((short)g_screen_w / 2));
+	elt->sety(((float)((short)g_screen_h / 2) - elt->get_height()) - sy * (float)y);
+	elt->force_show();
+	elt->set_blend((omt_BlendFunc)src_blend, (omt_BlendFunc)dst_blend);
+}
+
+void C2DInGameMenu::HudPic::Delete(void)
+{
+	FreeElt(elt, true);
+}
+
+// --------------------------------------------------------------------------- 0x401430
 
 C2DInGameMenu::C2DInGameMenu()
 {
-	char tag[] = "C2DINGAMEMENU";					// SetName upper-cases its argument in place
-	SetName(tag);
+	SetName((char *)"C2DINGAMEMENU");
 	Log("C2DInGameMenu()");
-	CLocalGameObject::InitObject();
-	FindDevice(2);								// 0x4783c0 (Input.cpp): the first joystick (omhidtc_Joystick)
-	v64(0.3f);
+	CLocalGameObject::InitObject();							// (direct call 0x458820)
+	const bool windowed = g_windowed;						// 0x509a13
+	FindDevice(2);											// 0x4783c0 the joystick
+	CGameObject::v64(0.3f);									// (direct call 0x4711e0)
 	m_object_id = 'NEM2';
+	f_4be = 0;
+	g_4f8030 = 0; g_4f8034 = 0; g_4f8038 = 0; g_4f803c = 0;
+	f_4b4 = NULL;
+	f_4b8 = NULL;
+	f_4bf = 0;
+	f_4e8 = 0;
+	f_50c = 0;
+	f_510 = -1;
+	f_4b8 = InitFileStream("omt\\screens.omt");				// 0x476170 (through a std::string)
+	f_4b4 = InitDatabase(f_4b8);							// 0x476000
+	g_screens_db = f_4b4;									// port: Negatron's global, for callers not ported yet
+	s_db_open = true;
+	v299(0);
+	v293();													// the menu pages
+	f_4bc = 3;
+	f_4c8 = 3;
 
-	g_screens_db = NULL;
-	f_4c8 = NULL;
-	f_4cc = 0;
-	f_520 = 0;
-	f_588 = -1;
-	f_4c8 = InitFileStream("omt\\screens.omt");
-	g_screens_db = InitDatabase(f_4c8);
-	f_4ce = -1;
-	CreateMenuPages();											// builds the menu pages
-	f_590 = -1;
+	// the HUD: lives picture, health bar, power bar
+	const omt_BlendFunc add = windowed ? omblendfc_Inv_Src_Alpha : omblendfc_One;
+	g_hud_lives = NULL;
+	g_hud_lives = new OMediaCanvasElement;
+	if (g_hud_lives) g_hud_lives->link_layer(g_layer_hud2d);
+	g_hud_lives->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+	g_hud_lives->set_canvas(NULL);
+	v276(g_hud_lives, 32.0f, 0.0f, 0x17, 1.0f, true);
 
-	// Full screen: most frame sprites are drawn additively (dest blend One).
-	const omt_BlendFunc frame_dest = g_windowed ? omblendfc_Inv_Src_Alpha : omblendfc_One;
-	const int windowed = g_windowed ? 1 : 0;		// also moves the bottom bar down 1 pixel (sic)
+	g_health_bar = NewElt();
+	g_health_bar->set_blend(omblendfc_Src_Alpha, add);
+	g_health_bar->set_canvas(NULL);
+	v276(g_health_bar, 6.0f, 4.0f, 0x16, 1.0f, true);
 
-	OMediaCanvasElementWrapper *s;
-	g_4f80fc = NULL;
-	s = g_4f80fc = NewSprite(g_layer_hud2d);
-	WideAnchor(s, WIDE_LEFT);					// port: widescreen, top left corner
-	s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 32, 0, 0x17);
+	g_health_frame = NewElt();
+	g_health_frame->set_blend(omblendfc_Src_Alpha, add);
+	g_health_frame->set_canvas(NULL);
+	v276(g_health_frame, 3.0f, 7.0f, 0x15, 1.0f, true);
 
-	s = g_4f7cb0 = NewSprite(g_layer_hud2d);
-	WideAnchor(s, WIDE_LEFT);					// port: widescreen, top left corner
-	s->set_blend(omblendfc_Src_Alpha, frame_dest);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 8, 4, 0x16);
+	g_gadget_bar_frame = NewElt();
+	g_gadget_bar_frame->set_blend(omblendfc_Src_Alpha, add);
+	g_gadget_bar_frame->set_canvas(NULL);
+	v276(g_gadget_bar_frame, 320.0f, 7.0f, 0x15, 1.0f, true);
+	Hide(g_gadget_bar_frame);
 
-	const float sx = (float)(short)g_screen_w * (1.0f / 640.0f);
-	const float sy = (float)(short)g_screen_h * (1.0f / 480.0f);
+	g_gadget_bar = NewElt();
+	f_4d0 = -1;
+	g_gadget_bar->set_blend(omblendfc_Src_Alpha, add);
+	g_gadget_bar->set_canvas(NULL);
+	v276(g_gadget_bar, 322.0f, 4.0f, 0x16, 1.0f, true);
+	g_gadget_bar->set_size(ScaleX() * 30.0f, ScaleY() * 50.0f);	// 0x48d404, 0x48d400
+	Hide(g_gadget_bar);
 
-	s = g_4f8028 = NewSprite(g_layer_hud2d);
-	WideAnchor(s, WIDE_LEFT);					// port: widescreen, top left corner
-	s->set_blend(omblendfc_Src_Alpha, frame_dest);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 3, 7, 0x15);
+	g_4f8188 = 20.0f;
+	for (int i = 0; i < 44; i++) g_story_lines[i] = NULL;
 
-	s = g_4f7cb0 = NewSprite(g_layer_hud2d);
-	s->set_blend(omblendfc_Src_Alpha, frame_dest);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 320, 7, 0x15);
-	s->hide(true);
-
-	g_4f8028 = NewSprite(g_layer_hud2d);			// set up below
-
-	f_5b0 = NULL;
-	s = f_5b0 = NewSprite(g_layer_hud2d);
-	WideAnchor(s, WIDE_RIGHT);					// port: widescreen, the radar disc (top right)
-	s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 490, 10, 0x223);
-	s->set_diffuse(OMediaFARGBColor(0.4f, 1.0f, 1.0f, 1.0f));
-	s->hide(true);
-
-	f_4e8 = -1;
-
-	s = g_4f8028;
-	s->set_blend(omblendfc_Src_Alpha, frame_dest);
-	s->set_canvas(NULL);
-	PlaceSprite(this, s, 325, 4, 0x16);
-	s->set_size(sx * 30.0f, sy * 50.0f);
-	s->hide(true);
-
-	strcpy(g_N2_545e7c, g_4f81a8);
-
-	// The 14 static elements g_elt_544908[] (a bar at y 340) and their 14 sprites (y 410).
-	static const short kEltCanvas[14] =
-		{ 0x71, 0x73, 0x6f, 0x70, 0x74, 0x1de, 0x76, 0x1dc, 0x6e, 0x1dd, 0x1db, 0x1d8, 0x1d9, 0x1da };
-	for (int i = 0; i < 14; i++)
+	// the current gadget's picture (one per gadget, bottom left)
+	static const short kGadgetPics[8] = { 0x6d, 0x73, 0x6f, 0x71, 0x74, 0x72, 0x76, 0x6e };
+	for (int i = 0; i < 8; i++)
 	{
-		SetupElt(g_elt_544908[i], kEltCanvas[i], 0, (short)(windowed + 340));
-		g_elt_544908[i].f_34 = 1;
-		WideAnchor(&g_elt_544908[i], WIDE_LEFT);	// port: widescreen, the help pictures (bottom left)
+		HudPic &p = s_gadget_pics[i];
+		p.db = f_4b4;
+		p.canvas_id = kGadgetPics[i];
+		p.x = 0;
+		p.y = 0x19b;
+		p.src_blend = 6;
+		p.dst_blend = 7;
 	}
-	// sprite index, canvas - in the order the original creates them
-	static const short kItemSprites[14][2] = {
-		{ 0, 0x20 }, { 11, 0x1ef }, { 12, 0x1e7 }, { 2, 0x58 }, { 3, 0x77 }, { 13, 0x1e8 }, { 10, 0x1ee },
-		{ 9, 0x1eb }, { 1, 0x57 }, { 7, 0x1e9 }, { 4, 0x1ea }, { 8, 0x1ec }, { 5, 0x1ed }, { 6, 0x142 } };
-	const float item_y = (float)(windowed + 410);
-	for (int i = 0; i < 14; i++)
+
+	// the gadget icons (bottom left, one shown: v300)
+	static const short kGadgetIcons[8] = { 0x5e, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d };
+	for (int i = 0; i < 8; i++)
 	{
-		s = g_menu_item_sprites[kItemSprites[i][0]] = new OMediaCanvasElementWrapper;
-		WideAnchor(s, WIDE_LEFT);				// port: widescreen, the help icons (bottom left)
-		s->link_layer(g_layer_hud2d);
-		PlaceSprite(this, s, 0, item_y, kItemSprites[i][1]);
-		s->hide(true);
+		g_gadget_icons[i] = NewElt();
+		v276(g_gadget_icons[i], 0.0f, 410.0f, kGadgetIcons[i], 1.0f, true);
+		Hide(g_gadget_icons[i]);
 	}
-	for (int i = 0; i < 14; i++)
-		g_menu_item_sprites[i]->set_blend(omblendfc_Src_Alpha, frame_dest);
+	for (int i = 0; i < 8; i++)
+		g_gadget_icons[i]->set_blend(omblendfc_Src_Alpha, windowed ? omblendfc_Inv_Src_Alpha : omblendfc_One);
 
-	g_interface.Create("HelpMenu", g_screens_db, 0x75, 513, 340, omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha, 1);
-	g_help_menu_elt = g_interface.Find("HelpMenu");
-	// port: widescreen - the help keys panel (bottom right) and the radar blips go to the right edge
-	WideAnchor(g_help_menu_elt, WIDE_RIGHT);
-	// TODO(BG): Negatron also anchored C3DRadar's blips (g_radar_blips) here; BG has no C3DRadar.
-
-	SetupElt(g_elt_5444d8, 0, 0, -1);
+	s_msg_arrow.db = f_4b4;
+	s_msg_arrow.canvas_id = 0x75;
+	s_msg_arrow.x = 0x189;
+	s_msg_arrow.y = 0x19b;
+	s_msg_arrow.src_blend = 6;
+	s_msg_arrow.dst_blend = 7;
+	s_pic_4f7c98.db = f_4b4;
+	s_pic_4f7c98.canvas_id = 0;
+	s_pic_4f7c98.x = 0;
+	s_pic_4f7c98.y = -1;
+	s_pic_4f7c98.src_blend = 6;
+	s_pic_4f7c98.dst_blend = 7;
+	f_4f0 = 0;
+	s_pic_4f7c98.Delete();
+	f_4f4 = 0;
+	f_4f8 = 2.0f;
+	f_4fc = 0;
+	f_500 = 0;
 	f_504 = 0;
-	g_elt_5444d8.Hide();
-	f_508 = 0;
-	f_50c = 2.0f;
-	f_510 = 0;
-	f_514 = 0;
-	f_518 = 0;
-	f_594 = -130;
-	f_598 = 0;
+	f_4d8 = 3;
+	f_4ec = -0x45;
+	v305();
 
-	// Inlined "deselect the current item" (f_594 was just set, so the else branch always runs).
-	g_elt_544908[g_menu_cur_item].Hide();
-	if (f_594 == 0 && g_menu_cur_item != 0)
-		g_menu_item_sprites[g_menu_cur_item]->force_show();	// hide count 1, then hide(false)
-	else
-		g_menu_item_sprites[g_menu_cur_item]->hide(true);
-	g_help_menu_elt->Hide();
-	f_594 = 0;
-	f_59c = 0;
+	g_hud_4f7c90 = NewElt();
+	v276(g_hud_4f7c90, 260.0f, 1.0f, 0x67, 1.0f, true);
+	g_hud_4f7c90->set_blend(omblendfc_Src_Alpha, omblendfc_One);
+	Hide(g_hud_4f7c90);
+	g_confirm_shown = 0;
+	Log("Before IntSetScreen");								// (debug log)
+	s_pic_4f8138.db = f_4b4;
+	s_pic_4f8138.canvas_id = 0x6b;
+	s_pic_4f8138.x = 0;
+	s_pic_4f8138.y = -1;
+	s_pic_4f8138.src_blend = 6;
+	s_pic_4f8138.dst_blend = 1;
+	Log("After IntSetScreen");
 
-	s = g_N2_5444d0 = NewSprite(g_layer_hud2d);
-	PlaceSprite(this, s, 260, 1, 0x67);
-	s->set_blend(omblendfc_Src_Alpha, omblendfc_One);
-	s->hide(true);
+	f_4e4 = NewElt();
+	f_4e4->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+	v276(f_4e4, 315.0f, 100.0f, 0xfd, 1.0f, true);
+	Hide(f_4e4);
 
-	g_N2_5324e4 = -1;
+	// the yes/no boxes (one picture per question) and their two highlights
+	struct Box { OMediaCanvasElement **elt; float x, y; int id; };
+	const Box boxes[] = {
+		{ &g_box_12, 210.0f, 210.0f, 0x18 },
+		{ &g_box_4f7cfc, 285.0f, 256.0f, 0x1a },
+		{ &g_box_level, 210.0f, 210.0f, 0xa9 },
+		{ &g_box_quit, 210.0f, 210.0f, 0xf1 },
+		{ &g_box_delete, 210.0f, 210.0f, 0x113 },
+	};
+	for (size_t i = 0; i < sizeof boxes / sizeof boxes[0]; i++)
+	{
+		*boxes[i].elt = NewElt();
+		(*boxes[i].elt)->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+		v276(*boxes[i].elt, boxes[i].x, boxes[i].y, boxes[i].id, 1.0f, true);
+		Hide(*boxes[i].elt);
+	}
+	s_loading_pic.db = f_4b4;
+	s_loading_pic.canvas_id = 0xf4;
+	s_loading_pic.x = 0x19a;
+	s_loading_pic.y = 0x14;
+	s_loading_pic.src_blend = 6;
+	s_loading_pic.dst_blend = 7;
+	const Box boxes2[] = {
+		{ &g_box_save, 210.0f, 210.0f, 0xf5 },
+		{ &g_box_load, 210.0f, 210.0f, 0x7b },
+		{ &g_box_yes, 210.0f, 252.0f, 0xf2 },
+		{ &g_box_no, 325.0f, 252.0f, 0xf3 },
+	};
+	for (size_t i = 0; i < sizeof boxes2 / sizeof boxes2[0]; i++)
+	{
+		*boxes2[i].elt = NewElt();
+		(*boxes2[i].elt)->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+		v276(*boxes2[i].elt, boxes2[i].x, boxes2[i].y, boxes2[i].id, 1.0f, true);
+		Hide(*boxes2[i].elt);
+	}
+	g_confirm_open = 0;
 	f_4dc = 0;
 
-	// Sprites with their blend set first: layer, x, y, canvas.
-	struct SpriteDef { OMediaCanvasElementWrapper **p; OMediaLayer *layer; float x, y; int canvas; };
-	const SpriteDef kGroup1[] = {
-		{ &g_N2_5444d4, g_layer_hud2d, 210, 210, 0x18 },
-		{ &g_N2_544744, g_layer_hud2d, 285, 256, 0x1a },
-		{ &g_4f7db0, g_layer_hud2d, 210, 210, 0xa9 },
-		{ &g_4f7ef0, g_layer_hud2d, 210, 210, 0xf1 },
-		{ &g_N2_545848, g_layer_hud2d, 210, 210, 0x113 },
-	};
-	for (int i = 0; i < COUNTOF(kGroup1); i++)
-	{
-		const SpriteDef &d = kGroup1[i];
-		s = *d.p = NewSprite(d.layer);
-		s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		PlaceSprite(this, s, d.x, d.y, d.canvas);
-		s->hide(true);
-	}
+	// the fade quad (full screen)
+	g_fade_quad = NewElt();
+	v276(g_fade_quad, 0.0f, -1.0f, 0xfc, 1.0f, true);
+	g_fade_quad->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+	Hide(g_fade_quad);
+	s_fade_pic.db = f_4b4;
+	s_fade_pic.y = 0;
+	s_fade_pic.canvas_id = 0xf7;
+	s_fade_pic.x = 0;
+	s_fade_pic.src_blend = 6;
+	s_fade_pic.dst_blend = 7;
+	s_pic_4f7cb8.db = f_4b4;
+	s_pic_4f7cb8.canvas_id = 0x14f;
+	s_pic_4f7cb8.x = 0;
+	s_pic_4f7cb8.y = 200;
+	s_pic_4f7cb8.src_blend = 6;
+	s_pic_4f7cb8.dst_blend = 7;
 
-	SetupElt(g_elt_545a70, 0xf4, 410, 20);
-	SetupElt(g_elt_545858, 0x1cd, 260, 5);
+	// the story message lines (44 pictures, v306)
+	static const short kLines[44] = {
+		0x9c, 0x78, 0x79, 0x7a, 0xa8, 0x9d, 0x9e, 0xa0, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xc4, 0xb8,
+		0xb9, 0xda, 0xfa, 0xf9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc3, 0xb7, 0xde, 0xdd, 0xdc,
+		0xcc, 0xc6, 0xc9, 0xca, 0xe0, 0xdf, 0xcb, 0xc5, 0xe6, 0xe2, 0xe3, 0xe4, 0xe5, 0xe1 };
+	v306(0, kLines[0]);
+	Hide(g_story_lines[0]);
+	for (int i = 1; i < 44; i++) v306(i, kLines[i]);
+	for (int i = 0; i < 44; i++) g_story_flags[i] = 0;
 
-	const SpriteDef kGroup2[] = {
-		{ &g_N2_544904, g_layer_hud2d, 210, 210, 0xf5 },
-		{ &g_N2_545c7c, g_layer_hud2d, 210, 210, 0x217 },
-		{ &g_N2_5445dc, g_layer_hud2d, 210, 210, 0x218 },
-	};
-	for (int i = 0; i < COUNTOF(kGroup2); i++)
-	{
-		const SpriteDef &d = kGroup2[i];
-		s = *d.p = NewSprite(d.layer);
-		s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		PlaceSprite(this, s, d.x, d.y, d.canvas);
-		s->hide(true);
-	}
-
-	f_5ac = 0;
-
-	const SpriteDef kGroup3[] = {
-		{ &g_N2_545a60, g_layer_top2d, 210, 210, 0x228 },
-		{ &g_N2_5446ec, g_layer_hud2d, 210, 210, 0x21f },
-		{ &g_N2_5444bc, g_layer_top2d, 407, (float)g_N2_532500, 0x221 },
-		{ &g_N2_5444c4, g_layer_top2d, 41, 221, 0x222 },
-		{ &g_N2_545850, g_layer_hud2d, 210, 210, 0x7b },
-		{ &g_N2_545a68, g_layer_hud2d, 210, 252, 0xf2 },
-		{ &g_N2_544748, g_layer_hud2d, 325, 252, 0xf3 },
-	};
-	for (int i = 0; i < COUNTOF(kGroup3); i++)
-	{
-		const SpriteDef &d = kGroup3[i];
-		s = *d.p = NewSprite(d.layer);
-		s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		PlaceSprite(this, s, d.x, d.y, d.canvas);
-		s->hide(true);
-	}
-
-	g_N2_545dd4 = 0;
-	f_4ec = 0;
-
-	// Placed first, then blend, hidden, diffuse opaque white.
-	const SpriteDef kGroup4[] = {
-		{ &g_N2_5448f0, g_layer_hud2d, 150, 3, 0x15a },
-		{ &g_N2_5448f4, g_layer_hud2d, 150, 3, 0x15b },
-		{ &g_N2_5448fc, g_layer_hud2d, 150, 3, 0x15c },
-		{ &g_N2_54472c, g_layer_hud2d, 290, 3, 0x159 },
-		{ &g_N2_544730, g_layer_hud2d, 290, 3, 0x154 },
-		{ &g_N2_544734, g_layer_hud2d, 290, 3, 0x155 },
-		{ &g_N2_544738, g_layer_hud2d, 290, 3, 0x156 },
-		{ &g_N2_54473c, g_layer_hud2d, 290, 3, 0x157 },
-		{ &g_N2_544740, g_layer_hud2d, 290, 3, 0x158 },
-	};
-	for (int i = 0; i < COUNTOF(kGroup4); i++)
-	{
-		const SpriteDef &d = kGroup4[i];
-		s = *d.p = NewSprite(d.layer);
-		PlaceSprite(this, s, d.x, d.y, d.canvas);
-		s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		s->hide(true);
-		s->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));
-	}
-
-	// Named interface elements: name, canvas, x, y, last Create argument.
-	static const struct { const char *name; short canvas, x, y; int f_34; } kElts[] = {
-		{ "LineGlow", 0x165, 100, 356, 0 },
-		{ "TextBackdrop", 0x177, 110, 100, 1 },
-		{ "LetterBoxTop", 0x15d, 0, -65, 0 },
-		{ "LetterBoxBottom", 0x15e, 0, 481, 0 },
-		{ "TextBackdrop2", 0x177, 110, 193, 1 },
-		{ "Cindy", 0x168, 414, 104, 1 },
-		{ "CindyWire", 0x169, 414, 104, 1 },
-		{ "Carl", 0x19d, 414, 104, 1 },
-		{ "CarlWire", 0x19c, 414, 104, 1 },
-		{ "Resume", 0x187, 414, 104, 1 },
-		{ "ResumeWire", 0x197, 414, 104, 1 },
-		{ "Exit", 0x188, 414, 104, 1 },
-		{ "ExitWire", 0x199, 414, 104, 1 },
-		{ "Options", 0x189, 414, 104, 1 },
-		{ "OptionsWire", 0x19a, 414, 104, 1 },
-		{ "Pickups", 0x18a, 414, 104, 1 },
-		{ "PickupsWire", 0x196, 414, 104, 1 },
-		{ "Credits", 0x18b, 414, 104, 1 },
-		{ "CreditsWire", 0x192, 414, 104, 1 },
-		{ "Pix4A", 0x166, 110, 157, 1 },
-		{ "Pix4B", 0x166, 378, 157, 1 },
-		{ "Pix4C", 0x166, 378, 217, 1 },
-		{ "Pix4D", 0x166, 110, 217, 1 },
-		{ "Pix4E", 0x166, 410, 100, 1 },
-		{ "Pix4F", 0x166, 530, 100, 1 },
-		{ "Pix4G", 0x166, 530, 220, 1 },
-		{ "Pix4H", 0x166, 410, 100, 1 },
-		{ "CursorLine", 0x176, 110, 100, 0 },
-		{ "Cursor1", 0x175, 110, 97, 0 },
-		{ "LS", 0x185, 414, 104, 1 },
-		{ "LSWire", 0x190, 414, 104, 1 },
-		{ "MainMenuPDA", 0xd9, 0, 0, 1 },
-		{ "Johnny", 0x1a1, 414, 104, 1 },
-		{ "JohnnyWire", 0x1a0, 414, 104, 1 },
-		{ "Fowl", 0x19f, 414, 104, 1 },
-		{ "FowlWire", 0x19e, 414, 104, 1 },
-		{ "MomDad", 0x1a3, 414, 104, 1 },
-		{ "MomDadWire", 0x1a2, 414, 104, 1 },
-		{ "Dino", 0x1cc, 414, 104, 1 },
-		{ "DinoWire", 0x1cb, 414, 104, 1 },
-		{ "HorizBlack", 0x186, 414, 104, 0 },
-		{ "Brain", 0x1bb, 814, 104, 0 },
-		{ "Formula1", 0x1b7, 814, 104, 0 },
-		{ "Formula2", 0x1b8, 814, 104, 0 },
-		{ "Formula3", 0x1b9, 814, 104, 0 },
-		{ "Formula4", 0x1ba, 814, 104, 0 },
-		{ "Pic_Cola", 0x1bc, 814, 104, 0 },
-		{ "Pic_Electromagnet", 0x1bd, 814, 104, 0 },
-		{ "Pic_Balloon", 0x1bf, 814, 104, 0 },
-		{ "Pic_Flurpbottle", 0x1d0, 814, 104, 0 },
-		{ "Pic_PVCPipe", 0x1cf, 814, 104, 0 },
-		{ "Pic_Shades", 0x1d1, 814, 104, 0 },
-		{ "Pic_Watergun", 0x1d2, 814, 104, 0 },
-		{ "Pic_MegaPipe", 0x1d3, 814, 104, 0 },
-		{ "Pic_MegaLamp", 0x1d4, 814, 104, 0 },
-		{ "Pic_Megaphone", 0x1d5, 814, 104, 0 },
-		{ "Pic_Megaburp", 0x1d6, 814, 104, 0 },
-	};
-	for (int i = 0; i < COUNTOF(kElts); i++)
-		g_interface.Create(kElts[i].name, g_screens_db, kElts[i].canvas, kElts[i].x, kElts[i].y,
-						   omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha, kElts[i].f_34);
-
-	SetupElt(g_elt_545c80, 0x9c, 425, 204);
-	g_elt_545c80.effect.move_dy = -1.0f;
-	g_elt_545c80.f_34 = 1;
-
-	// y is (float)(windowed - 1): 0 in a window, -1 full screen.
-	const float bar_y = (float)(windowed - 1);
-	s = g_N2_545844 = NewSprite(g_layer_hud2d);
-	PlaceSprite(this, s, 0, bar_y, 0x220);
-	s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	s->hide(true);
-	s = g_N2_545a64 = NewSprite(g_layer_hud2d);
-	PlaceSprite(this, s, 0, bar_y, 0x220);
-	s->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	s->hide(true);
-
-	SetupElt(g_elt_5445e8, 0x14f, 0, 200);
-
-	v107(0);
+	v107(0);												// (BG's slot 108 setter: not saved in a .gam)
 	v36(0);
 	v52(0);
-	strcpy(g_N2_545de4, "TEXTTRIG");
-	f_4f8 = 0;
-	g_N2_545e48 = 0;
-	f_4fc = 0;
-	g_N2_545e4c = 0;
-	f_500 = -1;
-	f_5a4 = f_5a5 = f_5a6 = f_5a7 = 1;
-	f_5a8 = f_5a9 = f_5aa = f_5ab = 1;
-	f_4d4 = 0;
-	f_4d0 = 0;
-	g_N2_545dc4 = 0;
-	f_4e4 = 0;
-	f_4d8 = 0;
-	g_N2_5324ec = 1;
-	g_N2_5324e8 = 1.0f;
-	f_51c = 0;
-	f_4f0 = 0;
-	f_4f4 = 0;
-	g_N2_545e64 = 0;
+	f_4c4 = 0;
+	f_4c0 = 0;
+	g_menu_active = 0;
+	f_4cc = 0;
 	f_4e0 = 0;
-	f_58c = 0;
-	g_menu = this;
-	f_5a0 = 0;
-	g_N2_545f0e = 0;
-	if (ReadKeys()) ErrorLog("ERROR: Reading Keys.txt file");
+	g_hud_on = 1;
+	g_fade_time = 1.0f;
+	f_508 = 0;
+	f_514 = 0;
+	f_518 = 0;
+	f_594 = 0; f_598 = 0; f_59c = 0; f_5b0 = NULL; f_4ce = 0;	// port: the Negatron members
 }
 
 // --------------------------------------------------------------------------- 0x4029c0
 
 C2DInGameMenu::~C2DInGameMenu()
 {
-	WideAnchorClear();							// port: widescreen anchors (Widescreen.h)
-	BillsUiShutdown();							// port: Bill's UI pieces (BillsUi.h)
-	g_interface.DestroyAll();
-
-	// Deleted, not cleared (sic: the globals keep dangling pointers). f_5b0 and the canvas
-	// elements of the other static interface elements are not deleted.
-	OMediaCanvasElementWrapper *const kSprites[] = {
-		g_4f8040, g_4f7ea4, g_4f80fc, g_4f7cb0, g_4f8028, g_4f7ea0, g_4f7cd0, g_4f7eec, g_4f7cb0,
-		g_4f8028, g_N2_5444d0, g_4f7db0, g_4f7ef0, g_N2_5444d4, g_N2_545a68, g_N2_544748, g_N2_544744, g_N2_544904,
-		g_N2_545c7c, g_N2_5445dc, g_N2_545a60, g_N2_5446ec, g_N2_545850, g_N2_5448f0, g_N2_5448f4, g_N2_5448fc, g_N2_54472c,
-		g_N2_544730, g_N2_544734, g_N2_544738, g_N2_54473c, g_N2_544740, g_N2_545848, g_4f8150, g_N2_5444bc, g_N2_5444c4,
-		g_N2_545844, g_N2_545a64,
+	OMediaCanvasElement **elts[] = {
+		&g_hud_lives, &g_health_bar, &g_health_frame, &g_gadget_bar_frame, &g_gadget_bar,
+		&g_box_level, &g_box_quit, &g_box_save, &g_box_load, &g_box_delete, &g_box_yes, &g_box_no,
 	};
-	// port: TODO(BG) - this is Negatron's list; several of its globals retarget to one Neutron.exe
-	// address (g_4f7cb0, g_4f8028 twice): delete each sprite once until 0x4029c0 is ported.
-	for (int i = 0; i < COUNTOF(kSprites); i++)
-	{
-		bool seen = false;
-		for (int k = 0; k < i; k++) if (kSprites[k] == kSprites[i]) seen = true;
-		if (!seen) DeleteSprite(kSprites[i]);
-	}
-	for (int i = 0; i < 14; i++)
-	{
-		DeleteSprite(g_elt_544908[i].canvas_elt);	// sic: canvas_elt left dangling
-		DeleteSprite(g_menu_item_sprites[i]);
-	}
-
-	// UnloadMyMenu for the menu pages (sic: page 1 is not unloaded).
-	v324(2);
-	v324(0);
-	v324(3);
-	v324(4);
-	v324(5);
-	v324(6);
-	DeleteAllMenuObject();							// inlined in the original (slot 328)
+	for (size_t i = 0; i < sizeof elts / sizeof elts[0]; i++)
+		if (*elts[i]) delete *elts[i];						// (the pointers are not cleared)
+	if (s_gadget_pics[0].elt) delete s_gadget_pics[0].elt;	// sic: 0x4f7ef0 only, the first gadget's picture
+	for (int i = 0; i < 44; i++)
+		if (g_story_lines[i]) delete g_story_lines[i];
+	v279();
+	// port: the pointers above are cleared so a second menu (a new C3DJimmy) does not see them
+	for (size_t i = 0; i < sizeof elts / sizeof elts[0]; i++) *elts[i] = NULL;
+	s_gadget_pics[0].elt = NULL;
+	for (int i = 0; i < 44; i++) g_story_lines[i] = NULL;
+	if (g_menu == this) g_menu = NULL;						// port: g_menu (Jimmy's +0xa18 in the original)
 }
 
-// --------------------------------------------------------------------------- 0x402b40
+// --------------------------------------------------------------------------- slot 8
 
-void C2DInGameMenu::UnInitObject()
+// port: every element of the menu lets go of its canvas while screens.omt is still open (closing
+// it frees the canvases; the elements are deleted after, and OMT 2.5's element destructor
+// unlocks its canvas - a use-after-free otherwise).
+static void Detach(OMediaCanvasElement *e)			{ if (e) e->set_canvas(NULL); }
+
+static void DetachAll(OMediaCanvasElement *const *own, int n)
+{
+	OMediaCanvasElement *const fixed[] = {
+		g_hud_lives, g_health_bar, g_health_frame, g_gadget_bar_frame, g_gadget_bar, g_hud_4f7c90,
+		g_hud_picture, g_fade_quad, g_box_12, g_box_4f7cfc, g_box_level, g_box_quit, g_box_save,
+		g_box_load, g_box_delete, g_box_yes, g_box_no };
+	for (size_t i = 0; i < sizeof fixed / sizeof fixed[0]; i++) Detach(fixed[i]);
+	for (int i = 0; i < n; i++) Detach(own[i]);
+	for (int i = 0; i < 8; i++) Detach(g_gadget_icons[i]);
+	for (int i = 0; i < 44; i++) Detach(g_story_lines[i]);
+	for (int i = 0; i < 8; i++) Detach(C2DInGameMenu::s_gadget_pics[i].elt);
+	C2DInGameMenu::HudPic *const pics[] = { &C2DInGameMenu::s_msg_arrow, &C2DInGameMenu::s_pic_4f7c98,
+		&C2DInGameMenu::s_pic_4f7cb8, &C2DInGameMenu::s_pic_4f8008, &C2DInGameMenu::s_fade_pic,
+		&C2DInGameMenu::s_loading_pic, &C2DInGameMenu::s_pic_4f8138 };
+	for (size_t i = 0; i < sizeof pics / sizeof pics[0]; i++) Detach(pics[i]->elt);
+	for (int p = 0; p < C2DInGameMenu::MENU_COUNT; p++)
+	{
+		C2DInGameMenu::MenuPage *pg = C2DInGameMenu::Page(p);
+		if (!pg) continue;
+		Detach(pg->background);
+		for (int i = 0; i < C2DInGameMenu::MENU_ITEMS; i++)
+		{
+			Detach(pg->items[i].rollover);
+			Detach(pg->items[i].active);
+		}
+	}
+}
+
+void C2DInGameMenu::UnInitObject()										// 0x402b40
 {
 	CLocalGameObject::UnInitObject();
-	// sic: neither pointer is cleared - a second call would release them again.
-	if (g_screens_db) UnInitDatabase(g_screens_db);
-	if (f_4c8) UnInitFileStream(f_4c8);
+	OMediaCanvasElement *const own[] = { f_4e4, f_5b0 };
+	DetachAll(own, 2);										// port: see DetachAll
+	if (f_4b4) UnInitDatabase(f_4b4);						// 0x476080
+	if (f_4b8) UnInitFileStream(f_4b8);						// 0x476290
+	s_db_open = false;										// port (FreeElt)
+}
+
+// --------------------------------------------------------------------------- sprites
+
+void C2DInGameMenu::v275(OMediaCanvasElement *e, float x, float y)		// 0x402cc0
+{
+	const float sx = ScaleX(), sy = ScaleY();
+	if (!e) return;
+	e->set_canvas_flags(omcanef_FreeWorldSize);
+	e->set_auto_align(omaac_Center, omaac_Center);
+	e->setz(0);
+	e->setx(sx * x - (float)((short)g_screen_w / 2));
+	e->sety(((float)((short)g_screen_h / 2) - e->get_height()) - sy * y);
+}
+
+void C2DInGameMenu::v276(OMediaCanvasElement *e, float x, float y, int canvas_id, float unused, bool scaled)	// 0x402d70
+{
+	(void)unused;
+	const float sx = ScaleX(), sy = ScaleY();
+	if (!e) return;
+	v277(e, canvas_id, scaled);
+	e->set_canvas_flags(omcanef_FreeWorldSize);
+	e->set_auto_align(omaac_Center, omaac_Center);
+	e->setz(0);
+	e->setx(sx * x - (float)((short)g_screen_w / 2));
+	e->sety(((float)((short)g_screen_h / 2) - e->get_height()) - sy * y);
+}
+
+void C2DInGameMenu::v277(OMediaCanvasElement *e, int canvas_id, bool scaled)	// 0x402e30
+{
+	const float sx = ScaleX(), sy = ScaleY();
+	if (canvas_id == -1)
+	{
+		// the original passes its `scaled` argument as the canvas (every caller with -1 passes 0)
+		e->set_canvas(NULL);
+		return;
+	}
+	OMediaCanvas *c = v278(canvas_id);
+	if (!c)
+	{
+		e->set_canvas(NULL);
+		return;
+	}
+	if (scaled) e->set_size((float)c->get_width() * sx, (float)c->get_height() * sy);
+	else e->set_size((float)c->get_width(), (float)c->get_height());
+	e->set_canvas(c);
+}
+
+OMediaCanvas *C2DInGameMenu::v278(int canvas_id)						// 0x402f00
+{
+	OMediaCanvas *c = LoadCanvasID(f_4b4, canvas_id);		// 0x477890
+	if (c) c->db_unlock();
+	return c;
+}
+
+// --------------------------------------------------------------------------- the current page
+
+void C2DInGameMenu::v279()												// 0x402f30
+{
+	v296(Page(f_4d4));
+	v310(f_4d4);
+}
+
+void C2DInGameMenu::v280()												// 0x4033f0
+{
+	v309(f_4d4);
+	v295(Page(f_4d4));
+}
+
+unsigned short C2DInGameMenu::v281()									// 0x403860
+{
+	return 0;
+}
+
+void C2DInGameMenu::v282(float health)									// 0x403980 the health bar
+{
+	if (!g_health_bar) return;
+	const float sy = ScaleY();
+	g_health_bar->set_size(ScaleX() * 27.0f, sy * health * (float)1.044);	// 0x48d910, 0x48d918
+}
+
+void C2DInGameMenu::v284()												// 0x4039e0
+{
+	f_4be = 1;
+}
+
+void C2DInGameMenu::v285()												// 0x4039f0
+{
+	if (f_4be) f_4be = 0;
+}
+
+unsigned short C2DInGameMenu::v286(short item)							// 0x403bd0
+{
+	f_4c8 = item;
+	return 1;
+}
+
+void C2DInGameMenu::v288()												// 0x403bf0
+{
+	f_4bc = 3;
+	f_4c8 = 3;
+}
+
+// --------------------------------------------------------------------------- the power bar
+
+void C2DInGameMenu::v289()												// 0x4036c0
+{
+	if (g_gadget_bar_frame) Show(g_gadget_bar_frame);
+	if (g_gadget_bar) Show(g_gadget_bar);
+}
+
+void C2DInGameMenu::v290()												// 0x403700
+{
+	if (g_gadget_bar_frame) Hide(g_gadget_bar_frame);
+	if (g_gadget_bar) Hide(g_gadget_bar);
+}
+
+void C2DInGameMenu::v291()												// 0x403730 red
+{
+	if (!g_gadget_bar) return;
+	OMediaFARGBColor c;
+	c.alpha = 1.0f; c.red = 0.2f; c.green = 0.2f; c.blue = 1.0f;	// +0x90..0x9c = 1, 0.2, 0.2, 1
+	g_gadget_bar->set_diffuse(c);
+	Show(g_gadget_bar);
+}
+
+void C2DInGameMenu::v292()												// 0x4037a0 white
+{
+	if (!g_gadget_bar) return;
+	SetAlpha(g_gadget_bar, 1.0f);
+}
+
+// --------------------------------------------------------------------------- 0x404de0 the pages
+
+// One page: allocated (items constructed), background `bg_id`, the background element made
+// here only when one exists (never: it is NULL), placed at (bx, by).
+static C2DInGameMenu::MenuPage *NewPage(C2DInGameMenu *m, short bg_id, float bx, float by)
+{
+	C2DInGameMenu::MenuPage *p = new C2DInGameMenu::MenuPage;	// 0x490 bytes
+	p->background = NULL;
+	p->background_id = bg_id;
+	if (p->background)										// (dead: the pointer was just cleared)
+	{
+		p->background->link_layer(g_layer_hud2d);
+		m->v276(p->background, bx, by, p->background_id, 1.0f, true);
+	}
+	return p;
+}
+
+void C2DInGameMenu::v293()
+{
+	// 0: gadgets (eight in a 2x4 grid, three more)
+	MenuPage *p = NewPage(this, 0x14, 0.0f, -1.0f);
+	Page(MENU_GADGETS) = p;
+	v294(p, 0, 0x0b, 0x34, 0x0c, 0xb6);
+	v294(p, 1, 0x0c, 0x2e, 0x9e, 0xb6);
+	v294(p, 2, 0x0d, 0x2f, 0x0c, 0x147);
+	v294(p, 3, 0x0e, 0x30, 0x9d, 0x147);
+	v294(p, 4, 0x0f, 0x31, 0x156, 0xb6);
+	v294(p, 5, 0x10, 0x32, 0x1e7, 0xb6);
+	v294(p, 6, 0x11, 0x33, 0x156, 0x147);
+	v294(p, 7, 0x12, 0x2d, 0x1e7, 0x147);
+	v294(p, 8, 0x54, 0x55, 0x1e7, 0x14);
+	v294(p, 9, 0xb4, 0xb3, 0x1e7, 0x5f);
+	v294(p, 10, 0xb6, 0xb5, 0x0c, 0x5f);
+
+	// 1: the phone booth map (nine places, four more)
+	p = NewPage(this, 0x1a, 0.0f, -1.0f);
+	Page(MENU_PHONE) = p;
+	v294(p, 0, 0x2c, 0x1b, 0x45, 0x14);
+	v294(p, 1, 0x1c, 0x1d, 0xcb, 0x14);
+	v294(p, 2, 0x1e, 0x1f, 0x152, 0x14);
+	v294(p, 3, 0x20, 0x21, 0x45, 0x7f);
+	v294(p, 4, 0x22, 0x23, 0xcb, 0x7f);
+	v294(p, 5, 0x24, 0x25, 0x152, 0x7f);
+	v294(p, 6, 0x26, 0x27, 0x45, 0xea);
+	v294(p, 7, 0x28, 0x29, 0xcb, 0xea);
+	v294(p, 8, 0x2a, 0x2b, 0x152, 0xea);
+	v294(p, 9, 0x150, -1, 0x1d6, 0x22);
+	v294(p, 10, 0x151, -1, 0x45, 0x154);
+	v294(p, 11, 0x153, -1, 0xcb, 0x154);
+	v294(p, 12, 0x152, -1, 0x152, 0x154);
+	MenuSetItem(1, 9, 1);
+	MenuSetItem(1, 10, 1);
+	MenuSetItem(1, 11, 1);
+	MenuSetItem(1, 12, 1);
+
+	// 6: credits
+	p = NewPage(this, 0xf6, 0.0f, 0.0f);
+	Page(MENU_CREDITS) = p;
+	v294(p, 1, 0x112, -1, 0, 0x1b0);
+	MenuSetItem(6, 1, 1);
+
+	// 2: pickups (29 icons in rows of six)
+	p = NewPage(this, 0x35, 0.0f, 0.0f);
+	Page(MENU_PICKUPS) = p;
+	static const short kPickups[29] = {
+		0xf0, 0x53, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42,
+		0x50, 0x43, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x51 };
+	static const short kCols[6] = { 0x37, 0x91, 0xeb, 0x145, 0x19f, 0x1f9 };
+	static const short kRows[5] = { 0x27, 0x81, 0xdb, 0x135, 399 };
+	for (int i = 0; i < 29; i++)
+		v294(p, (short)i, -1, kPickups[i], kCols[i % 6], kRows[i / 6]);
+
+	// 3: the PDA main page
+	p = NewPage(this, 0xd9, 200.0f, 200.0f);
+	Page(MENU_MAIN) = p;
+	v294(p, 1, 0xce, -1, 0, 0x79);
+	v294(p, 2, 0xd5, -1, 0xd5, 0x7d);
+	v294(p, 3, 0xd7, -1, 0x1f0, 0x8a);
+	v294(p, 4, 0xd8, -1, 0x8a, 0xef);
+	v294(p, 5, 0xd6, -1, 199, 2);
+	v294(p, 6, 0xcd, -1, 0x24, 0x0e);
+	v294(p, 7, 0xd1, -1, 0x178, 0x13a);
+	v294(p, 8, 0xd2, -1, 0x178, 0x13a);
+	v294(p, 9, 0xd3, -1, 0x178, 0x13a);
+	v294(p, 10, 0xd4, -1, 0x178, 0x13a);
+	v294(p, 11, 0xd0, -1, 0x178, 0x13a);
+	v294(p, 12, 0xe7, -1, 0, 0x154);
+	v294(p, 13, 0xe8, -1, 0x1d8, 0x13c);
+	v294(p, 14, 0xed, -1, 0x178, 0x13a);
+	v294(p, 15, 0xee, -1, 0x178, 0x13a);
+	v294(p, 16, 0xf8, -1, 0x178, 0x13a);
+	for (int i = 1; i <= 13; i++) MenuSetItem(3, (short)i, 1);
+
+	// 4: load / save (five buttons, ten slots)
+	p = NewPage(this, 0xef, 0.0f, -1.0f);
+	Page(MENU_SAVE) = p;
+	v294(p, 1, 0x85, -1, 0, 0x198);
+	v294(p, 2, 0x86, -1, 0x215, 0x198);
+	v294(p, 3, 0x89, -1, 0x71, 0x198);
+	v294(p, 4, 0x8e, -1, 0xfd, 0x198);
+	v294(p, 5, 0x82, -1, 0x189, 0x198);
+	static const short kSlots[10] = { 0x81, 0x87, 0x88, 0x84, 0x8b, 0x8c, 0x8d, 0x90, 0x91, 0x80 };
+	static const short kSlotY[10] = { 0x5b, 0x79, 0x97, 0xb5, 0xd3, 0xf1, 0x10f, 0x12e, 0x14c, 0x16a };
+	for (int i = 0; i < 10; i++)
+		v294(p, (short)(6 + i), kSlots[i], -1, 0xae, kSlotY[i]);
+	for (int i = 6; i <= 15; i++) MenuSetItem(4, (short)i, 1);
+	for (int i = 1; i <= 5; i++) MenuSetItem(4, (short)i, 1);
+
+	// 5: options (the two volumes)
+	p = NewPage(this, 0xec, 0.0f, -1.0f);
+	Page(MENU_OPTIONS) = p;
+	v294(p, 1, 0xea, -1, 0x90, 0x5f);
+	v294(p, 2, 0xe9, -1, 0x90, 0xff);
+	v294(p, 3, 0xeb, -1, 0, 0x1a3);
+	v294(p, 4, 0x10e, -1, 0x1a3, 0x5f);
+	v294(p, 5, 0x10f, -1, 0x1a3, 0xff);
+	for (int i = 1; i <= 5; i++) MenuSetItem(5, (short)i, 1);
+
+	v309(2);
+	v310(2);
+	v296(Page(0));
+	v296(Page(1));
+	v296(Page(2));
+	v296(Page(3));
+	v296(Page(4));
+	v296(Page(5));
+	v296(Page(6));
+}
+
+// 0x406240: item `index` of `page`: its two pictures (made later by LoadMyMenu) and position.
+void C2DInGameMenu::v294(MenuPage *page, short index, short rollover_id, short active_id, short x, short y)
+{
+	if (index < 0 || index >= MENU_ITEMS) return;
+	MenuItem &it = page->items[index];
+	it.active = NULL;
+	it.active_id = active_id;
+	it.type = 0;
+	if (it.active)											// (dead: just cleared)
+	{
+		it.active->link_layer(g_layer_hud2d);
+		if (active_id != -1) v276(it.active, (float)x, (float)y, active_id, 1.0f, true);
+	}
+	if (!g_windowed)
+	{
+		it.x = (float)x;
+		it.y = (float)y;
+	}
+	else
+	{
+		it.x = (float)x + 1.0f;								// 0x48d924
+		it.y = (float)y + 2.0f;								// 0x48d954
+	}
+	it.rollover = NULL;
+	it.rollover_id = rollover_id;
+	if (it.rollover)										// (dead)
+	{
+		it.rollover->link_layer(g_layer_hud2d);
+		v276(it.rollover, (float)x, (float)y, rollover_id, 1.0f, true);
+	}
+}
+
+// 0x4060d0 "displayMenu"
+void C2DInGameMenu::v295(MenuPage *page)
+{
+	Log("starting  displayMenu");
+	if (page->background) Show(page->background);
+	Log("In displayMenu");
+	for (int i = 0; i < MENU_ITEMS; i++)
+	{
+		if (page == Page(MENU_PICKUPS) && g_pickup_counts[i * 2] != 0)
+		{
+			const MenuItem &it = page->items[i];
+			DrawText((short)(int)it.x, (short)(int)it.y, 'MED', "%d", g_pickup_counts[i * 2]);	// 0x468660
+		}
+		const MenuItem &it = page->items[i];
+		if (it.type != 0 && it.type != 4)
+		{
+			if (it.rollover) Hide(it.rollover);
+			if (it.active) Show(it.active);
+		}
+	}
+	Log("Exiting  displayMenu");
+}
+
+void C2DInGameMenu::v296(MenuPage *page)								// 0x406080
+{
+	if (page->background) Hide(page->background);
+	for (int i = 0; i < MENU_ITEMS; i++)
+	{
+		if (page->items[i].rollover) Hide(page->items[i].rollover);
+		if (page->items[i].active) Hide(page->items[i].active);
+	}
+}
+
+// 0x403a30: the rollovers of the current page for the pointer at (mx, my); the item under it.
+short C2DInGameMenu::v297(short mx, short my)
+{
+	short hit = -1;
+	for (short i = 0; i < MENU_ITEMS; i++)
+	{
+		MenuItem &it = Page(f_4d4)->items[i];
+		const short t = it.type;
+		OMediaCanvasElement *r = it.rollover;
+		if (t == 0 || t == 4 || !r) continue;
+		const short ix = (short)(int)it.x;					// _ftol
+		const short iy = (short)(int)it.y;
+		bool inside = false;
+		if (ix < mx && !(r->get_width() + (float)ix <= (float)mx) &&
+			iy < my && (float)my < (float)iy + r->get_height())
+			inside = true;
+		if (inside)
+		{
+			if (t == 3) Hide(r);
+			else Show(r);
+			hit = i;
+			continue;
+		}
+		if (t == 2) Show(r);
+		else Hide(r);
+	}
+	return hit;
+}
+
+short C2DInGameMenu::v298()												// 0x403a10
+{
+	return f_4d4;
+}
+
+void C2DInGameMenu::v299(short page)									// 0x403a20
+{
+	f_4d4 = page;
+}
+
+// 0x405fb0: the current gadget becomes `gadget`: the old one's picture freed and its icon
+// hidden, the new icon shown when its item on page 0 is available.
+void C2DInGameMenu::v300(int gadget)
+{
+	s_gadget_pics[f_4d8].Delete();
+	Hide(g_gadget_icons[f_4d8]);
+	if (Page(0)->items[gadget].type == 1)
+	{
+		if (gadget < 0)
+		{
+			Show(g_gadget_icons[3]);						// (0x4f7ce0; unreachable with an index < 0 above)
+			f_4d8 = gadget;
+			return;
+		}
+		Show(g_gadget_icons[gadget]);
+	}
+	f_4d8 = gadget;
+}
+
+void C2DInGameMenu::v301(bool show)										// 0x406560
+{
+	if (!show) Hide(g_hud_4f7c90);
+	else Show(g_hud_4f7c90);
+}
+
+// 0x4063e0 "ShowHudPicture": picture `canvas_id` at (x, y), or none.
+void C2DInGameMenu::v302(int canvas_id, bool show, int x, int y)
+{
+	if (show)
+	{
+		if (g_hud_picture) FreeElt(g_hud_picture, false);
+		g_hud_picture = NewElt();
+		v276(g_hud_picture, (float)x, (float)y, canvas_id, 1.0f, true);
+		Show(g_hud_picture);
+		g_confirm_shown = 1;
+		return;
+	}
+	FreeElt(g_hud_picture, true);
+	g_confirm_shown = 0;
+}
+
+void C2DInGameMenu::v303(bool show)										// 0x403420
+{
+	if (!show) s_pic_4f8138.Delete();
+	else if (!g_windowed) s_pic_4f8138.Show();
+}
+
+void C2DInGameMenu::v304()												// 0x406650
+{
+	if (f_4ec != 0) return;
+	s_gadget_pics[f_4d8].Show();
+	s_msg_arrow.Show();
+	f_4ec = -0x45;
+}
+
+void C2DInGameMenu::v305()												// 0x406590
+{
+	if (f_4ec != -0x45) return;
+	s_gadget_pics[f_4d8].Delete();
+	s_msg_arrow.Delete();
+	f_4ec = 0;
+}
+
+void C2DInGameMenu::v306(int index, int canvas_id)						// 0x402b70
+{
+	OMediaCanvasElement *e = new OMediaCanvasElement;
+	g_story_lines[index] = e;
+	e->link_layer(g_layer_hud2d);
+	e->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+	v276(e, 0.0f, 0.0f, canvas_id, 1.0f, true);
+	Hide(e);
+}
+
+void C2DInGameMenu::v307(int index, int line, bool show)				// 0x402c40
+{
+	OMediaCanvasElement *e = g_story_lines[index];
+	if (!show) Hide(e);
+	else Show(e);
+	v275(e, 384.0f, (float)(f_4ec + 0x1c0 + line * 15));
+}
+
+// --------------------------------------------------------------------------- 0x402f60 LoadMyMenu
+
+void C2DInGameMenu::v309(int page)
+{
+	MenuPage *p = Page(page);
+	Log("LoadMyMenu: CurrMenu = %d", page);
+	if (!p->background)
+	{
+		p->background = new OMediaCanvasElement;
+		if (p->background) p->background->link_layer(g_layer_hud2d);
+		if (g_windowed) v276(p->background, 0.0f, 0.0f, p->background_id, 1.0f, true);
+		else v276(p->background, 0.0f, -1.0f, p->background_id, 1.0f, true);
+	}
+	for (int i = 0; i < MENU_ITEMS; i++)
+	{
+		MenuItem &it = p->items[i];
+		Log("Item #%d", i);
+		if (!it.active && it.active_id != -1)
+		{
+			Log("Item #%d is ActiveItem IsActive:%d", i, (int)it.type);
+			it.active = new OMediaCanvasElement;
+			if (it.active)
+			{
+				it.active->link_layer(g_layer_hud2d);
+				v276(it.active, (float)(int)it.x, (float)(int)it.y, it.active_id, 1.0f, true);
+				it.w = (short)(int)it.active->get_width();
+				it.h = (short)(int)it.active->get_height();
+				if (it.type == 0 || it.type == 4) Hide(it.active);
+				else if (it.type == 1) Show(it.active);
+			}
+		}
+		if (!it.rollover && it.rollover_id != -1)
+		{
+			Log("Item #%d is Rollover IsActive:%d", i, (int)it.type);
+			it.rollover = new OMediaCanvasElement;
+			if (it.rollover)
+			{
+				it.rollover->link_layer(g_layer_hud2d);
+				v276(it.rollover, (float)(int)it.x, (float)(int)it.y, it.rollover_id, 1.0f, true);
+				it.w = (short)(int)it.rollover->get_width();
+				it.h = (short)(int)it.rollover->get_height();
+				if (it.type == 0 || it.type == 4) Hide(it.rollover);
+				else if (it.type == 1) Show(it.rollover);
+			}
+		}
+	}
+}
+
+// --------------------------------------------------------------------------- 0x4032c0 UnloadMyMenu
+
+void C2DInGameMenu::v310(int page)
+{
+	Log("Enter UnloadMyMenu:%d", page);
+	MenuPage *p = Page(page);
+	if (page == MENU_PICKUPS) return;						// the pickups page keeps its pictures
+	FreeElt(p->background, false);
+	Log("Not a pickups_menu, deallocating all");
+	for (int i = 0; i < MENU_ITEMS; i++)
+	{
+		MenuItem &it = p->items[i];
+		if (it.active)
+		{
+			Log("Deallocaing ActiveItem %d", i);
+			FreeElt(it.active, false);
+		}
+		if (it.rollover)
+		{
+			Log("Deallocaing Rollover %d", i);
+			// its canvas only when it is not the active picture's too
+			FreeElt(it.rollover, false, it.active_id != it.rollover_id);
+		}
+	}
+	Log("Leave UnloadMyMenu");
 }

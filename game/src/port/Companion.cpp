@@ -696,33 +696,24 @@ bool ExitOpen(CLoadLevel *l)
 	return true;
 }
 
-// The caption: the TRIGTEXTSTRING lines of the current group typed so far (C2DInGameMenu::v340).
+// The caption: Negatron's trigger texts (dat\menu.dat TRIGTEXTSTRING lines). Boy Genius has
+// none: no caption.
 void Caption(std::string &out)
 {
-	if (!g_menu || !g_trig_text_group[0]) return;
-	for (std::list<C2DInGameMenu::MenuObject *>::iterator i = C2DInGameMenu::s_objects.begin();
-		 i != C2DInGameMenu::s_objects.end(); ++i)
-	{
-		C2DInGameMenu::MenuObject *m = *i;
-		if (!m || m->type != C2DInGameMenu::MOBJ_TRIGTEXTSTRING) continue;
-		if (strcasecmp(m->trigger, g_trig_text_group) != 0) continue;
-		if (m->id > g_trig_text_line) continue;
-		if (!out.empty()) out += '\n';
-		out += m->text;
-	}
+	(void)out;
 }
 
 // The display name of a level, by its 4cc (the companion panel, the launcher's slots.txt), from
 // a .gam file: its first four bytes are the level's 4cc (read once per file). NULL when the level
 // has no name (then the file name is shown).
-// port: Boy Genius has no level names of its own (Neutron.exe has no name table and its save
-// page shows none; Negatron's neg::SaveLevelName is not used here: its 4ccs mean other levels).
-// TODO(BG): display names for BG's levels (Bill's choice), e.g. { 'LEV1', "..." }. Until then
-// the panel and the launcher show the file names.
+// Boy Genius names its places only on the phone booth's keypad (PDA page 1, the pictures of
+// C3DJimmy::MenuTravel's places 0..8); the other levels have no name (the file name is shown).
 const char *LevelNameOf(int id)
 {
 	static const struct { int id; const char *name; } kNames[] = {
-		{ 0, NULL },
+		{ 'LV1B', "Lab" },			{ 'LEV1', "Neighborhood" },	{ 'LEV2', "School" },
+		{ 'LEV4', "Downtown" },		{ 'LEV3', "Retroland" },		{ 'LV4C', "Powerplant" },
+		{ 'LEV5', "Area 51" },		{ 'LV5A', "Rocket Maze" },	{ 'LEV6', "Yokian Ship" },
 	};
 	for (size_t i = 0; i < sizeof kNames / sizeof kNames[0]; i++)
 		if (id && kNames[i].id == id) return kNames[i].name;

@@ -1,0 +1,66 @@
+# C2DInGameMenu (Neutron.exe 0x401430..0x4074b0) and the menu helpers of C3DJimmy.
+# address kind type [name]      kinds: ptr (pointer slot), ptrarray, val (value in g_data), array
+#
+# The fixed HUD pictures (0x18-byte records at 0x4f7c40, 0x4f7c98, 0x4f7cb8, 0x4f7ef0[10],
+# 0x4f8008, 0x4f8100, 0x4f8120, 0x4f8138) are C++ objects: C2DInGameMenu::HudPic statics.
+
+# pages: C2DInGameMenu::MenuPage *, read through C2DInGameMenu::Page(i)
+0x4f8164 ptrarray MenuPage* g_menu_pages
+
+# HUD sprites, made by the constructor
+0x4f8040 ptr OMediaCanvasElement* g_hud_lives             # canvas 0x17 at (32, 0)
+0x4f7ea4 ptr OMediaCanvasElement* g_health_bar            # 0x16, height by v282(health)
+0x4f80fc ptr OMediaCanvasElement* g_health_frame          # 0x15
+0x4f7cb0 ptr OMediaCanvasElement* g_gadget_bar_frame      # 0x15, the power bar (v289..v292)
+0x4f8028 ptr OMediaCanvasElement* g_gadget_bar            # 0x16
+0x4f7cd4 ptrarray OMediaCanvasElement* g_gadget_icons     # [8] the current gadget (v300)
+0x4f7c90 ptr OMediaCanvasElement* g_hud_4f7c90            # 0x67 (v301)
+0x4f8150 ptr OMediaCanvasElement* g_hud_picture           # ShowHudPicture (v302)
+0x4f8020 ptr OMediaCanvasElement* g_fade_quad             # 0xfc, the screen fade (v311)
+0x4f804c ptrarray OMediaCanvasElement* g_story_lines      # [44] story message pictures (v306)
+0x4f7d00 array unsigned int g_story_flags                 # [44] which lines the message shows
+0x4f8188 val float g_story_time                           # the message panel's clock (v308)
+0x4f8194 val int g_story_scene                            # the message number (saved: 4th int of a .tsk)
+
+# the yes/no boxes (OpenConfirm 0x406f90)
+0x4f7c94 ptr OMediaCanvasElement* g_box_12               # 0x18 (box 12)
+0x4f7cfc ptr OMediaCanvasElement* g_box_4f7cfc           # 0x1a
+0x4f7ea0 ptr OMediaCanvasElement* g_box_level            # 0xa9 a VR level (boxes 0..6, 10)
+0x4f7cd0 ptr OMediaCanvasElement* g_box_quit             # 0xf1 (7)
+0x4f7eec ptr OMediaCanvasElement* g_box_save             # 0xf5 (8 save over a slot, 11 new game)
+0x4f802c ptr OMediaCanvasElement* g_box_load             # 0x7b (9)
+0x4f8024 ptr OMediaCanvasElement* g_box_delete           # 0x113 (13)
+0x4f8118 ptr OMediaCanvasElement* g_box_yes              # 0xf2 highlight
+0x4f7db0 ptr OMediaCanvasElement* g_box_no               # 0xf3 highlight
+0x4f8198 val char g_confirm_open                          # a yes/no box is up
+0x4f8048 val int g_confirm_box                            # which
+0x4f8180 val char g_confirm_shown                         # a ShowHudPicture picture is up
+0x4f8181 val char g_menu_active                           # the PDA is open (C3DJimmy ActivateActiveMenu)
+0x4f8182 val char g_menu_input_lock                       # an action was taken this press
+
+# fades (v311, MenuStartFade 0x403c10)
+0x4ec494 val char g_hud_on                                # 1 once a fade in has ended
+0x4ec490 val float g_fade_time
+0x4f818c val float g_fade_left
+0x4f8190 val int g_fade_mode
+
+# the pickup pop-up (AnnouncePickup 0x4061d0) and the counts
+0x4f8154 val int g_popup_pic
+0x4f8158 val int g_popup_next
+0x4f815c val float g_popup_time
+0x4f8160 val unsigned int g_popup_index
+0x4f7db8 array int g_pickup_counts                        # [29][2]: count of pickup i at [2*i]
+0x4f819c val float g_pulse_time
+0x4f81a0 val float g_pulse
+
+# player state (saved)
+0x4f83d4 val float g_health
+0x4f83cc val short g_lives
+0x4f83d8 ptr CGameObject* g_jimmy                         # the C3DJimmy (its CLocalGameObject base)
+
+# load / save page
+0x4eefd4 val int g_save_slot                              # selected item of page 4, 6..15 = JimmyGame1..10.tsk
+0x4f82e4 array int g_save_slot_info                           # [10][5] C2DInGameMenu::SaveSlotInfo
+0x4f6b34 val int g_music_volume                           # 0..10
+0x4f6b38 val int g_sfx_volume                             # 0..10
+0x4f81a8 array char g_empty_string                        # "" (the folder prefix of the .tsk paths; never written)

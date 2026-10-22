@@ -7,7 +7,8 @@
 
 namespace neg {
 void StartFade(int type, float time);						// 0x403c10
-// port: the timing and level side of C2DInGameMenu v311 (0x403c50), without its sprites, until
-// the menu's own is ported (agent F); CEditor::UpdateGame runs it every frame.
+// port: the timing and level side of C2DInGameMenu v311 (0x403c50), without its sprites, for the
+// frames without a menu (before Jimmy exists); CEditor::UpdateGame runs it every frame. With a
+// menu, its Process runs v311 (C2DInGameMenu_b.cpp).
 void FadeTick(float dt);
 }

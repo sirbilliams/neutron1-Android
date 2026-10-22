@@ -1,9 +1,8 @@
-/*  The savegame system, the task list, the demo levels and the texture scrolling: the free
-    functions of Neutron.exe 0x45f4c0..N2:0x4990a0. See SaveGame.h for the .tsk format.
+/*  The savegame system and the task list: Neutron.exe 0x45f8f0..0x460e70 and the save-slot
+    helpers 0x42aff0..0x42b180. See SaveGame.h for the .tsk format.
 
     The original's debug-log calls (0x472970, compiled empty in the shipped build) are kept as
-    Trace(): silent unless NEG_SAVE_TRACE is set in the environment.
-    Constants: 0x48d914 = 0.                                                                */
+    Trace(): silent unless NEG_SAVE_TRACE is set in the environment.                        */
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
@@ -15,18 +14,16 @@
 #include "CGameType.h"
 #include "CEditor.h"
 #include "C2DInGameMenu.h"
+#include "C3DPlayer.h"
 #include "InterfaceElement.h"
 #include "Game.h"
 #include "Globals.h"
 #include "Todo.h"
-#include "Sound.h"
-#include "pickups/C3DPickupItem.h"
 #include "gen/globals.h"
 
 #include "OMediaFilePath.h"
 #include "OMediaFileStream.h"
 #include "OMedia3DPolygon.h"
-#include "OMediaViewPort.h"
 #pragma GCC diagnostic pop
 
 #include <SDL.h>
@@ -59,19 +56,11 @@ static void Trace(const char *fmt, ...)
 	SDL_Log("[save] %s", buf);
 }
 
-static const char kVersion[] = "18:31:01";		// N2:0x53e7b8, the build time: written and required
-static const char kDummy[] = "DUMMY   ";		// N2:0x53e724, the shipped placeholder saves
-
 // String buffers. The file's strings are a length byte and up to 255 chars; the original reads
-// them into smaller stack buffers (76..136 bytes). These are 256 so a long one cannot overrun.
+// them into smaller stack buffers. These are 256 so a long one cannot overrun.
 enum { STR_MAX = 256 };
 
 // --------------------------------------------------------------------------- helpers
-
-static void IdString(char out[5], int id)		// a 4cc as text, as the logs print it
-{
-	out[0] = (char)(id >> 24); out[1] = (char)(id >> 16); out[2] = (char)(id >> 8); out[3] = (char)id; out[4] = 0;
-}
 
 static void DeleteFile(const char *dos_path)	// KERNEL32 DeleteFileA
 {
@@ -79,35 +68,6 @@ static void DeleteFile(const char *dos_path)	// KERNEL32 DeleteFileA
 }
 
 static CLocalGameObject *Local(CGameObject *o)	{ return static_cast<CLocalGameObject *>(o); }
-
-// Objects whose state goes into a save: slot 108 (f_00b, "saved in the .gam") or f_4c4.
-static bool IsSaved(CGameObject *o)		{ return o->v108() || Local(o)->f_4c4; }
-
-static void MenuShowLoading(int a)	{ neg::CutsceneLetterbox(a != 0); }	// N2:0x40c0f0 (C2DInGameMenu.h)
-
-// N2:0x485360: the game state (0 menu/new game, 1 loading, 2 saving, 3 cut scene, 5 playing...),
-// told to every object (copy of CEditor.cpp's).
-static void SetGameState(int state)
-{
-	if (state == g_game_state) return;
-	g_prev_game_state = g_game_state;
-	g_game_state = state;
-	if (state == 1)
-	{
-		if (g_N2_545d98)
-		{
-			if (!g_level_requested) { g_N2_54a468 = 1; MenuShowLoading(0); }
-			else g_level_requested = 0;
-		}
-	}
-	else
-	{
-		if (g_N2_54a468 && state == 3) MenuShowLoading(1);
-		g_N2_54a468 = 0;
-	}
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i) Local(*i)->v270(g_prev_game_state, state);
-}
 
 // 0x474070: the object whose tag ("ObjectTag") is `tag`, case-insensitive.
 static CGameObject *FindObjectByTag(const char *tag)
@@ -117,96 +77,23 @@ static CGameObject *FindObjectByTag(const char *tag)
 	return NULL;
 }
 
-// Menu items (menu helpers, copied): N2:0x404f20 get, N2:0x404dd0 set, 0x403910 clear the type of
-// item `item` of menu page `page` (page 2 = pickups, 3 = level items).
-static short GetItemState(short page, short item)				// N2:0x404f20
+// The path of a task file: the (empty) folder prefix g_empty_string (0x4f81a8) + the name.
+static void TaskPath(char *path, const char *name)
 {
-	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
-	if (p && item >= 0 && item < C2DInGameMenu::MENU_ITEMS) return p->items[item].type;
-	return 0;
+	strcpy(path, g_empty_string);
+	strcat(path, name);
 }
 
-static void SetItemState(short page, short item, short state)	// N2:0x404dd0
-{
-	// The pickups come in pairs (10/21 and 31/38): giving one also gives (and counts) the other.
-	if (item < 0 || item >= C2DInGameMenu::MENU_ITEMS) return;
-	C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(page);
-	if (p) p->items[item].type = state;
-	if (page != C2DInGameMenu::MENU_PICKUPS) return;
-	C2DInGameMenu::MenuPage *pk = C2DInGameMenu::Page(C2DInGameMenu::MENU_PICKUPS);
-	if (item == 10)
-	{
-		if (!pk || !pk->items[21].type) { SetItemState(2, 21, 1); g_pickup_counts[2 * 21]++; }
-	}
-	else if (item == 21)
-	{
-		if (!pk || !pk->items[10].type) { SetItemState(2, 10, 1); g_pickup_counts[2 * 10]++; }
-	}
-	else if (item == 38)
-	{
-		if (!pk || !pk->items[31].type) { SetItemState(2, 31, 1); g_pickup_counts[2 * 31]++; }
-	}
-	else if (item == 31)
-	{
-		if (!pk || !pk->items[38].type) { SetItemState(2, 38, 1); g_pickup_counts[2 * 38]++; }
-	}
-}
-
-static void ClearItemState(short page, short item)				// 0x403910
-{
-	C2DInGameMenu::MenuPage *p;
-	if (item >= 0 && item < C2DInGameMenu::MENU_ITEMS && (p = C2DInGameMenu::Page(page)) != NULL)
-		p->items[item].type = 0;
-}
-
-// N2:0x40c2b0 (a menu method, ecx = g_menu, `this` unused): the cut scene letterbox bars slide out.
-static void LetterboxOut(void)
-{
-	if (g_N2_545d98 == 1)
-	{
-		g_N2_545d98 = 0;
-		InterfaceElt *top = g_interface.Find("LetterBoxTop");
-		InterfaceElt *bottom = g_interface.Find("LetterBoxBottom");
-		top->QueueMorph(0, 1.0f, true, true, true, 640.0f, 64.0f, 640.0f, 0.0f, 0.0f, -1.0f, 0.0f, -1.0f);
-		bottom->QueueMorph(0, 1.0f, false, true, true, 640.0f, 0.0f, 640.0f, 64.0f, 0.0f, 480.0f, 0.0f, 416.0f);
-	}
-}
-
-// N2:0x4a3850: "EXIT REQUEST, CALLING QUIT (CLEAN EXIT)".
-static void RequestQuit(void)		{ g_app->quit(); }
-
-// N2:0x4104c0: element slot 59 (vtable +0xec, N2:0x45efb0 SyncWithMenu) of every C3DPICKUPITEM.
-static void PickupItemSlot59(CGameObject *o)
-{
-	if (C3DPickupItem *p = dynamic_cast<C3DPickupItem *>(o)) p->SyncWithMenu();
-}
-// --- not reconstructed yet
-static void ResetPickupItems(void)												// N2:0x4104c0
-{
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && (*i)->NameContains((char *)"C3DPICKUPITEM")) PickupItemSlot59(*i);
-}
-// A C3DAITrigger (element vtable +0xdc, its CGameObject base at +0xc8) activated by name.
-static void AITriggerActivate(CGameObject *o, const char *name, int a)
-{
-	NEG_TODO(/*N2*/0x498aa3, "C3DAITrigger element slot 55 (activate)"); (void)o; (void)name; (void)a;
-}
-// C3DJimmy (g_jimmy - 0xc0, 2002 layout): the start point names at +0x9c8, +0xa18 and +0xb24.
-static void JimmySetStartPoints(CGameObject *jimmy, const char *name)
-{
-	NEG_TODO(/*N2*/0x498cab, "C3DJimmy +0x9c8/+0xa18/+0xb24 = start point"); (void)jimmy; (void)name;
-}
-// C3DJimmy element slot 138 (vtable +0x228)(menu, jimmy's CLocalGameObject, a, b).
-static void JimmySlot138(CGameObject *jimmy, C2DInGameMenu *menu, CGameObject *jimmy_go, int a, float b)
-{
-	NEG_TODO(/*N2*/0x498e54, "C3DJimmy element slot 138"); (void)jimmy; (void)menu; (void)jimmy_go; (void)a; (void)b;
-}
+// Jimmy's strings and position that a save keeps (element +0x724, +0x774, +0x88c, +0x8f0,
+// +0x9a8). TODO(BG): C3DPlayer still has Negatron's layout; these are its members for the
+// same things (start point, return start point, next start point, return game, position).
+static C3DPlayer *Player(CGameObject *o)		{ return o ? dynamic_cast<C3DPlayer *>(o) : NULL; }
 
 // --------------------------------------------------------------------------- task list
 
 void neg::AddTask(const char *name, int state)					// 0x45f8f0
 {
-	// ("AddItem"; the CTaskList constructor has nine more copies of it inlined)
+	// ("AddItem"; the CTaskList constructor has more copies of it inlined)
 	Task *t = new (std::nothrow) Task;
 	if (!t)
 	{
@@ -218,18 +105,44 @@ void neg::AddTask(const char *name, int state)					// 0x45f8f0
 	g_tasks.push_back(t);
 }
 
+// 0x45f990: SCENE values that have a story message (ShowStoryMessage 0x406f50).
+static int SceneMessage(int state)
+{
+	switch (state)
+	{
+		case 0x23: return 1;	case 0x32: return 2;	case 0x3c: return 3;	case 0x46: return 4;
+		case 0x5a: return 5;	case 100: return 6;		case 0x6c: return 7;
+		case 0x8c: case 0x8d: return 8;
+		case 0xa0: return 9;	case 0xa2: return 10;	case 0xa8: return 11;	case 0xb2: return 12;
+		case 200: return 13;	case 0xcd: return 14;	case 0xd2: return 15;	case 0xdc: return 16;
+		case 0xe6: return 17;	case 0xfa: return 18;	case 0x104: return 19;	case 0x10e: return 20;
+		case 0x118: return 21;	case 0x122: return 22;	case 300: return 23;	case 0x136: return 24;
+		case 0x140: return 25;	case 0x14a: return 26;	case 0x154: return 27;	case 0x15e: return 28;
+		case 0x168: return 29;	case 0x17c: return 30;	case 0x186: return 31;	case 400: return 32;
+		case 0x19a: return 33;	case 0x1a4: return 34;	case 0x1ae: return 35;	case 0x1cc: return 36;
+		case 0x1d6: return 37;	case 0x1e0: return 38;	case 500: return 39;	case 0x1fe: return 40;
+		case 0x208: return 41;	case 0x21c: return 42;	case 0x226: return 43;
+	}
+	return 0;
+}
+
 void neg::SetTaskState(const char *name, int state)				// 0x45f990
 {
 	Trace("SETTING task %s to %d", name, state);
 	Trace("SETTING task %s to %d", name, state);			// (logged twice)
+	if (strcasecmp("SCENE", name) == 0)
+	{
+		const int m = SceneMessage(state);
+		if (m) ShowStoryMessage(m, 1);
+	}
 	for (std::list<Task *>::iterator i = g_tasks.begin(); i != g_tasks.end(); i++)
 		if (strcasecmp((*i)->name, name) == 0) (*i)->state = state;	// every match, no break
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 	{
-		// (no NULL test of the object; the original tests its m_task_name - an array, never
-		// NULL - and would log "ERROR: invalid TaskName for %s" with m_tag)
+		// (no NULL test of the object; its m_task_name is an array, so the original's
+		// "ERROR: invalid TaskName for %s" never shows)
 		CLocalGameObject *o = Local(*i);
-		if (strcasecmp(name, o->m_task_name) == 0) o->v267(state);
+		if (strcasecmp(name, o->m_task_name) == 0) o->v267(state);	// slot 265 (+0x424)
 	}
 }
 
@@ -240,361 +153,293 @@ int neg::GetTaskState(const char *name)							// 0x45fea0
 	return 0;
 }
 
-// --------------------------------------------------------------------------- 0x460210
-
-bool neg::ReadTaskFile(const char *name)
-{
-	char path[STR_MAX];
-	strcpy(path, "save\\");
-	strcat(path, name);
-	OMediaFilePath fp(path, 'null', 'null');
-	OMediaFileStream fs;
-	fs.setpath(&fp);
-	if (!fs.fileexists())
-	{
-		Trace("WARNING file %s does not exist for TaskGameLoad", name);
-		fs.close();
-		return false;
-	}
-	fs.open(omcfp_Read, false, false);
-	if (!fs.isopen())
-	{
-		ErrorLog("ERROR opening file %s for TaskGameLoad", name);
-		return false;
-	}
-	char version[STR_MAX];
-	fs >> version;
-	if (strcasecmp(version, kDummy) == 0)					// a placeholder: no game in it
-	{
-		fs.close();
-		return false;
-	}
-	// (any other version is accepted here; RestoreTask insists on kVersion)
-	char task_name[STR_MAX];
-	fs >> g_save_level_id;
-	fs >> g_game_file;
-	fs >> task_name;										// read and dropped
-	fs >> g_save_health;
-	fs >> g_save_lives;
-	fs >> g_save_score;
-	fs >> g_save_cam_x;										// sic: the camera x (a float), read as an int
-	fs.close();
-	return true;
-}
-
-// --------------------------------------------------------------------------- N2:0x498af0
-
-void neg::LoadTask(const char *name, bool new_level)
-{
-	if (!new_level)
-	{
-		if (!ReadTaskFile(name)) return;
-		strcpy(g_task_file, name);
-		char now[5], was[5];
-		IdString(now, g_save_level_id);
-		IdString(was, g_gametype->m_object_id);
-		Trace("Was in %s, now loading level %s", was, now);
-		if (g_save_level_id == g_gametype->m_object_id)
-		{
-			// the saved level is running: restore it in place
-			SetGameState(1);
-			ResetPickupItems();								// N2:0x4104c0
-			RestoreTask(name);
-			SetGameState(5);
-			return;
-		}
-		// else load its level; CEditor::LoadGame restores g_task_file once the objects exist
-		g_editor->RequestLevel(g_game_file);				// vtable +0x110
-		return;
-	}
-	strcpy(g_task_file, g_empty_string);
-	if (g_gametype->m_object_id == 'LPRO')
-		g_editor->RequestLevelDelayed((char *)name, 4.0f);	// vtable +0x114
-	else
-		g_editor->RequestLevel((char *)name);
-}
-
-// --------------------------------------------------------------------------- N2:0x498440
-
-bool neg::RestoreTask(const char *name)
-{
-	char path[STR_MAX];
-	strcpy(path, "save\\");
-	strcat(path, name);
-	OMediaFilePath fp(path, 'null', 'null');
-	OMediaFileStream fs;
-	fs.setpath(&fp);
-	if (!fs.fileexists())
-	{
-		Trace("WARNING file %s does not exist for TaskGameLoad", name);
-		fs.close();
-		return false;
-	}
-	fs.open(omcfp_Read, false, false);
-	if (!fs.isopen())
-	{
-		ErrorLog("ERROR opening file %s for TaskGameLoad", name);
-		return false;
-	}
-	StopAllChannels();										// 0x47d850
-
-	char unused[STR_MAX];
-	strcpy(unused, g_empty_string);							// (a local the original fills and never reads)
-	(void)unused;
-	char expected[12];
-	strcpy(expected, kVersion);
-	char version[STR_MAX];
-	fs >> version;
-	if (strcasecmp(expected, version) != 0)
-	{
-		// Not written by this build: the game quits.
-		ErrorLog("ERROR: Invalid header file");
-		RequestQuit();										// N2:0x4a3850
-		DrawText(200, 200, 'MED', "INVALID FILE VERSION");
-		return false;										// (not closed: the stream's destructor does it)
-	}
-
-	int level_id;
-	fs >> level_id;											// read and dropped
-	fs >> g_game_file;
-	char task_name[STR_MAX];
-	fs >> task_name;										// read and dropped
-
-	// health, at least 50 / 35 / 20 by difficulty
-	float health;
-	fs >> health;
-	switch (g_difficulty)
-	{
-		case 0: if (health < 50.0f) health = 50.0f; break;		// 0x48d400
-		case 1: if (health < 35.0f) health = 35.0f; break;		// N2:0x4e560c
-		case 2: if (health < 20.0f) health = 20.0f; break;		// 0x495324
-	}
-	g_health = health;
-	fs >> g_lives;
-	int score;
-	fs >> score;
-	g_score = score;
-
-	float x, y, z;
-	fs >> x;
-	fs >> y;
-	fs >> z;
-	g_viewport->setx(x);									// (2002 +0x44 / +0x48 / +0x4c)
-	g_viewport->sety(y);
-	g_viewport->setz(z);
-
-	for (int i = 0; i < 50; i++)							// the level items
-	{
-		ClearItemState(3, (short)i);
-		int state;
-		fs >> state;
-		SetItemState(3, (short)i, (short)state);
-	}
-	for (int i = 0; i < 4200; i++) fs >> g_object_states[i];
-	for (int i = 0; i < 50; i++)							// the pickups
-	{
-		ClearItemState(2, (short)i);
-		fs >> g_pickup_counts[2 * i];
-		if (g_pickup_counts[2 * i] > 0) SetItemState(2, (short)i, 1);
-	}
-
-	// The task states: as many as there are tasks now (the file does not say).
-	int ntasks = 0;
-	for (std::list<Task *>::iterator i = g_tasks.begin(); i != g_tasks.end(); i++) ntasks++;
-	if (ntasks > 0)
-	{
-		for (int k = 0; k < ntasks; k++)
-		{
-			char task[STR_MAX];
-			fs >> task;
-			// (the original also stops when the buffer's address is NULL)
-			int state;
-			fs >> state;
-			if (state < 0) break;
-			Trace("LoadTask 5  %s  %d", task, state);
-			SetTaskState(task, state);
-			// ...and once more for the objects (SetTaskState just did it, without the "none" test)
-			for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-			{
-				CLocalGameObject *o = Local(*i);			// (no NULL test)
-				if (strcasecmp(o->m_task_name, "none") != 0 && strcasecmp(o->m_task_name, task) == 0)
-				{
-					o->v267(state);
-					Trace("TaskState %s found, state set to %d", task, state);
-				}
-			}
-		}
-		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-			if (*i) Local(*i)->v266();
-	}
-
-	// The objects: as many as the level has, in g_objects order, each numbered (f_438).
-	int level_count = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && IsSaved(*i)) level_count++;
-	int file_count;
-	fs >> file_count;
-	if (file_count == level_count)
-		Trace("Save File has %d objects, level has %d objects", file_count, level_count);
-	else
-		ErrorLog("Error: Save File has %d objects, level has %d objects", file_count, level_count);
-	int n = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && IsSaved(*i)) (*i)->f_438 = (unsigned int)n++;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-	{
-		CGameObject *o = *i;
-		if (!o || !IsSaved(o)) continue;
-		const unsigned int old = o->f_438;
-		Local(o)->ReadState(fs);							// slot 285
-		if (old != o->f_438)
-			ErrorLog("ERROR: Object Index's dont match Old=%d New=%d", (int)old, (int)o->f_438);
-		Trace("Loaded object %d %s", (int)o->f_438, o->m_tag);
-	}
-	fs.close();
-
-	g_tasks_applied = 0;
-	SetGameState(5);
-	g_gametype->PauseGame(false);							// vtable +0x110
-	CGameObject *t = FindObjectByTag("LOADEDGAME");
-	if (t && t->NameContains((char *)"C3DAITRIGGER")) AITriggerActivate(t, "LOADEDGAME", 0);
-	return true;
-}
-
-// --------------------------------------------------------------------------- N2:0x498060 / N2:0x4983f0
+// --------------------------------------------------------------------------- 0x45fee0
 
 void neg::WriteTaskFile(const char *name)
 {
 	if (AssetViewLevel()) return;							// port: the Asset Viewer never saves
-	int score = g_score;									// (taken before the state change)
-	SetGameState(2);
 	char path[STR_MAX];
-	strcpy(path, "save\\");
-	strcat(path, name);
+	TaskPath(path, name);
 	OMediaFilePath fp(path, 'null', 'null');
 	OMediaFileStream fs;
 	fs.setpath(&fp);
 	fs.open(omcfp_Write, true, true);
-
-	float health = g_health;
-	char version[12];
-	strcpy(version, kVersion);
-	fs << version;
-	fs << g_gametype->m_object_id;							// (element +0x490)
-	fs << g_game_file;
-	fs << (char *)name;
-	fs << health;
+	int level = g_gametype->m_object_id;					// (element +0x490)
+	fs << level;
+	fs << g_health;
 	fs << g_lives;
+	int score = g_score;
 	fs << score;
-	float x = g_viewport->getx(), y = g_viewport->gety(), z = g_viewport->getz();
-	fs << x;
-	fs << y;
-	fs << z;
-	for (int i = 0; i < 50; i++)
-	{
-		int state = GetItemState(3, (short)i);
-		fs << state;
-	}
+	fs << g_story_scene;
 	for (int i = 0; i < 4200; i++) fs << g_object_states[i];
-	for (int i = 0; i < 50; i++) fs << g_pickup_counts[2 * i];
+	for (int i = 0; i < 29; i++) fs << g_pickup_counts[2 * i];
+	if (C3DPlayer *p = Player(FindObjectByTag("JIM1")))
+	{
+		fs << p->f_9c8;										// +0x724 (GO +0x664)
+		fs << p->f_a18;										// +0x774
+		fs << p->f_c25;										// +0x88c (a game file)
+		fs << p->f_b24;										// +0x8f0 (a start point)
+		fs << p->f_bdc.x;// +0x9a8..
+		fs << p->f_bdc.y;
+		fs << p->f_bdc.z;
+	}
+	for (int i = 0; i < 9; i++)
+	{
+		int t = MenuGetItem(0, (short)i);
+		fs << t;
+	}
+	for (int i = 0; i < 10; i++)
+	{
+		int t = MenuGetItem(1, (short)i);
+		fs << t;
+	}
+	int ntasks = 0;
+	for (std::list<Task *>::iterator i = g_tasks.begin(); i != g_tasks.end(); i++) ntasks++;
+	fs << ntasks;
 	for (std::list<Task *>::iterator i = g_tasks.begin(); i != g_tasks.end(); i++)
 	{
 		fs << (*i)->name;
 		fs << (*i)->state;
 	}
+	fs.close();
+	WriteSaveSlotList();									// port: slots.txt for the launcher (StartMode.h)
+}
 
-	int count = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && IsSaved(*i)) count++;
-	Trace("MEBTEMP saving %d objects", count);
-	fs << count;
-	int n = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && IsSaved(*i)) (*i)->f_438 = (unsigned int)n++;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
+// --------------------------------------------------------------------------- 0x460210
+
+bool neg::ReadTaskFile(const char *name)
+{
+	char path[STR_MAX];
+	TaskPath(path, name);
+	OMediaFilePath fp(path, 'null', 'null');
+	OMediaFileStream fs;
+	fs.setpath(&fp);
+	if (!fs.fileexists())
 	{
-		CGameObject *o = *i;
-		if (!o || !IsSaved(o)) continue;
-		Trace("Saving object %d %s", (int)o->f_438, o->m_tag);
-		Local(o)->WriteState(fs);							// slot 284
+		Trace("WARNING file %s does not exist for TaskGameLoad", name);
+		fs.close();
+		return false;
+	}
+	fs.open(omcfp_Read, false, false);
+	if (!fs.isopen())
+	{
+		Trace("ERROR opening file %s for TaskGameLoad", name);
+		return false;
+	}
+	fs >> g_save_level_id;
+	fs >> g_save_health;
+	fs >> g_save_lives;
+	fs >> g_save_score;
+	fs >> g_save_scene;
+	fs.close();
+	return true;
+}
+
+// --------------------------------------------------------------------------- 0x4603f0
+
+// The level file of a level id (the switch of TaskGameLoad), NULL when it has none.
+static const char *LevelFileOf(int id)
+{
+	switch (id)
+	{
+		case 'LEV1': return "level1.gam";	case 'LV1A': return "level1a.gam";
+		case 'LV1B': return "level1b.gam";	case 'LV1C': return "level1c.gam";
+		case 'LV1D': return "level1d.gam";	case 'LV1E': return "level1e.gam";
+		case 'LV1F': return "level1f.gam";
+		case 'LEV2': return "level2.gam";	case 'LV2A': return "level2a.gam";
+		case 'LV2B': return "level2b.gam";
+		case 'LEV3': return "level3.gam";	case 'LV3A': return "level3a.gam";
+		case 'LV3B': return "level3b.gam";	case 'LV3C': return "level3c.gam";
+		case 'LV3D': return "level3d.gam";	case 'LV3E': return "level3e.gam";
+		case 'LEV4': return "level4.gam";	case 'LV4A': return "level4a.gam";
+		case 'LV4B': return "level4b.gam";	case 'LV4C': return "level4c.gam";
+		case 'LV4D': return "level4d.gam";
+		case 'LEV5': return "level5.gam";	case 'LV5A': return "level5a.gam";
+		case 'LV5B': return "level5b.gam";
+		case 'LEV6': return "level6.gam";	case 'LV6A': return "level6a.gam";
+		case 'LEV7': return "level7.gam";	case 'LEV8': return "level8.gam";
+		case 'VR01': return "VR01.gam";		case 'VR02': return "VR02.gam";
+		case 'VR03': return "VR03.gam";		case 'VR04': return "VR04.gam";
+		case 'VR05': return "VR05.gam";		case 'VR06': return "VR06.gam";
+		case 'VR07': return "VR07.gam";		case 'VR08': return "VR08.gam";
+	}
+	return NULL;
+}
+
+bool neg::TaskGameLoad(const char *name)
+{
+	char path[STR_MAX];
+	TaskPath(path, name);
+	OMediaFilePath fp(path, 'null', 'null');
+	OMediaFileStream fs;
+	Trace("LoadTask 1");
+	fs.setpath(&fp);
+	if (!fs.fileexists())
+	{
+		Trace("WARNING file %s does not exist for TaskGameLoad", name);
+		fs.close();
+		return false;
+	}
+	Trace("LoadTask 2");
+	fs.open(omcfp_Read, false, false);
+	if (!fs.isopen())
+	{
+		Trace("ERROR opening file %s for TaskGameLoad", name);
+		return false;
+	}
+	Trace("LoadTask 3");
+	int level;
+	fs >> level;
+	fs >> g_health;
+	fs >> g_lives;
+	int score;
+	fs >> score;
+	g_score = score;
+	fs >> g_story_scene;
+	for (int i = 0; i < 4200; i++) fs >> g_object_states[i];
+	for (int i = 0; i < 29; i++)
+	{
+		MenuClearItem(2, (short)i);
+		fs >> g_pickup_counts[2 * i];
+		if (g_pickup_counts[2 * i] > 0) MenuSetItem(2, (short)i, 1);
+	}
+	if (const char *file = LevelFileOf(level)) strcpy(g_editor->m_level_name, file);	// +0x74d
+	if (g_camera && g_camera->NameContains((char *)"C3DJIMMY"))
+	{
+		C3DPlayer *p = Player(g_camera);
+		char s[STR_MAX];
+		fs >> s;											// +0x724 and +0x774 both get the first string
+		if (p) { strcpy(p->f_9c8, s); strcpy(p->f_a18, s); }
+		fs >> s;											// (the second is read and dropped)
+		fs >> s;
+		if (p) strcpy(p->f_c25, s);							// +0x88c (a game file)
+		fs >> s;
+		if (p) strcpy(p->f_b24, s);							// +0x8f0 (a start point)
+		float x, y, z;
+		fs >> x;
+		fs >> y;
+		fs >> z;
+		if (p)
+		{
+			p->f_bdc.x = x; p->f_bdc.y = y; p->f_bdc.z = z;	// +0x9a8..
+			char g[STR_MAX], st[STR_MAX];
+			strcpy(g, g_editor->m_level_name);
+			strcpy(st, p->f_9c8);
+			p->n2_ev121(g, st, g_editor->m_level_name, p->f_9c8, 0);	// element slot 90 (+0x168) TODO(BG): no picture arg
+		}
+	}
+	for (int i = 0; i < 9; i++)
+	{
+		MenuClearItem(0, (short)i);
+		int t;
+		fs >> t;
+		MenuSetItem(0, (short)i, (short)t);
+	}
+	for (int i = 0; i < 10; i++)
+	{
+		MenuClearItem(1, (short)i);
+		int t;
+		fs >> t;
+		MenuSetItem(1, (short)i, (short)t);
+	}
+	int ntasks = 0;
+	fs >> ntasks;
+	if (ntasks > 0)
+	{
+		Trace("LoadTask 4");
+		for (int i = 0; i < ntasks; i++)
+		{
+			char tname[STR_MAX];
+			fs >> tname;
+			int state;
+			fs >> state;
+			if (state < 0) break;
+			Trace("LoadTask 5  %s  %d", tname, state);
+			SetTaskState(tname, state);
+			for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
+			{
+				CLocalGameObject *o = Local(*it);
+				if (strcasecmp(o->m_task_name, "none") != 0 && strcasecmp(o->m_task_name, tname) == 0)
+				{
+					o->v267(state);								// slot 265 (+0x424)
+					Trace("TaskState %s found, state set to %d", tname, state);
+				}
+			}
+		}
+		Trace("LoadTask 6");
+		for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
+			if (*it) Local(*it)->v266();						// slot 264 (+0x420)
 	}
 	fs.close();
-	WriteSaveSlotList();									// port: save\slots.txt (StartMode.h)
+	return false;											// (eax is never set on this path)
 }
 
-void neg::SaveTask(const char *name)
+// --------------------------------------------------------------------------- 0x460e70
+
+void neg::RequestTask(const char *name)
 {
-	char unused[52];
-	strcpy(unused, g_empty_string);							// (a local the original fills and never reads)
-	(void)unused;
-	WriteTaskFile(name);
-	SetGameState(5);
+	g_task_requested = 1;
+	strcpy(g_task_request, name);
 }
 
-// --------------------------------------------------------------------------- N2:0x498c70
+// --------------------------------------------------------------------------- 0x42aff0..0x42b180
 
-void neg::NewGameAfterGameOver(void)
+// g_save_slot is the selected item of the load / save page: 6..15 = slots 1..10.
+static const char *SlotFile(void)
 {
-	if (g_N2_545f0f) return;
-	g_health = 100.0f;
-	g_lives = 0;
-	g_score = 0;
-	JimmySetStartPoints(g_jimmy, "PHONEBOOTH");				// (the original writes through NULL without a Jimmy)
-	strcpy(g_task_file, g_empty_string);
-	static const char *const autosaves[] = {
-		"save\\autosave.tsk",
-		"save\\autosave01.tsk", "save\\autosave02.tsk", "save\\autosave03.tsk", "save\\autosave04.tsk",
-		"save\\autosave05.tsk", "save\\autosave06.tsk", "save\\autosave07.tsk", "save\\autosave08.tsk",
-		"save\\autosave09.tsk", "save\\autosave10.tsk", "save\\autosave11.tsk", "save\\autosave12.tsk",
-		"save\\autosave13.tsk", "save\\autosave14.tsk", "save\\autosave15.tsk", "save\\autosave16.tsk",
-		"save\\autosave17.tsk" };
-	for (unsigned i = 0; i < sizeof(autosaves) / sizeof(autosaves[0]); i++) DeleteFile(autosaves[i]);
-	LoadTask("level1d.gam", true);
-	LetterboxOut();											// N2:0x40c2b0
-	g_gametype->PauseGame(false);							// vtable +0x110
-	g_resume_game_state = 9;
-	JimmySlot138(g_jimmy, NULL, g_jimmy, 0, 0.0f);			// (through NULL without a Jimmy)
+	static const char *const kFiles[10] = {
+		"JimmyGame1.tsk", "JimmyGame2.tsk", "JimmyGame3.tsk", "JimmyGame4.tsk", "JimmyGame5.tsk",
+		"JimmyGame6.tsk", "JimmyGame7.tsk", "JimmyGame8.tsk", "JimmyGame9.tsk", "JimmyGame10.tsk" };
+	if (g_save_slot < 6 || g_save_slot > 15) return NULL;
+	return kFiles[g_save_slot - 6];
+}
 
-	memset(g_object_states, 0, 4200 * sizeof(int));
-	for (int i = 0; i < 50; i++)
+void neg::DeleteSlot(void)										// 0x42aff0
+{
+	if (const char *f = SlotFile())
 	{
-		ClearItemState(2, (short)i);
-		g_pickup_counts[2 * i] = 0;
+		DeleteFile(f);										// DeleteFileA
+		WriteSaveSlotList();								// port: slots.txt
 	}
-	static const short level_items[] = { 0x21, 0x1d, 0x19, 0x1a, 0x1b, 0x1c, 0x23, 0x24, 0x22, 0x1e, 0x13 };
-	for (unsigned i = 0; i < sizeof(level_items) / sizeof(level_items[0]); i++) ClearItemState(3, level_items[i]);
-	g_N2_545efc = 0;											// the main menu's level pictures (N2:0x40a860)
-	g_N2_545f00 = 0;
-	g_N2_545f04 = 0;
-	g_N2_545f08 = 0;
-	for (std::list<Task *>::iterator i = g_tasks.begin(); i != g_tasks.end(); i++)
-		SetTaskState((*i)->name, 0);
-	// a new game starts with pickups 32 and 25
-	SetItemState(2, 0x20, 1);
-	g_pickup_counts[2 * 0x20]++;
-	SetItemState(2, 0x19, 1);
-	g_pickup_counts[2 * 0x19]++;
 }
 
-// --------------------------------------------------------------------------- N2:0x4990a0
-
-void neg::NextDemoLevel(void)
+void neg::SaveSlot(void)										// 0x42b0b0
 {
-	// (a switch in the original)
-	static const char *const levels[17] = {
-		"level3c.gam", "level3d.gam", "level3a.gam", "level3e.gam", "level5d.gam", "vr01.gam",
-		"level1b.gam", "level1_a.gam", "level1_c.gam", "level1.gam", "level1c.gam", "level5a.gam",
-		"level5b.gam", "level5b1.gam", "level5c.gam", "level4b.gam", "level5f.gam" };
-	const int i = g_demo_level;
-	g_demo_level = i + 1;
-	if ((unsigned)i < 17)
-	{
-		LoadTask(levels[i], true);
-		return;
-	}
-	LoadTask("level1d.gam", true);
-	g_demo_level = 0;
+	if (const char *f = SlotFile()) WriteTaskFile(f);
 }
+
+void neg::LoadSlot(void)										// 0x42b180
+{
+	if (const char *f = SlotFile()) RequestTask(f);
+}
+
+// C3DJimmy 0x428870 case 3: the ten slot headers ("JimmyGame%d.tsk", 0x4ef4a8).
+void neg::ReadSaveSlots(void)
+{
+	C2DInGameMenu::SaveSlotInfo *slot = (C2DInGameMenu::SaveSlotInfo *)g_save_slot_info;
+	for (int i = 1; i <= 10; i++, slot++)
+	{
+		char name[32];
+		snprintf(name, sizeof name, "JimmyGame%d.tsk", i);	// sprintf
+		if (!ReadTaskFile(name)) slot->score = -1;
+		else
+		{
+			slot->score = g_save_score;
+			slot->scene = g_save_scene;
+		}
+	}
+}
+
+// --------------------------------------------------------------------------- port: Negatron API
+
+void neg::LoadTask(const char *name, bool new_level)
+{
+	if (!new_level) RequestTask(name);
+	else g_editor->RequestLevel((char *)name);
+}
+
+bool neg::RestoreTask(const char *name)		{ (void)name; return false; }
+void neg::SaveTask(const char *name)			{ (void)name; }
 
 // --------------------------------------------------------------------------- texture scrolling
 
@@ -609,12 +454,14 @@ void neg::ClearTexScrolls(void)									// 0x45f4c0
 
 void neg::UpdateTexScrolls(float dt)							// N2:0x4970e0
 {
+	if (!g_gametype) return;								// port: the Asset Viewer's model stage has none
 	if (g_gametype->IsPaused()) return;						// vtable +0x114
 	if (!g_tex_scroll_on) return;
 	g_tex_scroll_time = g_tex_scroll_time + dt;
 	for (std::list<TexScroll *>::iterator it = g_tex_scrolls.begin(); it != g_tex_scrolls.end(); ++it)
 	{
 		TexScroll *s = *it;
+		if (!s || !s->polygon) continue;					// port: (the original has no checks)
 		// (a copy of the vertex list is made and thrown away, as shipped)
 		omt_3DPolygonVertexList copy = s->polygon->get_vertices();
 		(void)copy;
