@@ -6,7 +6,6 @@
 #include "../C3DPlayer.h"
 #include "../CGameType.h"
 #include "../Globals.h"
-#include "../Todo.h"
 #include "../gen/globals.h"
 #include "OMediaViewPort.h"
 #pragma GCC diagnostic pop
@@ -27,8 +26,8 @@ static CGameObject *FindObjectByTag(const char *tag)
 
 // --------------------------------------------------------------------------- the player
 
-// C3DPlayer (a C3DObject: element = object - 0xc0) members at their 2002 element offsets:
-// +0x9c8 the start point Jimmy is to enter the level at, +0xb88 a flag that the level was
+// C3DPlayer (a C3DObject: element = object - 0xc0) members at their element offsets:
+// +0x724 the start point Jimmy is to enter the level at, +0x954 a flag that the level was
 // entered by "RETURN" (CLoadLevel) - a start trigger is then not played again.
 // (callers check NameContains("C3DPLAYER") first; port: dynamic_cast)
 static C3DPlayer *Player(CGameObject *o)	{ return o ? dynamic_cast<C3DPlayer *>(o) : NULL; }
@@ -57,7 +56,7 @@ C3DStartPoint::C3DStartPoint()								// 0x4422d0
 	Log("C3DStartPoint()");
 	C3DStartPoint::InitObject();							// (called directly: the properties are
 															// registered here and again by the loader)
-	SetObjectID('STRT');									// element +0xc0
+	SetObjectID('STRT');									// 0x462d80
 	strcpy(m_sprite_db, "Icons.omt");
 	m_sprite_index = 5;
 	m_sprite_size = 100;
@@ -73,8 +72,8 @@ C3DStartPoint::C3DStartPoint()								// 0x4422d0
 	f_008 = 1;												// element +0xd0
 	strcpy(m_start_trigger, "none");
 	m_trigger_armed = 0;
-	C3DSprite::InitPhysics();
-	f_6ed = 0;
+	C3DSprite::InitPhysics();								// 0x464210 (called directly)
+	// (then a call to the empty 0x472970)
 }
 
 C3DStartPoint::~C3DStartPoint() {}							// 0x4424f0
@@ -96,9 +95,25 @@ void C3DStartPoint::InitObject(void)						// 0x442530
 	RegisterProperty("StartTrigger",  m_start_trigger,    PROP_ALPHA, 0);
 }
 
-void C3DStartPoint::Process(float dt)						// 0x40ff40
+// 0x442640: C3DSprite's, then one frame after Jimmy arrived here: take the camera from him and
+// fire StartTrigger.
+void C3DStartPoint::Process(float dt)
 {
-	C3DSprite::Process(dt);
+	C3DSprite::Process(dt);									// 0x463090
+	if (!m_trigger_armed) return;
+	m_trigger_armed = 0;
+	if (strcasecmp(m_start_trigger, "none") == 0) return;
+	// (debug logs "StartPoint with %s", "StartPoint found with StartTrigger %s for %s")
+	CGameObject *o = FindObjectByTag(m_start_trigger);
+	if (!o)
+	{
+		ErrorLog("ERROR: StartTrigger not found");			// (twice in the original)
+		return;
+	}
+	if (!o->NameContains((char *)"C3DTRIGGERTYPE")) return;
+	g_gametype->SetCamera(NULL);							// element +0x118
+	// port: the original's slot (element +0xd4) takes the name only; C3DTriggerType still has Negatron's flag
+	static_cast<C3DTriggerType *>(o)->CallNextTrigger(m_start_trigger, 0);
 }
 
 void C3DStartPoint::v258(void)								// 0x442700
@@ -109,32 +124,12 @@ void C3DStartPoint::v258(void)								// 0x442700
 	m_viewport_pos[2] = g_viewport->getz();
 }
 
-// 0x442640: one frame after Jimmy arrived here, take the camera from him and fire StartTrigger.
-void C3DStartPoint::v266(void)
-{
-	if (!m_trigger_armed) return;
-	m_trigger_armed = 0;
-	if (strcasecmp(m_start_trigger, "none") == 0) return;
-	// (debug logs "StartPoint with %s", "StartPoint found with StartTrigger %s for %s")
-	CGameObject *o = FindObjectByTag(m_start_trigger);
-	if (!o)
-	{
-		ErrorLog("ERROR: StartTrigger not found");
-		return;
-	}
-	if (!o->NameContains((char *)"C3DTRIGGERTYPE")) return;
-	g_gametype->SetCamera(NULL);							// element +0x124
-	static_cast<C3DTriggerType *>(o)->CallNextTrigger(m_start_trigger, 0);	// element +0xdc
-}
-
 // 0x442740: on (re)load, unless a savegame is being restored: when the camera is Jimmy and he
 // enters the level at this start point, arm StartTrigger (and take the camera from him) - but
 // not when he came back by a "RETURN" exit, which only clears that flag.
 void C3DStartPoint::v260(void)
 {
-	C3DSprite::v260();										// N2:0x49cfd0
-	if (g_task_file[0]) return;								// N2:0x54e71c
-
+	C3DSprite::v260();										// 0x464810
 	if (strcasecmp(m_start_trigger, "none") != 0)
 	{
 		// (debug log "StartPoint with %s")
@@ -147,8 +142,8 @@ void C3DStartPoint::v260(void)
 			{
 				if (!PlayerReturnFlag(g_camera))
 				{
-					g_gametype->SetCamera(NULL);
 					m_trigger_armed = 1;
+					g_gametype->SetCamera(NULL);
 				}
 				else
 					PlayerClearReturnFlag(g_camera);
@@ -161,11 +156,6 @@ void C3DStartPoint::v260(void)
 		PlayerClearReturnFlag(g_camera);
 }
 
-void C3DStartPoint::v270(int a2, int a3)					// N2:0x473d50
-{
-	CLocalGameObject::v270(a2, a3);
-}
-
 namespace neg {
-CGameObject *New_C3DStartPoint(void)	{ return new C3DStartPoint; }		// factory 'STRT' (0x6f8 bytes)
+CGameObject *New_C3DStartPoint(void)	{ return new C3DStartPoint; }		// factory 'STRT' (0x6e0 bytes)
 }

@@ -1,18 +1,15 @@
 /*  C3DAIOmtObj ('3AIO') - a C3DAI whose shape comes from an OMT database ("OmtDatabase", default
-    "objects.omt"; 3D shape chunk "OmtIndex", default 4), unlit. "TerrainColl" -1 leaves the
-    terrain collision as is, 0 turns it off (and hovers), 1 on. "SpecialCase": 1 a rolling
-    hazard (spins, scrolls its texture, pushes the camera away within 2000 by the difficulty;
-    touching it hurts Jimmy, autosaves the spot and costs 5 energy), 2 a vehicle that carries
-    the rocket / Jimmy / Goddard along and barrel-rolls when it meets the "BARRELROLL"
-    C3DAITrigger, 3 a train ("traintracks" sound; the camera lands on top of it), 5 a
-    trampoline ("boing", throws the camera up at 500 with our velocity).
-    Reconstructed from Neutron.exe: constructor 0x40ae30 (factory '3AIO', 0x1bdc bytes),
-    destructor 0x40b020 (only resets the vtables, then ~C3DAI; deleting thunks 0x40aff0 /
-    0x40b160 / 0x40b170 / 0x40b180).
+    "objects.omt"; 3D shape chunk "OmtIndex", default 4), unlit. "Radius" sets the collision
+    radius; "TerrainColl" -1 leaves the terrain collision as is, 0 turns it off (and hovers), 1
+    on. That is all of it: Boy Genius has none of Negatron's special cases (rolling hazard,
+    vehicle, train, trampoline).
+    Reconstructed from Neutron.exe 0x40ae30..0x40b1a0: constructor 0x40ae30 (factory '3AIO',
+    0xa08 bytes), destructor 0x40b020 (only resets the vtables, then ~C3DAI), slot 259 0x40b070
+    (deleting thunks 0x40aff0 / 0x40b160 / 0x40b170 / 0x40b180).
 
-    Original layout: as C3DAI (element vtable 0x48f0f0, 144 slots, none new; OMediaAnim vtable
-    0x48f0a0 at +0x90; listener 0x48f0dc at +0x30; CLocalGameObject vtable 0x48ec50 at +0xc0),
-    own members 0x1b50..0x1bd4, vtordisp 0x1bd4, streamer 0x1bd8.                        */
+    Original layout: as C3DAI (element vtable 0x48f0f0, 95 slots, none new; OMediaAnim vtable
+    0x48f0a0 at +0x90; listener 0x48f0dc at +0x30; CLocalGameObject vtable 0x48ec50 at +0xc0,
+    275 slots, none new but 259), own members 0x994..0x9fc, vtordisp 0xa00, streamer 0xa04.  */
 #pragma once
 #include "../C3DAI.h"
 
@@ -23,20 +20,10 @@ class C3DAIOmtObj : public C3DAI
 	virtual ~C3DAIOmtObj();													// 0x40b020
 
 	// ---- CGameObject-family overrides
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x417960 by special case
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 N2:0x417f40 collides with the camera, '3GOD', '3JIM', '3WBL' only
-	virtual void Process(float dt);											// SLOT 240 N2:0x417420 by special case
-	virtual void RotateToDest(float dt);									// SLOT 246 N2:0x417f80 (C3DAI's)
-	virtual void v260(void);												// SLOT 260 N2:0x417ca0 shape from the database, special case setup
+	virtual void v260(void);												// SLOT 259 0x40b070 properties loaded: the shape from the database, terrain collision
 
 	// ---- data members (object offsets)
-	char				f_1b50[100];	// 0x1b50 "OmtDatabase" ("objects.omt")
-	int					f_1bb4;			// 0x1bb4 "OmtIndex" (4): its 3D shape chunk
-	int					f_1bb8;			// 0x1bb8 "TerrainColl" (-1)
-	int					f_1bbc;			// 0x1bbc "SpecialCase" (0)
-	CGameObject			*f_1bc0;		// 0x1bc0 case 2: the rocket ship (looked up only if already set)
-	CGameObject			*f_1bc4;		// 0x1bc4 case 2: "JIM1" (likewise)
-	CGameObject			*f_1bc8;		// 0x1bc8 case 2: Goddard (likewise)
-	float				f_1bcc;			// 0x1bcc case 2: barrel roll time left
-	int					f_1bd0;			// 0x1bd0 case 3: "traintracks" channel (-1)
+	char				m_omt_database[100];	// 0x994 "OmtDatabase" ("objects.omt")
+	int					m_omt_index;			// 0x9f8 "OmtIndex" (4): its 3D shape chunk
+	int					m_terrain_coll;			// 0x9fc "TerrainColl" (-1)
 };
