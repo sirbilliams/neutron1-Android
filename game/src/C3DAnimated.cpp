@@ -513,12 +513,20 @@ void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 	if (f_6d0 == 0)
 	{
 		f_598 = 0;
-		strcpy(buf, g_4f81a8);
+		// Boy Genius: the animation names carry the detail level, "HI<name>" with the full shape
+		// (detail f_594 0, BG +0x580) or "LOW<name>" with the low one (1: f_58c, BG +0x578);
+		// another detail plays nothing. (0x4ed3dc / 0x4ed3e0; Negatron had no prefix.)
+		const char *prefix;
+		OMedia3DShape *shape;
+		if (f_594 == 0) { prefix = "HI"; shape = f_590; }
+		else if (f_594 == 1) { prefix = "LOW"; shape = f_590; }	// port: the low shape (f_58c) is never loaded
+
+		else return;
 		const float r = v151();								// the shape change below resets the radius
-		OMedia3DShapeElement::set_shape(f_590);
+		OMedia3DShapeElement::set_shape(shape);
 		FitToShape();										// element +0xc8
 		if (f_124 != 2) v152(r);							// not a box: keep the radius
-		strcpy(buf, g_4f81a8);
+		strcpy(buf, prefix);
 		strcpy(f_5fc, name);
 		strcat(buf, name);
 		AnimList *a = GetSequence(buf);
