@@ -8,6 +8,8 @@
 #include "../C3DTargetCursor.h"
 #include "../C3DPointCursor.h"
 #include "../C3DGraplingHook.h"
+#include "../gadgets/C3DBubble.h"
+#include "../gadgets/C3DBaseball.h"
 #include "../C3DRocketShip.h"
 #include "../C3DJetpackFire.h"
 #include "../level1/C3DJeep.h"
@@ -53,7 +55,7 @@ static inline float Dist(const OMedia3DVector &a, const OMedia3DVector &b)
 
 // The game-object part of an element pointer, and back (the original adds / subtracts 0xc0, or
 // 0xc8 for the sprites).
-static inline CGameObject *GO(C3DObject *e)			{ return e ? static_cast<CGameObject *>(e) : NULL; }
+template <class T> static inline CGameObject *GO(T *e)	{ return e ? static_cast<CGameObject *>(e) : NULL; }
 static inline C3DObject *Elem(CGameObject *o)		{ return o ? dynamic_cast<C3DObject *>(o) : NULL; }
 
 // Show: `if (e->hide_count) { e->hide_count = 1; e->hide(false); }` (element +0x70 / +0x58);

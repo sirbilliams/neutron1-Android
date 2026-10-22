@@ -22,11 +22,11 @@ short JimmyMove7e8(C3DJimmy *j)				{ return j->f_7e8; }
 void JimmyHideA10(C3DJimmy *j)					{ if (j->f_a10) Hide(j->f_a10); }
 }
 
-// The bubble (C3DBubble, Jimmy's f_a14; agent: not reconstructed yet, element +0x614..0x616).
-static void BubblePop(C3DObject *b)			{ (void)b; NEG_TODO(0x410d00, "C3DBubble: pop (+0x616 = 1, +0x614 = 0, +0x600 = 0)"); }
-static void BubbleStart(C3DObject *b)			{ (void)b; NEG_TODO(0x410ca0, "C3DBubble: start (+0x615 = 1, blend, shown)"); }
-static bool BubbleBusy(C3DObject *b)			{ (void)b; return false; }	// TODO(BG): +0x614 rising / +0x616 popping / +0x615 on
-static void BubbleOff(C3DObject *b)			{ (void)b; NEG_TODO(0x428060, "C3DBubble: +0x615 = 0"); }
+// The bubble (C3DBubble, Jimmy's f_a14: its Start / Pop and the flags at +0x614..0x616).
+static void BubblePop(C3DBubble *b)			{ b->Pop(); }				// 0x410d00
+static void BubbleStart(C3DBubble *b)			{ b->Start(); }				// 0x410ca0
+static bool BubbleBusy(C3DBubble *b)			{ return b->Busy(); }		// +0x614 floating / +0x616 fading out / +0x615 fading in
+static void BubbleOff(C3DBubble *b)			{ b->FadeInOff(); }			// 0x428060: +0x615 = 0
 
 // An enemy the shrink ray can shrink (CGameObject +0x898 of the enemy: a C3DAI flag of
 // Neutron.exe that our Negatron-shaped C3DAI does not have).
@@ -358,7 +358,7 @@ void C3DJimmy::MenuMark(void)								// 0x4299b0
 void C3DJimmy::ThrowBaseball(float x, float y, float z, float pitch)	// 0x429a30
 {
 	OMedia3DVector p = v224(x, y, z);						// +0x384
-	C3DObject *ball = f_ab4[f_b04];
+	C3DBaseball *ball = f_ab4[f_b04];
 	if (!ball) return;
 	Show(ball);
 	GO(ball)->v136(1);										// +0x224
