@@ -59,7 +59,7 @@ static void TriggerTypeActivate(CGameObject *o, const char *name, int a)
 namespace neg { void FlyingCameraTrigger(CGameObject *o); }			// objects/C3DFlyingCamera.cpp
 static void FlyingCameraStart(CGameObject *o)	{ neg::FlyingCameraTrigger(o); }	// N2:0x406cd4
 // A C3DPickupItem (element vtable +0xec, its CGameObject base at +0xc8).
-static void PickupItemCollect(CGameObject *o)	{ NEG_TODO(N2:0x408dce, "C3DPickupItem element slot 59"); (void)o; }
+static void PickupItemCollect(CGameObject *o)	{ NEG_TODO(/*N2*/0x408dce, "C3DPickupItem element slot 59"); (void)o; }
 // C3DJimmy element slot 121 (+0x1e4, C3DPlayer::ev121 N2:0x4648a0 "PlayerLoadLevel"): go to `file`
 // at start point `start`, coming back to `file2` / `start2`; `picture` shows while loading.
 // (The original calls g_jimmy's slot unchecked.)

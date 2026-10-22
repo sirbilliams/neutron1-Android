@@ -35,20 +35,21 @@ void CLevel01DGame::InitGame(void)											// 0x44fb00
 {
 	Log("InitGame()");
 	CJimmyGame::InitGame();
-	v107(0);												// not written to the .gam (f_00b)
+	v107(0);												// slot 108: not written to the .gam (f_00b)
 
 	C3DObject *sky = CreateSky();							// a local: m_sky stays NULL (no sky rotation)
-	SkyLoad(sky, "omt\\skylevel1d.omt", false);				// sky element +0xe8
-	sky->place(0.0f, 0.0f, 0.0f);
+	SkyLoad(sky, "omt\\space.omt", false);				// sky element +0xe0
+	sky->place(0.0f, 0.0f, 0.0f);							// (+0x44..+0x4c written directly)
 	sky->InitPhysics();										// (empty for a C3DSky)
 	sky->v67(1.0f);											// radius
 	sky->v152(1.0f);
 	sky->ev51();											// element +0xcc
 
 	InitTerrainDatabase("level1d.omt");						// element +0xe4
-	CreateTerrainUnLit();									// element +0xf8
+	CreateTerrain();										// element +0xf4 (lit; Negatron's level1d was unlit)
 	ViewportToOrigin();
-	SetFog(0.0f, 0.0f, 0.0f, 1.0f, 120000.0f, 130000.0f, 130000.0f, true);	// element +0x194
+	g_layer_world->set_far_clip(120000.0f);					// 0x509a30 +0xc0, then the same through 0x509a3c
+	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
 	CaptureMouse(true);										// 0x46a400
 	// (debug log)
 }

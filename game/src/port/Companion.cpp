@@ -14,7 +14,7 @@
 #include "../InterfaceElement.h"
 #include "../gen/globals.h"
 #include "../friends/C3DFriends.h"
-#include "../lab/C3DHerman.h"
+// TODO(BG): #include "../lab/C3DHerman.h" (Negatron-only class, deleted)
 #include "../lab/C3DSwingDoor.h"
 #include "../levels/CLoadLevel.h"
 #include "../pickups/C3DPickupItem.h"
@@ -847,7 +847,7 @@ void Build(std::string &o)
 	int s_icon_neutron = -1;
 	std::map<int, std::pair<int, int> > kinds;		// the level's pickups by menu item: collected, all
 	std::string pts = "[";
-	C3DHerman *boss = NULL;
+	CGameObject *boss = NULL;						// TODO(BG): Negatron: C3DHerman
 	CGameObject *jimmy = g_jimmy;
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 	{
@@ -888,11 +888,13 @@ void Build(std::string &o)
 			if (c->m_checked) ck_got++;
 			else Point(pts, 'c', g, ObjectIcon(kIconCheckpoint, g), NULL);
 		}
+#if 0	// TODO(BG): C3DHerman is Negatron only
 		else if (C3DHerman *h = dynamic_cast<C3DHerman *>(g))
 		{
 			boss = h;
 			if (Visible(g)) Point(pts, 'e', g, -1, NULL);
 		}
+#endif
 		else if (dynamic_cast<C3DGoddard *>(g))
 		{
 			if (Visible(g)) Point(pts, 'g', g, -1, NULL);
@@ -934,6 +936,7 @@ void Build(std::string &o)
 		o += ','; Int(o, icon); o += ']';
 	}
 	o += ']';
+#if 0	// TODO(BG): Negatron's boss C3DHerman (lane B: BG boss)
 	if (boss)
 	{
 		Key(o, "boss"); o += '{';
@@ -942,6 +945,7 @@ void Build(std::string &o)
 		o += ','; Str(o, "bar"); o += ':'; Int(o, boss->f_1d60 > 0 ? 1 : 0);
 		o += '}';
 	}
+#endif
 	VoxCard cards[8];										// the Vox world picker (port/VoxPicker.h)
 	int sel = -1;
 	const int ncards = VoxPickerCards(cards, 8, &sel);

@@ -5,7 +5,7 @@
 #include "DatabaseCache.h"
 #include "Game.h"
 #include "CGameType.h"
-#include "CDefaultGame.h"
+#include "CMainMenu.h"
 #include "CViewPort.h"
 #include "Todo.h"
 #include "Physics.h"
@@ -178,7 +178,7 @@ void neg::LoadNewLevel(unsigned int which)
 	CGfx::UnInitAlpha();				// 0x4685f0 = UnInitAlpha + InitAlpha
 	CGfx::InitAlpha();
 	ClearWayPoints();					// 0x47ec30
-	CreateGameType(which);				// N2:0x480230: a CDefaultGame, whatever the id
+	CreateGameType(which);				// 0x44d0e0: a CMainMenu, whatever the id
 	ResetFrameTimer();					// 0x47e470
 	SDL_Log("-LoadNewLevel()");
 }

@@ -32,7 +32,7 @@ static inline void SkyLoad(C3DObject *sky, std::string file, bool alt)
 // 0x46a400 (as in CEditor.cpp): every InitGame ends with CaptureMouse(true).
 static inline void CaptureMouse(bool capture)
 {
-	if (capture && !g_N2_56aed0)
+	if (capture)
 	{
 		// (the original also hides the Windows cursor and remembers its position; the SDL layer
 		// has no visible cursor on the Thor)

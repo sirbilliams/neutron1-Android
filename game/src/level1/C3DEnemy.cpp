@@ -2,11 +2,11 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DEnemy.h"
-#include "C3DSpriteObject.h"
+// TODO(BG): #include "C3DSpriteObject.h" (Negatron-only class, deleted)
 #include "../C3DJimmy.h"
 #include "../C3DPlayer.h"
 #include "../C3DTriggerType.h"
-#include "../C3DWaterBalloon.h"
+// TODO(BG): #include "../C3DWaterBalloon.h" (Negatron-only class, deleted)
 #include "../CanvasWrapper.h"
 #include "../CGameType.h"
 #include "../Game.h"
@@ -90,14 +90,9 @@ static void SetupBarElements(InterfaceElt &frame, InterfaceElt &bar)
 
 // The glow sprite of types 4..6 (inlined in ev69): a C3DSpriteObject, sprites.omt canvas 26,
 // size 270, opacity 0.4.
-static C3DSpriteObject *NewGlow(void)
+static CGameObject *NewGlow(void)
 {
-	C3DSpriteObject *s = new C3DSpriteObject;				// 0x478990(0x718), N2:0x472870
-	s->m_sprite_index = 26;
-	s->m_sprite_size = 270;
-	s->f_678 = 0.4f;										// Opacity
-	s->v107(0);												// CGameObject +0x1ac
-	return s;
+	return NULL;		// TODO(BG): C3DSpriteObject is Negatron only (N2:0x472870, canvas 26, size 270, opacity 0.4)
 }
 
 // --------------------------------------------------------------------------- construction
@@ -298,8 +293,7 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 	if (other->NameContains((char *)"C3DWATERBALLOON"))		// +0x18
 	{
 		if (f_1b50 != 3) return;
-		C3DWaterBalloon *b = dynamic_cast<C3DWaterBalloon *>(other);	// (other - 0xc8)
-		if (b) b->Pop();									// sprite +0xdc
+		// TODO(BG): C3DWaterBalloon is Negatron only (Pop)
 		if (f_96c == 1) return;
 		if (f_96c != 15)									// hit: run away
 		{
@@ -482,6 +476,7 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 	}
 	// the glow sprite: towards the camera, fading in within 600 of the target
 	if (!f_1b5c || !f_964) return;
+#if 0	// TODO(BG): the glow sprite was a Negatron C3DSpriteObject (f_1b5c stays NULL)
 	if (!(f_1b60 > 0))
 	{
 		f_1b5c->HideAgain();								// element +0xd8
@@ -504,6 +499,7 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 	f_1b5c->set_diffuse(OMediaFARGBColor(1.0f - d * 0.0016666667f, 1.0f, 1.0f, 1.0f));	// +0x90..+0x9c (N2:0x4d92c8: 1/600)
 	f_1b5c->v197(me.x - v.x * 80.0f, me.y + 50.0f - v.y * 80.0f, me.z - v.z * 80.0f);	// +0x314
 	f_1b5c->ShowAgain();									// element +0xd4
+#endif
 }
 
 void C3DEnemy::v258(void)									// N2:0x42ea20

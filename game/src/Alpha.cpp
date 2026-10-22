@@ -4,6 +4,7 @@
     0x4683e0 InitAlpha        0x468510 UnInitAlpha     0x4685f0 ReInitAlpha               */
 
 #include "Game.h"
+#include "gen/globals.h"
 #include "OMediaFilePath.h"
 #include "OMediaFileStream.h"
 #include "OMediaDataBase.h"
@@ -23,22 +24,8 @@ unsigned short		 g_alpha_used = 0;			// 0x5097e0
 static OMediaFileStream	*s_alpha_stream = 0;	// 0x5097fc
 static OMediaDataBase	*s_alpha_db = 0;		// 0x5097f8
 
-// Canvas IDs in alpha.omt for each font, indexed by (character - ' '); -1 = no glyph.
-// Read from Neutron.exe at 0x4f4ed8 (6 x 64 int16).
-static const short kFontGlyphs[FONT_COUNT][FONT_GLYPHS] = {
-	{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 82,83,84,85,86,87,88,89,90,91,-1,-1,-1,-1,-1,-1,
-	  -1,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,-1,-1,-1,-1,-1 },
-	{ 130,-1,-1,-1,-1,-1,-1,133,-1,-1,-1,134,134,138,140,-1, 82,83,84,85,86,87,88,89,90,91,139,135,136,137,-1,-1,
-	  -1,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,-1,-1,-1,-1,-1 },
-	{ 129,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,141,-1, 0,8,7,6,5,4,3,2,1,9,-1,-1,-1,-1,-1,-1,
-	  -1,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,-1,-1,-1,-1,-1 },
-	{ 129,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 45,36,37,38,44,43,42,41,40,39,-1,-1,-1,-1,-1,-1,
-	  -1,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,-1,-1,-1,-1,-1 },
-	{ 128,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 45,36,37,38,44,43,42,41,40,39,-1,-1,-1,-1,-1,-1,
-	  -1,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,-1,-1,-1,-1,-1 },
-	{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 118,127,120,121,122,123,124,125,126,119,-1,-1,-1,-1,-1,-1,
-	  -1,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,-1,-1,-1,-1,-1 },
-};
+// The canvas IDs in alpha.omt of each font's glyphs (character - ' ', -1 = none) are the exe's
+// table g_font_glyph_ids (0x4f4ed8, 6 x 64 int16).
 }
 
 // --------------------------------------------------------------------------- database helpers
@@ -96,7 +83,7 @@ OMediaCanvas *neg::LoadCanvasID(OMediaDataBase *db, int id)				// 0x477890
 void CGfx::InitAlpha(void)
 {
 	SDL_Log("InitAlpha()");
-	s_alpha_stream = InitFileStream(".\\omt\\alpha.omt");
+	s_alpha_stream = InitFileStream("alpha.omt");			// (Negatron: ".\\omt\\alpha.omt")
 	if (s_alpha_stream)
 	{
 		s_alpha_db = InitDatabase(s_alpha_stream);
@@ -106,7 +93,8 @@ void CGfx::InitAlpha(void)
 			for (int f = 0; f < FONT_COUNT; f++)
 				for (int g = 0; g < FONT_GLYPHS; g++)
 				{
-					g_font[f][g] = kFontGlyphs[f][g] == -1 ? NULL : LoadCanvasID(s_alpha_db, kFontGlyphs[f][g]);
+					const short id = g_font_glyph_ids[f * FONT_GLYPHS + g];
+					g_font[f][g] = id == -1 ? NULL : LoadCanvasID(s_alpha_db, id);
 					if (g_font[f][g]) loaded++;
 				}
 			SDL_Log("InitAlpha: %d glyphs", loaded);

@@ -19,14 +19,14 @@
     Element-family slots are `ev<n>` (`// ESLOT n`); members are f_<offset in the original
     object> (CGameObject-family code sees them at offset - 0xc0).                             */
 #pragma once
-#include "../C3DPlayerObject.h"
+#include "../C3DAnimated.h"
 #include "OMedia3DVector.h"
 
 class C3DObject;
 class OMediaViewPort;
 class OMedia3DPolygon;
 
-class C3DVehicle : public C3DPlayerObject
+class C3DVehicle : public C3DAnimated	// TODO(BG): C3DObject in Neutron.exe
 {
 	public:
 	C3DVehicle();															// 0x464b90

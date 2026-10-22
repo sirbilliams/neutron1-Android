@@ -47,14 +47,14 @@
     f_<offset in the original object> (CGameObject-family code of the original sees them at
     offset - 0xc0).                                                                           */
 #pragma once
-#include "C3DPlayerObject.h"
+#include "C3DAnimated.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
 class OMediaStreamOperators;
 class OMedia3DPolygon;
 
-class C3DAI : public C3DPlayerObject
+class C3DAI : public C3DAnimated
 {
 	public:
 	C3DAI();																// N2:0x410b30
@@ -123,6 +123,9 @@ class C3DAI : public C3DPlayerObject
 	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x4155e0
 
 	// ---- data members (object offsets)
+	float				f_930;			// N2 C3DPlayerObject 0x930  1.0 (TODO(BG): offsets)
+	int					f_934;			// N2 C3DPlayerObject 0x934  -1; != -1 while a cut scene has replaced our animation
+	char				f_938[40];		// N2 C3DPlayerObject 0x938  the animation to go back to after the cut scene
 	float				f_960;			// 0x960  time (+= dt)
 	CGameObject			*f_964;			// 0x964  target (TargetName; ev123 swaps it for a while)
 	float				f_968;			// 0x968  speed (200; InitialSpeed, a patrol point's PatrolSpeed, AITrigger AISpeed)

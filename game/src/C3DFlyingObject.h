@@ -24,13 +24,18 @@
     Element-family slots are `ev<n>` (`// ESLOT n`); members are f_<offset in the original
     object> (CGameObject-family code sees them at offset - 0xc0).                            */
 #pragma once
-#include "C3DPlayerObject.h"
+#include "C3DPlayer.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
-class C3DFlyingObject : public C3DPlayerObject
+class C3DFlyingObject : public C3DAnimated
 {
 	public:
+	// port: N2's C3DPlayerObject camera helpers (BG: C3DFlyingObject derives from C3DAnimated). TODO(BG).
+	float ev95(OMedia3DVector unused, OMedia3DVector *cam) { (void)unused; return neg::CamWallPull(this, cam); }
+	float ev96(OMedia3DVector target, OMedia3DVector *out, float max) { return neg::CamReach(target, out, max); }
+	void ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
+			  OMedia3DVector axis) { neg::CamMove(this, a, b, mode, cur, want, target, axis); }
 	C3DFlyingObject();														// N2:0x4346b0
 	virtual ~C3DFlyingObject();												// 0x419ed0
 

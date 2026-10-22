@@ -65,25 +65,25 @@ using neg::GetMouseDelta;									// 0x46a460 (Mouse.h)
 __attribute__((weak)) void neg::JimmyJetpackOff(CGameObject *jimmy)
 {
 	(void)jimmy;
-	NEG_TODO(N2:0x443370, "C3DJimmy jetpack off");
+	NEG_TODO(/*N2*/0x443370, "C3DJimmy jetpack off");
 }
 
 __attribute__((weak)) void neg::JimmyJetpackSound(CGameObject *jimmy, int a)
 {
 	(void)jimmy; (void)a;
-	NEG_TODO(N2:0x4433f0, "C3DJimmy jetpack sound");
+	NEG_TODO(/*N2*/0x4433f0, "C3DJimmy jetpack sound");
 }
 
 __attribute__((weak)) void neg::JimmyJetpackFlame(CGameObject *jimmy, float size)
 {
 	(void)jimmy; (void)size;
-	NEG_TODO(N2:0x4613a0, "C3DJimmy jetpack flame size");
+	NEG_TODO(/*N2*/0x4613a0, "C3DJimmy jetpack flame size");
 }
 
 __attribute__((weak)) void neg::JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value)
 {
 	(void)jimmy; (void)o; (void)who; (void)item; (void)value;
-	NEG_TODO(N2:0x449df0, "C3DJimmy::ActivateMenuItem (element slot 138)");
+	NEG_TODO(/*N2*/0x449df0, "C3DJimmy::ActivateMenuItem (element slot 138)");
 }
 
 // --------------------------------------------------------------------------- helpers
@@ -168,12 +168,121 @@ static void LowGravity(CGameObject *o)
 	o->v157(acc[0], g_gravity.y * 1.33f - g_gravity.y, acc[2]);	// N2:0x4f1f58
 }
 
+// --------------------------------------------------------------------------- Negatron's C3DPlayerObject
+
+// port: the camera helpers of N2's C3DPlayerObject (see C3DPlayer.h). TODO(BG).
+float neg::CamWallPull(C3DAnimated *self, OMedia3DVector *cam)	// N2:0x465010
+{
+	float p[4];
+	self->v195(p);											// our position (w as v195 gives it)
+	OMedia3DVector a(p[0], p[1], p[2]);
+	a.w = p[3];
+	if (!PhysicsLineBlocked(a, *cam, false)) return 1.0f;
+	*cam = g_phys_ray.end;									// the hit point
+	const float dx = (p[0] - cam->x) * 0.75f;
+	const float dy = (p[1] - cam->y) * 0.75f;
+	const float dz = (p[2] - cam->z) * 0.75f;
+	cam->x = p[0] - dx;
+	cam->y = p[1] - dy;
+	cam->z = p[2] - dz;
+	return 1.5f;
+}
+
+float neg::CamReach(OMedia3DVector target, OMedia3DVector *out, float max)	// N2:0x464ef0
+{
+	if (max <= 0.0f) return 1.0f;
+	OMedia3DVector d(g_viewport->getx() - target.x, g_viewport->gety() - target.y, g_viewport->getz() - target.z);
+	d.w = 0;
+	const double dist = sqrt((double)d.y * d.y + (double)d.z * d.z + (double)d.x * d.x);
+	if (dist <= max) return 1.0f;
+	const float inv = 1.0f / d.quick_magnitude();
+	*out = target;
+	d.x *= inv;
+	d.y *= inv;
+	const double dz = (double)inv * d.z;
+	const double m = (double)max - 3.0f;
+	out->x = (float)(m * d.x + out->x);
+	out->y = (float)(m * d.y + out->y);
+	out->z = (float)(m * dz + out->z);
+	return 2.0f;
+}
+
+void neg::CamPlace(OMedia3DVector pos, OMedia3DVector target)	// N2:0x465110
+{
+	g_viewport->place(pos.x, pos.y, pos.z);
+	OMedia3DVector d(target.x - pos.x, target.y - pos.y, target.z - pos.z);
+	d.w = 0;
+	omt_Angle ax, ay;
+	d.angles(ax, ay);
+	g_viewport->set_angle(ax, ay, 0);
+}
+
+void neg::CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want,
+				  OMedia3DVector target, OMedia3DVector axis)	// N2:0x4651c0
+{
+	if (mode != 1.0f)
+	{
+		CamPlace(want, target);
+		return;
+	}
+	const double dx = (double)want.x - cur.x;
+	const float dy = want.y - cur.y, dz = want.z - cur.z;
+	if (!self->f_8a7)
+	{
+		g_viewport->setx((float)((double)axis.x * dx * a * b + g_viewport->getx()));
+		g_viewport->sety((float)((double)axis.y * dy * a * b + g_viewport->gety()));
+		g_viewport->setz((float)((double)axis.z * dz * a * b + g_viewport->getz()));
+	}
+	OMedia3DVector d(target.x - cur.x, target.y - cur.y, target.z - cur.z);
+	d.w = 0;
+	omt_Angle ax, ay;
+	d.angles(ax, ay);
+	const short vx = g_viewport->get_anglex(), vy = g_viewport->get_angley();
+	short turn = (short)((ay - vy) & 0x3fff);				// the short way round
+	if (turn > 0x2000) turn -= 0x4000;
+	// (N2 also kept the old viewport position / angles in globals nothing reads: dropped.)
+	if (!self->f_8a7)
+	{
+		g_viewport->set_anglex((omt_WAngle)(vx + (short)(ax - vx)));
+		g_viewport->set_angley((omt_WAngle)(vy + turn));
+	}
+}
+
+unsigned char C3DPlayer::ev103(void)						// 0x4378d0
+{
+	if (!g_mouse_rdown && !g_keys[0x2d] && !g_keys[0x10] && !g_keys[0x60] && !g_joy_button1)	// VK_INSERT, VK_SHIFT, VK_NUMPAD0
+		return 0;
+	if (g_4f0588 == 6 && ev104() && v133()) return 0;		// current gadget 6
+	return 1;
+}
+
+unsigned char C3DPlayer::ev104(void)						// 0x42a7a0
+{
+	if (g_4f83e0) return 0;									// player controls off
+	if (!g_mouse_down && !g_keys[0x0d] && !g_keys[0x11] && !g_joy_button0) return 0;	// VK_RETURN, VK_CONTROL
+	return 1;
+}
+
+void C3DPlayer::ev105(void)									// N2:0x465360
+{
+	// port: Negatron's "Jimmy is out: back to autosave.tsk"; Boy Genius restarts the level from
+	// C3DJimmy ("RestartLevel.tsk"). TODO(BG): remove once the callers are ported.
+	NEG_TODO(0x465360, "C3DPlayerObject::ev105 (Negatron only)");
+}
+
+void C3DPlayer::WriteState(OMediaStreamOperators &s) { CLocalGameObject::WriteState(s); }	// N2:0x4651b0
+void C3DPlayer::ReadState(OMediaStreamOperators &s) { CLocalGameObject::ReadState(s); }		// N2:0x4651a0
+
 // --------------------------------------------------------------------------- construction
 
 C3DPlayer::C3DPlayer()										// N2:0x45ff00
 {
 	// (f_9b8, f_a6c, f_a7c, f_aa0, f_ad4, f_bdc, f_c8c are OMedia3DPoints: w = 1; f_ab0 and f_af0
 	// OMedia3DVectors: w = 0.)
+	f_930 = 1.0f;											// port: N2 C3DPlayerObject's constructor (TODO(BG))
+	f_934 = -1;
+	strcpy(f_938, g_4f81a8);
+	g_4f83e0 = 0;
 	SetName((char *)"C3DPLAYER");
 	Log("C3DPlayer()");
 	f_960 = 30.0f;
@@ -283,7 +392,7 @@ void C3DPlayer::InitObject(void)							// 0x437830
 
 void C3DPlayer::ResetObject(void)							// 0x437890
 {
-	C3DPlayerObject::ResetObject();							// CLocalGameObject's (0x4587f0)
+	C3DAnimated::ResetObject();								// CLocalGameObject's (0x4587f0)
 	f_96c = 0;
 	f_978 = 0;
 	f_97c = 0;
@@ -299,7 +408,7 @@ void C3DPlayer::v258(void)									// 0x41afb0
 
 void C3DPlayer::v260(void)									// 0x43a750
 {
-	C3DPlayerObject::v260();
+	C3DAnimated::v260();									// port: N2 went through C3DPlayerObject (+ g_5461cc = 0)
 	f_c20 = FindObjectByTag("C3DHERMAN");
 }
 

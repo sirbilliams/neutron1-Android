@@ -80,6 +80,11 @@ static void CutSceneCameraFire(CGameObject *next, unsigned char flag)
 // C3DFlyingCamera is a C3DObject (CGameObject at +0xc0): element slot 144 (+0x240).
 namespace neg { void FlyingCameraTrigger(CGameObject *o); }
 static void FlyingCameraFire(CGameObject *next)	{ neg::FlyingCameraTrigger(next); }	// objects/C3DFlyingCamera.cpp
+// TODO(BG): C3DTextTrigger, C3DFadeObject and C3DFlyingCamera are Negatron classes (deleted): weak
+// stubs until it is known what Neutron.exe's CallNextTrigger does instead.
+void __attribute__((weak)) neg::TextTriggerTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DTextTrigger (Negatron only)"); }
+void __attribute__((weak)) neg::FadeObjectTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFadeObject (Negatron only)"); }
+void __attribute__((weak)) neg::FlyingCameraTrigger(CGameObject *o)	{ (void)o; NEG_TODO(0, "C3DFlyingCamera (Negatron only)"); }
 // CLoadLevel (a C3DSprite): element slot 55 (+0xdc).
 static void LoadLevelFire(CGameObject *next)		{ static_cast<CLoadLevel *>(next)->ev55(); }
 

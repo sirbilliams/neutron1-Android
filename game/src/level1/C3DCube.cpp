@@ -69,7 +69,7 @@ void C3DCube::InitCube(std::string file, float size)		// N2:0x4999a0
 	Log("InitCube(\"%s\",%f)", file.c_str(), (double)size);
 	// The original builds the 8 corners (+-size/2) and the 6 textured quads itself, with a
 	// material textured from <file> ("" when none is given). Nothing in the shipped game calls it.
-	NEG_TODO(N2:0x4999a0, "C3DCube::InitCube(file, size): the textured cube");
+	NEG_TODO(/*N2*/0x4999a0, "C3DCube::InitCube(file, size): the textured cube");
 }
 
 void C3DCube::ev59(float alpha)								// N2:0x49a0f0

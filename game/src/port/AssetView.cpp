@@ -10,8 +10,8 @@
 #include "../Globals.h"
 #include "../SaveGame.h"
 #include "../TextureAnims.h"
-#include "../C3DASEObj.h"
-#include "../C3DGrannyObj.h"
+// TODO(BG): #include "../C3DASEObj.h" (Negatron-only class, deleted)
+// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "../../granny/granny_compat.h"
 #include "../gen/globals.h"
 #include "OMediaViewPort.h"
@@ -270,47 +270,10 @@ void Load(int i)
 	float scale = 1.0f;
 	try
 	{
-		if (m.kind == 'g')
+		if (m.kind == 'g' || m.kind == 'a')
 		{
-			C3DGrannyObj *o = dynamic_cast<C3DGrannyObj *>(CreateObject('3GRO'));
-			if (o)
-			{
-				s_obj = o;
-				o->m_object_id = '3GRO';
-				snprintf(o->f_924, sizeof o->f_924, "%s", m.file.c_str());
-				strcpy(o->f_988, "none"); strcpy(o->f_9ec, "none"); strcpy(o->f_a50, "none");
-				strcpy(o->f_ab4, "none"); strcpy(o->f_b18, "none"); strcpy(o->f_b7c, "none");
-				o->ResetObject();
-				o->v260();
-				o->v197(kStage[0], kStage[1], kStage[2]);
-				o->v90(kStage[0], kStage[1], kStage[2]);
-				o->place(kStage[0], kStage[1], kStage[2]);			// (the element; Process would)
-				o->ShowAgain();
-				shape = o->get_shape();
-				scale = o->f_6f0 > 0 ? o->f_6f0 : 1.0f;
-			}
-		}
-		else if (m.kind == 'a')
-		{
-			C3DASEObj *o = dynamic_cast<C3DASEObj *>(CreateObject('3ASE'));
-			if (o)
-			{
-				s_obj = o;
-				o->m_object_id = '3ASE';
-				snprintf(o->f_924, sizeof o->f_924, "%s", m.file.c_str());
-				snprintf(o->f_988, sizeof o->f_988, "%s", m.file.c_str());
-				char png[128];
-				if (AseTexture(m.file.c_str(), png, sizeof png)) snprintf(o->f_ab4, sizeof o->f_ab4, "%s", png);
-				else { strcpy(o->f_ab4, "none"); strcpy(s_info, "NO TEXTURE"); }
-				o->f_664 = 0;										// "SecondPass" off: its materials would wait for a pass the stage does not draw
-				o->ResetObject();
-				o->v260();
-				o->v197(kStage[0], kStage[1], kStage[2]);
-				o->v90(kStage[0], kStage[1], kStage[2]);
-				o->place(kStage[0], kStage[1], kStage[2]);			// (the element; Process would)
-				o->ShowAgain();
-				shape = o->get_shape();
-			}
+			// TODO(BG): Negatron's .grn (C3DGrannyObj) / .ase (C3DASEObj) viewers; those classes are gone
+			strcpy(s_info, "NOT SUPPORTED");
 		}
 		else
 		{

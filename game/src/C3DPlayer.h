@@ -33,17 +33,41 @@
     defined weak (doing nothing but a TODO log) in C3DPlayer.cpp; C3DJimmy.cpp defines the real
     ones. The input tests N2:0x465750..N2:0x465ad0 are exported for C3DJimmy too.                  */
 #pragma once
-#include "C3DPlayerObject.h"
+#include "C3DAnimated.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
 class OMedia3DPolygon;
+class OMediaStreamOperators;
 
-class C3DPlayer : public C3DPlayerObject
+namespace neg {
+// port: the chase-camera helpers of Negatron's C3DPlayerObject (N2:0x465010 / N2:0x464ef0 /
+// N2:0x465110 / N2:0x4651c0); Neutron.exe has no C3DPlayerObject (C3DPlayer derives from
+// C3DAnimated) and these have no match there. TODO(BG): find BG's camera code and port it.
+float CamWallPull(C3DAnimated *self, OMedia3DVector *cam);
+float CamReach(OMedia3DVector target, OMedia3DVector *out, float max);
+void CamPlace(OMedia3DVector pos, OMedia3DVector target);
+void CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want,
+			 OMedia3DVector target, OMedia3DVector axis);
+}
+
+class C3DPlayer : public C3DAnimated
 {
 	public:
 	C3DPlayer();															// N2:0x45ff00
 	virtual ~C3DPlayer();													// 0x437790
+
+	// ---- from Negatron's C3DPlayerObject (port: TODO(BG) - see neg::CamWallPull)
+	float ev95(OMedia3DVector unused, OMedia3DVector *cam) { (void)unused; return neg::CamWallPull(this, cam); }
+	float ev96(OMedia3DVector target, OMedia3DVector *out, float max) { return neg::CamReach(target, out, max); }
+	void ev97(OMedia3DVector pos, OMedia3DVector target) { neg::CamPlace(pos, target); }
+	void ev98(float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want, OMedia3DVector target,
+			  OMedia3DVector axis) { neg::CamMove(this, a, b, mode, cur, want, target, axis); }
+	virtual unsigned char ev103(void);										// ESLOT 86 0x4378d0 jump/use button (N2 C3DPlayerObject ev103 ~0.81)
+	virtual unsigned char ev104(void);										// ESLOT 87 0x42a7a0 fire button
+	virtual void ev105(void);												// N2:0x465360 Jimmy is out: back to the autosave (TODO(BG))
+	virtual void WriteState(OMediaStreamOperators &s);						// (N2 C3DPlayerObject's: CLocalGameObject's)
+	virtual void ReadState(OMediaStreamOperators &s);
 
 	// ---- element-family slots
 	virtual void ev67(void);												// ESLOT 67  N2:0x4639b0 "AnimEnded": FENCE / LADDER / FULLSTOP / SPLAT / HIT done
@@ -83,6 +107,9 @@ class C3DPlayer : public C3DPlayerObject
 	virtual void v271(void);												// SLOT 271 N2:0x461b20 power-up over: f_968 = 600
 
 	// ---- data members (object offsets; the gaps are never used)
+	float				f_930;			// N2 C3DPlayerObject 0x930  1.0 (TODO(BG): offsets)
+	int					f_934;			// N2 C3DPlayerObject 0x934  -1; != -1 while a cut scene has replaced our animation
+	char				f_938[40];		// N2 C3DPlayerObject 0x938  the animation to go back to after the cut scene
 	float				f_960;			// 0x960  acceleration per frame (30)
 	float				f_964;			// 0x964  braking per frame (50)
 	float				f_968;			// 0x968  top speed (600; 1000 with power-up 0 (g_power_timers[0]), 1200 flying)
