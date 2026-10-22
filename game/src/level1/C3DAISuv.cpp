@@ -13,6 +13,7 @@
 #include "../Todo.h"
 #include "../JimmySlots.h"
 #include "C3DJeep.h"
+#include "../C3DRocketShip.h"
 #pragma GCC diagnostic pop
 #include "OMedia3DShape.h"
 #include <string.h>
@@ -42,13 +43,17 @@ static CGameObject *JeepDriver(CGameObject *vehicle)
 	return jeep ? jeep->f_a84 : NULL;
 }
 
-// The rocket ship: BG tests a member at +0x69c of its element (not yet mapped: C3DRocketShip is still
-// Negatron's layout) and takes the start point from the rider at +0x740 (f_9f4).
+// The rocket ship: BG tests the int at +0x69c of its element, which lies in C3DAnimated's
+// PickupLink name (0x655, 100 bytes; byte 71..74: zero unless a level wrote a 72+ character
+// link) and takes the start point from the rider at +0x740 (f_9f4).
 static CGameObject *RocketDriver(CGameObject *vehicle)
 {
-	(void)vehicle;
-	NEG_TODO(0x40b4f0, "the rocket ship an SUV hit: its +0x69c member / rider +0x740");
-	return NULL;
+	C3DRocketShip *r = dynamic_cast<C3DRocketShip *>(vehicle);
+	if (!r) return NULL;
+	int tested;
+	memcpy(&tested, r->f_669 + (0x69c - 0x655), 4);
+	if (!tested) return NULL;
+	return r->f_9f4;										// port: the original does not check for NULL
 }
 
 C3DAISuv::C3DAISuv()										// 0x40b1b0
