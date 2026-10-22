@@ -347,14 +347,11 @@ void C3DRocketShip::InitObject(void)						// 0x43dd10
 {
 	Log("InitObject()");
 	C3DFlyingObject::InitObject();							// 0x419f70
-	InitAnim();												// element +0x110
-	CreateAnim((char *)"LOSTWING", (char *)"Stratolosewing.ase");	// +0xe0
-	CreateAnim((char *)"LEFT", (char *)"Stratoleft.ase");
-	CreateAnim((char *)"RIGHT", (char *)"Stratoright.ase");
-	CreateAnim((char *)"DEFAULT", (char *)"Strato.ase");
-	CreateTexture((char *)"strato.png", 0);					// +0xfc
-	ApplyTexture(f_590, 0);									// +0x100
-	v67(50.0f);
+	InitAnim();												// element +0x108
+	CreateAnim((char *)"HIDEFAULT", (char *)"Strato.ase");	// +0xd8 (Boy Genius: no wing / banking animations)
+	CreateTexture((char *)"strato.png", 0);					// +0xf0
+	ApplyTexture(f_590, 0);									// +0xf4
+	v67(50.0f);												// +0x110
 	ev58((char *)"DEFAULT", 1);
 }
 

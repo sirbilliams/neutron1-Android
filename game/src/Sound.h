@@ -19,7 +19,7 @@
 
     Everything is off while g_sound is NULL, g_sfx_on is 0 or g_sound_muted is set (never set in
     the shipped game); music only needs g_sound and g_music_on. A play request refused because
-    the sound is off sets g_cutscene_skipped (N2:0x54a3d4), so a cut scene waiting for its voice ends.
+    the sound is off returns -1 (Negatron also set g_cutscene_skipped; Neutron.exe does not).
 
     The Play/Stop "Game" helpers (0x48f...) are what game objects use: they do nothing until the
     sound-effect database is loaded (g_sfx_db_loaded) or while the sound-effect volume is 0, and

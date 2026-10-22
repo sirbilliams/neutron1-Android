@@ -128,5 +128,7 @@ void neg::TestPosLog(CGameObject *o, float dt)
 	o->v195(p);
 	o->v201(r);
 	o->v174(v);
-	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2]);
+	C3DAnimated *a = dynamic_cast<C3DAnimated *>(o);
+	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
+		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
 }
