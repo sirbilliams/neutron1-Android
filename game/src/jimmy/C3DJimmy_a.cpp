@@ -3,7 +3,7 @@
 #include "../C3DPermanentSprite.h"
 #include "../C3DShadow.h"
 #include "../C3DPointCursor.h"
-#include "../C3DGrannyObj.h"
+// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "../pickups/C3DPickupItem.h"
 #include "../C3DRocketShip.h"
 #include "../C2DInGameMenu.h"
@@ -21,7 +21,7 @@
 #include "../Physics.h"
 #include "../CanvasWrapper.h"
 #include "../levels/CLevel04Games.h"
-#include "../lab/C3DBot.h"
+// TODO(BG): #include "../lab/C3DBot.h" (Negatron-only class, deleted)
 #include "OMediaViewPort.h"
 #include "OMedia3DShape.h"
 #include "OMedia3DPolygon.h"
@@ -192,10 +192,9 @@ static CGameObject *FindNearest(CGameObject *o, int id1, int id2)
 
 // Members of helper classes that are not reconstructed yet (their objects are never created
 // until they are; see C3DJimmy.h).
-static void ParticleBurst(C3DMagicParticle *p, OMedia3DVector pos)	// +0x610 = 1, element slot 55 (+0xdc)(pos)
+static void ParticleBurst(C3DObject *p, OMedia3DVector pos)	// +0x610 = 1, element slot 55 (+0xdc)(pos)
 {
-	p->f_610 = 1.0f;										// (set before the camera point in the original)
-	p->Burst(pos);
+	(void)p; (void)pos;										// TODO(BG): N2 C3DMagicParticle (Negatron only)
 }
 // N2:0x4489ac: the pickup's "ShowArrow" - C3DGrannyObj +0xdb4, anything else read as a
 // C3DPickupItem (+0x914). port: other classes have none (the original reads +0x84c of them).
@@ -203,8 +202,7 @@ static bool CursorWanted(CGameObject *pickup)
 {
 	if (pickup->NameContains((char *)"C3DGRANNY"))			// +0x18
 	{
-		C3DGrannyObj *g = dynamic_cast<C3DGrannyObj *>(pickup);
-		return g && g->f_db4 != 0;
+		return false;										// TODO(BG): N2 C3DGrannyObj (Negatron only)
 	}
 	C3DPickupItem *p = dynamic_cast<C3DPickupItem *>(pickup);
 	return p && p->m_show_arrow != 0;
@@ -284,11 +282,9 @@ void C3DJimmy::ev155(void)									// N2:0x447c70
 }
 
 // The colour of a C3DMagicParticle (+0x600..+0x608).
-static void SetParticleColour(C3DMagicParticle *p, float r, float g, float b)
+static void SetParticleColour(C3DObject *p, float r, float g, float b)
 {
-	p->f_600 = r;
-	p->f_604 = g;
-	p->f_608 = b;
+	(void)p; (void)r; (void)g; (void)b;					// TODO(BG): N2 C3DMagicParticle (Negatron only)
 }
 
 void C3DJimmy::ev156(float t, float r, float g, float b)	// N2:0x447950
@@ -356,106 +352,39 @@ void C3DJimmy::ev165(CGameObject *start)					// N2:0x445d20
 	{
 		// port: v260 falls back to the "PHONEBOOTH" object, which is no start point; the original
 		// reads the same offsets of it.
-		NEG_TODO(N2:0x445f77, "C3DJimmy::ev165 on an object that is not a C3DStartPoint");
+		NEG_TODO(/*N2*/0x445f77, "C3DJimmy::ev165 on an object that is not a C3DStartPoint");
 	}
 }
 
 // --------------------------------------------------------------------------- CGameObject family
 
-void C3DJimmy::InitObject(void)								// N2:0x444780
+void C3DJimmy::InitObject(void)								// 0x422ac0
 {
 	Log("C3DJimmy::InitObject()");
 	C3DPlayer::InitObject();								// 0x437830
-	InitAnim();												// element +0x110
-	InitModel(std::string("jimmybase.grn"));				// element +0x144
-	static const char *const anims[][2] = {					// element +0xe0 CreateAnim(name, file)
-		{ "DRIVE", "jimmysit.grn" },
-		{ "FULLSTOP", "jimmyfullstop.grn" },
-		{ "SCOOT", "jimmyscooter.grn" },
-		{ "SCOOTSTOP", "jimmyscooterstop.grn" },
-		{ "UPPERRUNHOLD", "jimmyupperrunhold.grn" },
-		{ "UPPERRUN", "jimmyupperrun.grn" },
-		{ "UPPERWALK", "jimmyupperwalk.grn" },
-		{ "UPPERSTOP", "jimmyupperstop.grn" },
-		{ "UPPERSTOPHOLD", "jimmyupperstophold.grn" },
-		{ "UPPERSTOPGUN", "jimmyupperstopgun.grn" },
-		{ "UPPERRUNGUN", "jimmyupperrungun.grn" },
-		{ "UPPERPOINTGUN", "jimmyupperpointgun.grn" },
-		{ "UPPERBAZOOKA", "jimmyupperbazooka.grn" },
-		{ "SHOOTGUN", "jimmyshootgun.grn" },
-		{ "LOWERRUN", "jimmylowerrun.grn" },
-		{ "LOWERWALK", "jimmylowerwalk.grn" },
-		{ "LOWERLEFT", "jimmylowerleft.grn" },
-		{ "LOWERRIGHT", "jimmylowerright.grn" },
-		{ "LOWERSTOP", "jimmylowerstop.grn" },
-		{ "LOWERBACK", "jimmylowerbackpedal.grn" },
-		{ "FULLRUN", "jimmyfullrun.grn" },
-		{ "FULLLEFT", "jimmyfullleft.grn" },
-		{ "FULLRIGHT", "jimmyfullright.grn" },
-		{ "FULLRUNGUN", "jimmyfullrungun.grn" },
-		{ "FULLGUNPOINT", "jimmyfullgunpoint.grn" },
-		{ "FULLGUNSHOOT", "jimmyfullgunshoot.grn" },
-		{ "FULLRIGHTHOLDGUN", "jimmyfullrightholdgun.grn" },
-		{ "FULLLEFTHOLDGUN", "jimmyfullleftholdgun.grn" },
-		{ "FULLSTOPHOLD", "jimmyfullstophold.grn" },
-		{ "FULLRUNHOLD", "jimmyfullrunhold.grn" },
-		{ "FULLLEFTHOLD", "jimmyfulllefthold.grn" },
-		{ "FULLRIGHTHOLD", "jimmyfullrighthold.grn" },
-		{ "FULLBACK", "jimmyfullbackpedal.grn" },
-		{ "FULLBURPSTOP", "jimmyfullburpgunstop.grn" },
-		{ "FULLBURPRUN", "jimmyfullrunburpgun.grn" },
-		{ "FULLBURPRIGHT", "jimmyfullrightburpgun.grn" },
-		{ "FULLBURPLEFT", "jimmyfullleftburpgun.grn" },
-		{ "SLIDE", "jimmyslide.grn" },
-		{ "JUMPGUN", "jimmyjumpgun.grn" },
-		{ "JUMP", "jimmyjump.grn" },
-		{ "JUMPJOY", "jimmyjumpjoy.grn" },
-		{ "FALL", "jimmyfall.grn" },
-		{ "FLY", "jimmyfly.grn" },							// (the name is the shared string N2:0x533460)
-		{ "LEVER", "jimmylever.grn" },
-		{ "SWIM", "jimmyswim.grn" },
-		{ "FLOAT", "jimmyfloat.grn" },
-		{ "SITWAVE", "jimmysitwave.grn" },
-		{ "SHOCK", "jimmyshock.grn" },
-		{ "HIT", "jimmyhit.grn" },							// (0x4ef2e4)
-		{ "SWING", "jimmyswing.grn" },
-		{ "INVENT", "jimmyinvent.grn" },
-		{ "AFTERBURN", "jimmyafterburn.grn" },
-		{ "LADDER", "jimmyladder.grn" },
-		{ "FENCE", "jimmyfence.grn" },
-		{ "TYPE", "jimmybuttons.grn" },
-		{ "PICKUP", "jimmypickup.grn" },
-		{ "PICKUPFLOOR", "jimmypickupfloor.grn" },
-		{ "PICKUPGLASSES", "jimmypickupglasses.grn" },
-		{ "PUTAWAY", "jimmyputinbackpack.grn" },
-		{ "GET", "jimmypickup2.grn" },						// (N2:0x536db0)
-		{ "GETITEM", "jimmygetfrombackpack.grn" },
-		{ "GETPDA", "jimmygetpda.grn" },
-		{ "LOOKPDA", "jimmylookpda.grn" },
-		{ "TALKPDA", "jimmytalkpda.grn" },
-		{ "TALK", "jimmyfulltalk.grn" },
-		{ "NO", "jimmyno.grn" },							// (0x4f6634)
-		{ "PANIC", "jimmysitpanic.grn" },
-		{ "FACESTOP", "jimmyfacestop.grn" },
-		{ "TALKBODY", "jimmytalkbody.grn" },
-		{ "TALKHERMAN", "jimmytalkherman.grn" },
-		{ "WORRYIDLE", "jimmyscared.grn" },
-		{ "WORRYTALK", "jimmyscaredtalk.grn" },
-		{ "PROUD", "jimmyproud.grn" },
-		{ "EXCITETALK", "jimmytalkexcited.grn" },
-		{ "EXCITEIDLE", "jimmyExcited.grn" },
-		{ "ARGGH", "jimmyAhhrrgg.grn" },
-		{ "YAWN", "jimmyawn.grn" },
-		{ "ORDER", "jimmyorderpizza.grn" },
-		{ "IDLE", "jimmyidle.grn" },
-		{ "HANGTALK", "jimmyspork.grn" },
-		{ "CLIMBROPE", "jimmyclimbrope.grn" },
-		{ "GIVEFLURP", "jimmygiveflurp.grn" },
+	InitAnim();												// element +0x108
+	// Boy Genius's Jimmy is an OMT morph model (.ase animations; Negatron's was Granny)
+	static const char *const anims[][2] = {
+		{ "HISHOOT", "jimshoot.ase" }, { "HIDRIVE", "jimdrive.ase" }, { "HIFLY", "jimfly.ase" },
+		{ "HIRUN", "jimrun.ase" }, { "HILEFT", "jimleft.ase" }, { "HIRIGHT", "jimright.ase" },
+		{ "HITALK", "jimtalk.ase" }, { "HIFALL", "jimfall.ase" }, { "HIFENCE", "jimfence.ase" },
+		{ "HISPLAT", "jimsplat.ase" }, { "HIHIT", "jimhit.ase" }, { "HISWING", "jimswing.ase" },
+		{ "HILADDER", "jimladder.ase" }, { "HIJUMP", "jimjump.ase" }, { "HISCRATCH", "jimscratch.ase" },
+		{ "HIBUTTONS", "jimButtons.ase" }, { "HIPLAY", "jimheadshrink.ase" }, { "HIBACK", "jimbackpedal.ase" },
+		{ "HISCOOT", "jimscooter.ase" }, { "HISCOOTSTOP", "Jimscooterstop.ase" }, { "HISTOP", "jimstop.ase" },
 	};
 	for (unsigned i = 0; i < sizeof(anims) / sizeof(anims[0]); i++)
-		CreateAnim((char *)anims[i][0], (char *)anims[i][1]);
+		CreateAnim((char *)anims[i][0], (char *)anims[i][1]);	// element +0xd8
+	CreateTexture((char *)"jimycarl.png", 0);				// element +0xf0
+	CreateTexture((char *)"jimyshock.png", 1);
+	ApplyTexture(f_590, 0);									// element +0xf4
+	set_shape(f_590);										// element +0xac
+	set_morph_flags(ommorf_InterpolateVertices | ommorf_InterpolateVNormals);	// element +0xb8 = 3
 	f_594 = 0;
-	ev58((char *)"STOP", 1);
+	ev58((char *)"RUN", 1);									// element +0xe0 (0x4eca64)
+	v197(0, 600.0f, 100.0f);								// slot 198 (+0x318)
+	place(0, 600.0f, 100.0f);								// element +0x44..+0x4c, written directly
+	// (debug log)
 }
 
 void C3DJimmy::UnInitObject(void)							// 0x422a90
@@ -527,7 +456,6 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	f_d20->HideAgain();
 	if (f_d44)
 	{
-		f_d44->f_8ac = 0;									// "CanClip"
 		f_d44->HideAgain();
 		f_d44->v52(0);										// +0xd0
 		f_d44->v46(0);										// +0xb8
@@ -580,6 +508,7 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	g_4eefd0 = -1.0f;
 	if (LevelID() == 'LV5C') ev152(1);						// element +0x260
 	else if (LevelID() == 'LV5F') ev152(0);
+	g_gametype->SetCamera(static_cast<CGameObject *>(this));	// BG 0x424472 (+0x118): Jimmy has the camera before the start points' post-load
 	v261();													// +0x414
 	if (f_d5c)
 	{
@@ -641,7 +570,7 @@ void C3DJimmy::v278(void)									// N2:0x447780
 		CJimmyGame *g = JimmyGame();
 		if (g) ev153(g->m_surface_sound_next);				// element +0x264 (g_gametype +0x560)
 	}
-	if (f_cc8) NEG_TODO(N2:0x447898, "C3DRocketShip +0x123c: restart its engine sound (element +0x1b0)(2)");
+	if (f_cc8) NEG_TODO(/*N2*/0x447898, "C3DRocketShip +0x123c: restart its engine sound (element +0x1b0)(2)");
 }
 
 // --------------------------------------------------------------------------- the per-frame slots
@@ -1019,6 +948,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 	if (other->NameContains((char *)"C3DBOT"))
 	{
 		if (f_a68 == 2) return;
+#if 0	// TODO(BG): C3DBot is Negatron only
 		C3DBot *bot = dynamic_cast<C3DBot *>(other);		// N2:0x44512a (port: the original subtracts 0xc0 without looking)
 		if (!bot) return;
 		if (bot->f_c40) return;								// state locked
@@ -1041,6 +971,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 		v261();
 		ev116();
 		PlayGameSound(-1, std::string("YokianBump"), false);
+#endif
 		return;
 	}
 	if (other->NameContains((char *)"C3DHUMPHREY")) return;

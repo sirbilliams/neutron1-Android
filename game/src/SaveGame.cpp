@@ -189,17 +189,17 @@ static void ResetPickupItems(void)												// N2:0x4104c0
 // A C3DAITrigger (element vtable +0xdc, its CGameObject base at +0xc8) activated by name.
 static void AITriggerActivate(CGameObject *o, const char *name, int a)
 {
-	NEG_TODO(N2:0x498aa3, "C3DAITrigger element slot 55 (activate)"); (void)o; (void)name; (void)a;
+	NEG_TODO(/*N2*/0x498aa3, "C3DAITrigger element slot 55 (activate)"); (void)o; (void)name; (void)a;
 }
 // C3DJimmy (g_jimmy - 0xc0, 2002 layout): the start point names at +0x9c8, +0xa18 and +0xb24.
 static void JimmySetStartPoints(CGameObject *jimmy, const char *name)
 {
-	NEG_TODO(N2:0x498cab, "C3DJimmy +0x9c8/+0xa18/+0xb24 = start point"); (void)jimmy; (void)name;
+	NEG_TODO(/*N2*/0x498cab, "C3DJimmy +0x9c8/+0xa18/+0xb24 = start point"); (void)jimmy; (void)name;
 }
 // C3DJimmy element slot 138 (vtable +0x228)(menu, jimmy's CLocalGameObject, a, b).
 static void JimmySlot138(CGameObject *jimmy, C2DInGameMenu *menu, CGameObject *jimmy_go, int a, float b)
 {
-	NEG_TODO(N2:0x498e54, "C3DJimmy element slot 138"); (void)jimmy; (void)menu; (void)jimmy_go; (void)a; (void)b;
+	NEG_TODO(/*N2*/0x498e54, "C3DJimmy element slot 138"); (void)jimmy; (void)menu; (void)jimmy_go; (void)a; (void)b;
 }
 
 // --------------------------------------------------------------------------- task list

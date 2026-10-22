@@ -5,6 +5,7 @@
 #include "../CJimmyGame.h"
 #include "../Globals.h"
 #include "../SaveGame.h"
+#include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include <strings.h>
 

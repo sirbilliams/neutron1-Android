@@ -55,7 +55,7 @@ static void ResetParticles(void)			{}
 // equivalent on the Thor); release only clears the flag.
 static void CaptureMouse(bool capture)
 {
-	if (capture && !g_N2_56aed0) { neg::CenterMouse(); g_mouse_captured = 1; return; }
+	if (capture) { neg::CenterMouse(); g_mouse_captured = 1; return; }
 	g_mouse_captured = 0;
 }
 // OMediaMouseCursor::hide() (OMT2.dll); the SDL build of OMT has no OMediaMouseCursor.

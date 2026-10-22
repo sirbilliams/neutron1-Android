@@ -24,19 +24,19 @@ C3DYokianShip::C3DYokianShip()								// 0x44b7d0
 	C3DAI::InitObject();									// 0x407ee0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3YSH');							// 0x462220
-	f_6c4 = 700.0f;											// speed
-	f_6c8 = 3;												// AI state: patrol only
-	f_93c = 3;
-	strcpy(f_7f8, "none");									// 0x407fa0: no animations
-	strcpy(f_820, "none");
-	strcpy(f_848, "none");
-	strcpy(f_870, "none");
-	strcpy(f_7d0, "none");
-	strcpy(f_898, "none");
+	f_968 = 700.0f;											// speed
+	f_96c = 3;												// AI state: patrol only
+	f_c08 = 3;
+	strcpy(f_ac4, "none");									// 0x407fa0: no animations
+	strcpy(f_aec, "none");
+	strcpy(f_b14, "none");
+	strcpy(f_b3c, "none");
+	strcpy(f_a9c, "none");
+	strcpy(f_b64, "none");
 	v67(100.0f);											// (BG slot 68) radius
 	v152(100.0f);											// (BG slot 153)
 	v52(0);
-	f_8d4 = 0.3f;											// turn rate y
+	f_b9c.y = 0.3f;											// turn rate y
 	v42(0);
 	v40(0);
 	m_db = GetDatabase("yokianship.omt");					// 0x46a910
@@ -75,7 +75,7 @@ void C3DYokianShip::Process(float dt)						// 0x44bbc0
 	v155(b);
 	v157(b[0], -g_gravity.y, a[2]);							// +0x278: gravity cancelled (0x5cfc04)
 	if (LevelID() == 'LV1D' || LevelID() == 'LV1F') return;
-	if (f_638 != -1 && f_638 > GetTaskState("SCENE")) return;	// RequiredLevel (0x45fea0)
+	if (f_64c != -1 && f_64c > GetTaskState("SCENE")) return;	// RequiredLevel (0x45fea0)
 	if (!m_beam) return;
 	m_beam->v196(ahead.x, ahead.y, ahead.z, ahead.w);		// +0x314
 	float r[4];

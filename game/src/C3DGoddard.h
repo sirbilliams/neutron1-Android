@@ -91,6 +91,6 @@ class C3DGoddard : public C3DAI
 	float				f_1bb0;			// 0x1bb0 time left of the trick
 	unsigned char		f_1bb4;			// 0x1bb4 0
 	int					f_1bb8;			// 0x1bb8 -1
-	C3DGrannyObj		*f_1bbc;		// 0x1bbc prop on his head ("headspinbase.grn")
-	C3DGrannyObj		*f_1bc0;		// 0x1bc0 his Granny shadow ("goddshadow.grn" on "shadowbone")
+	C3DAnimated			*f_1bbc;	// TODO(BG): N2 C3DGrannyObj (NULL now);		// 0x1bbc prop on his head ("headspinbase.grn")
+	C3DAnimated			*f_1bc0;	// TODO(BG): N2 C3DGrannyObj (NULL now);		// 0x1bc0 his Granny shadow ("goddshadow.grn" on "shadowbone")
 };

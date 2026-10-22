@@ -18,7 +18,7 @@
 #include "../Todo.h"
 #include "../Sound.h"
 #include "../CGameType.h"
-#include "../C3DPlayerObject.h"
+#include "../C3DPlayer.h"
 #include "OMediaCanvas.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaFilePath.h"
@@ -163,7 +163,7 @@ static OMediaDataBase *LoadMusic(const char *omt_name)							// 0x46a910 GetData
 
 static void ShowMouseCursor(bool show)									// N2:0x4a38c0 (ShowCursor + flags N2:0x56aec9..)
 {
-	NEG_TODO(N2:0x4a38c0, "ShowMouseCursor"); (void)show;
+	NEG_TODO(/*N2*/0x4a38c0, "ShowMouseCursor"); (void)show;
 }
 
 static void GameTypeSetMenuMode(bool on)								// CGameType vtable +0x110: PauseGame
@@ -192,7 +192,7 @@ static void GetMousePos(short &x, short &y)
 static bool PlayerActionPressed(void)
 {
 	if (!g_N2_545fd0) return false;		// port: the original calls through NULL here
-	C3DPlayerObject *p = dynamic_cast<C3DPlayerObject *>(g_N2_545fd0);
+	C3DPlayer *p = dynamic_cast<C3DPlayer *>(g_N2_545fd0);
 	return p && p->ev104();
 }
 

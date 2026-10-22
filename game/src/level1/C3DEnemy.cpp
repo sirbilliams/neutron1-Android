@@ -9,8 +9,8 @@ using namespace neg;
 C3DEnemy::C3DEnemy()										// 0x417d50
 {
 	SetName((char *)"C3DENEMY");
-	f_970 = 0;												// C3DAI +0x970 (byte)
-	f_958 = 0;												// C3DAI +0x958 (byte)
+	f_c40 = 0;												// C3DAI +0x970 (byte)
+	f_c28 = 0;												// C3DAI +0x958 (byte)
 }
 
 C3DEnemy::~C3DEnemy()										// 0x417e50

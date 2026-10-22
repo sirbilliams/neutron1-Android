@@ -93,14 +93,14 @@ static void AISetState(CGameObject *ai, int state)							// element +0x124 (BG E
 }
 static void AISetSpeed(CGameObject *ai, float speed)						// C3DAI +0x6c4
 {
-	if (C3DAI *a = AI(ai)) a->f_6c4 = speed;
+	if (C3DAI *a = AI(ai)) a->f_968 = speed;
 }
 static void AISetPatrolPoint(CGameObject *ai, const char *name)			// C3DAI +0x708 = name, +0x8c0 = 0
 {
 	if (C3DAI *a = AI(ai))
 	{
-		strcpy(a->f_708, name);
-		a->f_8c0 = 0;
+		strcpy(a->f_9ac, name);
+		a->f_b8c = NULL;
 	}
 }
 // Element slot 82 (+0x148) of the camera object (a C3DPlayer: Jimmy).
@@ -227,7 +227,7 @@ CGameObject *C3DAITrigger::FindActiveObject(void)
 	for (int i = 0; i < 5; i++)
 	{
 		CGameObject *o = FindObjectByTag(m_activate_object[i]);
-		if (o && m_activate_state[i] != -1 && m_activate_state[i] == f_494) return o;
+		if (o && m_activate_state[i] != -1 && m_activate_state[i] == f_4a0) return o;
 	}
 	return NULL;
 }
@@ -346,7 +346,9 @@ void C3DAITrigger::Trigger(CGameObject *caller)
 
 	CGameObject *toggle;
 	if (strcasecmp(m_toggle_object, "none") != 0 && (toggle = FindObjectByTag(m_toggle_object)) != NULL)
-		toggle->v268(m_toggle);								// +0x428 (BG slot 266) NextState(Toggle)
+	{
+		if (CLocalGameObject *l = dynamic_cast<CLocalGameObject *>(toggle)) l->v268(m_toggle);	// +0x428 (BG slot 266) NextState(Toggle)
+	}
 
 	CGameObject *n = FindActiveObject();					// 0x40c230
 	SpecialAction();										// 0x40caa0

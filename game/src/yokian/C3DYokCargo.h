@@ -9,8 +9,8 @@
     bytes), destructor 0x449670 (deleting thunks 0x449640 / 0x449c60 / 0x449c70 / 0x449c80).
     Game object vtable (+0xc0): 0, 10, 241, 246, 264 (C3DArrow's shared: the task state
     written back), 265 overridden. Own members 0x994..0xa18 (two clocks, the 30 mines, the next
-    mine), vtordisp 0xa18, streamer 0xa1c. Slot numbers are Boy Genius's; C3DAI members are
-    f_<object offset> (TODO(core): BG C3DAI names).                                            */
+    mine), vtordisp 0xa18, streamer 0xa1c. Slot numbers in the comments are Boy Genius's;
+    the code uses Negatron's C3DAI names.                                            */
 #pragma once
 #include "../C3DAI.h"
 
@@ -33,6 +33,6 @@ class C3DYokCargo : public C3DAI
 };
 
 // 0x449a00: turn towards the destination rotation (CGameObject f_274..f_27c) by the
-// difference x the per-axis rates f_8d0 / f_8d4 / f_8d8 per second. Code shared by
+// difference x the per-axis rates f_b9c.x / f_b9c.y / f_b9c.z per second. Code shared by
 // C3DYokCargo and C3DYokianShip.
 void YokRotateToDest(C3DAI *self, float dt);

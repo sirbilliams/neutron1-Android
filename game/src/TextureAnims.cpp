@@ -80,7 +80,7 @@ OMedia3DMaterial *LoadMaterialName(OMediaDataBase *db, std::string name)
 	if (db && db->object_exists(OMediaCanvas::db_type, name))
 	{
 		m = (OMedia3DMaterial *)db->get_object(OMedia3DMaterial::db_type, name);
-		if (g_509a12) NEG_TODO(N2:0x4b2b10, "debug database call (db vtable +0x4c)");
+		if (g_509a12) NEG_TODO(/*N2*/0x4b2b10, "debug database call (db vtable +0x4c)");
 		if (m) m->db_unlock();
 	}
 	return m;

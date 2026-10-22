@@ -7,7 +7,7 @@
 #include "../CanvasWrapper.h"
 #include "../Game.h"
 #include "../Mouse.h"
-#include "../objects/C3DHelpSound.h"
+// TODO(BG): #include "../objects/C3DHelpSound.h" (Negatron-only class, deleted)
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include <SDL.h>
@@ -106,6 +106,8 @@ void ItemName(int item, char *out, size_t size)
 void StepJimmyBack(void)
 {
 	C3DJimmy *j = Jimmy();
+	(void)j;
+#if 0	// TODO(BG): C3DHelpSound is Negatron only
 	if (!j) return;
 	CGameObject *jg = j;
 	float jp[4];
@@ -136,6 +138,7 @@ void StepJimmyBack(void)
 	const float want = static_cast<CGameObject *>(best)->f_034 + 60.0f;
 	if (len >= want) return;
 	jg->v196(hp[0] + dx / len * want, jp[1], hp[2] + dz / len * want, jp[3]);
+#endif
 }
 
 void Label(short x, short y, int font, bool lit, const char *s)

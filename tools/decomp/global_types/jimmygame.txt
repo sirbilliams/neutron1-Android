@@ -1,7 +1,7 @@
 # CJimmyGame (game/src/CJimmyGame.cpp) - shared globals it uses; the ones it owns are real variables in CJimmyGame.h
 # address kind type [name]      kinds: ptr (pointer slot), ptrarray, val (value in g_data), array
 
-# unresolved (Neutron2 address): N2:0x545fd0 ptr CGameObject* g_player                 # the player's CGameObject subobject (C3DJimmy element at -0xc0)
+0x4f83d8 ptr CGameObject* g_player                 # the player's CGameObject subobject (C3DJimmy element at -0xc0); set by the C3DJimmy constructor 0x422160
 # unresolved (Neutron2 address): N2:0x54a46c ptr OMediaElement* g_player_hud           # the player's HUD object (its CGameObject at +0xc8), set by CJimmyGame::v260
 0x696004 ptr OMediaDataBase* g_level_music                  # music database of the level (LoadMusic 0x46a910), NULL when none
 

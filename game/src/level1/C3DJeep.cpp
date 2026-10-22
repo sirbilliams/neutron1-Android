@@ -221,7 +221,7 @@ void C3DJeep::v243(float dt)								// 0x421880
 
 void C3DJeep::v260(void)									// 0x4217d0
 {
-	C3DPlayerObject::v260();								// N2:0x464ed0
+	C3DVehicle::v260();								// N2:0x464ed0
 	ev107(f_9f0);											// element +0x1ac
 }
 
@@ -247,7 +247,7 @@ void C3DJeep::v278(void)									// N2:0x442d40
 
 void C3DJeep::WriteState(OMediaStreamOperators &s)			// N2:0x46cc40 (C3DRocketShip's)
 {
-	C3DPlayerObject::WriteState(s);							// N2:0x4651b0
+	CLocalGameObject::WriteState(s);							// N2:0x4651b0
 	float v[4], a, b, c;
 	v195(v); a = v[0];
 	v195(v); b = v[1];
@@ -261,7 +261,7 @@ void C3DJeep::WriteState(OMediaStreamOperators &s)			// N2:0x46cc40 (C3DRocketSh
 
 void C3DJeep::ReadState(OMediaStreamOperators &s)			// N2:0x442e10
 {
-	C3DPlayerObject::ReadState(s);							// N2:0x4651a0
+	CLocalGameObject::ReadState(s);							// N2:0x4651a0
 	float a, b, c;
 	s >> a >> b >> c;
 	v197(a, b, c);											// +0x314: position

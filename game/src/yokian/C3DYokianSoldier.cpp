@@ -19,10 +19,10 @@ C3DYokianSoldier::C3DYokianSoldier()								// 0x44bee0
 	f_649 = 0;												// animations not loaded (BG +0x635)
 	C3DYokianSoldier::InitObject();							// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
-	strcpy(f_7f8, "WALK");									// 0x407fa0
-	strcpy(f_820, "WALK");
-	strcpy(f_870, "WALK");
-	strcpy(f_898, "STOP");
+	strcpy(f_ac4, "WALK");									// 0x407fa0
+	strcpy(f_aec, "WALK");
+	strcpy(f_b3c, "WALK");
+	strcpy(f_b64, "STOP");
 	C3DObject::SetObjectID('3SOL');							// 0x462220
 	m_mouth = 0;
 	m_mouth_time = 0;

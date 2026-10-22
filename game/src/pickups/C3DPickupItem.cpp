@@ -2,11 +2,11 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DPickupItem.h"
-#include "../level3a/C3DWaterPlane.h"
+// TODO(BG): #include "../level3a/C3DWaterPlane.h" (Negatron-only class, deleted)
 #include "../objects/C3DCorona.h"
 #include "../C2DInGameMenu.h"
 #include "../C3DJimmy.h"
-#include "../C3DRadar.h"
+// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
 #include "../CJimmyGame.h"
 #include "../DatabaseCache.h"
 #include "../InterfaceElement.h"
@@ -87,7 +87,7 @@ static void AddPickupCount(int pic, int n)	{ g_pickup_counts[2 * pic] += n; }		/
 // N2:0x45f2eb: C3DWaterPlane game object +0x87c (f_93c, the time under water) = 3.0: the oxygen refill.
 static void WaterPlaneOxygen(CGameObject *wp)
 {
-	if (C3DWaterPlane *w = dynamic_cast<C3DWaterPlane *>(wp)) w->f_93c = 3.0f;	// port: checked
+	(void)wp;	// TODO(BG): C3DWaterPlane is Negatron only
 }
 
 // The power timers g_power_timers[0..9] (N2:0x54a424..): which powerup each one runs.
@@ -508,10 +508,7 @@ void C3DPickupItem::Powerup(void)
 		if (j)
 		{
 			j->ev156(15.0f, 0, 1.0f, 0);
-			C3DJimmy *pj = JimmyOf(g_player);				// N2:0x545fd0 - 0xc0
-			C3DRadar *radar = pj ? pj->f_d40 : NULL;
-			CGameObject *johnny = FindObjectByTag("JOHNNY");
-			if (radar) radar->Open(g_camera, '3DIN', 23, 16, 40, johnny);	// N2:0x4689d0 (port: the original calls it on NULL)
+			// TODO(BG): Negatron opened Jimmy's C3DRadar here (N2:0x4689d0); no such class in Neutron.exe
 		}
 	}
 	if (strcasecmp(tag, "RAPIDFIRE") == 0)

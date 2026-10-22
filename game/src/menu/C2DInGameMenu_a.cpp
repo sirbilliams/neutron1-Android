@@ -12,7 +12,7 @@
 #include "../CanvasWrapper.h"
 #include "../Game.h"
 #include "../Todo.h"
-#include "../C3DRadar.h"
+// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
 #include "../port/Widescreen.h"
 #include "../port/BillsUi.h"
 #include "OMediaFileStream.h"
@@ -277,7 +277,7 @@ C2DInGameMenu::C2DInGameMenu()
 	g_help_menu_elt = g_interface.Find("HelpMenu");
 	// port: widescreen - the help keys panel (bottom right) and the radar blips go to the right edge
 	WideAnchor(g_help_menu_elt, WIDE_RIGHT);
-	for (int i = 0; i < 65; i++) WideAnchor(&g_radar_blips[i], WIDE_RIGHT);
+	// TODO(BG): Negatron also anchored C3DRadar's blips (g_radar_blips) here; BG has no C3DRadar.
 
 	SetupElt(g_elt_5444d8, 0, 0, -1);
 	f_504 = 0;
@@ -516,7 +516,14 @@ C2DInGameMenu::~C2DInGameMenu()
 		g_N2_544730, g_N2_544734, g_N2_544738, g_N2_54473c, g_N2_544740, g_N2_545848, g_4f8150, g_N2_5444bc, g_N2_5444c4,
 		g_N2_545844, g_N2_545a64,
 	};
-	for (int i = 0; i < COUNTOF(kSprites); i++) DeleteSprite(kSprites[i]);
+	// port: TODO(BG) - this is Negatron's list; several of its globals retarget to one Neutron.exe
+	// address (g_4f7cb0, g_4f8028 twice): delete each sprite once until 0x4029c0 is ported.
+	for (int i = 0; i < COUNTOF(kSprites); i++)
+	{
+		bool seen = false;
+		for (int k = 0; k < i; k++) if (kSprites[k] == kSprites[i]) seen = true;
+		if (!seen) DeleteSprite(kSprites[i]);
+	}
 	for (int i = 0; i < 14; i++)
 	{
 		DeleteSprite(g_elt_544908[i].canvas_elt);	// sic: canvas_elt left dangling

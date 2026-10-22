@@ -9,8 +9,8 @@
     bytes), destructor 0x44bb10 (deleting thunks 0x44bae0 / 0x44be90 / 0x44bea0 / 0x44beb0).
     Game object vtable (+0xc0): 0, 8 / 10 (jumps to C3DAnimated's / C3DAI's, so not overridden
     here), 241, 246 (C3DYokCargo's shared RotateToDest). Own members 0x994..0x9a4, vtordisp
-    0x9a4, streamer 0x9a8. Slot numbers are Boy Genius's; C3DAI members are f_<object offset>
-    (TODO(core): BG C3DAI names).                                                              */
+    0x9a4, streamer 0x9a8. Slot numbers in the comments are Boy Genius's; the code
+    uses Negatron's C3DAI names.                                                              */
 #pragma once
 #include "../C3DAI.h"
 

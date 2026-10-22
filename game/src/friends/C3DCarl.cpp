@@ -4,7 +4,7 @@
 #include "C3DCarl.h"
 #include "../C3DPlayer.h"
 #include "../C3DTriggerType.h"
-#include "../C3DWaterBalloon.h"
+// TODO(BG): #include "../C3DWaterBalloon.h" (Negatron-only class, deleted)
 #include "../CanvasWrapper.h"
 #include "../CGameType.h"
 #include "../Game.h"
@@ -213,8 +213,7 @@ void C3DCarl::AddTouching(CGameObject *other)				// N2:0x425e90
 	const float k = speed * 0.25f;							// 0x49fad0
 	other->v176(k * rx, k * r.y, k * rz);					// +0x2c0: its new velocity
 	other->v136(0);
-	C3DWaterBalloon *wb = dynamic_cast<C3DWaterBalloon *>(other);	// (other - 0xc8)
-	if (wb) wb->f_634 = NULL;								// it stops homing (port: the original writes it unchecked)
+	// TODO(BG): Negatron stopped a C3DWaterBalloon homing here (class not in Neutron.exe)
 }
 
 void C3DCarl::Process(float dt)								// N2:0x426380

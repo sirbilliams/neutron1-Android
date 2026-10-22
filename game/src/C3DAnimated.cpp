@@ -1,6 +1,6 @@
 /*  C3DAnimated - see C3DAnimated.h. */
 #include "C3DAnimated.h"
-#include "C3DGrannyObj.h"
+// TODO(BG): #include "C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "Game.h"
 #include "Bridge.h"
 #include "Todo.h"
@@ -1196,11 +1196,7 @@ void C3DAnimated::ev90(unsigned char detach)				// N2:0x439ba0
 	{
 		CGameObject *o = *i;
 		if (!o || o->m_object_id != '3GRO') continue;
-		C3DGrannyObj *g = dynamic_cast<C3DGrannyObj *>(o);
-		if (g && g->f_d88 && g->f_d70 == (CGameObject *)this && detach)
-		{
-			g->ev98((CGameObject *)this, 0);				// element vtable +0x188
-			g->HideAgain();									// +0xdc
-		}
+		// TODO(BG): Negatron dropped the C3DGrannyObj props ('3GRO') attached to us; no such class in Neutron.exe
+		(void)detach;
 	}
 }

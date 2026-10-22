@@ -10,7 +10,7 @@
 #include "CJimmyGame.h"
 #include "C3DObject.h"
 #include "C3DJimmy.h"
-#include "C3DRadar.h"
+// TODO(BG): #include "C3DRadar.h" (Negatron-only class, deleted)
 #include "C3DRocketShip.h"
 #include "C2DInGameMenu.h"
 #include "CanvasWrapper.h"
@@ -59,8 +59,8 @@ static void LoadTask(const char *name, int a)	{ neg::LoadTask(name, a != 0); }		
 
 // The player's HUD object (C3DJimmy +0xd40, minus 200 to its element; NULL if none) and its
 // hide (C3DRadar N2:0x468aa0).
-static OMediaElement *PlayerHud(void)			{ C3DRadar *r = Jimmy()->f_d40; return r ? static_cast<OMediaElement *>(r) : NULL; }	// N2:0x483b9d
-static void HudHide(OMediaElement *hud)			{ static_cast<C3DRadar *>(hud)->Hide(); }
+static OMediaElement *PlayerHud(void)			{ return NULL; }	// TODO(BG): N2:0x483b9d C3DJimmy +0xd40 C3DRadar (Negatron only)
+static void HudHide(OMediaElement *hud)			{ (void)hud; }	// TODO(BG): C3DRadar N2:0x468aa0
 
 // g_camera's element slot 105 (+0x1a4): called once when the health has run out. Every 3D object's
 // slot 105 is N2:0x465360 (C3DPlayerObject::ev105: back to the autosave + a comment), the other game
@@ -69,7 +69,7 @@ static void HudHide(OMediaElement *hud)			{ static_cast<C3DRadar *>(hud)->Hide()
 static void CameraPlayerDead(CGameObject *camera)
 {
 	if (!dynamic_cast<C3DObject *>(camera)) return;			// 0x471830
-	C3DPlayerObject *p = dynamic_cast<C3DPlayerObject *>(camera);
+	C3DPlayer *p = dynamic_cast<C3DPlayer *>(camera);	// port: N2 C3DPlayerObject
 	if (!p) p = Jimmy();									// port: the same code (N2:0x465360) through Jimmy
 	if (p) p->ev105();
 }

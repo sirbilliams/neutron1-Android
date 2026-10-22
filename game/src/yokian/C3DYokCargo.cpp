@@ -5,6 +5,7 @@
 #include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../Game.h"
+#include "../Bridge.h"
 #include "../Globals.h"
 #include "../Physics.h"
 #include "../SaveGame.h"
@@ -24,15 +25,15 @@ C3DYokCargo::C3DYokCargo()									// 0x449360
 	C3DAI::InitObject();									// 0x407ee0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DObject::SetObjectID('3YCA');							// 0x462220
-	f_6c4 = 500.0f;											// speed
-	f_6c8 = 1;												// AI state: wait
-	f_93c = 1;
-	strcpy(f_7f8, "none");									// 0x407fa0: no animations
-	strcpy(f_820, "none");
-	strcpy(f_848, "none");
-	strcpy(f_870, "none");
-	strcpy(f_7d0, "none");
-	strcpy(f_898, "none");
+	f_968 = 500.0f;											// speed
+	f_96c = 1;												// AI state: wait
+	f_c08 = 1;
+	strcpy(f_ac4, "none");									// 0x407fa0: no animations
+	strcpy(f_aec, "none");
+	strcpy(f_b14, "none");
+	strcpy(f_b3c, "none");
+	strcpy(f_a9c, "none");
+	strcpy(f_b64, "none");
 	v67(100.0f);											// (BG slot 68) radius
 	v152(100.0f);											// (BG slot 153)
 	v52(0);
@@ -45,9 +46,9 @@ C3DYokCargo::C3DYokCargo()									// 0x449360
 	set_shape(Load3DShape(m_db, 2));						// 0x477ba0
 	MakeShapeUnLit(get_shape());							// 0x477550
 	v34(1);
-	f_8d0 = 0.1f;											// turn rates x, y, z
-	f_8d4 = 0.8f;
-	f_8d8 = 0.5f;
+	f_b9c.x = 0.1f;											// turn rates x, y, z
+	f_b9c.y = 0.8f;
+	f_b9c.z = 0.5f;
 	m_fly_time = 0;
 	m_mine_time = 0;
 	for (int i = 0; i < 30; i++)
@@ -89,19 +90,19 @@ void C3DYokCargo::Process(float dt)							// 0x4496e0
 	v155(a);												// +0x270 constant acceleration (BG slot 156)
 	v155(b);
 	v157(b[0], -g_gravity.y, a[2]);							// +0x278: gravity cancelled (0x5cfc04)
-	if (f_6c8 != 3) return;									// patrolling only
-	if (g_camera && f_6c4 < 1800.0f && g_camera->NameContains((char *)"C3DROCKET"))	// 0x4a311c
+	if (f_96c != 3) return;									// patrolling only
+	if (g_camera && f_968 < 1800.0f && g_camera->NameContains((char *)"C3DROCKET"))	// 0x4a311c
 	{
 		float c[4], p[4];
 		g_camera->v195(c);									// +0x310
 		v195(p);
 		const float dx = p[0] - c[0], dy = p[1] - c[1], dz = p[2] - c[2];
-		if (sqrtf(dx * dx + dy * dy + dz * dz) < 7000.0f) f_6c4 = 1400.0f;	// 0x4a3e38
+		if (sqrtf(dx * dx + dy * dy + dz * dz) < 7000.0f) f_968 = 1400.0f;	// 0x4a3e38
 	}
 	m_fly_time = dt + m_fly_time;
 	if (!(m_fly_time > 25.0f)) return;						// 0x48fe04
 	m_mine_time = dt + m_mine_time;
-	const float every = f_6c4 <= 1000.0f ? 5.0f : 2.0f;	// 0x48e5ac; 0x48d950 / 0x48d954
+	const float every = f_968 <= 1000.0f ? 5.0f : 2.0f;	// 0x48e5ac; 0x48d950 / 0x48d954
 	if (!(m_mine_time > every)) return;
 	m_mine_time = 0;
 	CGameObject *mine = m_mines[m_next_mine];
@@ -144,7 +145,7 @@ void YokRotateToDest(C3DAI *self, float dt)					// 0x449a00
 		else if (rz < -180.0f) rz += 360.0f;
 		self->f_00a = 1;
 	}
-	self->AddRotation(rx * self->f_8d0 * dt, ry * self->f_8d4 * dt, rz * self->f_8d8 * dt);	// +0x334
+	self->AddRotation(rx * self->f_b9c.x * dt, ry * self->f_b9c.y * dt, rz * self->f_b9c.z * dt);	// +0x334
 }
 
 void C3DYokCargo::v266(void)								// 0x419aa0 (shared code)

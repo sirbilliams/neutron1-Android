@@ -2,11 +2,11 @@
     Constants: 0x48e5e8 = 16384 / 360, 0x48e5b4 = 360 / 16384, 0x49fabc = 1 / 45, 0x49fab8 = 52,
     0x49fadc = 14.4 (mouse to steering), 0x48e5dc = 200 (arrow distance from the viewport).   */
 #include "C3DGoddard.h"
-#include "objects/C3DBone.h"
+// TODO(BG): #include "objects/C3DBone.h" (Negatron-only class, deleted)
 #include "Mouse.h"
 #include "C3DShadow.h"
 #include "C3DCursor.h"
-#include "C3DGrannyObj.h"
+// TODO(BG): #include "C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "C3DPlayer.h"				// PlayerKey*, JimmyActivateMenuItem
 #include "C3DRocketShip.h"			// neg::GoddardMarker
 #include "CGameType.h"
@@ -136,9 +136,7 @@ using neg::GetMouseDelta;									// 0x46a460 (Mouse.h)
 // A C3DBone that Goddard picked up: hidden, its +0x924 cleared.
 static void BoneTaken(CGameObject *bone)
 {
-	C3DBone *b = bone ? dynamic_cast<C3DBone *>(bone) : NULL;
-	b->HideAgain();											// element +0xdc
-	b->f_924 = 0;
+	(void)bone;												// TODO(BG): C3DBone is Negatron only (hide it, +0x924 = 0)
 }
 
 // The arrow of a C3DCursor (its CGameObject part) as an element.
@@ -148,22 +146,11 @@ static C3DObject *Arrow(CGameObject *o)
 }
 
 // A head prop / shadow prop of Goddard: model `file` on our bone `bone`.
-static C3DGrannyObj *NewProp(C3DGoddard *g, const char *file, const char *bone)
+// TODO(BG): the props were Negatron C3DGrannyObjs (no such class in Neutron.exe): none for now.
+static C3DAnimated *NewProp(C3DGoddard *g, const char *file, const char *bone)
 {
-	C3DGrannyObj *p = new C3DGrannyObj;						// 0xdc0 bytes
-	if (!p) return p;
-	strcpy(p->f_924, file);
-	strcpy(p->f_c44, g->m_tag);								// AttachTo us
-	strcpy(p->f_ca8, bone);
-	p->v107(0);												// +0x1ac
-	p->v36(0);												// +0x90
-	p->f_d70 = NULL;
-	p->v52(0);												// +0xd0
-	p->v46(0);												// +0xb8
-	p->f_d7c = 0.5f;										// attach in 0.5 s
-	p->f_db0 = 0;
-	strcpy(p->f_be0, "none");
-	return p;
+	(void)g; (void)file; (void)bone;
+	return NULL;
 }
 
 // --------------------------------------------------------------------------- construction
@@ -235,7 +222,7 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	f_1bb8 = -1;
 	f_1bbc = NULL;
 	f_1bbc = NewProp(this, "headspinbase.grn", "head");
-	if (f_1bbc) f_1bbc->f_da0 = 0.1f;						// "SlideSpeedX"
+	// (N2: f_1bbc "SlideSpeedX" = 0.1)
 	f_1bc0 = NULL;
 	f_1bc0 = NewProp(this, "goddshadow.grn", "shadowbone");
 	// (then a call to the empty 0x472970)
@@ -589,12 +576,11 @@ void C3DGoddard::Process(float dt)							// N2:0x439170
 		}
 	}
 	if (g_camera == static_cast<CGameObject *>(this)) return;	// steered (v243)
-	if (g_50988b)											// (never set in the shipped game)
+	if (0)	// TODO(BG): N2 flag mapped to 0x50988b (g_keys[0x53]?), never set in the shipped game
 	{
 		if (!f_1bbc)
 		{
 			f_1bbc = NewProp(this, "headspinbase.grn", "head");
-			if (f_1bbc) f_1bbc->f_da0 = 0.1f;
 		}
 		ev107(1);											// element +0x1ac: wait
 	}
@@ -872,8 +858,7 @@ void C3DGoddard::v266(void)									// N2:0x43a090
 	if (!f_1bc0) return;
 	f_1bc0->ev65(0, 2, 0);									// +0x104: blend Dst_Color, Zero
 	f_1bc0->ev91(1);										// +0x16c: second pass
-	f_1bbc->f_d7c = 0.5f;									// (sic: the head prop)
-	f_1bbc->f_d70 = NULL;
+	// (N2: f_1bbc +0xd7c = 0.5, +0xd70 = NULL: C3DGrannyObj fields) TODO(BG)
 }
 
 void C3DGoddard::v270(int old_mode, int new_mode)			// N2:0x43b410

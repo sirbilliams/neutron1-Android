@@ -19,7 +19,7 @@
 #include "../Sound.h"
 #include "../CEditor.h"
 #include "../C3DJimmy.h"
-#include "../C3DRadar.h"
+// TODO(BG): #include "../C3DRadar.h" (Negatron-only class, deleted)
 #include "../port/Widescreen.h"
 #include "../port/BillsUi.h"
 #include "OMediaCanvas.h"
@@ -62,17 +62,17 @@ static bool GameTypeLevelIs(int id)
 // The player's HUD object (a C3DRadar): C3DJimmy (g_N2_545fd0 - 0xc0)->f_d40 - 200, NULL when f_d40 is 0.
 static void *PlayerHud(void)			{ return Jimmy()->f_d40; }	// N2:0x40b676
 // hud->f_61c (the HUD panel is shown). The original reads through a NULL hud when there is none.
-static bool HudShown(void *hud)			{ return static_cast<C3DRadar *>(hud)->IsShown(); }
-static void HudShow(void *hud)			{ static_cast<C3DRadar *>(hud)->Show(); }	// N2:0x468a50
-static void HudHide(void *hud)			{ static_cast<C3DRadar *>(hud)->Hide(); }	// N2:0x468aa0
+static bool HudShown(void *hud)			{ (void)hud; return false; }	// TODO(BG): Negatron C3DRadar
+static void HudShow(void *hud)			{ (void)hud; }	// N2:0x468a50
+static void HudHide(void *hud)			{ (void)hud; }	// N2:0x468aa0
 
 // C3DJimmy element-family slots, called on (g_N2_545fd0 - 0xc0).
 // port: the original calls through (NULL - 0xc0) when there is no player; these do nothing then.
-static C3DPlayerObject *PlayerObj(void)	{ return g_N2_545fd0 ? dynamic_cast<C3DPlayerObject *>(g_N2_545fd0) : NULL; }
-static void PlayerAnimEvents(void)		{ if (C3DPlayerObject *p = PlayerObj()) p->ev67(); }		// slot 67 (C3DJimmy N2:0x44e0b0)
+static C3DPlayer *PlayerObj(void)	{ return g_N2_545fd0 ? dynamic_cast<C3DPlayer *>(g_N2_545fd0) : NULL; }
+static void PlayerAnimEvents(void)		{ if (C3DPlayer *p = PlayerObj()) p->ev67(); }		// slot 67 (C3DJimmy N2:0x44e0b0)
 static void PlayerStopSound(void)		{ if (C3DPlayer *p = dynamic_cast<C3DPlayer *>(PlayerObj())) p->ev116(); }	// slot 116 (C3DJimmy 0x42aac0)
-static bool PlayerAltButton(void)		{ C3DPlayerObject *p = PlayerObj(); return p && p->ev103(); }	// slot 103 0x4378d0
-static bool PlayerFireButton(void)		{ C3DPlayerObject *p = PlayerObj(); return p && p->ev104(); }	// slot 104 0x42a7a0
+static bool PlayerAltButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev103(); }	// slot 103 0x4378d0
+static bool PlayerFireButton(void)		{ C3DPlayer *p = PlayerObj(); return p && p->ev104(); }	// slot 104 0x42a7a0
 
 // (g_5099e4 - 0xc0)->slot 121("VR01.gam", "PHONEBOOTH", +0xb89, +0x9c8, 0x21b): go to the phone booth
 // (C3DPlayer::ev121 N2:0x4648a0 "PlayerLoadLevel"), coming back to the player's next level / start point.

@@ -20,15 +20,15 @@ C3DFleetCommander::C3DFleetCommander()								// 0x419760
 	C3DFleetCommander::InitObject();						// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	m_helmet = NULL;
-	strcpy(f_7f8, "STOP");									// 0x407fa0
-	strcpy(f_820, "WALK");
-	strcpy(f_870, "STOP");
-	strcpy(f_898, "ATTACK");
+	strcpy(f_ac4, "STOP");									// 0x407fa0
+	strcpy(f_aec, "WALK");
+	strcpy(f_b3c, "STOP");
+	strcpy(f_b64, "ATTACK");
 	m_mouth = 0;
 	m_mouth_time = 0;
 	C3DObject::SetObjectID('3FLE');							// 0x462220
 	f_008 = 1;												// CGameObject +0x8
-	f_908 = 0;
+	f_bd4 = 0;
 	// (then a call to the empty 0x472970)
 }
 
