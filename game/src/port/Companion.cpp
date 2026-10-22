@@ -718,30 +718,21 @@ void Caption(std::string &out)
 	}
 }
 
-// The game's own name of a level (the Load/Save page's, neg::SaveLevelName) from its 4cc, else
-// from a .gam file: its first four bytes are the level's 4cc (read once per file). NULL when the
-// level has no name (then the file name is shown).
-// port: the panel's display names: the game's own name in Title Case, a few overridden to read
-// better (Bill's choice).
+// The display name of a level, by its 4cc (the companion panel, the launcher's slots.txt), from
+// a .gam file: its first four bytes are the level's 4cc (read once per file). NULL when the level
+// has no name (then the file name is shown).
+// port: Boy Genius has no level names of its own (Neutron.exe has no name table and its save
+// page shows none; Negatron's neg::SaveLevelName is not used here: its 4ccs mean other levels).
+// TODO(BG): display names for BG's levels (Bill's choice), e.g. { 'LEV1', "..." }. Until then
+// the panel and the launcher show the file names.
 const char *LevelNameOf(int id)
 {
-	static const struct { int id; const char *name; } kOverride[] = {
-		{ 'LEV3', "Negatron's Lab" },
-		{ 'VR01', "VR Vox" },
+	static const struct { int id; const char *name; } kNames[] = {
+		{ 0, NULL },
 	};
-	for (size_t i = 0; i < sizeof kOverride / sizeof kOverride[0]; i++)
-		if (kOverride[i].id == id) return kOverride[i].name;
-	const char *own = id ? SaveLevelName(id) : NULL;
-	if (!own) return NULL;
-	static std::map<int, std::string> s_names;			// game thread
-	std::string &t = s_names[id];
-	if (t.empty())
-	{
-		t = own;
-		for (size_t i = 0; i < t.size(); i++)
-			if (i == 0 || t[i - 1] == ' ') t[i] = (char)toupper((unsigned char)t[i]);
-	}
-	return t.c_str();
+	for (size_t i = 0; i < sizeof kNames / sizeof kNames[0]; i++)
+		if (id && kNames[i].id == id) return kNames[i].name;
+	return NULL;
 }
 
 const char *LevelNameOfFile(const char *file)

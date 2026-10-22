@@ -158,7 +158,7 @@ final class LauncherView extends View {
     private void drawTop(Canvas c, LauncherModel.Page p) {
         long t = SystemClock.uptimeMillis();
         // header: the game's name and the page in the LCD, two status LEDs
-        text(c, "JIMMY NEUTRON vs. JIMMY NEGATRON", T_HEAD.left + 52, T_HEAD.top + 82, 44, LED_ON, Paint.Align.LEFT, true);
+        text(c, "JIMMY NEUTRON: BOY GENIUS", T_HEAD.left + 52, T_HEAD.top + 82, 44, LED_ON, Paint.Align.LEFT, true);
         text(c, p.title.toUpperCase(java.util.Locale.ROOT), T_HEAD.right - 150, T_HEAD.top + 82, 40, PHOSPHOR,
                 Paint.Align.RIGHT, true);
         led(c, T_HEAD.right - 98, T_HEAD.centerY(), 11, 2, LED_ON);

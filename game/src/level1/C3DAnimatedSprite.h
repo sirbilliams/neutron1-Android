@@ -5,11 +5,12 @@
     level loads (0: hidden); "InitallyVisible" (-1: as Activated) 1 shows it, 0 hides it.
     NextState (v268) 1 starts it ("OnSoundIndex"), 0 stops and hides it ("OffSoundIndex"),
     -1 toggles it, at most once a second.
-    Reconstructed from Neutron.exe: constructor 0x40e880 (factory '3ANI', 0x81c bytes),
-    destructor 0x40eae0 (only resets the vtables, then ~CPickupType; deleting thunks N2:0x420310 /
-    0x40eab0 / N2:0x420320). Vtables 0x49085c (element, CPickupType's 56 slots) / 0x490848
-    (listener) / 0x4903f8 (game object: 0, 7, 240, 260, 268 overridden) / 0x4903e8 (streamer).
-    Own members 0x7b0..0x814, vtordisp 0x814, the streamer at 0x818.
+    Reconstructed from Neutron.exe: constructor 0x40e880 (factory '3ANI', 0x738 bytes),
+    destructor 0x40eae0 (only resets the vtables, then ~CPickupType; deleting thunks 0x40f290 /
+    0x40eab0 / 0x40f2a0). Vtables 0x49085c (element, CPickupType's 54 slots) / 0x490848
+    (listener) / 0x4903f8 (game object at +0xc8: 0, 7, 241, 259, 266 overridden) / 0x4903e8
+    (streamer at +0x734). Own members 0x6cc..0x730 (named by their Negatron offsets).
+    Boy Genius: no pause check; shown / hidden with an inline force_show / hide(true).
 
     Members are named after their 2002 offset from the object start (element view; the
     CGameObject-family methods of the original see them 0xc8 lower).                          */
@@ -24,9 +25,9 @@ class C3DAnimatedSprite : public CPickupType
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x40eb20 properties
-	virtual void Process(float dt);											// SLOT 240 N2:0x41fdd0 the flip-book
-	virtual void v260(void);												// SLOT 260 N2:0x420020 properties loaded: frame count, shown / hidden
-	virtual void v268(int state);											// SLOT 268 N2:0x420200 "NextState": 1 on, 0 off, -1 toggle
+	virtual void Process(float dt);											// SLOT 241 0x40ed40 the flip-book
+	virtual void v260(void);												// SLOT 259 0x40ef70 properties loaded: frame count, shown / hidden
+	virtual void v268(int state);											// SLOT 266 0x40f160 "NextState": 1 on, 0 off, -1 toggle
 
 	// FIELD 0x7b0 0x64
 	float			f_7b0;				// 0x7b0  "Red" (1)

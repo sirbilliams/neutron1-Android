@@ -5,7 +5,7 @@
     "ExactLevel", or at least "RequiredLevel".
     Reconstructed from Neutron.exe: constructor 0x45f040, destructor 0x45f130 (only resets the
     vtables, then ~C3DTriggerType; deleting thunks 0x45f100 / 0x45f3e0 / 0x45f3f0). Vtables
-    0x4d1b98 (element, 56 slots: C3DTriggerType's) / 0x4d1b84 (listener) / 0x4d1734 (game
+    0x4d1b98 (element, 54 slots: C3DTriggerType's) / 0x4d1b84 (listener) / 0x4d1734 (game
     object: 7, 242, 260, 266, 267 overridden; 266 is code shared with C3DArrow) / 0x4d1724
     (streamer). No factory ID. Own members 0x7a0..0x7b0 (vtordisp 0x7b0, streamer 0x7b4 when
     it stands alone; C3DPickupItem puts its members from 0x7b0).
@@ -24,9 +24,9 @@ class CPickupType : public C3DTriggerType
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x45f170
 	virtual void v242(float t);												// SLOT 242 0x45f280 editor: shown
-	virtual void v260(void);												// SLOT 260 0x45f1f0 PickupIndex from the level; shown unless collected
-	virtual void v266(void);												// SLOT 266 0x419aa0 the task's state set to itself
-	virtual void v267(int level);											// SLOT 267 0x45f2b0 TaskName state: shown / hidden
+	virtual void v260(void);												// SLOT 259 0x45f1f0 PickupIndex from the level; shown unless collected
+	virtual void v266(void);												// SLOT 264 0x419aa0 the task's state set to itself
+	virtual void v267(int level);											// SLOT 265 0x45f2b0 TaskName state: shown / hidden
 
 	// FIELD 0x7a0 0x10
 	int			m_pickup_index;			// 0x7a0  "PickupIndex" (= 0; v260: the next object state index)

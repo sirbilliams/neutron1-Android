@@ -256,7 +256,7 @@ public class NegatronActivity extends SDLActivity {
                         "Gadget hologram: " + LauncherPages.holoName(holo), "Close" }
                 : new String[] { panel, zoom, ui, "Close" };
         new AlertDialog.Builder(this)
-                .setTitle("Negatron")
+                .setTitle("Boy Genius")
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface d, int which) {

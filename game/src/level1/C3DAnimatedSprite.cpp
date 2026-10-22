@@ -56,7 +56,7 @@ C3DAnimatedSprite::C3DAnimatedSprite()						// 0x40e880
 C3DAnimatedSprite::~C3DAnimatedSprite() {}					// 0x40eae0
 
 namespace neg {
-CGameObject *New_C3DAnimatedSprite(void) { return new C3DAnimatedSprite; }	// '3ANI' (0x81c bytes)
+CGameObject *New_C3DAnimatedSprite(void) { return new C3DAnimatedSprite; }	// '3ANI' (0x738 bytes)
 }
 
 void C3DAnimatedSprite::InitObject(void)					// 0x40eb20
@@ -79,10 +79,9 @@ void C3DAnimatedSprite::InitObject(void)					// 0x40eb20
 	v67(10.0f);												// +0x10c: radius
 }
 
-void C3DAnimatedSprite::Process(float dt)					// N2:0x41fdd0
+void C3DAnimatedSprite::Process(float dt)					// 0x40ed40
 {
-	C3DSpriteType::Process(dt);								// 0x40ff40
-	if (g_gametype->IsPaused()) return;						// +0x114
+	C3DSpriteType::Process(dt);								// 0x463090 (C3DSprite's; no pause check)
 	f_7c4 += dt;
 	f_7d4 += dt;
 	if (!f_80c || f_7c0 == 0) return;
@@ -97,36 +96,36 @@ void C3DAnimatedSprite::Process(float dt)					// N2:0x41fdd0
 		if (f_808 != 0)
 		{
 			if (f_808 != 2) return;							// Loop 1: again
-			HideAgain();									// element +0xd8
+			OMediaElement::hide(true);						// element +0x58
 		}
 		f_80c = 0;
 	}
 }
 
-void C3DAnimatedSprite::v260(void)							// N2:0x420020
+void C3DAnimatedSprite::v260(void)							// 0x40ef70
 {
 	CPickupType::v260();									// 0x45f1f0
 	f_7c4 = 0;
 	for (int i = 8; i >= 0; i--)							// the first -1 ends the list
 		if (f_7e0[i] == -1) f_7dc = i;
 	m_sprite_index = f_7e0[0];
-	if (f_7c0 == 0) HideAgain();							// element +0xd8
+	if (f_7c0 == 0) OMediaElement::hide(true);			// element +0x58
 	else
 	{
 		set_diffuse(OMediaFARGBColor(f_7bc, f_7b0, f_7b4, f_7b8));	// +0x90..+0x9c
-		ShowAgain();										// element +0xd4
+		force_show();										// inline: hide_count = 1, hide(false)
 		f_80c = 1;
 	}
 	if (f_810 == 1)
 	{
 		set_diffuse(OMediaFARGBColor(f_7bc, f_7b0, f_7b4, f_7b8));
-		ShowAgain();
+		force_show();
 	}
-	else if (f_810 == 0) HideAgain();
+	else if (f_810 == 0) OMediaElement::hide(true);
 	v52(0);													// +0xd0
 }
 
-void C3DAnimatedSprite::v268(int state)						// N2:0x420200
+void C3DAnimatedSprite::v268(int state)						// 0x40f160
 {
 	if (state == -1)
 	{
@@ -139,7 +138,7 @@ void C3DAnimatedSprite::v268(int state)						// N2:0x420200
 	{
 		if (f_7d0 != -1) PlayGameSoundIndex(-1, f_7d0, false);	// 0x458980
 		f_7c0 = 0;
-		HideAgain();
+		OMediaElement::hide(true);
 		return;
 	}
 	if (state != 1) return;
@@ -148,5 +147,5 @@ void C3DAnimatedSprite::v268(int state)						// N2:0x420200
 	f_7c0 = 1;
 	f_7c4 = 0;
 	f_80c = 1;
-	ShowAgain();
+	force_show();
 }

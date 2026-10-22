@@ -14,15 +14,15 @@
 #pragma once
 #include "../CJimmyGame.h"
 
-class CLevel01Game : public CJimmyGame										// vtables N2:0x50ada4 / N2:0x50ad90 / 0x4c561c / N2:0x50a904
+class CLevel01Game : public CJimmyGame										// vtables 0x4c5a80 / 0x4c5a6c / 0x4c561c / 0x4c560c
 {
 	public:
 	CLevel01Game();															// 0x4503c0
 	virtual ~CLevel01Game();												// 0x4504f0
-	virtual void Process(float dt);											// SLOT 240 0x4508d0
-	virtual void InitGame(void);											// ESLOT 45 0x450580
+	virtual void Process(float dt);											// SLOT 241 0x4508d0
+	virtual void InitGame(void);											// ESLOT 45 0x450580 sky and tint by the time of day
 
-	int			f_684;					// 0x684  0 (constructor; not used by the class)
+	int			f_684;					// 0x5b8  0 (constructor; not used by the class)
 };
 
 class CLevel01AGame : public CJimmyGame										// vtables 0x4c36e0 / 0x4c36cc / 0x4c327c / 0x4c326c

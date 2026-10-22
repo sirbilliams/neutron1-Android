@@ -124,7 +124,7 @@ int neg_import_iso(int iso_fd, const char *dest_dir, const char *tmp_dir,
 	if (!find_file(iso_fd, root, "data1.hdr", 2, &hdr, &where) || !find_file(iso_fd, where, "data1.cab", 0, &cab, &where))
 	{
 		snprintf(err, err_size, "That CD image doesn't contain the game's installer files (data1.hdr / data1.cab). "
-				 "Use the Jimmy Neutron vs. Jimmy Negatron PC CD.");
+				 "Use the Jimmy Neutron: Boy Genius PC CD.");
 		return -1;
 	}
 
@@ -139,7 +139,7 @@ int neg_import_iso(int iso_fd, const char *dest_dir, const char *tmp_dir,
 	{
 		unlink(hdr_path); unlink(cab_path);
 		snprintf(err, err_size, r == -2 ? "Cancelled." : "Couldn't copy the installer off the CD image "
-				 "(is there enough free space? about 130 MB is needed while installing).");
+				 "(is there enough free space? about 100 MB is needed while installing).");
 		return -1;
 	}
 
@@ -151,9 +151,23 @@ int neg_import_iso(int iso_fd, const char *dest_dir, const char *tmp_dir,
 	else
 	{
 		long long nfiles = (long long)g->last_file - g->first_file + 1, n = 0;
-		int saved = 0, have_exe = 0;
-		result = 0;
-		for (unsigned int i = g->first_file; i <= g->last_file; i++, n++)
+		int saved = 0, have_exe = 0, other_game = 0;
+		/* Which game is it? Boy Genius has Neutron.exe at the top; Negatron (the sequel) Neutron2.exe. */
+		for (unsigned int i = g->first_file; i <= g->last_file; i++)
+		{
+			const char *dir = unshield_directory_name(u, unshield_file_directory(u, (int)i));
+			const char *name = unshield_file_name(u, (int)i);
+			if (!name || (dir && dir[0])) continue;
+			if (strcasecmp(name, "Neutron.exe") == 0) have_exe = 1;
+			if (strcasecmp(name, "Neutron2.exe") == 0) other_game = 1;
+		}
+		result = have_exe ? 0 : -1;
+		if (!have_exe)
+			snprintf(err, err_size, other_game ? "That's the Jimmy Neutron vs. Jimmy Negatron CD (the sequel). "
+					 "This app plays Jimmy Neutron: Boy Genius: use its PC CD."
+					 : "The installer on that CD image doesn't have the game files (Neutron.exe).");
+		have_exe = 0;
+		for (unsigned int i = g->first_file; i <= g->last_file && result == 0; i++, n++)
 		{
 			if (!unshield_file_is_valid(u, (int)i)) continue;
 			const char *dir = unshield_directory_name(u, unshield_file_directory(u, (int)i));
@@ -175,7 +189,7 @@ int neg_import_iso(int iso_fd, const char *dest_dir, const char *tmp_dir,
 			}
 			if (!unshield_file_save(u, (int)i, path) && !unshield_file_save_old(u, (int)i, path))
 			{
-				snprintf(err, err_size, "Couldn't unpack %s (is there enough free space? the game needs about 270 MB).", name);
+				snprintf(err, err_size, "Couldn't unpack %s (is there enough free space? the game needs about 220 MB).", name);
 				result = -1;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*  C3DArrow - see C3DArrow.h. Reconstructed from Neutron.exe 0x40f2d0..N2:0x4207e0 (and 0x419aa0). */
+/*  C3DArrow - see C3DArrow.h. Reconstructed from Neutron.exe 0x40f2d0..0x40f700 (and 0x419aa0). */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DArrow.h"
@@ -53,9 +53,8 @@ void C3DArrow::InitObject(void)								// 0x40f4f0
 	// (then a call to the empty 0x472970)
 }
 
-void C3DArrow::Process(float dt)							// 0x40f560 (C3DSpriteType's is not called)
+void C3DArrow::Process(float dt)							// 0x40f560 (C3DSpriteType's is not called; no pause check)
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
 	m_time += dt;
 	// x87: the sines are taken of the float time times a float constant, scaled by doubles
 	const float h = (float)(sin((double)(m_time * 10.0f)) * 50.0 + 200.0);	// 0x48e5ec, 0x490ea0, 0x490e98
@@ -78,8 +77,8 @@ void C3DArrow::v267(int level)								// 0x40f620
 	const int state = GetTaskState(m_required_task);		// 0x45fea0
 	if (m_exact_level == -1)
 	{
-		if (m_required_level <= state) { ShowAgain(); return; }	// element +0xd4
+		if (m_required_level <= state) { force_show(); return; }	// inline: hide_count (+0x70) = 1, hide(false)
 	}
-	else if (state == m_exact_level) { ShowAgain(); return; }
-	HideAgain();											// element +0xd8
+	else if (state == m_exact_level) { force_show(); return; }
+	OMediaElement::hide(true);								// element +0x58
 }

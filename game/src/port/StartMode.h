@@ -1,6 +1,13 @@
 /*  port: how the game starts (NEG_START) and the save-slot list for the Android launcher.
 
-    What the original does (Neutron.exe, CEditor::UpdateGame N2:0x4a5c70; the manual, p. 6-7):
+    TODO(BG): everything below describes Negatron (Neutron2.exe). Boy Genius's Neutron.exe has no
+    "autosave", "DUMMY", "StartLevel.txt" or "save\" strings: its saves are JimmyGame1..10.tsk
+    (C3DJimmy, near 0x4289a0), plus NewGame.tsk and RestartLevel.tsk in the game folder; the start
+    chain is level1d.gam -> Level1.gam. Port NEG_START / slots.txt to BG's CEditor start-up and
+    save code (with the BG CEditor / C2DInGameMenu / C3DJimmy); the launcher's Continue / Load
+    pages read slots.txt only.
+
+    What the original (Negatron) does (CEditor::UpdateGame N2:0x4a5c70; the manual, p. 6-7):
     there is no menu before the game. The installer writes save\StartLevel.txt = "autosave", so
     every start CONTINUES the autosave (save\autosave.tsk, written at the checkpoints); when there
     is none (the shipped autosave.tsk is a "DUMMY" placeholder) a NEW GAME starts: level1d.gam,
@@ -26,7 +33,7 @@
     line ends, lines starting with '#' are comments, then one line per saved game, TAB-separated:
         <slot>  <level id>  <level name>  <gam file>  <score>  <mtime>
     slot: "autosave" or 1..10 (the NEG_START=load:<n> number); level id: the 4cc ('LV3E');
-    level name: the Load/Save page's name for it ("negatron lab b"; empty when it has none);
+    level name: the port's display name for it (Companion.cpp LevelNameOf; empty when none);
     gam file: "Level3e.gam"; score: integer; mtime: the file's modification time, Unix seconds.
     Empty slots and DUMMY placeholders are not listed.                                         */
 #pragma once

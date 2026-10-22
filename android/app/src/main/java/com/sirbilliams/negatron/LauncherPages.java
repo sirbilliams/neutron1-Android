@@ -214,6 +214,9 @@ final class LauncherPages {
         return sb.toString();
     }
 
+    // TODO(BG): Continue / New game / the slots follow Negatron's saves (save/autosave.tsk + slots.txt,
+    // game/src/port/StartMode.h). Boy Genius has no autosave (its saves: JimmyGame1..10.tsk, plus
+    // NewGame.tsk / RestartLevel.tsk): rework once StartMode is ported to BG.
     static LauncherModel.Page main(Slot autosave, boolean test) {
         LauncherModel.Page p = new LauncherModel.Page("main", "Main menu");
         boolean canContinue = GAME_LOADS && autosave.present;
@@ -341,7 +344,7 @@ final class LauncherPages {
         i = p.add("bg_clear", "Menu background: clear", "Back to the plain brushed steel.");
         i.enabled = background;
         i = p.add("hd", "HD texture pack: install (.zip)", "Sharper pictures: a zip of upscaled copies of "
-                + "the game's own textures (omt/, png/ and grn/ folders, each picture 2x, 4x... its size). "
+                + "the game's own textures (omt/ and png/ folders, each picture 2x, 4x... its size). "
                 + "It is unpacked into the game's hd/ folder.");
         i = p.add("hd_remove", "HD texture pack: remove", "Delete the installed HD pack (the game goes back to "
                 + "its own pictures).");
@@ -367,7 +370,7 @@ final class LauncherPages {
         p.add("explore", "Explore a level", "Fly freely through any level with a noclip camera: "
                 + "nothing moves, no story, no enemies, nothing is saved.");
         LauncherModel.Item m = p.add("models", "Model viewer", null);
-        m.detail = new String[] { "Models: .grn .ase .omt", "Up/down model  L1/R1 jump 10  Sticks turn",
+        m.detail = new String[] { "Models: .ase .omt", "Up/down model  L1/R1 jump 10  Sticks turn",
             "L2/R2 zoom  A auto-turn  B leave" };
         p.add("back", "Back", "Back to the main menu.");
         return p;
@@ -408,7 +411,7 @@ final class LauncherPages {
             String label = n == null ? base : uses.get(n) > 1 ? n + " (" + base + ")" : n;
             LauncherModel.Item i = p.add("explore:" + g, label, null);
             i.detail = new String[] { label + "   " + g, EXPLORE_HELP[0], EXPLORE_HELP[1] };
-            if (g.equalsIgnoreCase(select != null ? select : "Level5.gam")) p.sel = p.items.size() - 1;
+            if (g.equalsIgnoreCase(select != null ? select : "Level1.gam")) p.sel = p.items.size() - 1;
         }
         p.add("back", "Back", "Back to the Asset viewer.");
         return p;
@@ -419,7 +422,7 @@ final class LauncherPages {
         p.pic = "test";
         for (String g : gams) {
             p.add("level:" + g, g, "Play " + g + " from its start.");
-            if (g.equalsIgnoreCase("Level5.gam")) p.sel = p.items.size() - 1;
+            if (g.equalsIgnoreCase("Level1.gam")) p.sel = p.items.size() - 1;
         }
         p.add("back", "Back", "Back to the test page.");
         return p;

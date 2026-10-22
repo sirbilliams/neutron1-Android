@@ -47,7 +47,9 @@ public class SetupActivity extends Activity {
     private static final int PICK_BACKGROUND = 3;
     private static final int EXPORT_ALL = 4, EXPORT_SLOT = 5, IMPORT_SAVES = 6;
     private static final int PICK_HD = 7;
-    private static final String[] GAME_DIRS = { "omt", "gam", "grn", "ase", "png", "dat", "save" };
+    private static final String[] GAME_DIRS = { "omt", "gam", "ase", "png", "save" };
+    /** Set by unzip when the zip holds Neutron2.exe: the Negatron game, not Boy Genius. */
+    private volatile boolean mZipIsNegatron;
 
     private TextView message;
     private Button choose;
@@ -218,7 +220,7 @@ public class SetupActivity extends Activity {
 
     /** Picture key (LauncherModel.pics) -> the file the game saves for it. */
     private static final String[][] PICS = {
-        { "new", "museum.png" }, { "load", "loadsave.png" }, { "saves", "menu.png" },
+        { "new", "newgame.png" }, { "load", "loadsave.png" }, { "saves", "menu.png" },
         { "settings", "options.png" }, { "test", "inventory.png" }, { "quit", "credits.png" } };
 
     /** The game's pictures (small: the info window shows them at most 640 x 480). */
@@ -413,7 +415,7 @@ public class SetupActivity extends Activity {
         } else if (id.equals("saves")) mMenu.push(LauncherPages.saves());
         else if (id.equals("export_all")) {
             String date = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new java.util.Date());
-            createDocument("application/zip", "negatron-saves-" + date + ".zip", EXPORT_ALL);
+            createDocument("application/zip", "boygenius-saves-" + date + ".zip", EXPORT_ALL);
         } else if (id.equals("import")) {
             Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             i.addCategory(Intent.CATEGORY_OPENABLE);
@@ -850,7 +852,7 @@ public class SetupActivity extends Activity {
             }
         }
         Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
-        if (names.isEmpty()) names.add("Level5.gam");
+        if (names.isEmpty()) names.add("Level1.gam");
         return names;
     }
 
@@ -871,7 +873,7 @@ public class SetupActivity extends Activity {
         text += displayLog();
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_SUBJECT, "Negatron log");
+        i.putExtra(Intent.EXTRA_SUBJECT, "Boy Genius log");
         i.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(i, "Share log"));
     }
@@ -903,7 +905,7 @@ public class SetupActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView title = new TextView(this);
-        title.setText("Jimmy Neutron vs. Jimmy Negatron");
+        title.setText("Jimmy Neutron: Boy Genius");
         title.setTextColor(Color.rgb(255, 210, 90));
         title.setTextSize(26);
         title.setTypeface(Typeface.DEFAULT_BOLD);
@@ -915,9 +917,9 @@ public class SetupActivity extends Activity {
         message.setTextSize(17);
         message.setGravity(Gravity.CENTER);
         message.setPadding(0, dp(20), 0, dp(24));
-        message.setText("Game files needed.\n\nChoose the game's CD image (Jimmy Neutron vs. Jimmy "
-                + "Negatron.iso): the game is installed from it, about 270 MB. A zip of an installed "
-                + "game's Program_Executable_Files folder works too.");
+        message.setText("Game files needed.\n\nChoose an image of the Jimmy Neutron: Boy Genius PC CD "
+                + "(.iso): the game is installed from it, about 220 MB. A zip of an installed "
+                + "game's folder (the one with Neutron.exe) works too.");
         root.addView(message, wrap());
 
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
@@ -992,12 +994,17 @@ public class SetupActivity extends Activity {
             File dest = new File(base, "game");
             try {
                 deleteTree(tmp);
+                mZipIsNegatron = false;
                 int files = unzip(uri, tmp, total);
-                if (!canRead(new File(new File(tmp, "omt"), "level1.omt"))) {
+                boolean haveExe = canRead(new File(tmp, "Neutron.exe"));
+                if (!haveExe && mZipIsNegatron) {
+                    error = "That's Jimmy Neutron vs. Jimmy Negatron (the sequel, Neutron2.exe). This app "
+                            + "plays Jimmy Neutron: Boy Genius: use its CD image or installed files.";
+                } else if (!canRead(new File(new File(tmp, "omt"), "level1.omt")) || !haveExe) {
                     error = files == 0 && looksLikeInstaller(uri)
-                            ? "That looks like the game's installer. Pick Negatron-GameFiles.zip instead "
+                            ? "That looks like the game's installer. Pick the CD image (.iso) instead "
                               + "(the installer keeps the files inside data1.cab)."
-                            : "That zip doesn't contain the game files (omt/level1.omt is missing).";
+                            : "That zip doesn't contain the game files (Neutron.exe and omt/level1.omt are needed).";
                 } else {
                     deleteTree(dest);
                     if (!tmp.renameTo(dest)) throw new IOException("could not move files into place");
@@ -1118,6 +1125,7 @@ public class SetupActivity extends Activity {
         try (ZipInputStream zip = new ZipInputStream(counting)) {
             ZipEntry e;
             while ((e = zip.getNextEntry()) != null) {
+                if (e.getName().toLowerCase(Locale.ROOT).endsWith("neutron2.exe")) mZipIsNegatron = true;
                 String rel = gamePath(e.getName());
                 if (rel == null || e.isDirectory()) continue;
                 File out = new File(dir, rel);
@@ -1134,15 +1142,19 @@ public class SetupActivity extends Activity {
         return written;
     }
 
-    /** "Program_Executable_Files/omt/level1.omt" -> "omt/level1.omt"; null for anything else. */
+    /** "Program_Executable_Files/omt/level1.omt" -> "omt/level1.omt", ".../alpha.omt" -> "alpha.omt";
+     *  null for anything else. */
     private static String gamePath(String name) {
         String n = name.replace('\\', '/');
         String low = n.toLowerCase(Locale.ROOT);
-        // The game reads its built-in data (text, tables, defaults) from the player's own
-        // Neutron2.exe; the source tree has none of it. Other programs and DLLs aren't needed.
-        if (low.equals("neutron2.exe") || low.endsWith("/neutron2.exe")) return "Neutron2.exe";
-        if (low.endsWith(".exe") || low.endsWith(".dll")) return null;
         String[] parts = n.split("/");
+        String base = parts[parts.length - 1], lowBase = base.toLowerCase(Locale.ROOT);
+        // The game reads its built-in data (text, tables, defaults) from the player's own
+        // Neutron.exe; the source tree has none of it. OMT2.dll is kept with it (the CD install
+        // has it too); other programs and DLLs aren't needed.
+        if (lowBase.equals("neutron.exe")) return "Neutron.exe";
+        if (lowBase.equals("omt2.dll")) return "OMT2.dll";
+        if (low.endsWith(".exe") || low.endsWith(".dll")) return null;
         for (int i = 0; i < parts.length - 1; i++) {
             for (String d : GAME_DIRS) {
                 if (parts[i].equalsIgnoreCase(d)) {
@@ -1152,6 +1164,9 @@ public class SetupActivity extends Activity {
                 }
             }
         }
+        // Boy Genius keeps a few files next to Neutron.exe (alpha.omt, fontsmall.png, green_font.png,
+        // NewGame.tsk).
+        if (lowBase.endsWith(".omt") || lowBase.endsWith(".png") || lowBase.endsWith(".tsk")) return base;
         return null;
     }
 

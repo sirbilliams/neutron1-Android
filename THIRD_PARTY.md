@@ -50,10 +50,10 @@ Copyright (c) 2003 David Eriksson. MIT licence: `assets/licenses/unshield-MIT.tx
 
 ## Not included
 
-- **The game.** No game files, and no data or code bytes from `Neutron2.exe` or its DLLs, are in this
+- **The game.** No game files, and no data or code bytes from `Neutron.exe` or its DLLs, are in this
   repository or the APK. The player installs their own copy from the game's CD image; the
   reconstructed code reads the values it needs from that copy at run time. *Jimmy Neutron* and all
   of the game's content belong to their owners (Nickelodeon / Viacom, THQ).
-- **RAD Game Tools' Granny.** `game/granny/` is our own reimplementation of the few Granny 1.x
-  functions the game calls; it reads the game's `.grn` files, and the player's own `granny.dll` as a
-  data file (it is never loaded or run).
+- **RAD Game Tools' Granny.** Boy Genius doesn't use it. `game/granny/` (our own reimplementation of
+  a few Granny 1.x functions, from the Negatron port this one was seeded from) reads no files of
+  this game.
