@@ -1,4 +1,4 @@
-/*  C3DAICar - see C3DAICar.h. Reconstructed from Neutron.exe 0x40a8a0..N2:0x415de0. */
+/*  C3DAICar - see C3DAICar.h. Reconstructed from Neutron.exe 0x40a8a0..0x40ac80. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DAICar.h"
@@ -25,7 +25,7 @@ C3DAICar::C3DAICar()										// 0x40a8a0
 	m_hold_pos.w = 1.0f;
 	m_held = 0;
 	m_check_stuck = 0;
-	f_1b68 = -1;
+	m_sound = -1;
 }
 
 C3DAICar::~C3DAICar()										// 0x40aa00
@@ -47,8 +47,7 @@ void C3DAICar::AddTouching(CGameObject *other)				// 0x40aad0
 	C3DAI::AddTouching(other);								// 0x40a3c0
 	if (!other->NameContains((char *)"C3DJIMMY") &&			// +0x18
 		!other->NameContains((char *)"C3DJEEP") &&
-		!other->NameContains((char *)"C3DGODDARD") &&
-		!other->NameContains((char *)"C3DROCKETSHIP"))
+		!other->NameContains((char *)"C3DGODDARD"))			// (Boy Genius: not the rocket ship)
 		return;
 	float o[4], p[4];
 	other->v195(o);											// +0x30c
@@ -79,12 +78,21 @@ void C3DAICar::RemoveTouching(CGameObject *other)			// 0x40ac10
 	m_held = 0;
 }
 
-void C3DAICar::v277(void)									// N2:0x415d50
+void C3DAICar::v260(void)									// 0x40ac30
 {
-	PauseAnim(1);												// +0x13c
+	C3DAI::v260();											// 0x409480
+	m_sound = PlayGameSound3DIndex(this, -1, 6, true);		// 0x4589c0
 }
 
-void C3DAICar::v278(void)									// N2:0x415d60
+void C3DAICar::v277(void)									// 0x40ac60
 {
-	PauseAnim(0);
+	C3DAnimated::v277();									// 0x40e770 PauseAnim(1)
+	if (m_sound != -1) StopChannel(m_sound, false);			// 0x47d7a0
+}
+
+void C3DAICar::v278(void)									// 0x40ac80
+{
+	C3DAnimated::v278();									// 0x40e790 PauseAnim(0)
+	if (m_sound != -1)
+		m_sound = PlayGameSound3DIndex(this, -1, 6, true);	// 0x4589c0
 }

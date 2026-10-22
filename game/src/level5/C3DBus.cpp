@@ -3,6 +3,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DBus.h"
+#include "../SaveGame.h"
+#include "../Sound.h"
 #pragma GCC diagnostic pop
 
 using namespace neg;
@@ -21,8 +23,7 @@ C3DBus::C3DBus()											// 0x411060
 	CGameObject::v66(1000.0f);
 	CGameObject::v94(2);
 	CGameObject::v34(0);
-	f_1b6c = -1;
-	CGameObject::v42(0);
+	m_bus_sound = -1;
 	C3DObject::InitPhysics();								// 0x4623d0
 }
 
@@ -31,7 +32,7 @@ C3DBus::~C3DBus()											// 0x4111d0
 }
 
 namespace neg {
-CGameObject *New_C3DBus(void) { return new C3DBus; }		// '3SBU' (0x1b78 bytes)
+CGameObject *New_C3DBus(void) { return new C3DBus; }		// '3SBU' (0x9bc bytes)
 }
 
 void C3DBus::InitObject(void)								// 0x418290
@@ -51,12 +52,35 @@ void C3DBus::ev69(void)										// 0x411220
 	ev58((char *)"STOP", 1);								// +0xe8 looped
 }
 
-void C3DBus::v277(void)										// N2:0x423850
+void C3DBus::v260(void)										// 0x411280
 {
-	PauseAnim(1);												// +0x13c
+	C3DAICar::v260();										// 0x40ac30
+	if (GetTaskState("DINO") < 10)							// 0x45fea0
+	{
+		if (GetTaskState("SCENE") > 0x103)
+			m_bus_sound = PlayGameSound3DIndex(this, -1, 0xe0, true);	// 0x4589c0
+	}
 }
 
-void C3DBus::v278(void)										// N2:0x423860
+void C3DBus::v267(int level)								// 0x4112e0
 {
-	PauseAnim(0);
+	C3DAnimated::v267(level);								// 0x40e340
+	if (GetTaskState("DINO") >= 10 && m_bus_sound != -1)
+	{
+		StopGameSound(m_bus_sound, false);					// 0x458a00
+		m_bus_sound = -1;
+	}
+}
+
+void C3DBus::v277(void)										// 0x411330
+{
+	C3DAICar::v277();										// 0x40ac60
+	if (m_bus_sound != -1) StopChannel(m_bus_sound, false);	// 0x47d7a0
+}
+
+void C3DBus::v278(void)										// 0x411350
+{
+	C3DAICar::v278();										// 0x40ac80
+	if (m_bus_sound != -1)
+		m_bus_sound = PlayGameSound3DIndex(this, -1, 0xe0, true);	// 0x4589c0
 }
