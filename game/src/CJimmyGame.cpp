@@ -453,30 +453,6 @@ void CJimmyGame::CreateTerrainTinted(float r, float g, float b, float a)	// 0x44
 	BuildTerrain(this, TERRAIN_TINTED, r, g, b);
 }
 
-void CJimmyGame::PauseGame(bool pause)										// N2:0x485410
-{
-	Log("Inside PauseGame");
-	if (!pause)
-	{
-		g_5099ab = 0;
-		g_4f641c = 0;
-		CGameType::PauseGame(false);
-		if (g_game_mode != 1) SetGameMode(5);								// N2:0x485360
-		ShowPauseSprite(false);												// g_menu N2:0x40ed30
-		PauseAll(false);													// vtable +0x45c
-	}
-	else if (g_game_mode != 6)
-	{
-		g_5099ab = 1;
-		g_4f641c = 0;
-		g_mode_before_pause = g_game_mode;
-		SetGameMode(6);
-		CGameType::PauseGame(true);
-		ShowPauseSprite(true);
-		PauseAll(true);
-		StopAllChannels();													// 0x47d850
-	}
-}
 
 void CJimmyGame::OnActivate(void)											// N2:0x482a80
 {
