@@ -92,10 +92,8 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_545f10 (*(unsigned char *)&neg::g_n2_data[0x13f10])
 #define g_N2_545f11 (*(char *)&neg::g_n2_data[0x13f11])
 #define g_N2_545f30 (*(int *)&neg::g_n2_data[0x13f30])
-#define g_N2_545f34 (*(char *)&neg::g_n2_data[0x13f34])
 #define g_N2_545f48 (*(int *)&neg::g_n2_data[0x13f48])
 #define g_N2_545f4c (*(int *)&neg::g_n2_data[0x13f4c])
-#define g_N2_545f50 (*(int *)&neg::g_n2_data[0x13f50])
 #define g_N2_545f54 (*(unsigned int *)&neg::g_n2_data[0x13f54])
 #define g_N2_545fd0 (*(CGameObject* *)&neg::g_n2_ptrs[0x4ff4])
 #define g_N2_545fdc (*(int *)&neg::g_n2_data[0x13fdc])
@@ -108,10 +106,7 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_5461cc (*(char *)&neg::g_n2_data[0x141cc])
 #define g_N2_5461cd (*(char *)&neg::g_n2_data[0x141cd])
 #define g_N2_54a400 (*(float *)&neg::g_n2_data[0x18400])
-#define g_N2_54a428 (*(float *)&neg::g_n2_data[0x18428])
-#define g_N2_54a434 (*(float *)&neg::g_n2_data[0x18434])
 #define g_N2_54a438 (*(float *)&neg::g_n2_data[0x18438])
-#define g_N2_54a440 (*(float *)&neg::g_n2_data[0x18440])
 #define g_N2_54a448 (*(float *)&neg::g_n2_data[0x18448])
 #define g_N2_54a450 (*(int *)&neg::g_n2_data[0x18450])
 #define g_N2_54a454 (*(int *)&neg::g_n2_data[0x18454])
@@ -217,8 +212,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_menu_dialog_open (*(bool *)&neg::g_n2_data[0x13dd4])
 #define g_menu_item_sprites ((OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bd])
 #define g_mode_before_pause (*(int *)&neg::g_n2_data[0x95bc])	// initialised in Neutron2.exe: port gets 0
-#define g_phys_objects_on (*(bool *)&neg::g_n2_data[0xeb68])	// initialised in Neutron2.exe: port gets 0
-#define g_phys_on (*(bool *)&neg::g_n2_data[0xeb6b])	// initialised in Neutron2.exe: port gets 0
 #define g_player_hud (*(OMediaElement* *)&neg::g_n2_ptrs[0x611b])
 #define g_power_timers ((float *)&neg::g_n2_data[0x18424])
 #define g_prev_game_mode (*(int *)&neg::g_n2_data[0x95b8])	// initialised in Neutron2.exe: port gets 0

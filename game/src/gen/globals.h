@@ -231,10 +231,12 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f6630 (&neg::g_data[0xa630])		// address only
 #define g_4f6634 (&neg::g_data[0xa634])		// address only
 #define g_4f6638 (&neg::g_data[0xa638])		// address only
-#define g_4f69e4 (*(char *)&neg::g_data[0xa9e4])
+#define g_4f69e4 (*(bool *)&neg::g_data[0xa9e4])
+#define g_phys_objects_on (*(bool *)&neg::g_data[0xa9e4])
 #define g_4f69e5 (*(bool *)&neg::g_data[0xa9e5])
 #define g_phys_terrain_on (*(bool *)&neg::g_data[0xa9e5])
-#define g_4f69e7 (*(char *)&neg::g_data[0xa9e7])
+#define g_4f69e7 (*(bool *)&neg::g_data[0xa9e7])
+#define g_phys_on (*(bool *)&neg::g_data[0xa9e7])
 #define g_4f69e8 (*(int *)&neg::g_data[0xa9e8])
 #define g_terrain_memory (*(int *)&neg::g_data[0xa9e8])
 #define g_4f6b30 (*(int *)&neg::g_data[0xab30])

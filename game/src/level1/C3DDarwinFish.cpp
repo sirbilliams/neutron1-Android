@@ -17,7 +17,7 @@ C3DDarwinFish::C3DDarwinFish()								// 0x416ac0
 	SetName((char *)"C3DDARWINFISH");						// 0x4702d0
 	Log("C3DDarwinFish");
 	f_649 = 0;												// ev69 loads the animations later
-	f_99c = 1;												// a pickup
+	m_is_pickup = 1;												// a pickup
 	C3DDarwinFish::InitObject();							// 0x4173c0 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	C3DAI::ev106(f_a9c, (char *)"STOP");
@@ -30,7 +30,7 @@ C3DDarwinFish::C3DDarwinFish()								// 0x416ac0
 	C3DObject::SetObjectID('3FIS');							// 0x462220
 	f_bd4 = 0;												// no hovering
 	f_c28 = 1;
-	f_998 = 12;												// PIC_NUMBER
+	m_pic_number = 12;												// PIC_NUMBER
 }
 
 C3DDarwinFish::~C3DDarwinFish()								// 0x416c70
@@ -64,28 +64,28 @@ void C3DDarwinFish::ev69(void)								// 0x416d00
 void C3DDarwinFish::AddTouching(CGameObject *other)			// 0x416d90
 {
 	C3DAI::AddTouching(other);								// 0x40a3c0
-	if (!f_c40 || other != g_camera || g_object_states[f_994] != 0) return;
+	if (!f_c40 || other != g_camera || g_object_states[m_pickup_index] != 0) return;
 	OMediaElement::hide(true);								// element +0x58
 	v232();													// +0x3a4
 	// 0x42adc0: 50 points (no difficulty scaling; the pop-up shows the award)
 	g_score += 50;
 	g_score_popup = 50;
 	g_score_popup_time = 1.2f;
-	if (f_998 < 0) return;
+	if (m_pic_number < 0) return;
 	// 0x4061d0: the pickup pop-up (3 s, or queued behind the one showing), counted
 	if (g_4f815c <= 0)
 	{
 		g_4f8158 = -1;
-		g_4f8154 = f_998;
+		g_4f8154 = m_pic_number;
 		g_4f815c = 3.0f;
-		g_4f8160 = (unsigned int)f_994;
+		g_4f8160 = (unsigned int)m_pickup_index;
 	}
-	else if (g_4f8154 != -1) g_4f8158 = f_998;
-	g_pickup_counts[2 * f_998]++;							// 0x4f7db8
-	if (f_998 < 29)											// 0x4038c0(2, pic, 1)
+	else if (g_4f8154 != -1) g_4f8158 = m_pic_number;
+	g_pickup_counts[2 * m_pic_number]++;							// 0x4f7db8
+	if (m_pic_number < 29)											// 0x4038c0(2, pic, 1)
 	{
 		C2DInGameMenu::MenuPage *p = C2DInGameMenu::Page(2);
-		if (p) p->items[f_998].type = 1;
+		if (p) p->items[m_pic_number].type = 1;
 	}
-	g_object_states[f_994] = 1;
+	g_object_states[m_pickup_index] = 1;
 }

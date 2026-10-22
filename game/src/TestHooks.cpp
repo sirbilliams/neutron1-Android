@@ -8,7 +8,9 @@
                                sequence cannot run yet (level1d's logo intro, level5's museum
                                cut scene whose classes do not exist yet).
     NEG_TEST_SEQUENCE=1        With NEG_TEST_PLAY: leave the level as it loads (its start trigger
-                               and story sequence run, as in a new game).                     */
+                               and story sequence run, as in a new game).
+    NEG_TEST_AT=<ObjectTag>    With NEG_TEST_PLAY: Jimmy starts where that object is (to try an
+                               exit, a trigger or an NPC).                                    */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
@@ -43,5 +45,16 @@ void neg::TestPlayHook(const char *level)
 		if (C3DStartPoint *s = dynamic_cast<C3DStartPoint *>(*i)) s->m_trigger_armed = 0;
 	g_gametype->SetCamera(jim);
 	SetGameMode(5);
+	const char *at = getenv("NEG_TEST_AT");
+	if (at && *at)
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (*i && strcasecmp((*i)->m_tag, at) == 0)
+			{
+				float p[4];
+				(*i)->v195(p);
+				jim->v196(p[0], p[1], p[2], p[3]);
+				SDL_Log("NEG_TEST_AT: Jimmy at %s (%.0f, %.0f, %.0f)", at, p[0], p[1], p[2]);
+				break;
+			}
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
 }
