@@ -1,4 +1,5 @@
-/*  C3DGoddard ('3GOD') - Jimmy's robot dog, a Granny-animated C3DAI ("goddbase.grn" and its
+/*  C3DGoddard ('3GOD') - Jimmy's robot dog (TODO(BG): mostly still Negatron's code; InitObject is
+    Neutron.exe's morph model; Negatron's was a Granny-animated C3DAI ("goddbase.grn" and its
     animations). As an AI he follows his target (Jimmy, '3JIM') in state 4 at one of six places
     around it (ev144: behind, beside, in front; ev148 / ev145 move to a free one when a wall is
     in the way), teleports behind him when he is left too far behind, sits and does tricks when

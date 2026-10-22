@@ -432,6 +432,10 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	g_sfx_db_loaded = false;
 	g_active_sound_db = GetDatabase("SoundEffects.omt");	// 0x46a910
 	f_4ef0 = NULL;
+	// Neutron.exe's v260 (0x423610) makes Goddard here, once (Jimmy +0xa1c), and on later
+	// reloads tells him (his element +0x174). port: only the creation is ported so far (TODO(BG):
+	// port 0x423610 as a whole).
+	if (!f_d5c) f_d5c = new C3DGoddard;						// 0x41c810
 	v67(60.0f);												// +0x10c
 	v64(1.265f);											// +0x100
 	f_bec = 0;

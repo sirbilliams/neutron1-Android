@@ -159,8 +159,7 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 {
 	SetName((char *)"C3DGODDARD");
 	Log("C3DGoddard()");
-	f_6d0 = 1;												// Granny
-	f_649 = 0;
+	// (Negatron's Goddard was a Granny model: f_6d0 = 1, f_649 = 0. Boy Genius's is a morph model.)
 	C3DGoddard::InitObject();								// 0x41cd70 (called directly)
 	C3DObject::SetObjectID('3GOD');							// 0x462220
 	m_time = 0;
@@ -448,27 +447,18 @@ void C3DGoddard::InitObject(void)							// 0x41cd70
 {
 	Log("InitObject()");
 	C3DAI::InitObject();									// 0x407ee0
-	InitAnim();												// element +0x110
-	f_649 = 1;
-	InitModel(std::string("goddbase.grn"));					// +0x144
-	CreateAnim((char *)"RUN", (char *)"goddwalk.grn");		// +0xe0 (granny: AddAnimation)
-	CreateAnim((char *)"SIT", (char *)"goddsit.grn");
-	CreateAnim((char *)"WAG", (char *)"goddstop.grn");
-	CreateAnim((char *)"FLY", (char *)"goddfly.grn");
-	CreateAnim((char *)"ROCK", (char *)"goddrocket.grn");
-	CreateAnim((char *)"LOSTWING", (char *)"goddcatchwingrocket.grn");
-	CreateAnim((char *)"FIX", (char *)"goddfixrocket.grn");
-	CreateAnim((char *)"AFTERBURN", (char *)"goddafterburn.grn");
-	CreateAnim((char *)"STOP", (char *)"goddstop.grn");
-	CreateAnim((char *)"CHASE", (char *)"goddchase.grn");
-	CreateAnim((char *)"JUMP", (char *)"goddjump.grn");
-	CreateAnim((char *)"SLIDE", (char *)"goddstopshort.grn");
-	CreateAnim((char *)"PLAY", (char *)"goddplay.grn");
-	CreateAnim((char *)"SNIFF", (char *)"goddsniff.grn");
-	CreateAnim((char *)"WAVE", (char *)"goddwave.grn");
-	CreateAnim((char *)"POINT", (char *)"goddpoint.grn");
-	CreateAnim((char *)"DISH", (char *)"godddish.grn");
-	ev58((char *)"STOP", 1);								// +0xe8
+	InitAnim();												// element +0x108
+	static const char *const anims[][2] = {
+		{ "HIFLY", "godfly.ASE" }, { "HIEAT", "godeat.ASE" }, { "HIRUN", "godrun.ASE" },
+		{ "HISIT", "godsit.ASE" }, { "HISCOOT", "godscooter.ASE" }, { "HIWAG", "godwag.ASE" },
+		{ "HIGROWL", "godgrowl.ASE" }, { "HIROCK", "godrocket.ASE" }, { "HIPOINT", "godpoint.ASE" },
+	};
+	for (unsigned i = 0; i < sizeof(anims) / sizeof(anims[0]); i++)
+		CreateAnim((char *)anims[i][0], (char *)anims[i][1]);	// element +0xd8
+	CreateTexture((char *)"goddard02.png", 0);				// element +0xf0
+	ApplyTexture(f_590, 0);									// element +0xf4
+	ev58((char *)"WAG", 1);									// element +0xe0 (0x4eca68)
+	// (debug log)
 }
 
 void C3DGoddard::AddTouching(CGameObject *other)			// N2:0x43a830
