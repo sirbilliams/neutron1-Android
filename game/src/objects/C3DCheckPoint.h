@@ -1,19 +1,16 @@
-/*  C3DCheckPoint ('3CHK') - a checkpoint (sprites.omt canvas 206): when the camera (Jimmy) first
-    touches it while playing (or, touched in another game mode, as soon as the game is back in
-    mode 5) it becomes his checkpoint: his camera type, "ResetWhenDamaged" and "FallSpeedDamage"
-    are set from it, and the game is autosaved with him standing on it (facing its way, unless
-    the current gadget is 1), then put back where he was. The first time it also sends Goddard
-    ("SendGoddardTo": WAIT, FOLLOW, a patrol point to walk to by path, or one to patrol from) and
-    hides. "AlwaysAutoSave" saves on every touch. "CheckpointNum" is remembered (N2:0x545f38).
-    Reconstructed from Neutron.exe: constructor 0x414190 (factory '3CHK', 0x6f8 bytes),
-    destructor N2:0x426f60 (only resets the vtables, then ~C3DSpriteType; deleting thunks 0x414350 /
-    0x414be0 / 0x414bf0). Vtables 0x495e0c (element, 57 slots: C3DSprite's 55 + 55, 56) /
-    0x495df8 (listener) / 0x4959a8 (game object: 7, 16, 231, 240, 260, 270, 284, 285
-    overridden) / 0x495998 (streamer). Own members 0x668..0x6f0, vtordisp 0x6f0, the streamer
-    at 0x6f4.
-
-    Members are named after their 2002 offset from the object start (element view; the
-    CGameObject-family methods of the original see them 0xc8 lower).                          */
+/*  C3DCheckPoint ('3CHK') - a gate of the school races (sprites.omt canvas 42, size 100; the
+    tags STARTLINE, CHECKn and FINISHLINE are what the code looks for). While it is available
+    ("CheckAvail"; the one named by "Next" takes over when it is passed) it is shown and the
+    scooter (a "C3DJEEP") passing it scores 10; the FINISHLINE counts the laps (m_count_a: the
+    scooter's gate passes, odd = in a lap) and Nick's (m_count_b) and shows both on the race
+    HUD (0x4eefc8: the stopwatch is running). When Nick (state 3, patrolling) has made 6 passes
+    he walks home (NICKWALK0) and Jimmy is put back at PUTNICKHERE; when the scooter has made 6
+    the race is won (SCENE 120/125 -> 130, 145 -> 160), unless Nick was first.
+    Reconstructed from Neutron.exe: constructor 0x414190 (factory '3CHK', 0x660 bytes),
+    destructor 0x414380 (only resets the vtables, then ~C3DSpriteType; deleting thunks 0x414350 /
+    0x414be0 / 0x414bf0). Vtables 0x495e0c (element, 53 slots, C3DSprite's) / 0x495df8 (listener) /
+    0x4959a8 (game object at +0xc8: 7, 16, 241, 259 overridden) / 0x495998 (streamer at +0x65c).
+    Own members 0x5e8..0x658 (Negatron's checkpoint, an autosave, was a different class).     */
 #pragma once
 #include "../C3DSpriteType.h"
 
@@ -21,31 +18,22 @@ class C3DCheckPoint : public C3DSpriteType
 {
 	public:
 	C3DCheckPoint();														// 0x414190
-	virtual ~C3DCheckPoint();												// N2:0x426f60
+	virtual ~C3DCheckPoint();												// 0x414380
 
-	// ---- element-family slots it adds
-	virtual void SendGoddard(void);											// ESLOT 55 N2:0x427340 (+0xdc) send Goddard (SendGoddardTo)
-	virtual void Touched(CGameObject *who);									// ESLOT 56 N2:0x427000 (+0xe0) checked by who (the camera)
+	// ---- not virtual
+	void Enable(void);														// 0x414ae0 available, shown again
+	void Disable(void);														// 0x414b00 not available, hidden
+	static void DisableAll(void);											// 0x414b70 every C3DCheckPoint (ID '3CHK') disabled
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   0x414aa0
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x426fb0 the camera: Touched (now or in game mode 5)
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 N2:0x43d610 collides with the camera only
-	virtual void Process(float dt);											// SLOT 240 N2:0x426fa0 (C3DSpriteType's)
-	virtual void v260(void);												// SLOT 260 N2:0x427470 radius = SpriteSize, unchecked
-	virtual void v270(int prev, int mode);									// SLOT 270 N2:0x427560 game mode 5: a pending touch
-	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x427510
-	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x4274a0
+	virtual void InitObject(void);											// SLOT 7   0x414aa0 "CheckAvail", "Next"
+	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x4144c0 Nick / the scooter passes
+	virtual void Process(float dt);											// SLOT 241 0x414410 the race HUD (FINISHLINE)
+	virtual void v260(void);												// SLOT 259 0x414b20 enabled or not as the property says
 
-	// FIELD 0x668 0x88
-	int			f_668;					// 0x668  (not used)
-	unsigned char m_checked;			// 0x66c  checked once (saved)
-	int			m_always_autosave;		// 0x670  "AlwaysAutoSave" (= 0; saved, as 0 / 1)
-	unsigned char f_674;				// 0x674  1; 0 once checked (not read)
-	char		m_send_goddard_to[100];	// 0x675  "SendGoddardTo" (= "none")
-	int			m_checkpoint_num;		// 0x6dc  "CheckpointNum" (= -1)
-	unsigned char f_6e0;				// 0x6e0  0 (not used)
-	int			m_reset_when_damaged;	// 0x6e4  "ResetWhenDamaged" (= -1: leave Jimmy's)
-	float		m_fall_speed_damage;	// 0x6e8  "FallSpeedDamage" (= -1: leave Jimmy's)
-	int			m_camera_type;			// 0x6ec  "CameraType" (= -1: leave Jimmy's)
+	// ---- data members (object offsets)
+	char				m_next[100];	// 0x5e8  "Next" ("none"): the gate that takes over
+	int					m_check_avail;	// 0x64c  "CheckAvail" (0): available
+	int					m_count_a;		// 0x650  FINISHLINE: gate passes of the scooter (odd = in a lap)
+	int					m_count_b;		// 0x654  FINISHLINE: gate passes of Nick
 };

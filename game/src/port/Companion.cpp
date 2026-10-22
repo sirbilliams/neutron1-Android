@@ -861,7 +861,7 @@ void Build(std::string &o)
 		else if (C3DCheckPoint *c = dynamic_cast<C3DCheckPoint *>(g))
 		{
 			ck_all++;
-			if (c->m_checked) ck_got++;
+			if (!c->m_check_avail) ck_got++;
 			else Point(pts, 'c', g, ObjectIcon(kIconCheckpoint, g), NULL);
 		}
 #if 0	// TODO(BG): C3DHerman is Negatron only

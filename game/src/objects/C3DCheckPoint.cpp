@@ -1,17 +1,19 @@
-/*  C3DCheckPoint - see C3DCheckPoint.h. Reconstructed from Neutron.exe 0x414190..N2:0x427600. */
+/*  C3DCheckPoint - see C3DCheckPoint.h. Reconstructed from Neutron.exe 0x414190..0x414c20. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DCheckPoint.h"
-#include "C3DPatrolPoint.h"
-#include "../C3DJimmy.h"
-#include "../C3DGoddard.h"
-#include "../SaveGame.h"
+#include "../friends/C3DNick.h"
+#include "../C2DInGameMenu.h"
+#include "../Bridge.h"
 #include "../CGameType.h"
 #include "../Game.h"
 #include "../Globals.h"
+#include "../InterfaceElement.h"
+#include "../JimmySlots.h"
+#include "../SaveGame.h"
+#include "../Sound.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
-#include "OMediaStreamOperators.h"
 #include <string.h>
 #include <strings.h>
 
@@ -31,191 +33,211 @@ C3DCheckPoint::C3DCheckPoint()								// 0x414190
 {
 	SetName((char *)"C3DCHECKPOINT");
 	Log("C3DCheckPoint()");
-	C3DCheckPoint::InitObject();							// (called directly, as in the original)
-	SetObjectID('3CHK');									// element slot 48
+	C3DCheckPoint::InitObject();							// 0x414aa0 (called directly)
+	SetObjectID('3CHK');									// element slot 48, 0x462d80
 	strcpy(m_sprite_db, "sprites.omt");
-	m_sprite_index = 206;
-	m_sprite_size = 300;
+	m_sprite_index = 42;									// 0x2a
+	m_sprite_size = 100;									// 0x64
 	v42(0);
 	v40(0);
 	v52(1);
 	v107(1);
 	v34(1);
 	v46(0);
+	strcpy(m_next, "none");
 	f_008 = 1;												// element +0xd0
-	v67((float)m_sprite_size);
-	m_checked = 0;
-	m_always_autosave = 0;
-	strcpy(m_send_goddard_to, "none");
-	m_checkpoint_num = -1;
+	m_check_avail = 0;
+	v67(g_gametype->m_object_id == 'LV2B' ? 400.0f : 350.0f);	// +0x490 of the game type, 0x471240: radius
 	C3DSprite::InitPhysics();								// 0x464210
-	f_6e0 = 0;
-	m_reset_when_damaged = -1;
-	m_fall_speed_damage = -1.0f;
-	m_camera_type = -1;
-	f_674 = 1;
-	// (an empty debug log)
+	m_count_a = 0;
+	m_count_b = 0;
+	// (then a call to the empty 0x472970)
 }
 
-C3DCheckPoint::~C3DCheckPoint() {}							// N2:0x426f60
+C3DCheckPoint::~C3DCheckPoint() {}							// 0x414380
 
 namespace neg {
-CGameObject *New_C3DCheckPoint(void) { return new C3DCheckPoint; }	// '3CHK' (0x6f8 bytes)
+CGameObject *New_C3DCheckPoint(void) { return new C3DCheckPoint; }	// '3CHK' (0x660 bytes)
+}
+
+// --------------------------------------------------------------------------- helpers
+
+void C3DCheckPoint::Enable(void)							// 0x414ae0
+{
+	m_check_avail = 1;
+	force_show();											// (+0x70 != 0: = 1, hide(false))
+}
+
+void C3DCheckPoint::Disable(void)							// 0x414b00
+{
+	m_check_avail = 0;
+	hide(true);
+}
+
+void C3DCheckPoint::DisableAll(void)						// 0x414b70
+{
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (*i && (*i)->m_object_id == '3CHK')				// +0x404
+			static_cast<C3DCheckPoint *>(*i)->Disable();
+}
+
+// Nick sent off along the NICKWALK patrol again (0x414b00-area inline, twice).
+static void NickWalksHome(C3DNick *nick)
+{
+	nick->m_state = 2;
+	nick->ev72(nick->m_anim_run, (char *)"WALK");			// element +0x120
+	strcpy(nick->m_patrol_point, "NICKWALK0");
+	nick->m_dest = NULL;
+	nick->m_speed = 170.0f;
 }
 
 // --------------------------------------------------------------------------- CGameObject family
 
-void C3DCheckPoint::InitObject(void)						// 0x414aa0
+void C3DCheckPoint::InitObject(void)						// 0x414aa0 (no base call, no log)
 {
-	C3DSprite::InitObject();								// 0x464130
-	RegisterProperty("SendGoddardTo", m_send_goddard_to, PROP_ALPHA, 0);
-	RegisterProperty("CheckpointNum", &m_checkpoint_num, PROP_LONG, 0);
-	RegisterProperty("ResetWhenDamaged", &m_reset_when_damaged, PROP_LONG, 0);
-	RegisterProperty("FallSpeedDamage", &m_fall_speed_damage, PROP_FLOAT, 0);
-	RegisterProperty("CameraType", &m_camera_type, PROP_LONG, 0);
-	RegisterProperty("AlwaysAutoSave", &m_always_autosave, PROP_LONG, 0);
+	RegisterProperty("CheckAvail", &m_check_avail, PROP_LONG, 0);
+	RegisterProperty("Next", m_next, PROP_ALPHA, 0);
 }
 
-void C3DCheckPoint::AddTouching(CGameObject *other)			// N2:0x426fb0
+void C3DCheckPoint::v260(void)								// 0x414b20
 {
-	CGameObject::AddTouching(other);						// 0x43cf10
-	if (other != g_camera) return;
-	if (g_game_mode == 5)									// playing
+	C3DSprite::v260();										// 0x441ac0 (C3DSprite's)
+	if (m_check_avail == 0) Disable();
+	else Enable();
+	m_count_b = 0;
+	m_count_a = 0;
+	DisableAll();
+}
+
+void C3DCheckPoint::Process(float dt)						// 0x414410
+{
+	if (!GameIsRunning()) return;							// 0x475ca0
+	C3DSprite::Process(dt);									// 0x463090
+	if (strcasecmp(m_tag, "FINISHLINE") != 0) return;
+	if (g_4eefc8 > 0.0f)									// the stopwatch runs
 	{
-		Touched(other);										// element +0xe0
+		ShowLoadingPicture(true);							// 0x4073b0
+		DrawText(0x212, 0x39, 'MED', "%d", m_count_b / 2);	// 0x468660
+		DrawText(0x212, 0x58, 'MED', "%d", m_count_a / 2);
 		return;
 	}
-	g_checkpoint_pending = 1;								// N2:0x545f3c pending until game mode 5 (v270)
-	g_checkpoint_toucher = other;							// N2:0x545f40
+	ShowLoadingPicture(false);
 }
 
-unsigned char C3DCheckPoint::v231(CGameObject *other)		// N2:0x43d610
+void C3DCheckPoint::AddTouching(CGameObject *other)			// 0x4144c0
 {
-	return g_camera == other;
-}
-
-void C3DCheckPoint::Process(float dt)						// N2:0x426fa0
-{
-	C3DSprite::Process(dt);								// 0x40ff40
-}
-
-void C3DCheckPoint::v260(void)								// N2:0x427470
-{
-	C3DSprite::v260();									// 0x464810
-	v67((float)m_sprite_size);								// +0x10c
-	m_checked = 0;
-	g_checkpoint_num = 0;									// N2:0x545f38
-}
-
-void C3DCheckPoint::v270(int prev, int mode)				// N2:0x427560 (no base call)
-{
-	if (mode == 5 && g_checkpoint_pending && prev != 2)
+	// (debug log "Enter cp Touch")
+	CGameObject::AddTouching(other);						// 0x470a90
+	if (other->NameContains((char *)"C3DNICK"))
 	{
-		Touched(g_checkpoint_toucher);
-		g_checkpoint_pending = 0;
-	}
-}
-
-void C3DCheckPoint::WriteState(OMediaStreamOperators &s)	// N2:0x427510
-{
-	CLocalGameObject::WriteState(s);
-	bool checked = m_checked != 0;
-	s << checked;
-	if (m_always_autosave != 1) m_always_autosave = 0;
-	s << m_always_autosave;
-}
-
-// The checkpoint Jimmy last touched (Negatron kept it in Jimmy +0x4c04).
-static CGameObject *s_last_checkpoint = NULL;
-
-// N2:0x4274a0: Jimmy's checkpoint sends Goddard again.
-void C3DCheckPoint::ReadState(OMediaStreamOperators &s)
-{
-	CLocalGameObject::ReadState(s);
-	bool checked;
-	s >> checked;
-	m_checked = checked;
-	CGameObject *jim = FindObjectByTag("JIM1");
-	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// (JIM1 game object +0x4b44)
-	if (j && s_last_checkpoint == static_cast<CGameObject *>(this)) SendGoddard();	// element +0xdc
-	s >> m_always_autosave;
-}
-
-// --------------------------------------------------------------------------- element family
-
-// N2:0x427000: checked by `who` (the camera). The first time (or every time with AlwaysAutoSave):
-// Jimmy's checkpoint state from ours, then the autosave with `who` on the checkpoint.
-void C3DCheckPoint::Touched(CGameObject *who)
-{
-	// (debug log "Point checked for number %d")
-	if (m_checked && !m_always_autosave) return;
-	CGameObject *jim = FindObjectByTag("JIM1");
-	C3DJimmy *j = jim ? dynamic_cast<C3DJimmy *>(jim) : NULL;	// port: the original writes into any JIM1
-	if (j)
-	{
-		s_last_checkpoint = static_cast<CGameObject *>(this);	// port: Negatron's Jimmy +0x4b44 (TODO(BG): no such member in Neutron.exe's Jimmy)
-		float r[4];
-		jim->v201(r);										// +0x324: his rotation
-		(void)r;											// TODO(BG): Negatron's Jimmy +0x4d80 rotation / +0xc1c camera type
-		float pos[4], rot[4], p[4];
-		who->v195(pos);										// +0x30c: where who is
-		v195(p);
-		who->v196(p[0], p[1], p[2], p[3]);					// +0x310: on the checkpoint
-		who->v201(rot);
-		if (g_cur_gadget != 1)								// N2:0x545d9c
+		C3DNick *nick = dynamic_cast<C3DNick *>(other);
+		if (nick && nick->m_state == 3)						// patrolling
 		{
-			v201(p);
-			who->v202(p[0], p[1], p[2], p[3]);				// +0x328: facing its way
+			if (strcasecmp(m_tag, "FINISHLINE") == 0)
+			{
+				if (GetTaskState("SCENE") > 161) return;
+				// (debug log "N1")
+				if ((m_count_b & 0x80000001) == 1)			// odd
+				{
+					m_count_b++;
+					if (GetTaskState("SCENE") < 130) PlayGameSoundIndex(-1, 0x66, false);	// 0x458980
+					// (debug log "N2  %d")
+					if (m_count_b > 5)
+					{
+						// (debug log "N 3")
+						NickWalksHome(nick);
+						// (debug log "N4")
+						if (m_count_a < 6)					// the scooter has not finished its laps
+						{
+							CGameObject *put = FindObjectByTag("PUTNICKHERE");
+							if (put)
+							{
+								CGameObject *jim = FindObjectByTag("JIM1");
+								if (jim)
+								{
+									JimmyElementSlot94(jim);	// +0x178
+									float p[4];
+									put->v195(p);			// +0x310
+									jim->v196(p[0], p[1], p[2], p[3]);	// +0x314
+									m_count_a = 0;
+									m_count_b = 0;
+									DisableAll();
+								}
+							}
+							const int scene = GetTaskState("SCENE");
+							if (scene == 120) SetTaskState("SCENE", 125);
+							else if (scene == 145) SetTaskState("SCENE", 150);
+						}
+					}
+				}
+			}
+			else if (strcasecmp(m_tag, "STARTLINE") == 0)
+			{
+				C3DCheckPoint *fin = dynamic_cast<C3DCheckPoint *>(FindObjectByTag("FINISHLINE"));
+				if (fin) fin->m_count_b++;
+			}
 		}
-		if (m_reset_when_damaged != -1)
+	}
+	if (!other->NameContains((char *)"C3DJEEP")) return;
+	if (m_check_avail == 0) return;
+	if (strcasecmp(m_tag, "STARTLINE") == 0)
+	{
+		if (g_4eefc8 > 0.0f) g_4eefcc = g_4eefc8;			// the last lap's time
+		C3DCheckPoint *fin = dynamic_cast<C3DCheckPoint *>(FindObjectByTag("FINISHLINE"));
+		if (fin) fin->m_count_a++;
+		g_4eefc8 = 0;										// 0x42ae80: the stopwatch starts again
+	}
+	if (strcasecmp(m_tag, "FINISHLINE") == 0)
+	{
+		if ((m_count_a & 0x80000001) == 1)
 		{
-			// TODO(BG): Negatron's Jimmy +0x4dac
-			// (debug log "MEBTEMP ResetWhenDamaged= %d")
+			PlayGameSoundIndex(-1, 0xa3, false);
+			m_count_a++;
+			if (m_count_a > 5)
+			{
+				Disable();
+				CGameObject *jim = FindObjectByTag("JIM1");
+				if (jim) JimmyElementSlot94(jim);			// +0x178
+				const int nick_passes = m_count_b;
+				m_count_a = 0;
+				m_count_b = 0;
+				if (nick_passes > 5)						// Nick was first
+				{
+					DisableAll();
+					return;
+				}
+				DisableAll();
+				// (debug log "JW0")
+				CGameObject *n = FindObjectByTag("Nick1");
+				if (!n) n = FindObjectByTag("Nick2");
+				if (n)
+				{
+					// (debug log "JW2")
+					CGameObject *put = FindObjectByTag("PUTNICKHERE");
+					if (put)
+					{
+						float p[4];
+						put->v195(p);
+						n->v196(p[0], p[1], p[2], p[3]);
+						if (C3DNick *nick = dynamic_cast<C3DNick *>(n)) NickWalksHome(nick);
+					}
+				}
+				const int scene = GetTaskState("SCENE");
+				if (scene != 120 && scene != 125)
+				{
+					if (scene != 145) return;
+					SetTaskState("SCENE", 160);
+					return;
+				}
+				SetTaskState("SCENE", 130);
+				return;
+			}
 		}
-		if (m_fall_speed_damage != -1.0f)
-		{
-			// (debug logs "MEBTEMP 1 / 2 FallSpeedDamage= %d")
-			// TODO(BG): Negatron's Jimmy +0x4db0
-		}
-		SaveTask("autosave.tsk");							// N2:0x4983f0
-		who->v202(rot[0], rot[1], rot[2], rot[3]);			// back as it was
-		who->v196(pos[0], pos[1], pos[2], pos[3]);
-		// (Negatron's Jimmy +0x4c98 / +0x4c94 = 0: TODO(BG))
-		g_N2_5461cc = 0;
-		if (m_checkpoint_num != -1) g_checkpoint_num = m_checkpoint_num;
 	}
-	if (!m_checked)
-	{
-		SendGoddard();										// element +0xdc
-		f_674 = 0;
-	}
-	m_checked = 1;
-}
-
-// N2:0x427340: SendGoddardTo "WAIT": Goddard waits (state 1); "FOLLOW": follows (4); a patrol point
-// of the path network (PatrolType 1): walks there by path (13), or follows when there is no
-// path; another object: patrols from there (3).
-void C3DCheckPoint::SendGoddard(void)
-{
-	CGameObject *go = FindObjectByTag("C3DGODDARD");
-	C3DGoddard *g = go ? dynamic_cast<C3DGoddard *>(go) : NULL;	// (- 0xc0)
-	if (!g) return;
-	if (strcasecmp(m_send_goddard_to, "none") == 0) return;
-	if (strcasecmp(m_send_goddard_to, "WAIT") == 0)
-	{
-		g->ev73(1);										// element +0x1ac
-		return;
-	}
-	if (strcasecmp(m_send_goddard_to, "FOLLOW") == 0)
-	{
-		g->ev73(4);
-		return;
-	}
-	CGameObject *to = FindObjectByTag(m_send_goddard_to);
-	if (!to) return;
-	// TODO(BG): Negatron sent Goddard along a path when <to> was a PatrolType 1 point; Boy
-	// Genius's patrol points have no type (check this function against Neutron.exe).
-	g->ev73(3);
-	strcpy(g->m_patrol_point, m_send_goddard_to);					// PatrolPoint
-	g->m_dest = NULL;
+	Disable();
+	AddScore(10);											// 0x42adc0
+	PlayGameSoundIndex(-1, 0xae, false);
+	CGameObject *next = FindObjectByTag(m_next);
+	if (next && next->NameContains((char *)"C3DCHECKPOINT"))
+		static_cast<C3DCheckPoint *>(next)->Enable();		// 0x414ae0
 }
