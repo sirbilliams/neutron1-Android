@@ -61,8 +61,10 @@ void CLevel02Game::InitGame(void)											// 0x4513e0
 	}
 	CreateTerrainTinted(r, g, b, a);						// element +0x168
 	ViewportToOrigin();
+	g_layer_clear->set_clear_color(RGBA(0.03f, 0.34f, 0.58f, 0.0f));	// 0x509a38 +0x10c (0x3cfdf3b6, 0x3eae147b, 0x3f147ae1)
+	g_layer_world->set_far_clip(50000.0f);					// 0x509a3c +0xc0
+	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
 	CaptureMouse(true);
-	// (no SetFog here)
 }
 
 // --------------------------------------------------------------------------- CLevel02AGame 'LV2A'
@@ -90,8 +92,8 @@ void CLevel02AGame::InitGame(void)											// 0x450ab0
 	v107(0);												// (twice)
 	CreateTerrainTinted(1.0f, 1.0f, 1.0f, 1.0f);
 	ViewportToOrigin();
-	g_layer_clear->set_clear_color(RGBA(0.1f, 0.1f, 0.1f, 0.0f));	// 2002 +0x10c (inline)
-	SetFog(0.1f, 0.1f, 0.1f, 0.0f, 600.0f, 3300.0f, 3500.0f, true);
+	g_layer_clear->set_clear_color(RGBA(0.1f, 0.1f, 0.1f, 0.0f));	// 0x509a38 +0x10c
+	WorldFog(g_layer_world, RGBA(0.1f, 0.1f, 0.1f, 0.0f), 3500.0f, 600.0f, 3300.0f);	// 0x509a3c, inline (no SetFog)
 	CaptureMouse(true);
 }
 
@@ -146,6 +148,10 @@ void CLevel02BGame::InitGame(void)											// 0x450e30
 	}
 	CreateTerrainTinted(r, g, b, a);
 	ViewportToOrigin();
+	const OMediaFARGBColor c = RGBA(0.03f, 0.34f, 0.58f, 0.0f);
+	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
+	WorldFog(g_layer_world, c, 50000.0f, 20000.0f, 33000.0f);	// 0x509a30 (inline) ...
+	WorldFog(g_layer_world, c, 50000.0f, 20000.0f, 30000.0f);	// ... and 0x509a3c, the same layer: this one stays
 	CaptureMouse(true);
 }
 
