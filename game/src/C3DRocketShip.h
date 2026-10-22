@@ -74,8 +74,3 @@ class C3DRocketShip : public C3DFlyingObject
 	unsigned char		f_1248;			// 0xf90  damaged: pushed down while hit, the sound sputters
 };
 
-namespace neg {
-// port: Negatron's hook for the hurt call, still used by C3DAIOmtObj.cpp (Neutron.exe calls the
-// camera's element slot 104 directly: C3DJimmy::Shock). `flag` is unused.
-void JimmyHurt(CGameObject *jimmy, float energy, int points, float time, unsigned char flag);
-}

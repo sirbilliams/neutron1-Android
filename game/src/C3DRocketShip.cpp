@@ -123,13 +123,6 @@ static void MineSetState(CGameObject *o)
 	NEG_TODO(0x42f310, "C3DMine / C3DRock: +0x62c (from other - 0xc8) = 2");
 }
 
-// port: kept for C3DAIOmtObj.cpp, which still calls Negatron's hook.
-void neg::JimmyHurt(CGameObject *jimmy, float energy, int points, float time, unsigned char flag)
-{
-	(void)flag;
-	if (C3DJimmy *j = jimmy ? dynamic_cast<C3DJimmy *>(jimmy) : NULL) j->Shock(energy, points, time);
-}
-
 // --------------------------------------------------------------------------- construction
 
 C3DRocketShip::C3DRocketShip()								// 0x43d840
