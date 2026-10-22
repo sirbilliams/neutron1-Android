@@ -14,6 +14,8 @@
     NEG_TEST_GOTO=<s>:<tag>[#n][@dx/dz],...  At <s> seconds of game time put Jimmy where the
                                (n-th) object tagged <tag> is (moved by dx, dz; 60 higher), e.g.
                                to try an exit or a phone booth without steering there.
+    NEG_TEST_EXITS=1           Log every CLoadLevel (exit) of the level: target, start point, task gate
+                               (=2: and every object: tag, class ID, position).
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
@@ -21,6 +23,7 @@
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
+#include "levels/CLoadLevel.h"
 #include "objects/C3DStartPoint.h"
 #include "Game.h"
 #include "SaveGame.h"
@@ -67,6 +70,20 @@ void neg::TestPlayHook(const char *level)
 				while (p[1] >= '0' && p[1] <= '9') p++;
 			}
 	}
+	if (const char *ex = getenv("NEG_TEST_EXITS"))
+		if (*ex == '2')										// every object: tag, object id, position
+			for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			{
+				float p[4];
+				(*i)->v195(p);
+				const unsigned int id = (unsigned int)(*i)->m_object_id;
+				SDL_Log("OBJ %s %c%c%c%c (%.0f %.0f %.0f)", (*i)->m_tag, id >> 24, id >> 16, id >> 8, id, p[0], p[1], p[2]);
+			}
+	if (getenv("NEG_TEST_EXITS"))
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (CLoadLevel *e = dynamic_cast<CLoadLevel *>(*i))
+				SDL_Log("EXIT %s -> %s @%s needs %s >= %d exact %d", e->m_tag, e->m_level_name, e->m_start_point,
+						e->m_required_task, e->m_required_level, e->m_exact_level);
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
