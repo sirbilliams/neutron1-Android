@@ -1,4 +1,4 @@
-/*  C3DYokDoor - see C3DYokDoor.h. Reconstructed from Neutron.exe 0x449cb0..N2:0x4801c0. */
+/*  C3DYokDoor - see C3DYokDoor.h. Reconstructed from Neutron.exe 0x449cb0..0x44a440. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DYokDoor.h"
@@ -38,7 +38,7 @@ C3DYokDoor::C3DYokDoor()									// 0x449cb0
 	v52(1);
 	v42(0);
 	v40(0);
-	v94(2);
+	v94(2);													// (BG slot 95)
 	v46(0);
 	MakeShapeUnLit(get_shape());							// 0x477550
 	f_648 = 0;												// animations off
@@ -54,7 +54,6 @@ C3DYokDoor::C3DYokDoor()									// 0x449cb0
 	strcpy(f_990, "objects.omt");							// OmtDatabase
 	f_9f4 = 0;												// OmtIndex
 	f_a10 = -1;
-	f_6d0 = 2;												// no animation system
 	v34(0);
 	// (then a call to the empty 0x472970)
 }
@@ -62,7 +61,7 @@ C3DYokDoor::C3DYokDoor()									// 0x449cb0
 C3DYokDoor::~C3DYokDoor() {}								// 0x449ec0
 
 namespace neg {
-CGameObject *New_C3DYokDoor(void) { return new C3DYokDoor; }		// '3DOR' (0xa1c bytes)
+CGameObject *New_C3DYokDoor(void) { return new C3DYokDoor; }		// '3DOR' (0x7b4 bytes)
 }
 
 // --------------------------------------------------------------------------- slots
@@ -70,7 +69,7 @@ CGameObject *New_C3DYokDoor(void) { return new C3DYokDoor; }		// '3DOR' (0xa1c b
 void C3DYokDoor::InitObject(void)							// 0x449f70
 {
 	Log("InitObject()");
-	C3DAnimated::InitObject();								// N2:0x41b0a0
+	C3DAnimated::InitObject();								// 0x40d3c0
 	RegisterProperty("ItemClosed",  &f_924, PROP_LONG,  0);
 	RegisterProperty("Next",        f_92c,  PROP_ALPHA, 0);
 	RegisterProperty("DoorSpeed",   &f_9fc, PROP_FLOAT, 0);
@@ -101,19 +100,16 @@ void C3DYokDoor::AddTouching(CGameObject *other)			// 0x44a0d0
 	if (other->NameContains((char *)"C3DYOKIAN")) v268(0);	// +0x430
 }
 
-unsigned char C3DYokDoor::v231(CGameObject *other)			// N2:0x47fc20
+void C3DYokDoor::RemoveTouching(CGameObject *other)		// 0x44a100 (shared code)
 {
-	if (g_camera == other) return 1;
-	const int id = other->m_object_id;
-	return id == '3JIM' || id == '3ENE' || id == '3GOD' || id == '3WBL';
+	CGameObject::RemoveTouching(other);						// 0x470b20
 }
 
 // Moving: y = start + OpenAmount * (the fraction of the way open). Stopped open: close after
 // OpenTime.
 void C3DYokDoor::Process(float dt)							// 0x44a110
 {
-	if (g_gametype->IsPaused()) return;						// +0x114
-	C3DAnimated::Process(dt);								// N2:0x41c120
+	C3DAnimated::Process(dt);								// 0x40e050 (no pause check, unlike Negatron's)
 	if (f_9f8 > 0)											// 0x48d914
 	{
 		f_9f8 = f_9f8 - dt;
@@ -122,7 +118,7 @@ void C3DYokDoor::Process(float dt)							// 0x44a110
 			f_9f8 = 0;
 			StopGameSound(f_a10, false);					// 0x458a00
 			f_a10 = -1;
-			PlayGameSound3DNoDoppler(this, -1, std::string("door closing"), false);	// 0x458a40
+			PlayGameSound3DIndex(this, -1, 0x3a, false);		// 0x4589c0
 		}
 		const float t = f_9f8 / f_9fc;
 		float p[4];
@@ -148,14 +144,14 @@ void C3DYokDoor::Process(float dt)							// 0x44a110
 
 void C3DYokDoor::v260(void)									// 0x44a060
 {
-	C3DAnimated::v260();									// N2:0x41cec0
+	C3DAnimated::v260();									// (BG slot 259)
 	m_db = GetDatabase(f_990);								// 0x46a910
 	set_shape(Load3DShape(m_db, f_9f4));					// element +0xac (0x477ba0)
 	MakeShapeUnLit(get_shape());							// element +0xb0, 0x477550
 	ev51();													// element +0xcc
 }
 
-void C3DYokDoor::v268(int state)							// N2:0x47fe70
+void C3DYokDoor::v268(int state)							// 0x44a2a0 (BG slot 266)
 {
 	if (f_9f8 > 0)
 	{
@@ -166,7 +162,7 @@ void C3DYokDoor::v268(int state)							// N2:0x47fe70
 	{
 		if (f_928 == state) return;
 		f_9f8 = f_9fc;
-		if (f_a10 == -1) f_a10 = PlayGameSound3DNoDoppler(this, -1, std::string("Door opening loop"), true);	// 0x458a40
+		if (f_a10 == -1) f_a10 = PlayGameSound3DIndex(this, -1, 0x3b, true);	// 0x4589c0
 	}
 	if (strcasecmp(f_92c, "none") != 0)						// 0x487c20 _stricmp
 	{
@@ -174,48 +170,14 @@ void C3DYokDoor::v268(int state)							// N2:0x47fe70
 		if (next)
 		{
 			if (next->NameContains((char *)"C3DAITRIGGER"))
-				static_cast<C3DAITrigger *>(next)->Trigger(this, 0);				// element +0xe4
+				static_cast<C3DAITrigger *>(next)->Trigger(this, 0);				// BG: the direct call 0x40c300(this)
 			else if (next->NameContains((char *)"C3DCUTSCENECAMERA"))
 			{
-				// ("Calling TC from NextState in %s": compiled-out log)
-				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xe0
+				static_cast<C3DCutSceneCamera *>(next)->TriggerCamera(0);			// element +0xd8 (BG slot 54)
 			}
 		}
 	}
 	if (state == 0) f_928 = 0;
 	else if (state == 1) f_928 = 1;
 	else f_928 = f_928 == 0;
-}
-
-void C3DYokDoor::v270(int a, int msg)						// N2:0x47fff0
-{
-	(void)a;
-	if (msg == 3 && f_a10 != -1) StopGameSound(f_a10, false);	// 0x458a00 (the channel is kept)
-}
-
-void C3DYokDoor::WriteState(OMediaStreamOperators &s)		// N2:0x480010
-{
-	CLocalGameObject::WriteState(s);						// N2:0x48fbb0
-	s << f_a0c;
-	s << f_928;
-	s << f_9f8;
-}
-
-void C3DYokDoor::ReadState(OMediaStreamOperators &s)		// N2:0x480050
-{
-	CLocalGameObject::ReadState(s);							// N2:0x48fbf0
-	s >> f_a0c;
-	s >> f_928;
-	s >> f_9f8;
-	const float t = f_9f8 / f_9fc;
-	float p[4];
-	if (f_928)
-	{
-		v88(p);
-		v197(p[0], t * f_a0c + p[1], p[2]);					// +0x314
-		return;
-	}
-	f_a04 = 0;
-	v88(p);
-	v197(p[0], (1.0f - t) * f_a0c + p[1], p[2]);			// 0x48d924
 }
