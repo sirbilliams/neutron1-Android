@@ -48,14 +48,14 @@ void C3DUltraLord::ev69(void)								// 0x448500
 {
 	if (f_649) return;
 	f_649 = 1;
-	CreateAnim((char *)"WALK", (char *)"ultrawalk.ase");	// +0xe0
-	CreateAnim((char *)"FLEX1", (char *)"ultraflex.ase");
-	CreateAnim((char *)"FLEX2", (char *)"ultraflex2.ase");
-	CreateAnim((char *)"FLEX3", (char *)"ultraflex3.ase");
-	CreateAnim((char *)"TALK", (char *)"ultratalk.ase");
-	CreateAnim((char *)"GIVE", (char *)"ultragive.ase");
-	CreateAnim((char *)"WHISPER", (char *)"ultrawhisper.ase");
-	CreateAnim((char *)"STOP", (char *)"ultrastop.ase");
+	CreateAnim((char *)"HIWALK", (char *)"ultrawalk.ase");	// +0xe0
+	CreateAnim((char *)"HIFLEX1", (char *)"ultraflex.ase");
+	CreateAnim((char *)"HIFLEX2", (char *)"ultraflex2.ase");
+	CreateAnim((char *)"HIFLEX3", (char *)"ultraflex3.ase");
+	CreateAnim((char *)"HITALK", (char *)"ultratalk.ase");
+	CreateAnim((char *)"HIGIVE", (char *)"ultragive.ase");
+	CreateAnim((char *)"HIWHISPER", (char *)"ultrawhisper.ase");
+	CreateAnim((char *)"HISTOP", (char *)"ultrastop.ase");
 	CreateTexture((char *)"ultralord.png", 0);				// +0xfc
 	ev58((char *)"STOP", 1);								// +0xe8
 	ApplyTexture(f_590, 0);									// +0x100

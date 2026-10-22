@@ -152,9 +152,9 @@ void C3DNick::ev69(void)									// 0x433730
 {
 	if (f_649) return;
 	f_649 = 1;
-	CreateAnim((char *)"WALK", (char *)"nickwalk.ase");		// +0xe0
-	CreateAnim((char *)"STOP", (char *)"nickcoin.ase");
-	CreateAnim((char *)"WAIT", (char *)"nickstop.ase");
+	CreateAnim((char *)"HIWALK", (char *)"nickwalk.ase");		// +0xe0
+	CreateAnim((char *)"HISTOP", (char *)"nickcoin.ase");
+	CreateAnim((char *)"HIWAIT", (char *)"nickstop.ase");
 	CreateTexture((char *)"nick.png", 0);					// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	ev58((char *)"STOP", 1);								// +0xe8

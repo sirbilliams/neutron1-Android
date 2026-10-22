@@ -48,7 +48,7 @@ void C3DTesla::InitObject(void)								// 0x445a70
 	RegisterProperty("ItemActive", &f_92c, PROP_LONG, 0);
 	RegisterProperty("SoundActive", &f_938, PROP_LONG, 0);
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"DEFAULT", (char *)"tesla.ase");		// +0xe0
+	CreateAnim((char *)"HIDEFAULT", (char *)"tesla.ase");		// +0xe0
 	CreateTexture((char *)"tesla0000.png", 0);				// +0xfc
 	ev65(0, omblendfc_Src_Alpha, omblendfc_One);			// +0x104: added onto the scene
 	CreateTexture((char *)"tesla0001.png", 1);

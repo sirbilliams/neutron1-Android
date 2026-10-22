@@ -285,7 +285,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 					g_4eefc8 = -1.0f;						// 0x42ae90
 					g_4eefcc = -1.0f;
 					Unlink(GO(f_a30));						// +0x3b0
-					f_a30->ShowAgain();						// its element +0xd8
+					f_a30->HideAgain();						// its element +0xd8 (slot 54: hide)
 					GO(f_a30)->v52(0);
 					GO(f_a30)->v132(0);
 					NEG_TODO(0x467f70, "C3DVehicle slot 89: delete its +0x664 object");	// its element +0x164

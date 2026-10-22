@@ -26,7 +26,7 @@ class C3DJeep : public C3DCar
 	virtual ~C3DJeep();														// 0x421330
 
 	// ---- element-family slots
-	virtual void ShowAgain(void);											// ESLOT 54  0x464f30 + the wheels
+	virtual void ShowAgain(void);											// ESLOT 55  0x464f30 (+0xdc) show, with the wheels (C3DVehicle's)
 	virtual void ev107(float power);										// ESLOT 107 N2:0x4428f0 + power-up 0: top speed x1.4
 	virtual void ev112(void) {}												// ESLOT 112 0x472970 (no joystick)
 	virtual unsigned char ev123(void);										// ESLOT 123 N2:0x442da0 PlayerKeyLeft

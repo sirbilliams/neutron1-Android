@@ -380,7 +380,7 @@ void C3DJimmy::v260(void)									// 0x423610
 	}
 	if (f_a30)
 	{
-		f_a30->ShowAgain();									// element +0xd8
+		f_a30->HideAgain();									// element +0xd8 (slot 54: hide, with the wheels)
 		GO(f_a30)->v52(0);									// +0xd0
 		GO(f_a30)->v46(0);									// +0xb8
 	}

@@ -28,7 +28,7 @@ void C3DSkateBoard::InitObject(void)						// 0x440440
 	Log("InitObject()");
 	C3DAnimated::InitObject();								// N2:0x41b0a0
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"BOARD", (char *)"board.ase");		// +0xe0
+	CreateAnim((char *)"HIBOARD", (char *)"board.ase");		// +0xe0
 	CreateTexture((char *)"skate.png", 0);					// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	v67(1.0f);												// CGameObject +0x10c: radius

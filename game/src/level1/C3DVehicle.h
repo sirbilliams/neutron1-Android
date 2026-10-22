@@ -33,7 +33,7 @@ class C3DVehicle : public C3DAnimated	// TODO(BG): C3DObject in Neutron.exe
 	virtual ~C3DVehicle();													// 0x464e20
 
 	// ---- element-family slots
-	virtual void HideAgain(void);											// ESLOT 55  0x464f00 + the wheels
+	virtual void HideAgain(void);											// ESLOT 54  0x464f00 (+0xd8) hide, with the wheels
 	virtual void ev106(void);												// ESLOT 106 0x421800 shown again, with the wheels (hide(false))
 	virtual void ev107(float power);										// ESLOT 107 N2:0x49d770 power: accel, brake, top speed
 	virtual void ev108(float d);											// ESLOT 108 N2:0x49d7e0 power += d

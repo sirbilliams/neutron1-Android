@@ -39,9 +39,9 @@ void C3DHugh::InitObject(void)								// 0x420570
 	Log("InitObject()");
 	C3DFriends::InitObject();								// 0x41b840
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"TALK", (char *)"hughtalk.ase");		// +0xe0
-	CreateAnim((char *)"WALK", (char *)"hughwalk.ase");
-	CreateAnim((char *)"STOP", (char *)"hughstop.ase");
+	CreateAnim((char *)"HITALK", (char *)"hughtalk.ase");		// +0xe0
+	CreateAnim((char *)"HIWALK", (char *)"hughwalk.ase");
+	CreateAnim((char *)"HISTOP", (char *)"hughstop.ase");
 	CreateTexture((char *)"hugh.png", 0);					// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	ev58((char *)"STOP", 1);								// +0xe8

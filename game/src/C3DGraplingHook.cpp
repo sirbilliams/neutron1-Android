@@ -15,7 +15,7 @@ C3DGraplingHook::C3DGraplingHook()							// 0x415760
 	v107(0);
 	v36(0);
 	v52(0);
-	C3DObject::HideAgain();									// N2:0x49b120
+	hide(true);												// element +0x58 (BG; C3DObject::HideAgain only after a ShowAgain)
 	C3DObject::InitPhysics();								// 0x4623d0
 	// (then a call to the empty 0x472970)
 }
@@ -29,7 +29,7 @@ void C3DGraplingHook::InitObject(void)						// 0x41f060
 	Log("C3DGraplingHook::InitObject()");
 	C3DAnimated::InitObject();								// N2:0x41b0a0
 	InitAnim();												// element +0x110
-	CreateAnim((char *)"ROPE", (char *)"rope01.ase");		// +0xe0
+	CreateAnim((char *)"HIROPE", (char *)"rope01.ase");		// +0xe0
 	CreateTexture((char *)"jimycarl.png", 0);				// +0xf0 (Negatron: "laser.png")
 	ApplyTexture(f_590, 0);									// +0x100
 	v67(10.0f);												// +0x10c

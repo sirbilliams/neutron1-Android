@@ -56,11 +56,11 @@ CGameObject *New_C3DJeep(void) { return new C3DJeep; }		// '3JEE' (0xa94 bytes)
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DJeep::ShowAgain(void)								// 0x464f30
+void C3DJeep::ShowAgain(void)								// 0x464f30: C3DVehicle's element slot 55
 {
-	C3DObject::ShowAgain();									// N2:0x49b100
-	for (int i = 0; i < 6; i++)
-		if (f_960[i]) f_960[i]->ShowAgain();				// +0xd8
+	C3DObject::ShowAgain();
+	for (int i = 0; i < 6; i++)								// the wheels: hide(false)
+		if (f_960[i]) f_960[i]->ShowAgain();
 }
 
 void C3DJeep::ev107(float power)							// N2:0x4428f0

@@ -13,7 +13,7 @@ C3DNeuCar2::C3DNeuCar2()										// N2:0x4594f0
 	Log("InitObject()");									// 0x4328b0 inlined
 	C3DAI::InitObject();									// 0x407ee0
 	InitAnim();												// +0x110
-	CreateAnim((char *)"DEFAULT", (char *)"car.ase");		// +0xe0
+	CreateAnim((char *)"HIDEFAULT", (char *)"car.ase");		// +0xe0
 	CreateTexture((char *)"cargreen.png", 0);					// +0xfc
 	ApplyTexture(f_590, 0);									// +0x100
 	v67(300.0f);											// radius
@@ -37,7 +37,7 @@ void C3DNeuCar2::InitObject(void)							// 0x4328b0
 	Log("InitObject()");
 	C3DAI::InitObject();									// 0x407ee0 (C3DAICar has none)
 	InitAnim();
-	CreateAnim((char *)"DEFAULT", (char *)"car.ase");
+	CreateAnim((char *)"HIDEFAULT", (char *)"car.ase");
 	CreateTexture((char *)"cargreen.png", 0);
 	ApplyTexture(f_590, 0);
 	v67(300.0f);
