@@ -14,7 +14,7 @@ public final class RenderMenu {
     public static void main(String[] a) throws Exception {
         File game = new File(a[0]), out = new File(a[1]);
         out.mkdirs();
-        File save = new File(game, "save");
+        File save = game;                                      // Boy Genius: the saves are in the game folder
         LauncherModel m = new LauncherModel();
         if (a.length > 2 && !a[2].equals("-")) {           // the folder the game saves its pictures in
             String[][] pics = { { "new", "museum.png" }, { "load", "loadsave.png" }, { "saves", "menu.png" },
@@ -26,7 +26,7 @@ public final class RenderMenu {
             }
             m.art = m.pics.get("saves");
         }
-        m.reset(LauncherPages.main(LauncherPages.slots(save)[0], true));
+        m.reset(LauncherPages.main(LauncherPages.newest(LauncherPages.slots(save)), true));
         draw(m, out, "main");
         for (int k = 0; k < m.page().items.size(); k++)          // each option's picture
             if (m.select(k)) draw(m, out, "opt_" + m.page().items.get(k).id);
@@ -50,7 +50,7 @@ public final class RenderMenu {
         m.push(LauncherPages.saves());
         draw(m, out, "saves");
         java.util.List<LauncherPages.Incoming> in = new java.util.ArrayList<>();
-        for (int n : new int[] { 0, 1, 3, 7 }) {                 // an import of the folder's own saves
+        for (int n : new int[] { 1, 2, 3, 7 }) {                 // an import of the folder's own saves
             LauncherPages.Incoming f = new LauncherPages.Incoming();
             f.name = LauncherPages.fileName(n);
             f.info = LauncherPages.slots(save)[n];

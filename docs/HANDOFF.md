@@ -88,12 +88,11 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
 - Done outside the game classes: the importer (ISO and zip) installs BG; the app identity, icon,
   CI and docs; launcher / port strings; the Vox picker (Negatron only) is stubbed out.
 - Open `TODO(BG)` items outside the game classes (grep `TODO(BG)`):
-  - `port/StartMode.*` and the launcher's Continue / slots: BG has no autosave, `StartLevel.txt` or
-    `save\` folder (saves `JimmyGame1..10.tsk`, plus `NewGame.tsk`, `RestartLevel.tsk`).
-  - Level display names: `Neutron.exe` has none; `port/Companion.cpp` shows file names until Bill
-    picks names.
-  - `port/LauncherArt.cpp`: per-level loading pictures (BG's CLoadLevel has no LoadScreen) and the
-    menu background (BG has no `dat\menu.dat`).
+  - Done (agent F): the menus and saves are Boy Genius's (C2DInGameMenu, CTaskList, SaveGame,
+    jimmy/C3DJimmy_menu.cpp); NEG_START continue / load:<n> and the launcher use JimmyGame1..10.tsk
+    in the game folder (port/StartMode.h); level names: the game's own (phone booth keypad).
+  - `port/LauncherArt.cpp`: per-level loading pictures (BG's CLoadLevel has no LoadScreen); the
+    menu background is the PDA main page (screens.omt 0xd9).
   - `port/BillsUi.cpp`: the gadget table is Negatron's numbering.
 - Goal of this round: the first levels playable: `level1d.gam` (the opening) -> `Level1.gam`
   (Retroville) <-> `level1b.gam` (Jimmy's lab, via the phone booth).

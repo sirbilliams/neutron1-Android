@@ -19,6 +19,7 @@
 #include "../CEditor.h"
 #include "../CGameType.h"
 #include "../SaveGame.h"
+#include "../Fade.h"
 #include "../Game.h"
 #include "../Globals.h"
 #include "../Mouse.h"
@@ -131,15 +132,6 @@ short neg::MenuGetItem(short page, short item)							// 0x403950
 {
 	if (item < 0 || item >= C2DInGameMenu::MENU_ITEMS) return 0;
 	return C2DInGameMenu::Page(page)->items[item].type;
-}
-
-void neg::MenuStartFade(int mode, float time)							// 0x403c10
-{
-	g_fade_mode = mode;
-	if (time < 0.1f) time = 0.1f;							// 0x48d920
-	g_fade_time = time;
-	g_fade_left = time;
-	g_hud_on = 0;
 }
 
 int neg::MenuPickupCount(int pic)											// 0x4061b0
@@ -457,8 +449,8 @@ void C2DInGameMenu::v260()												// 0x4072d0
 	}
 	if (g_hud_on)
 	{
-		if (g_fade_mode == 4) { MenuStartFade(5, 1.0f); return; }
-		MenuStartFade(3, 1.0f);
+		if (g_fade_mode == 4) { StartFade(5, 1.0f); return; }
+		StartFade(3, 1.0f);
 	}
 }
 
@@ -555,7 +547,7 @@ void C2DInGameMenu::v311(float dt)
 		{
 			case 0:											// faded out: the level loads, fade in
 				g_editor->m_load_pending = 1;
-				MenuStartFade(1, 1.0f);
+				StartFade(1, 1.0f);
 				DrawText(0x3c, 0x39, 'BIG', "%6.0d", g_score);
 				break;
 			case 1:
@@ -566,7 +558,7 @@ void C2DInGameMenu::v311(float dt)
 			case 2:
 				g_editor->m_load_pending = 1;
 				s_pic_4f8008.Show();							// (never given a picture)
-				MenuStartFade(3, 1.0f);
+				StartFade(3, 1.0f);
 				break;
 			case 3:
 				g_hud_on = 1;

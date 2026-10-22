@@ -4,6 +4,7 @@
 #include "CEditor.h"
 #include "CGameType.h"
 #include "Globals.h"
+#include "C2DInGameMenu.h"
 #include "OMediaViewPort.h"
 
 void neg::StartFade(int type, float time)					// 0x403c10
@@ -17,6 +18,7 @@ void neg::StartFade(int type, float time)					// 0x403c10
 
 void neg::FadeTick(float dt)								// 0x403c50, the parts outside the menu
 {
+	if (g_menu) return;										// port: the menu's own v311 runs the fade (C2DInGameMenu_b.cpp)
 	if (g_fade_off) return;
 	if (g_view_restore)
 	{

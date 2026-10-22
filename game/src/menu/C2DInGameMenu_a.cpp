@@ -354,13 +354,49 @@ C2DInGameMenu::~C2DInGameMenu()
 	for (size_t i = 0; i < sizeof elts / sizeof elts[0]; i++) *elts[i] = NULL;
 	s_gadget_pics[0].elt = NULL;
 	for (int i = 0; i < 44; i++) g_story_lines[i] = NULL;
+	if (g_menu == this) g_menu = NULL;						// port: g_menu (Jimmy's +0xa18 in the original)
 }
 
 // --------------------------------------------------------------------------- slot 8
 
+// port: every element of the menu lets go of its canvas while screens.omt is still open (closing
+// it frees the canvases; the elements are deleted after, and OMT 2.5's element destructor
+// unlocks its canvas - a use-after-free otherwise).
+static void Detach(OMediaCanvasElement *e)			{ if (e) e->set_canvas(NULL); }
+
+static void DetachAll(OMediaCanvasElement *const *own, int n)
+{
+	OMediaCanvasElement *const fixed[] = {
+		g_hud_lives, g_health_bar, g_health_frame, g_gadget_bar_frame, g_gadget_bar, g_hud_4f7c90,
+		g_hud_picture, g_fade_quad, g_box_12, g_box_4f7cfc, g_box_level, g_box_quit, g_box_save,
+		g_box_load, g_box_delete, g_box_yes, g_box_no };
+	for (size_t i = 0; i < sizeof fixed / sizeof fixed[0]; i++) Detach(fixed[i]);
+	for (int i = 0; i < n; i++) Detach(own[i]);
+	for (int i = 0; i < 8; i++) Detach(g_gadget_icons[i]);
+	for (int i = 0; i < 44; i++) Detach(g_story_lines[i]);
+	for (int i = 0; i < 8; i++) Detach(C2DInGameMenu::s_gadget_pics[i].elt);
+	C2DInGameMenu::HudPic *const pics[] = { &C2DInGameMenu::s_msg_arrow, &C2DInGameMenu::s_pic_4f7c98,
+		&C2DInGameMenu::s_pic_4f7cb8, &C2DInGameMenu::s_pic_4f8008, &C2DInGameMenu::s_fade_pic,
+		&C2DInGameMenu::s_loading_pic, &C2DInGameMenu::s_pic_4f8138 };
+	for (size_t i = 0; i < sizeof pics / sizeof pics[0]; i++) Detach(pics[i]->elt);
+	for (int p = 0; p < C2DInGameMenu::MENU_COUNT; p++)
+	{
+		C2DInGameMenu::MenuPage *pg = C2DInGameMenu::Page(p);
+		if (!pg) continue;
+		Detach(pg->background);
+		for (int i = 0; i < C2DInGameMenu::MENU_ITEMS; i++)
+		{
+			Detach(pg->items[i].rollover);
+			Detach(pg->items[i].active);
+		}
+	}
+}
+
 void C2DInGameMenu::UnInitObject()										// 0x402b40
 {
 	CLocalGameObject::UnInitObject();
+	OMediaCanvasElement *const own[] = { f_4e4, f_5b0 };
+	DetachAll(own, 2);										// port: see DetachAll
 	if (f_4b4) UnInitDatabase(f_4b4);						// 0x476080
 	if (f_4b8) UnInitFileStream(f_4b8);						// 0x476290
 	s_db_open = false;										// port (FreeElt)

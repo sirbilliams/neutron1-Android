@@ -233,11 +233,11 @@ public class SetupActivity extends Activity {
             return;
         }
         for (String[] k : PICS) putPicture(k[0], new File(dir, k[1]));
-        // Continue: the autosave's level (its loading picture), else the general loading screen
-        LauncherPages.Slot auto = LauncherPages.slots(saveDir())[0];
-        String gam = auto.gam.toLowerCase(Locale.ROOT);
+        // Continue: the newest save's level (its loading picture), else the general loading screen
+        LauncherPages.Slot auto = LauncherPages.newest(LauncherPages.slots(saveDir()));
+        String gam = auto != null ? auto.gam.toLowerCase(Locale.ROOT) : "";
         if (gam.endsWith(".gam")) gam = gam.substring(0, gam.length() - 4);
-        if (!auto.present || gam.length() == 0 || !putPicture("continue", new File(dir, "level-" + gam + ".png")))
+        if (auto == null || gam.length() == 0 || !putPicture("continue", new File(dir, "level-" + gam + ".png")))
             putPicture("continue", new File(dir, "loading.png"));
         mMenu.art = mMenu.pics.get("saves");                        // the PDA: the bottom screen's fallback
     }
@@ -311,13 +311,15 @@ public class SetupActivity extends Activity {
         return null;
     }
 
+    /** Boy Genius keeps its saves (JimmyGame1..10.tsk) in the game folder itself; the game writes
+     *  slots.txt and levels.txt there too (game/src/port/StartMode.h). */
     private File saveDir() {
         File data = findReadableData();
-        return new File(data != null ? data : getExternalFilesDir(null), "save");
+        return data != null ? data : getExternalFilesDir(null);
     }
 
     private LauncherModel.Page mainPage() {
-        return LauncherPages.main(LauncherPages.slots(saveDir())[0], mTestShown);
+        return LauncherPages.main(LauncherPages.newest(LauncherPages.slots(saveDir())), mTestShown);
     }
 
     private LauncherModel.Page settingsPage() {
@@ -476,7 +478,7 @@ public class SetupActivity extends Activity {
 
     private void back() {
         if (!mMenu.pop()) return;
-        if (mMenu.depth() == 1) mMenu.replace(mainPage());       // the autosave may have changed
+        if (mMenu.depth() == 1) mMenu.replace(mainPage());       // the saves may have changed
     }
 
     // ------------------------------------------------------------------ saves: export / import
@@ -595,9 +597,9 @@ public class SetupActivity extends Activity {
                         String base = e.getName().replace('\\', '/');
                         base = base.substring(base.lastIndexOf('/') + 1);   // never a path: no zip-slip
                         int n = LauncherPages.slotOf(base);
-                        if (n == -1) continue;
+                        if (n < 1) continue;
                         LauncherPages.Incoming f = new LauncherPages.Incoming();
-                        f.name = n >= 0 ? LauncherPages.fileName(n) : base.toLowerCase(Locale.ROOT);
+                        f.name = LauncherPages.fileName(n);
                         f.data = readAll(zip);
                         f.info.number = n;
                         found.add(f);
@@ -611,10 +613,10 @@ public class SetupActivity extends Activity {
                 }
                 int n = display != null ? LauncherPages.slotOf(display) : -1;
                 f.info.number = n;
-                f.name = n >= 0 ? LauncherPages.fileName(n) : n == -2 ? display.toLowerCase(Locale.ROOT) : null;
+                f.name = n >= 1 ? LauncherPages.fileName(n) : null;
                 LauncherPages.readTsk(new java.io.ByteArrayInputStream(f.data), f.info);
-                if (!f.info.present && !new String(f.data, 0, Math.min(9, f.data.length), "ISO-8859-1").startsWith("\bDUMMY")) {     // \b = the length byte 8
-                    toast("That isn't a save file (.tsk) or a .zip of them.");
+                if (!f.info.present) {
+                    toast("That isn't a Boy Genius save (.tsk) or a .zip of them.");
                     return;
                 }
                 found.add(f);
