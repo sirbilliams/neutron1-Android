@@ -5,7 +5,7 @@
 	virtual void MenuMark(void);											// ESLOT 95  0x4299b0 menu +0x470
 	virtual void ThrowBaseball(float x, float y, float z, float w);			// ESLOT 96  0x429a30 the next baseball from v224(x, y, z)
 	virtual void GadgetKeys(void);											// ESLOT 97  0x425870 the PDA / gadget keys
-	virtual unsigned char GrappleSwing(void);								// ESLOT 98  0x429d00 gadget 7: swinging on the rope, the target cursor
+	virtual unsigned char GrappleSwing(float dt);								// ESLOT 98  0x429d00 gadget 7: swinging on the rope, the target cursor
 	virtual void Slot99(void) {}											// ESLOT 99  0x472970 (empty)
 	virtual void EnterWater(void);											// ESLOT 100 0x42aa70 "Calling EnterWater"
 	virtual void LeaveWater(void);											// ESLOT 101 0x42aac0 "Calling LeaveWater"

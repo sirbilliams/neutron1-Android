@@ -28,9 +28,12 @@ static void BubbleStart(C3DBubble *b)			{ b->Start(); }				// 0x410ca0
 static bool BubbleBusy(C3DBubble *b)			{ return b->Busy(); }		// +0x614 floating / +0x616 fading out / +0x615 fading in
 static void BubbleOff(C3DBubble *b)			{ b->FadeInOff(); }			// 0x428060: +0x615 = 0
 
-// An enemy the shrink ray can shrink (CGameObject +0x898 of the enemy: a C3DAI flag of
-// Neutron.exe that our Negatron-shaped C3DAI does not have).
-static bool Shrinkable(CGameObject *o)		{ (void)o; return true; }	// TODO(BG): C3DAI CGameObject +0x898
+// The rope anchors (0x4f8214: x y z w, 16 bytes each); g_4f82cc is the one in use.
+static float *RopeAnchor(void)								{ return (float *)&g_4f8214 + (int)g_4f82cc * 4; }
+
+// An enemy the shrink ray can shrink (CGameObject +0x898 of the enemy = C3DAI m_958, BG +0x958:
+// set by the Darwin fish, the girl-eating plant, Humphrey and the Yokians).
+static bool Shrinkable(CGameObject *o)		{ C3DAI *ai = o ? dynamic_cast<C3DAI *>(o) : NULL; return ai && ai->m_958; }
 
 static void LoadVR(C3DJimmy *j, const char *game)
 {
@@ -472,10 +475,149 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 	f_1e00 = 0;
 }
 
-unsigned char C3DJimmy::GrappleSwing(void)					// 0x429d00
+// Gadget 7 every frame (called first by v243): the rope's sound, then, hooked, the swing: the
+// rope length g_4f82b8 hangs Jimmy from the anchor, pushed by the sway speeds g_4f82bc / g_4f82c0
+// (damped, limited to +-50); the rope strip is stretched from the hand to the anchor and his
+// shadow put on the floor. Unhooked: the target cursor sits where the hook would catch.
+unsigned char C3DJimmy::GrappleSwing(float dt)				// 0x429d00
 {
+	const OMedia3DVector pos0 = Pos(this);
+	const float hand_x = pos0.x, hand_y = pos0.y + 116.0f, hand_z = pos0.z;	// 0x4a3e8c
+	if (KeyFire())											// 0x42a7a0
+	{
+		if (g_4f8210)
+		{
+			if (f_1e04 == -1) f_1e04 = PlayGameSoundIndex(-1, 0x22, true);	// the rope sound
+		}
+		else if (f_1e04 != -1)
+		{
+			StopGameSound(f_1e04, false);
+			f_1e04 = -1;
+		}
+	}
+	else if (g_4f8210 && f_1e04 != -1)
+	{
+		StopGameSound(f_1e04, false);
+		f_1e04 = -1;
+	}
 	if (g_4f0588 != 7) return 0;
-	NEG_TODO(0x429d00, "C3DJimmy slot 98: the grappling hook swing (gadget 7)");
+	if (g_4f82c8 < g_4f82b8) g_4f82b8 -= dt * 950.0f;		// 0x4a3e88: reel the rope in to its limit
+	bool swing = true;
+	if (KeyJumpGadget())									// 0x42a730
+	{
+		if (!g_4f8210) swing = false;
+		else if (!KeyFire())
+		{
+			GrappleRelease();								// element +0x204
+			return 0;
+		}
+	}
+	if (swing && g_4f8210)
+	{
+		const float *a = RopeAnchor();
+		float r[4];
+		v201(r);											// +0x328
+		v203(0, r[1], 0);									// +0x330: upright
+		PlayAnim((char *)"SWING");							// element +0x150
+		float dx = (a[0] - hand_x) + g_4f82bc * dt * 30.0f;	// 0x48d404
+		float dy = a[1] - hand_y;
+		float dz = (a[2] - hand_z) + g_4f82c0 * dt * 30.0f;
+		OMedia3DVector d(dx, dy, dz, 0);
+		const float inv = 1.0f / d.quick_magnitude();
+		d.x = dx * inv * g_4f82b8;							// the rope along the sway: length g_4f82b8
+		d.y = dy * inv * g_4f82b8;
+		d.z = dz * inv * g_4f82b8;
+		const float tx = a[0] - d.x, ty = a[1] - (d.y + 116.0f), tz = a[2] - d.z;	// where he hangs
+		OMedia3DVector p2 = Pos(this);
+		const OMedia3DVector delta(tx - p2.x, ty - p2.y, tz - p2.z, 0);
+		PhysicsMoveAgainstTerrain(static_cast<CGameObject *>(this), &p2, delta, true);	// 0x47b4b0
+		v196(p2.x, p2.y, p2.z, p2.w);						// +0x314
+		const OMedia3DVector v = Vel(this);
+		v176(v.x, 0, v.z);									// +0x2c4: no vertical speed
+		g_4f82c4 += dt;
+		g_4f82bc = (float)((double)g_4f82bc - (double)d.x * dt * 0.17);	// 0x4a3e80: pushed back to the middle
+		g_4f82c0 = (float)((double)g_4f82c0 - (double)d.z * dt * 0.17);
+		if (!(g_4f82c4 < 0.2))								// 0x4a2ad0
+		{
+			if (g_4f82bc > 50.0f) g_4f82bc = 50.0f;			// 0x48d400
+			else if (g_4f82bc < -50.0f) g_4f82bc = -50.0f;	// 0x4a3e78
+			if (g_4f82c0 > 50.0f) g_4f82c0 = 50.0f;
+			else if (g_4f82c0 < -50.0f) g_4f82c0 = -50.0f;
+			const float k = g_4f82b8 < 350.0f ? 0.95f : 0.98f;	// 0x49fae4, 0x4a3e74, 0x4a3e70
+			g_4f82bc *= k;
+			g_4f82c0 *= k;
+			g_4f82c4 -= 0.2f;								// 0x4a3e6c
+		}
+		if (f_b0c)
+		{
+			omt_Angle ax, ay;
+			d.angles(ax, ay);								// 0x48d108
+			CGameObject *rope = static_cast<CGameObject *>(f_b0c);
+			rope->v203((float)ax * kAngleToDeg, (float)ay * kAngleToDeg, 0);	// +0x330: along the rope
+			rope->v196(tx, ty + 116.0f, tz, a[3]);			// +0x314: at the hand
+			if (!g_windowed)
+			{
+				const OMedia3DVector p3 = Pos(this);
+				const OMedia3DVector down(p3.x, p3.y - 2500.0f, p3.z, p3.w);	// 0x4a0ce8
+				if (PhysicsClosestHit(p3, down, false))		// 0x47c6e0: the floor under him
+				{
+					const OMedia3DVector ground = g_phys_ray.end;
+					if (f_a2c)
+					{
+						const OMedia3DVector p5 = Pos(this);
+						static_cast<CGameObject *>(f_a2c)->v197(p5.x, ground.y + 30.0f, p5.z);	// +0x318
+						Show(f_a2c);
+					}
+				}
+				else if (f_a2c) Hide(f_a2c);
+			}
+		}
+	}
+	// the target cursor where the hook would catch
+	const OMedia3DVector p6 = Pos(this);
+	const OMedia3DVector q = v224(0, 2400.0f, 2400.0f);		// +0x384: up and forward
+	if (!PhysicsLineBlocked(p6, q, false))					// 0x47c210
+	{
+		Hide(f_b14);
+		return 0;
+	}
+	const OMedia3DVector hit = g_phys_ray.end;
+	const float ex = hit.x - p6.x, ey = hit.y - p6.y, ez = hit.z - p6.z;
+	if (sqrtf(ex * ex + ey * ey + ez * ez) < 450.0f)		// 0x4a3e68: too near
+	{
+		Hide(f_b14);
+		return 1;
+	}
+	// surfaces the hook cannot hold on (by the chunk id of the polygon's material)
+	bool no_hold = false;
+	if (OMedia3DPolygon *poly = PhysicsHitPolygon())		// 0x695d54
+	{
+		OMedia3DMaterial *mat = poly->get_material();
+		if (!mat) no_hold = true;
+		else
+		{
+			const int id = (int)mat->get_chunk_ID();			// the material's chunk id (0: none)
+			if (id != 0 && ((id > 0x4f && id < 0x5a) || (id > 0xd1 && id < 0xdc) || (id > 0x3b && id < 0x46) || id == -1 || id == 0xaa))
+				no_hold = true;
+		}
+	}
+	if (no_hold)
+	{
+		Hide(f_b14);
+		if ((KeyFire() || KeyPressed(0x0d)) && g_4f82b8 > 250.0f)	// 0x4a3e58
+			g_4f82b8 -= dt * 250.0f;
+		return 1;
+	}
+	if (f_b14)
+	{
+		OMedia3DVector dir(q.x - p6.x, q.y - p6.y, q.z - p6.z, 0);
+		const float inv = 1.0f / dir.quick_magnitude();
+		dir.x *= inv * 100.0f;								// 0x48d96c: just before the hit
+		dir.y *= inv * 100.0f;
+		dir.z *= inv * 100.0f;
+		static_cast<CGameObject *>(f_b14)->v197(hit.x - dir.x, hit.y - dir.y, hit.z - dir.z);	// +0x318
+		Show(f_b14);
+	}
 	return 0;
 }
 
@@ -731,11 +873,80 @@ void C3DJimmy::GoddardHeals(float dt)						// 0x427340
 	if (f_a1c) AddHealth(dt * 0.1f);						// element +0x1cc (0x4a3e60) TODO(BG): check the constant
 }
 
+// Gadget 7, the fire key (every frame, called by v243): not hooked, a ray from Jimmy up and
+// forward (2400 units); where it hits the hook catches: Goddard is put away, the anchor is set,
+// the rope length is the distance less 100, the rope strip is shown (stretched once) and the
+// camera pulls back. Hooked: the rope is reeled in down to 250 while the key is held.
 unsigned char C3DJimmy::GrappleFire(float dt)				// 0x426a70
 {
-	(void)dt;
 	if (g_4f0588 != 7) return 0;
-	NEG_TODO(0x426a70, "C3DJimmy slot 112: the grappling hook fire / reel (gadget 7)");
+	if (!g_4f8210)
+	{
+		if (f_a3c != -1)									// the jet pack's sound
+		{
+			StopGameSound(f_a3c, false);
+			f_a3c = -1;
+		}
+		const OMedia3DVector p = Pos(this);
+		const OMedia3DVector q = v224(0, 2400.0f, 2400.0f);	// +0x384
+		if (PhysicsLineBlocked(p, q, false))				// 0x47c210
+		{
+			if (f_a1c)
+			{
+				Hide(f_a1c);
+				GO(f_a1c)->v52(0);							// +0xd0
+				GO(f_a1c)->v132(0);							// +0x214
+			}
+			float *a = RopeAnchor();
+			a[0] = g_phys_ray.end.x;						// 0x5cfc60: the anchor
+			a[1] = g_phys_ray.end.y;
+			a[2] = g_phys_ray.end.z;
+			a[3] = g_phys_ray.end.w;
+			const float ex = a[0] - p.x, ey = a[1] - p.y, ez = a[2] - p.z;
+			g_4f82b8 = sqrtf(ex * ex + ey * ey + ez * ez) - 100.0f;	// 0x48d96c: the rope length
+			if (g_4f82b4 == 0.0f)							// 0x48d914: the first time
+			{
+				if (f_b0c) f_b0c->f_590->scale(1.0f, 1.0f, g_4f82b8 * (1.0f / 600.0f));	// shape vtable +0x34 (0x4a3e5c)
+				g_4f82b4 = g_4f82b8;
+			}
+			g_4f8210 = 1;
+			f_864 = 1;
+			f_7e8 = 0;
+			if (f_7f8) f_7f8->f_928 = 0;					// the jet pack's burn time (BG +0x6c0)
+			PlayGameSoundIndex(-1, 0x1f, false);
+			if (f_1e04 != -1)
+			{
+				StopGameSound(f_1e04, false);
+				f_1e04 = -1;
+			}
+			if (f_1e04 == -1) f_1e04 = PlayGameSoundIndex(-1, 0x22, true);	// the rope sound
+			g_4f82bc = 0;
+			g_4f82c0 = 0;
+			const OMedia3DVector v = Vel(this);
+			v176(v.x, 100.0f, v.z);							// +0x2c4: a jump up (0x42c80000)
+			g_4f82c4 = 0;
+			g_4f82c8 = (a[1] - p.y) - 200.0f;				// 0x48e5dc: the shortest rope
+			f_7c8.y = 400.0f;								// the camera
+			f_7c8.z = -648.0f;
+			f_854.x = 0.8f;									// 0x3f4ccccd
+			f_854.y = 1.0f;
+			f_854.z = 0.8f;
+			Show(f_b0c);
+		}
+	}
+	else if (g_4f82b8 <= 250.0f)							// 0x4a3e58: reeled in
+	{
+		if (f_1e04 != -1)
+		{
+			StopGameSound(f_1e04, false);
+			f_1e04 = -1;
+		}
+	}
+	else
+	{
+		g_4f82b8 -= dt * 250.0f;
+		if (f_1e04 == -1) f_1e04 = PlayGameSoundIndex(-1, 0x22, true);
+	}
 	return 1;
 }
 
@@ -875,13 +1086,13 @@ void C3DJimmy::GrappleRelease(void)							// 0x429c10
 	if (!g_4f8210) return;
 	g_4f8210 = 0;
 	f_864 = 0;
-	f_854.x = 1.4f;
+	f_854.x = 1.6f;											// 0x3fcccccd
 	f_854.y = 1.0f;
-	f_854.z = 1.4f;
+	f_854.z = 1.6f;
 	f_7c8.set(0, 50.0f, -350.0f);
 	f_7d8.set(0, 130.0f, 100.0f);
-	g_4f82bc *= 0.5f;										// 0x4a3e64 TODO(BG): check
-	g_4f82c0 *= 0.5f;
+	g_4f82bc *= 0.96f;										// 0x4a3e64
+	g_4f82c0 *= 0.96f;
 	v176(0, 0, 0);
 	ev58((char *)"FALL", 1);
 	if (f_1e04 != -1)
