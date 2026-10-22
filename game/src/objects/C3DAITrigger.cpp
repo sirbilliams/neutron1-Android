@@ -188,10 +188,7 @@ static CGameObject *GoddardPointer(CGameObject *goddard)					// C3DGoddard +0x1b
 }
 static void LibbySlot(CGameObject *libby, bool digitize)					// C3DLibby +0x24c / +0x250 (slots 147/148)
 {
-	C3DLibby *l = dynamic_cast<C3DLibby *>(libby);					// port: the original calls the slot of whatever is tagged C3DLIBBY
-	if (!l) return;
-	if (digitize) l->ev147();										// wireframe texture
-	else l->ev148();												// her own texture
+	(void)libby; (void)digitize;	// TODO(BG): Negatron's DIGITIZE / UNDIGITIZE (Boy Genius's Libby has no such slots)
 }
 static void MinisubReset(CGameObject *sub)									// C3DMiniSub +0x5a0, +0x934, +0x938 = 0
 {

@@ -38,7 +38,8 @@ class C3DFriends : public C3DAI
 	// ---- element-family slots
 	virtual void ev113(void);												// ESLOT 113 N2:0x436d90 (a jump to C3DAI's)
 	virtual unsigned char ev144(void) { return 0; }							// ESLOT 144 N2:0x436f80 (0)
-	virtual void ev145(void) {}												// ESLOT 145 0x472970 (empty; Sheen/Libby/Benny: FriendTouchScene, Nick his own)
+	virtual void ev126(void);												// ESLOT 126 0x41bc20 (BG elem 90) state 3 (patrolling)
+	virtual void ev145(void);												// ESLOT 145 0x41b810 (BG elem 96) talked to: 100 points, v261
 	virtual void ev146(int unused) { (void)unused; }						// ESLOT 146 0x4732a0 (empty, one stack argument: type unknown)
 
 	// ---- CGameObject-family overrides
