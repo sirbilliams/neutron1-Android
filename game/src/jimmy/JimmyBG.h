@@ -60,10 +60,8 @@ static inline C3DObject *Elem(CGameObject *o)		{ return o ? dynamic_cast<C3DObje
 
 // Show: `if (e->hide_count) { e->hide_count = 1; e->hide(false); }` (element +0x70 / +0x58);
 // Hide: element +0x58 hide(true).
-template <class T> static inline void Show(T *e)	{ if (e) e->ShowAgain(); }
+template <class T> static inline void Show(T *e)	{ if (e) e->force_show(); }
 template <class T> static inline void Hide(T *e)	{ if (e) e->hide(true); }
-// (the menu's 2D elements are plain canvas elements: the menu's own Show is force_show)
-static inline void Show(OMediaCanvasElement *e)		{ if (e) e->force_show(); }
 
 // 0x42a920: energy (g_4f83d4, 0..100) += d. Not in the VR levels. "Energy out" sound 0x50 when it
 // runs out, the warning 0xb6 (once, g_4f83dc) below 20.

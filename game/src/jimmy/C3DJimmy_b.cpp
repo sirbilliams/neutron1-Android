@@ -12,7 +12,7 @@ static void MenuOpen(C3DJimmy *j)				{ j->ToggleMainMenu(); }			// element +0x1f
 static void MenuActivate(C3DJimmy *j, int p)	{ j->ActivateActiveMenu(p); }		// element +0x1f8 (slot 126)
 static void MenuDeactivate(C3DJimmy *j)		{ j->DeactivateActiveMenu(); }		// element +0x1fc (slot 127)
 
-// The hooks the menu methods call (jimmy/JimmyMenu.h; weak defaults in C3DJimmy_menu.cpp).
+// The hooks the menu methods call (jimmy/JimmyMenu.h).
 namespace neg {
 void JimmyAnimEnded(C3DJimmy *j)				{ j->ev67(); }					// slot 65
 void JimmyStopLoopSound(C3DJimmy *j)			{ j->StepSoundOff(); }			// slot 82
@@ -108,7 +108,7 @@ void C3DJimmy::ActivateGadget(short g)						// 0x428d50
 			{
 				if (f_a1c)
 				{
-					f_a1c->HideAgain();
+					f_a1c->hide(true);
 					f_a1c->v52(0);
 					f_a1c->v132(0);
 				}
@@ -140,7 +140,7 @@ void C3DJimmy::ActivateGadget(short g)						// 0x428d50
 					f_a30->ev106();							// its element +0x174 (0x421800): shown with the wheels
 					GO(f_a30)->v52(1);
 					GO(f_a30)->v132(1);
-					f_a1c->HideAgain();
+					f_a1c->hide(true);
 					f_a1c->v52(0);
 					f_a1c->v132(0);
 					g_4f0588 = 4;
@@ -165,7 +165,7 @@ void C3DJimmy::ActivateGadget(short g)						// 0x428d50
 			Show(MenuShotSprite(f_a18));
 			if (f_a1c)
 			{
-				f_a1c->HideAgain();
+				f_a1c->hide(true);
 				f_a1c->v52(0);
 				f_a1c->v132(0);
 			}
@@ -174,7 +174,7 @@ void C3DJimmy::ActivateGadget(short g)						// 0x428d50
 		case 7:												// the grappling hook
 			if (f_a1c)
 			{
-				f_a1c->HideAgain();
+				f_a1c->hide(true);
 				f_a1c->v52(0);
 				f_a1c->v132(0);
 			}
@@ -233,7 +233,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 				f_a1c->f_1b60 = 0;
 				f_a1c->v136(1);
 				f_a1c->v132(1);
-				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();	// his shadow
+				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->force_show();	// his shadow
 				if (f_a30) GO(f_a30)->v120(0);
 			}
 			if (f_ab0 && f_ab0->f_9f4)
@@ -262,7 +262,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 			MenuGadgetBarHide(f_a18);						// +0x488
 			if (f_a1c && !f_a1c->f_1ba4)					// BG +0x9e8
 			{
-				f_a1c->ShowAgain();
+				f_a1c->force_show();
 				f_a1c->v52(1);
 				f_a1c->v132(1);
 			}
@@ -272,7 +272,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 		case 4:												// Goddard off the scooter
 			if (f_a1c)
 			{
-				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();
+				if (!g_windowed && f_a1c->f_1b50) f_a1c->f_1b50->force_show();
 				if (!f_a1c->v51())							// +0xcc
 				{
 					MenuShowHud(f_a18, false);				// +0x4b4
@@ -282,16 +282,16 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 					float a[4];
 					GO(f_a30)->v201(a);
 					f_a1c->v92(a[0], a[1], a[2]);			// +0x174
-					f_a1c->ShowAgain();
+					f_a1c->force_show();
 					f_a1c->v52(1);
 					f_a1c->v132(1);
 					g_4eefc8 = -1.0f;						// 0x42ae90
 					g_4eefcc = -1.0f;
 					Unlink(GO(f_a30));						// +0x3b0
-					f_a30->HideAgain();						// its element +0xd8 (slot 54: hide)
+					f_a30->HideAgain();						// C3DVehicle slot 54 (+0xd8, 0x464f00): hide with the wheels (not C3DObject's)
 					GO(f_a30)->v52(0);
 					GO(f_a30)->v132(0);
-					NEG_TODO(0x467f70, "C3DVehicle slot 89: delete its +0x664 object");	// its element +0x164
+					f_a30->ev140();									// its element +0x164 (0x467f70: delete the +0x664 object; C3DVehicle::ev140)
 					if (f_a30->f_a78 != -1)					// BG +0x690: its engine
 					{
 						StopGameSound(f_a30->f_a78, false);
@@ -328,10 +328,10 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 			f_84c = 0;
 			if (f_a1c)
 			{
-				f_a1c->ShowAgain();
+				f_a1c->force_show();
 				f_a1c->v52(1);
 				f_a1c->v132(1);
-				if (f_a1c->f_1b50) f_a1c->f_1b50->ShowAgain();
+				if (f_a1c->f_1b50) f_a1c->f_1b50->force_show();
 			}
 			ResetCamera();									// element +0x170
 			Hide(MenuShotSprite(f_a18));					// menu +0x4e4
@@ -339,7 +339,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 		case 7:												// the hook away
 			if (f_a1c && !f_a1c->f_1ba4)
 			{
-				f_a1c->ShowAgain();
+				f_a1c->force_show();
 				f_a1c->v52(1);
 				f_a1c->v132(1);
 			}
@@ -722,7 +722,7 @@ void C3DJimmy::Trail(float dt)								// 0x425490
 
 void C3DJimmy::HurtFlash(float dt)							// 0x4255c0
 {
-	OMedia3DMaterial *mat = f_5d4[0];						// TODO(BG): BG +0x5c0 (C3DAnimated -0x14): the material
+	OMedia3DMaterial *mat = f_5d4[0];						// BG +0x5c0 (C3DAnimated -0x14): the material
 	if (!f_1ded)
 	{
 		if (f_1e60 > 0) f_1e60 -= dt;
@@ -731,7 +731,7 @@ void C3DJimmy::HurtFlash(float dt)							// 0x4255c0
 			// shocked: red flashing for f_1e2c s
 			f_1de8 = dt + f_1de8;
 			double k;
-			if (f_1de8 <= f_1e2c) k = (sin(f_1de8 * 20.0f) + 1.0) * 0.5;	// TODO(BG): 0x492a58 / 0x48e5d0 (+1, * 0.5)
+			if (f_1de8 <= f_1e2c) k = (sin(f_1de8 * 20.0f) + 1.0) * 0.5;	// 0x495324 = 20; 0x492a58 = 1.0 and 0x48e5d0 = 0.5 (doubles)
 			else
 			{
 				k = 1.0;
@@ -741,11 +741,11 @@ void C3DJimmy::HurtFlash(float dt)							// 0x4255c0
 		}
 		if (f_1dec)
 		{
-			// hit: blue / green flashing for 3 s
+			// hit: blue / green flashing for 4 s (0x49d5e8)
 			const double t = dt + f_1de8;
 			f_1de8 = (float)t;
 			double k;
-			if (t <= 3.0) k = (sin(t * 20.0f) + 1.0) * 0.5;	// TODO(BG): 0x49d5e8
+			if (t <= 4.0) k = (sin(t * 20.0f) + 1.0) * 0.5;	// 0x49d5e8 = 4.0
 			else
 			{
 				k = 1.0;
@@ -767,8 +767,8 @@ void C3DJimmy::HurtFlash(float dt)							// 0x4255c0
 		f_1e60 = 0.9f;
 		f_1ded = 0;
 		f_1df0.y = 100.0f;
-		f_1df0.x = f_1df0.x * 300.0f;						// 0x4a3e38 TODO(BG): check
-		f_1df0.z = f_1df0.z * 300.0f;
+		f_1df0.x = f_1df0.x * 7000.0f;						// 0x4a3e38 = 7000.0
+		f_1df0.z = f_1df0.z * 7000.0f;
 		v175(f_1df0.x, f_1df0.y, f_1df0.z, f_1df0.w);		// +0x2c0
 		if (g_camera == static_cast<CGameObject *>(this))
 		{
@@ -870,7 +870,7 @@ void C3DJimmy::Shrunk(CGameObject *o)						// 0x42ac10
 
 void C3DJimmy::GoddardHeals(float dt)						// 0x427340
 {
-	if (f_a1c) AddHealth(dt * 0.1f);						// element +0x1cc (0x4a3e60) TODO(BG): check the constant
+	if (f_a1c) AddHealth(dt * -0.05f);						// element +0x1cc (0x4a3e60 = -0.05)
 }
 
 // Gadget 7, the fire key (every frame, called by v243): not hooked, a ray from Jimmy up and
@@ -980,7 +980,7 @@ void C3DJimmy::PowerGadget(float dt)						// 0x424e80
 		if (g_4f8182) return;
 		if (f_1e1c == 0 && f_1e20 == 7.0f)
 		{
-			if (g_4f83d4 <= 5.0f && !f_9f8) return;			// 0x48d954 TODO(BG): check
+			if (g_4f83d4 <= 2.0f && !f_9f8) return;			// 0x48d954 = 2.0
 			AddEnergy(-2.0f);
 			f_1e1c = 7.0f;
 			ev65(0, 6, 1);					// element +0xfc (BG C3DAnimated slot 63)
@@ -993,7 +993,7 @@ void C3DJimmy::PowerGadget(float dt)						// 0x424e80
 	{
 		const float t = dt + f_1e20;
 		f_1e20 = t;
-		if (f_a18) SetEnergyBar(t * (1.0f / 7.0f) * 100.0f);	// 0x4a3e30 TODO(BG): check
+		if (f_a18) SetEnergyBar(t * (1.0f / 7.0f) * 100.0f);	// 0x4a3e30 = 1/7, 0x48d96c = 100
 		if (f_1e20 >= 7.0f)									// 0x48e5b8
 		{
 			MenuGadgetBarFull(f_a18);						// +0x490

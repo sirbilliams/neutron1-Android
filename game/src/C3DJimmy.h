@@ -26,6 +26,8 @@
     slot numbers for their ev<n> names, see C3DPlayer.h); the comments give the BG slot.
     The PDA menu functions (BG slots 107, 116, 117, 124..127 and the free functions 0x42aff0 /
     0x42b0b0 / 0x42b180) are agent F's, in jimmy/C3DJimmy_menu.{inc,cpp}.
+    Left (no classes yet, level 4 and later): touching a C3DSUB (0x422e60: gets in, the sub's rider
+    +0x740) or a C3DTANK (0x423030: the tank's +0x69c = Jimmy), both in C3DJimmy_a.cpp.
     Members are f_<offset in the original object> (CGameObject-family code sees them at
     offset - 0xc0).                                                                          */
 #pragma once

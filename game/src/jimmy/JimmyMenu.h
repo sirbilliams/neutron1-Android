@@ -1,6 +1,5 @@
 /*  The C3DJimmy slots that the PDA menu methods (jimmy/C3DJimmy_menu.cpp) call but do not own.
-    Weak defaults (a NEG_TODO each) in C3DJimmy_menu.cpp; C3DJimmy's own port defines the real
-    ones (a strong definition replaces the weak one at link time).                          */
+    Defined in jimmy/C3DJimmy_b.cpp (C3DJimmy's own port).                                    */
 #pragma once
 
 class C3DJimmy;

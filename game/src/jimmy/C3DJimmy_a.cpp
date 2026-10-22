@@ -19,11 +19,10 @@ static void FadeOut(int k, float t)
 	g_4ec494 = 0;
 }
 
-// 0x4073b0(0): the blinking HUD sprite (0x4f8120) away.
+// 0x4073b0(0): the HUD picture at 0x4f8120 (hide, release its canvas, delete) away.
 static void HudBlink(bool on)
 {
-	// TODO(BG): the sprite at 0x4f8120 (hidden, its canvas released, deleted; on: made from 0x4f8124)
-	if (on || g_4f8120) NEG_TODO(0x4073b0, "HUD blink sprite on / off");
+	ShowLoadingPicture(on);									// 0x4073b0 (menu/C2DInGameMenu_b.cpp)
 }
 
 // --------------------------------------------------------------------------- touching
@@ -152,7 +151,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 		if (strcasecmp(other->m_tag, "REACTOR") == 0)
 		{
 			f_1e51 = 1;
-			if (g_gametype->m_object_id == 'LV4B') NEG_TODO(0x423244, "CGameType +0x5bc = 1 (LV4B reactor)");
+			if (g_gametype->m_object_id == 'LV4B') static_cast<CJimmyGame *>(g_gametype)->m_reactor_touched = 1;	// 0x423244
 		}
 		return;
 	}
@@ -576,7 +575,7 @@ void C3DJimmy::v278(void)									// 0x425db0
 		g_696004 = GetDatabase(f_a4c);						// 0x46a910
 		if (g_696004) f_a38 = PlayMusic(g_696004, -1, 0, true);	// 0x47d710
 	}
-	if (f_1e08 != -1) f_1e08 = PlayGameSoundIndex(-1, 0x33, true);	// TODO(BG): check the sound ids (the args are not in the decompilation)
+	if (f_1e08 != -1) f_1e08 = PlayGameSoundIndex(-1, 0x33, true);	// 0x425e0b
 	if (f_a48 != -1) f_a48 = PlayGameSound(-1, std::string("not available"), true);	// 0x458b40
 	if (f_1e04 != -1) f_1e04 = PlayGameSoundIndex(-1, 0x22, true);
 	if (f_a40 != -1) f_a40 = PlayGameSoundIndex(-1, 2, true);

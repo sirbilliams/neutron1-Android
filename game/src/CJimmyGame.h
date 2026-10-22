@@ -108,6 +108,7 @@ class CJimmyGame : public CGameType
 	float		m_fog_color[4];			// 0x5e4  r, g, b, a (also the clear colour)
 	// FIELD 0x5f4 1
 	unsigned char m_refog;				// 0x5f4  set by OnActivate: Process calls SetFog again
+	unsigned char m_reactor_touched;	// BG 0x5bc  set by C3DJimmy::Touch on the REACTOR button in LV4B (no reader in CJimmyGame; the level 4 classes)
 	// (0x5f5..0x660 is not used by CJimmyGame)
 	// FIELD 0x660 12
 	float		m_xray_time;			// 0x660  terrain flashing while the x-ray gadget runs (StartGadgetEffect "XRAY")

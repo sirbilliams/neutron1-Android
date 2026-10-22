@@ -152,7 +152,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	{
 		// the rope's material: diffuse (1, 0.3, 0.3, 1) (element +0x5c0, its first material +0x4c)
 		OMedia3DMaterial *m = f_b0c->f_5d4[0];
-		if (m) m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 0.3f, 0.3f));	// TODO(BG): +0x5c0 is our f_5d4 (C3DAnimated -0x14)
+		if (m) m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 0.3f, 0.3f));	// (BG +0x5c0 = our f_5d4, C3DAnimated -0x14)
 	}
 	f_1ddc = 0;
 	f_1de0 = 0;
@@ -183,7 +183,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	f_1e50 = 0;
 	f_1e51 = 0;
 	f_1e58 = 0;
-	f_42c = 1;												// (element 0x4ec = CGameObject +0x42c; TODO(BG): is it our f_42c?)
+	f_42c = 1;												// (element 0x4ec = CGameObject +0x42c: Physics reads it as f_42c)
 	f_1e59 = 0;
 	f_1e5c = 0;
 	f_1e64 = 0;
@@ -240,7 +240,7 @@ void C3DJimmy::InitObject(void)								// 0x422ac0
 	ApplyTexture(f_590, 0);									// element +0xf4 (BG +0x57c: the morph base shape)
 	set_shape(f_590);										// element +0xac
 	set_morph_flags(ommorf_InterpolateVertices | ommorf_InterpolateVNormals);	// element +0xb8 = 3
-	// (element short 0x580 = 0: CGameObject +0x4c0 of Neutron.exe; TODO(BG) - no member in our CGameObject)
+	f_594 = 0;												// (element short 0x580: C3DAnimated's detail HI)
 	ev58((char *)"RUN", 1);									// element +0xe0 (0x4eca64 "RUN")
 	v197(0, 600.0f, 100.0f);								// +0x318
 	OMediaElement::place(0, 600.0f, 100.0f);				// element +0x44..0x4c
@@ -380,7 +380,7 @@ void C3DJimmy::v260(void)									// 0x423610
 	}
 	if (f_a30)
 	{
-		f_a30->HideAgain();									// element +0xd8 (slot 54: hide, with the wheels)
+		f_a30->HideAgain();									// C3DVehicle slot 54 (+0xd8, 0x464f00): hide with the wheels (not C3DObject's)
 		GO(f_a30)->v52(0);									// +0xd0
 		GO(f_a30)->v46(0);									// +0xb8
 	}

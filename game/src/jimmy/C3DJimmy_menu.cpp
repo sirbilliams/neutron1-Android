@@ -27,16 +27,6 @@
 
 using namespace neg;
 
-// --------------------------------------------------------------------------- hooks (weak)
-
-#define WEAK __attribute__((weak))
-WEAK void neg::JimmyAnimEnded(C3DJimmy *j)			{ (void)j; NEG_TODO(0x43a900, "C3DJimmy slot 65 (AnimEnded)"); }
-WEAK void neg::JimmyStopLoopSound(C3DJimmy *j)		{ (void)j; NEG_TODO(0x429a00, "C3DJimmy slot 82 (stop sound +0xa44)"); }
-WEAK void neg::JimmySelectGadget(C3DJimmy *j, short g)	{ (void)j; (void)g; NEG_TODO(0x428d50, "C3DJimmy slot 93 (select gadget)"); }
-WEAK void neg::JimmyLeaveMenu(C3DJimmy *j)			{ (void)j; NEG_TODO(0x427ff0, "C3DJimmy slot 94"); }
-WEAK short neg::JimmyMove7e8(C3DJimmy *j)			{ (void)j; return 0; }
-WEAK void neg::JimmyHideA10(C3DJimmy *j)			{ (void)j; }
-
 // --------------------------------------------------------------------------- helpers
 
 static C2DInGameMenu *Menu(void)		{ return g_menu; }	// the original: this +0xa18

@@ -342,6 +342,7 @@ void CJimmyGame::InitGame(void)												// 0x44d3d0
 {
 	Log("InitGame()");
 	f_564 = 0;																// +0x550
+	m_reactor_touched = 0;												// port: BG's InitGame does not touch 0x5bc (the allocator zeroes it?); read only by the level 4 classes
 	CGameType::InitGame();
 	neg::ClearTexScrolls();													// 0x45f4c0
 	g_gravity.x = 0.0f;														// 0x5cfc00 (Physics.cpp)
@@ -401,8 +402,11 @@ static void BuildTerrain(CJimmyGame *game, TerrainMode mode, float r, float g, f
 		const bool nc = NameChar(name, 0) == 'n' && NameChar(name, 1) == 'c';	// "nc...": no collision
 		if (mode == TERRAIN_LIT)
 		{
-			if (nc) MakeShapeUnLit(shape);
-			else t->InitPhysics();
+			if (!nc)
+			{
+				t->InitPhysics();											// element +0x2c
+				MakeShapeUnLit(shape);										// 0x477550
+			}
 		}
 		else
 		{
@@ -411,35 +415,14 @@ static void BuildTerrain(CJimmyGame *game, TerrainMode mode, float r, float g, f
 		}
 		if (!g_windowed) t->ev51();											// element +0xcc (0x509a13)
 		else if (!g_5099ac) MakeShapeUnLit(shape);
-		if (NameChar(name, 0) == 'i' && NameChar(name, 1) == 'k') t->HideAgain();	// "ik...": element +0xdc
 		omt_PolygonList *polys = shape->get_polygons();
 		for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); p++)
 		{
-			game->SetupTextureScroll(&*p);									// element +0x170
+			game->SetupTextureScroll(&*p);									// element +0x160
 			OMedia3DMaterial *m = (*p).get_material();
-			if (mode == TERRAIN_TINTED)
-			{
-				if (!m) continue;
-				SetDiffuseRGB(m, r, g, b);
-				if (nc && NameChar(name, 2) == '3' && !g_windowed) m->set_flags(m->get_flags() | ommatf_SecondPass);	// "nc3"
-				continue;
-			}
-			if (mode == TERRAIN_LIT && !m) continue;						// (the unlit builder does not test m)
-			// "nc1": additive; "nc2": additive, second pass. Windowed, they are hidden instead.
-			if (nc && NameChar(name, 2) == '1')
-			{
-				if (!g_windowed) m->set_blend(omblendfc_Src_Alpha, omblendfc_One);
-				else t->HideAgain();
-			}
-			if (nc && NameChar(name, 2) == '2')
-			{
-				if (!g_windowed)
-				{
-					m->set_blend(omblendfc_Src_Alpha, omblendfc_One);
-					m->set_flags(m->get_flags() | ommatf_SecondPass);
-				}
-				else t->HideAgain();
-			}
+			if (!m) continue;
+			if (mode == TERRAIN_TINTED) SetDiffuseRGB(m, r, g, b);			// (+0x4c..+0x54; alpha kept)
+			if (nc) m->set_flags(m->get_flags() | ommatf_SecondPass);		// "nc...": drawn in the second pass
 		}
 	}
 	game->SetFogColor();													// element +0xb0
