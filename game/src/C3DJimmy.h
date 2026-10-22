@@ -40,6 +40,8 @@ class C3DShadow;
 class C3DTargetCursor;
 class C3DPointCursor;
 class C3DGraplingHook;
+class C3DBubble;
+class C3DBaseball;
 class C3DRocketShip;
 class C3DJeep;
 
@@ -56,7 +58,7 @@ class C3DJimmy : public C3DPlayer
 	// ---- data members (object offsets). Names say what is known.
 	int					f_9fc;			// 0x9fc  0
 	C3DAnimated			*f_a10;			// 0xa10  C3DShrinkRay: the ray's effect (element; shown while firing)
-	C3DObject			*f_a14;			// 0xa14  C3DBubble (element; +0x614 rising, +0x615 on, +0x616 popping)
+	C3DBubble			*f_a14;			// 0xa14  the bubble (element)
 	C2DInGameMenu		*f_a18;			// 0xa18  the PDA menu (also g_menu)
 	short				f_a0c;			// 0xa0c  0
 	C3DGoddard			*f_a1c;			// 0xa1c  Goddard (made by PostLoad; element)
@@ -74,7 +76,7 @@ class C3DJimmy : public C3DPlayer
 	int					f_a48;			// 0xa48  sound channel (-1): "not available"
 	char				f_a4c[100];		// 0xa4c  "none": the music database of the start point
 	C3DRocketShip		*f_ab0;			// 0xab0  the rocket ship (gadget 1; element)
-	C3DObject			*f_ab4[20];		// 0xab4  C3DBaseball pool (elements)
+	C3DBaseball			*f_ab4[20];		// 0xab4  the baseball pool (elements)
 	short				f_b04;			// 0xb04  next baseball (0..19)
 	int					f_b08;			// 0xb08  0
 	C3DGraplingHook		*f_b0c;			// 0xb0c  the grappling hook's rope (element)

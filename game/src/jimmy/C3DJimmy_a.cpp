@@ -316,7 +316,7 @@ void C3DJimmy::v243(float dt)								// 0x426030
 	if (g_4f8198) return;									// 0x407060: paused
 	if (!GameIsRunning() || !g_camera || g_4f8430 || f_1ded) return;
 	C3DPlayer::v243(dt);									// 0x438a60
-	if (GrappleSwing()) return;								// element +0x188
+	if (GrappleSwing(dt)) return;								// element +0x188
 	if (!v133())
 	{
 		// in the air: the jet pack starts by itself when falling fast (with it in the menu)
@@ -530,7 +530,7 @@ void C3DJimmy::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	/
 		const float sz = g_4f82c0 * g_4f82c0, sx = g_4f82bc * g_4f82bc;
 		g_4f82bc = 0;
 		g_4f82c0 = 0;
-		if (sqrtf(sx + sz) > 6.0f)							// 0x49d5b4
+		if (sqrtf(sx + sz) > 60.0f)							// 0x49d5b4
 		{
 			GrappleRelease();								// element +0x204
 			f_1e25 = 1;

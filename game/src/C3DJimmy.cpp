@@ -73,7 +73,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	f_b18 = new CTaskList;									// 0x45f790 (0x4b8 bytes)
 	f_a10 = dynamic_cast<C3DAnimated *>(New_C3DShrinkRay());	// 0x43fe20 (0x6d0 bytes)
 	Hide(f_a10);
-	f_a14 = Elem(New_C3DBubble());							// 0x410840 (0x620 bytes)
+	f_a14 = dynamic_cast<C3DBubble *>(New_C3DBubble());							// 0x410840 (0x620 bytes)
 	Hide(f_a14);
 	f_a18 = new C2DInGameMenu;								// 0x401430 (0x51c bytes)
 	g_menu = f_a18;											// port: the menu is also reached through g_menu
@@ -102,7 +102,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	Hide(pc);
 	for (int i = 0; i < 20; i++)
 	{
-		f_ab4[i] = Elem(New_C3DBaseball());					// 0x40fc50 (0x61c bytes)
+		f_ab4[i] = dynamic_cast<C3DBaseball *>(New_C3DBaseball());					// 0x40fc50 (0x61c bytes)
 		if (f_ab4[i])
 		{
 			Hide(f_ab4[i]);
