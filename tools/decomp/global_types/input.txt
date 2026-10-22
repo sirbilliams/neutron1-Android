@@ -1,0 +1,26 @@
+# The input module (CInput 0x478200, FindDevice 0x4783c0, the joystick poll 0x478530).
+# 0x509a78 (std::string, the device name FindDevice skips) is a real C++ object: Game.h.
+# 0x509aa0 and 0x509ab0 are OMedia3DVectors (x, y, z, w): their constructors (static initialiser
+# N2:0x4b3240) zero only w (0x509aac / 0x509abc). Kept as separate floats: menu part b reads 0x509aa0.
+0x509a88 array unsigned char g_joy_prev_buttons     # [20] buttons of the previous poll
+0x509aa0 val float g_joy_x                          # axis X  (element axis_type 1)
+0x509aa4 val float g_joy_y                          # axis Y  (2; up is +1, OMT negates DirectInput's Y)
+0x509aa8 val float g_joy_z                          # axis Z  (3)
+0x509ab0 val float g_joy_rx                         # axis rX (4)
+0x509ab4 val float g_joy_ry                         # axis rY (5)
+0x509ab8 val float g_joy_rz                         # axis rZ (6)
+0x509ac0 val float g_joy_pov                        # POV angle in degrees, -1 centred
+0x509ac4 val unsigned char g_joy_button0            # g_joy_buttons[20] starts here (0..19)
+0x509ac5 val unsigned char g_joy_button1
+0x509ac6 val unsigned char g_joy_button2
+0x509ac7 val unsigned char g_joy_button3
+0x509ac8 val unsigned char g_joy_button4
+0x509acc val unsigned char g_joy_button8
+0x509acd val unsigned char g_joy_button9
+0x509ad8 val unsigned char g_joy_any_button         # a button was down in the last poll
+0x509adc ptr OMediaHumanInterfaceDevice* g_joy_device   # the locked device (FindDevice)
+0x509ae4 val short g_joystick_count                 # joysticks/wheels FindDevice went past
+0x509ae8 ptr omt_HIDElementList* g_joy_elements     # its element list (lock())
+0x509aed val unsigned char g_joy_debug              # on-screen element display (never set)
+0x509aee val short g_joy_debug_mode                 # 2 hides the buttons, 3 everything else
+# unresolved (Neutron2 address): N2:0x56b088 val int g_joy_frames                       # polls so far (buttons cleared for the first 30)

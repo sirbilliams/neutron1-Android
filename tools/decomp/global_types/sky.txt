@@ -1,0 +1,5 @@
+# C3DSky (game/src/C3DSky.cpp): the sky database, one at a time
+# address kind type [name]      kinds: ptr (pointer slot), ptrarray, val (value in g_data), array
+0x4fc6b0 ptr OMediaDataBase* g_sky_db            # opened by C3DSky ev56, closed by ev57 (UnInitObject)
+0x4fc6b4 ptr OMediaFileStream* g_sky_stream      # its file stream
+0x4fc6b8 val bool g_sky_alt                      # C3DSky ev58's alt flag: "skyNalt" textures, and CGameType's "fogcoloralt"

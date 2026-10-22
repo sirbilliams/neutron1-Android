@@ -1,0 +1,64 @@
+# C2DInGameMenu part a (constructor N2:0x401380 / destructor 0x4029c0)
+# --- sprites (OMediaCanvasElementWrapper, 0xd8 bytes) created by the constructor, deleted by the destructor
+0x4f80fc ptr OMediaCanvasElementWrapper*
+0x4f7cb0 ptr OMediaCanvasElementWrapper*
+0x4f8028 ptr OMediaCanvasElementWrapper*
+0x4f7cb0 ptr OMediaCanvasElementWrapper*
+0x4f8028 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5444d0 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5444d4 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544744 ptr OMediaCanvasElementWrapper*
+0x4f7db0 ptr OMediaCanvasElementWrapper*
+0x4f7ef0 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545848 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544904 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545c7c ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5445dc ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545a60 ptr OMediaCanvasElementWrapper*      # on the top 2D layer; used by the score display N2:0x410600
+# unresolved (Neutron2 address): N2:0x5446ec ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5444bc ptr OMediaCanvasElementWrapper*      # top 2D layer, score display
+# unresolved (Neutron2 address): N2:0x5444c4 ptr OMediaCanvasElementWrapper*      # top 2D layer, score display
+# unresolved (Neutron2 address): N2:0x545850 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545a68 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544748 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5448f0 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5448f4 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x5448fc ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x54472c ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544730 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544734 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544738 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x54473c ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x544740 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545844 ptr OMediaCanvasElementWrapper*
+# unresolved (Neutron2 address): N2:0x545a64 ptr OMediaCanvasElementWrapper*
+# 14 sprites paired with the 14 static elements g_elt_544908[] (same index); g_menu_cur_item picks one
+# unresolved (Neutron2 address): N2:0x5446f4 ptrarray OMediaCanvasElementWrapper* g_menu_item_sprites
+# unresolved (Neutron2 address): N2:0x545d9c val int g_menu_cur_item
+# deleted by the destructor but never created anywhere in the exe (always NULL)
+0x4f8040 ptr OMediaCanvasElementWrapper*
+0x4f7ea4 ptr OMediaCanvasElementWrapper*
+0x4f7ea0 ptr OMediaCanvasElementWrapper*
+0x4f7cd0 ptr OMediaCanvasElementWrapper*
+0x4f7eec ptr OMediaCanvasElementWrapper*
+# created by a part-b/c slot (ParseBackground area), deleted by the destructor
+0x4f8150 ptr OMediaCanvasElementWrapper*
+# the "HelpMenu" interface element (g_interface.Find right after Create)
+# unresolved (Neutron2 address): N2:0x5444cc ptr InterfaceElt* g_help_menu_elt
+# strings
+# unresolved (Neutron2 address): N2:0x545e7c array char
+0x4f81a8 array char
+# unresolved (Neutron2 address): N2:0x545de4 array char
+# key bindings read from dat\keys.txt (N2:0x465bc0): 6 key codes each (records 0x28 bytes apart)
+# unresolved (Neutron2 address): N2:0x545fec array int g_key_speed
+# unresolved (Neutron2 address): N2:0x546014 array int g_key_cutscene_bypass
+# unresolved (Neutron2 address): N2:0x54603c array int g_key_climb_down
+# unresolved (Neutron2 address): N2:0x546064 array int g_key_action
+# unresolved (Neutron2 address): N2:0x54608c array int g_key_deactivate_item
+# unresolved (Neutron2 address): N2:0x5460b4 array int g_key_turnaround
+# unresolved (Neutron2 address): N2:0x5460dc array int g_key_turn_left
+# unresolved (Neutron2 address): N2:0x546104 array int g_key_jump
+# unresolved (Neutron2 address): N2:0x54612c array int g_key_back
+# unresolved (Neutron2 address): N2:0x546154 array int g_key_go
+# unresolved (Neutron2 address): N2:0x54617c array int g_key_turn_right
+# unresolved (Neutron2 address): N2:0x5461a4 array int g_key_brake
