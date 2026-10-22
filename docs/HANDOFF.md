@@ -81,6 +81,45 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   (data macros, which don't compile until resolved); `retarget.tsv` lists every unmapped or
   not-identical match (`check func~0.80` = the BG function is only 80% similar: port the differences).
 
+## Status (Oct 22, end of session 1) - READ THIS FIRST
+
+- **Playable on desktop, first build on the Thor boots** (main = this commit; CI builds the APK):
+  new game -> THQ splash -> level1d (Yokian fleet intro, King Goobot) -> "MEANWHILE" -> level1b (lab:
+  Carl, Goddard, shrink ray, "practice?" box) -> Level1 (Neighborhood: Carl's talks, neutrons/score,
+  red neutrons, Nick's call to SCENE 100) -> front door -> level1c (Jimmy's house). Jimmy animates
+  (BG names animations "HI"/"LOW" + name). PDA menu (Esc/Start), phone booth map, saves
+  JimmyGame1..10.tsk, launcher Continue/Load on them. Bill's Thor: boots and plays the intro;
+  "getting better, not quite there" (his screenshot: scooter-with-Goddard shown in the lab, now
+  hidden but unverified; a black ball on the floor, unidentified).
+- **How the port was made:** the Negatron source retargeted with tools/decomp/addrmap.py +
+  retarget.py, then class by class against Neutron.exe. Unported Negatron code still exists:
+  grep `N2:` / `g_N2_` / `TODO(BG)` / `n2_ev`; `/home/claude/decomp1/retarget.tsv` lists every
+  address that wasn't an exact match (`check func~<1`). gen/n2globals.h holds zero-filled stand-ins
+  for unresolved Negatron globals.
+- **Ported to Neutron.exe:** CGameObject (BG slot numbers; Negatron-only marked N2SLOT),
+  CLocalGameObject names (offsets still Negatron's), C3DAnimated, CGameType, CJimmyGame, CEditor
+  (splash.omt, LoadGame, LoadLevelNow), CViewPort, CLoadLevel, fades, C2DInGameMenu + CMainMenu +
+  saves + CTaskList, C3DPlayer, C3DJimmy (+ jimmy/C3DJimmy_menu.cpp), both cut-scene cameras, the
+  Yokians, lab and Level1 object classes (agents C/D lists in git log).
+- **Open (next session):**
+  - gen CGameObject::v197 (slot 198, 0x472330) drops z: ~30 callers (shadows, rocket, friends).
+  - C3DGoddard is still Negatron logic (BG 0x41c810.., decompiled notes were in scratch).
+  - C3DBubble, C3DBaseball, grappling hook swing/fire, merry-go-round / SUV slot 94.
+  - The lab's black ball (Bill's screenshot); verify the scooter stays hidden after the intro.
+  - C3DObject; level game types sweep (VR03-VR08 missing); the .ase loader for the model viewer.
+  - Exit-time use-after-free in C2DInGameMenu's destructor; OMT shape reader new[]/delete.
+  - APK is signed with a one-off key until Bill adds NEG_KEYSTORE_B64 / NEG_KEYSTORE_PASSWORD to
+    this repo's secrets (same values as neutron2-android).
+- **Debugging on the device:** omt-log.txt (launcher: Y on the main menu -> Test -> Share log) now
+  carries a crash backtrace (library+offset; symbolise with llvm-addr2line on the APK's
+  libnegatron.so) and the first frames' times. Android's allocator aborts on use-after-free that
+  glibc tolerates: run an ASan desktop build (`-fsanitize=address,undefined`,
+  ASAN_OPTIONS=detect_leaks=0:alloc_dealloc_mismatch=0) before shipping. The shared Xvfb :99 can
+  steal focus: test on a private display.
+- **Agent setup that worked:** docs/agent-brief.md; worktrees /home/claude/wt1/<x>, game copies
+  /home/claude/gamefiles/bg-<x>; 2 CPUs / 7 GB: `make -j2`, at most 3 agents building. Decomp
+  inputs backed up in the private negatron-gamefiles repo (decomp/bg-decomp-inputs.tar.gz).
+
 ## Status (Oct 22, start of the port)
 
 - `game/src` is the Negatron reconstruction with addresses retargeted to `Neutron.exe`: Negatron's
