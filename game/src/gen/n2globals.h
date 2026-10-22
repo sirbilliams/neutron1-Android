@@ -19,14 +19,11 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_5324f8 (*(int *)&neg::g_n2_data[0x4f8])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_532508 (*(float *)&neg::g_n2_data[0x508])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_537634 (*(float *)&neg::g_n2_data[0x5634])	// initialised in Neutron2.exe: port gets 0
-#define g_N2_537638 (*(unsigned int *)&neg::g_n2_data[0x5638])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53b5b0 (*(int *)&neg::g_n2_data[0x95b0])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53f27c (*(int *)&neg::g_n2_data[0xd27c])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_5446ec (*(OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bb])
 #define g_N2_545d98 (*(char *)&neg::g_n2_data[0x13d98])
-#define g_N2_545d9c (*(int *)&neg::g_n2_data[0x13d9c])
 #define g_N2_545e57 (*(bool *)&neg::g_n2_data[0x13e57])
-#define g_N2_545ef4 (*(int *)&neg::g_n2_data[0x13ef4])
 #define g_N2_545ef8 (*(bool *)&neg::g_n2_data[0x13ef8])
 #define g_N2_545efc (*(unsigned int *)&neg::g_n2_data[0x13efc])
 #define g_N2_545f00 (*(int *)&neg::g_n2_data[0x13f00])
@@ -41,15 +38,8 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_545fe0 (*(int *)&neg::g_n2_data[0x13fe0])
 #define g_N2_545fe4 (*(int *)&neg::g_n2_data[0x13fe4])
 #define g_N2_5461cc (*(char *)&neg::g_n2_data[0x141cc])
-#define g_N2_5461cd (*(char *)&neg::g_n2_data[0x141cd])
-#define g_N2_54a400 (*(float *)&neg::g_n2_data[0x18400])
-#define g_N2_54a438 (*(float *)&neg::g_n2_data[0x18438])
-#define g_N2_54a448 (*(float *)&neg::g_n2_data[0x18448])
-#define g_N2_54a450 (*(int *)&neg::g_n2_data[0x18450])
-#define g_N2_54a454 (*(int *)&neg::g_n2_data[0x18454])
 #define g_N2_54a468 (*(char *)&neg::g_n2_data[0x18468])
 #define g_N2_54a48c g_view_restore_w	// Neutron.exe global (n2_aliases.txt)
-#define g_N2_54a498 g_view_restore	// Neutron.exe global (n2_aliases.txt)
 #define g_N2_56aebe (*(short *)&neg::g_n2_data[0x38ebe])
 #define g_N2_56aec0 (*(short *)&neg::g_n2_data[0x38ec0])
 #define g_N2_56aed0 (*(char *)&neg::g_n2_data[0x38ed0])
@@ -82,7 +72,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_key_action ((int *)&neg::g_n2_data[0x14064])
 #define g_key_back ((int *)&neg::g_n2_data[0x1412c])
 #define g_key_brake ((int *)&neg::g_n2_data[0x141a4])
-#define g_key_climb_down ((int *)&neg::g_n2_data[0x1403c])
 #define g_key_cutscene_bypass ((int *)&neg::g_n2_data[0x14014])
 #define g_key_deactivate_item ((int *)&neg::g_n2_data[0x1408c])
 #define g_key_go ((int *)&neg::g_n2_data[0x14154])

@@ -14,3 +14,6 @@
 0x4f8424 val float g_view_restore_w
 0x4f8428 val float g_view_restore_ax
 0x4f842c val float g_view_restore_ay
+# --- C3DAnimated's shared in-memory database (slot 62, 0x40df90)
+0x4f8410 ptr OMediaMemStream* g_anim_mem_stream
+0x4f840c ptr OMediaDataBase* g_anim_mem_db

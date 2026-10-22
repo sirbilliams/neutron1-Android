@@ -17,6 +17,7 @@
 #include "OMedia3DShapeConverter.h"
 #include "OMediaCanvas.h"
 #include "OMediaDataBase.h"
+#include "OMediaMemStream.h"
 #include "OMediaHDPack.h"
 #include "OMediaFilePath.h"
 #include "OMediaFileStream.h"
@@ -105,7 +106,7 @@ C3DAnimated::C3DAnimated()									// 0x40d110
 	f_918 = NULL;
 	f_91c = NULL;
 	f_920 = 0;
-	f_58c = 0;
+	f_58c = NULL;
 	f_590 = NULL;											// port: not set by the original until InitAnim
 	f_888 = NULL;											// port: idem
 }
@@ -119,7 +120,7 @@ C3DAnimated::~C3DAnimated()									// N2:0x41a9f0
 
 // --------------------------------------------------------------------------- CGameObject family
 
-void C3DAnimated::InitObject(void)							// N2:0x41b0a0
+void C3DAnimated::InitObject(void)							// 0x40d3c0
 {
 	C3DObject::InitObject();
 	RegisterProperty("RequiredLevel", &f_64c, PROP_LONG, 0);
@@ -130,29 +131,33 @@ void C3DAnimated::InitObject(void)							// N2:0x41b0a0
 	RegisterProperty("CanMove", &f_660, PROP_LONG, 0);
 	RegisterProperty("SecondPass", &f_664, PROP_LONG, 0);
 	RegisterProperty("PickupLink", f_669, PROP_ALPHA, 0);
-	RegisterProperty("CanRotate", &f_884, PROP_LONG, 0);
-	RegisterProperty("FaceViewport", &f_88c, PROP_LONG, 0);
-	RegisterProperty("Translucent", &f_89c, PROP_FLOAT, 0);
-	RegisterProperty("Lit", &f_8a0, PROP_FLOAT, 0);
-	RegisterProperty("CanClip", &f_8ac, PROP_LONG, 0);
-	if (f_6d0 == 1)
+	// (Negatron also had CanRotate, FaceViewport, Translucent, Lit and CanClip; their members
+	// keep their defaults here.)
+	if (f_6d0 == 1)											// port: Negatron's granny objects (none in Boy Genius)
 	{
-		OMedia3DShape *sh = new OMedia3DShape;				// (debug log "OMedia3DShape " + tag, empty)
-		set_shape(sh);										// element +0xac
+		OMedia3DShape *sh = new OMedia3DShape;
+		set_shape(sh);
 	}
 }
 
-void C3DAnimated::UnInitObject(void)						// N2:0x41ab10
+void C3DAnimated::UnInitObject(void)						// 0x40e670
 {
-	if (f_6d0 == 1)
+	if (f_6d0 == 1)											// port: Negatron's granny objects own their shape
 	{
 		OMedia3DShape *sh = get_shape();
 		set_shape(NULL);
-		if (sh) delete sh;									// vtable at +0x24, slot 0 (deleting)
+		if (sh) delete sh;
 	}
-	if (f_4bc && f_6d0 == 0)
+	else if (OMedia3DShape *sh = get_shape())				// element +0xb0
+	{
+		sh->set_material(NULL);								// shape vtable +0x70
+		sh->set_modified(false);							// +8
+	}
+	C3DObject::UnInitObject();								// 0x462390
+	if (f_63c && f_6d0 == 0)								// InitAnim done (+0x570)
 	{
 		set_anim_def(NULL);									// element +0xc0
+		// (debug log)
 		for (int i = 0; i < 10; i++)
 		{
 			if (f_5ac[i]) { delete f_5ac[i]; f_5ac[i] = NULL; }
@@ -169,6 +174,11 @@ void C3DAnimated::UnInitObject(void)						// N2:0x41ab10
 				delete dead;
 			} while (a->next);
 		}
+		// port: the original leaves f_5a4 dangling and the InitAnim flag set, so a second call
+		// (the destructors here call it again after CheckLoadLevel did) frees the list twice.
+		f_5a4 = NULL;
+		f_640 = NULL;
+		f_63c = 0;
 	}
 	if (f_6d0 == 1)
 	{
@@ -199,16 +209,10 @@ void C3DAnimated::UnInitObject(void)						// N2:0x41ab10
 	}
 }
 
-void C3DAnimated::Process(float dt)							// N2:0x41c120
+void C3DAnimated::Process(float dt)							// 0x40e050
 {
 	float v[4];
-	if (g_gametype->IsPaused())								// vtable +0x114
-	{
-		if (f_660 != 0) return;
-		v88(v);	v196(v[0], v[1], v[2], v[3]);				// back to the start position / rotation
-		v91(v);	v202(v[0], v[1], v[2], v[3]);
-		return;
-	}
+	if (!GameIsRunning()) return;							// 0x475ca0
 	if (!f_6cd)
 	{
 		f_6cd = 1;
@@ -216,71 +220,20 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 		if (strcasecmp(f_669, "none") != 0 && (item = FindObjectByTag(f_669)) != NULL &&
 			item->NameContains((char *)"C3DPICKUPITEM"))
 		{
-			const int idx = PickupItemIndex(item);
-			if (idx >= 0 && g_object_states[idx] != 0)		// port: idx < 0 = not known yet
+			const int idx = PickupItemIndex(item);			// item +0x5f4
+			if (idx >= 0 && g_object_states[idx] != 0)		// 0x4f8438; port: idx < 0 = not known yet
 			{
-				HideAgain();
+				HideAgain();								// element +0x58
 				v232();
 				v132(0);
 			}
 		}
 	}
 	C3DObject::Process(dt);
-	if (f_660 == 0)											// CanMove 0
+	if (f_660 == 0)											// CanMove 0: kept at the start position and rotation
 	{
 		v88(v);	v196(v[0], v[1], v[2], v[3]);
 		v91(v);	v202(v[0], v[1], v[2], v[3]);
-	}
-	if (f_884 == 0)											// CanRotate 0
-	{
-		v91(v);	v202(v[0], v[1], v[2], v[3]);
-	}
-	if (f_8ac == 1)											// CanClip
-	{
-		f_8a8 = n2_ev93();
-		if (f_8a8) return;
-	}
-	if (f_890 && f_8b0 && f_898 > 0.0f)						// fading out
-	{
-		f_898 -= dt;
-		if (f_898 <= 0.0f)
-		{
-			f_890 = 0;
-			HideAgain();
-		}
-		else
-		{
-			ShowAgain();
-			if (f_89c > 0.0f) ev71(f_898 / f_894 * f_89c);
-			else if (f_8a0 > 0.0f) n2_ev72(f_898 / f_894 * f_8a0);
-			else { ev71(f_898 / f_894); n2_ev91(1); }
-		}
-	}
-	if (f_891)												// fading in
-	{
-		// (debug log "test" for the object tagged C3DHERMAN, empty)
-		if (g_N2_545ef8)
-		{
-			f_898 = 1.0e-5f;								// 0x3727c5ac
-			g_N2_545ef8 = 0;
-		}
-		if (f_8b0 && f_898 > 0.0f)
-		{
-			f_898 -= dt;
-			if (f_898 <= 0.0f)
-			{
-				f_891 = 0;
-				ShowAgain();
-				if (f_89c == 0.0f) { ev71(0.0f); n2_ev91(0); }
-			}
-			else
-			{
-				ShowAgain();
-				if (f_89c > 0.0f) { ev71((1.0f - f_898 / f_894) * f_89c); n2_ev91(1); }
-				else if (f_8a0 > 0.0f) n2_ev72((1.0f - f_898 / f_894) * f_8a0);
-				else { ev71(1.0f - f_898 / f_894); n2_ev91(1); }
-			}
-		}
 	}
 	if (f_648 && f_649)
 	{
@@ -288,13 +241,9 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 		{
 			f_598 += dt;
 			if (!getplay_loop() && f_640 && getcurrentframe_pos() >= f_640->nframes - 1)	// OMediaAnim +0xad, vtable +0x1c
-			{
-				ev67();
-				f_598 = 0;
-				return;
-			}
+				ev67();												// element +0x104
 		}
-		else if (f_6d0 == 1)
+		else if (f_6d0 == 1)								// port: Negatron's granny objects
 		{
 			if (f_8a4) { n2_ev80(); return; }
 			if (!f_8a5) n2_ev80();
@@ -302,24 +251,19 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 	}
 }
 
-void C3DAnimated::v242(float t)								// N2:0x41b070
+void C3DAnimated::v242(float t)								// 0x40d3a0: while editing, always shown
 {
 	(void)t;
-	ShowAgain();
-	n2_ev80();
+	ShowAgain();											// hide count 1, hide(false)
+	if (f_6d0 == 1) n2_ev80();								// port: Negatron's granny objects
 }
 
-void C3DAnimated::v260(void)								// N2:0x41cec0
+void C3DAnimated::v260(void)								// 0x40e7b0
 {
-	if (f_65c == 0) HideAgain();
+	// (debug log)
+	if (f_65c == 0) HideAgain();							// InitiallyVisible
 	else if (f_65c == 1) ShowAgain();
-	if (f_88c == 1) set_flags(get_flags() | omelf_FaceViewport);	// element +0x7c |= 0x200
-	if (f_89c > 0.0f) ev71(f_89c);
-	if (f_8a0 > 0.0f) n2_ev72(f_8a0);
-	if (f_658 == 1) v234();
-	if (f_658 == 0) v136(0);
-	if (f_664 == 1) n2_ev91(1);
-	if (f_8ac == 0) f_8a8 = 0;
+	if (f_664 == 1) AlphaSecondPass();						// SecondPass: element +0x118
 }
 
 void C3DAnimated::v267(int level)							// 0x40e340
@@ -355,27 +299,6 @@ void C3DAnimated::v268(int state)							// 0x40e1f0
 	{
 		v232();
 		HideAgain();
-	}
-}
-
-void C3DAnimated::v270(int a, int msg)						// N2:0x41e960
-{
-	CLocalGameObject::v270(a, msg);
-	if (msg != 5 || strcasecmp(m_tag, "C3DHERMAN") != 0) return;
-	if (f_891)
-	{
-		f_898 = 0;
-		f_891 = 0;
-		ShowAgain();
-		if (f_89c <= 0.0f) { ev71(1.0f); n2_ev91(0); }
-		else ev71(f_89c);
-	}
-	if (f_890)
-	{
-		f_894 = 0;
-		f_898 = 0;
-		f_890 = 0;
-		ShowAgain();
 	}
 }
 
@@ -461,7 +384,7 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 	// first animation: a new morph definition, the next ones add a sequence to it
 	OMedia3DShapeConverter::set_anim_conv_mode_mode(first ? omc3danconv_AlwaysCreateNewMorphAnimDef : omc3danconv_AddSequence);
 	OMedia3DShapeConverter::set_object_convert_mode(omc3doconv_OneShapePerGroup);
-	m_db->generate_from_stream(fs, f_590);					// database vtable +0x2c
+	m_db->generate_from_stream(fs, name[0] == 'L' ? f_58c : f_590);	// database vtable +0x2c: "LOW..." into the LOW shape
 	if (first) m_db->set_dbsize_dirty();					// +0x4c
 	fs.close();
 	// The original reads related_morphdefs[0] whether or not this file made a morph definition.
@@ -508,34 +431,36 @@ AnimList *C3DAnimated::GetSequence(char *name)				// 0x40d9e0
 
 void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 {
-	if (f_8a7 || !f_648 || !f_649) return;
-	char buf[64];
-	if (f_6d0 == 0)
+	if (f_8a7) return;										// port: Negatron's animation lock (no Neutron.exe code sets it)
+	if (!f_648 || !f_649) return;
+	char buf[80];
+	if (f_6d0 != 0)											// port: Negatron's granny objects
 	{
-		f_598 = 0;
-		strcpy(buf, g_4f81a8);
+		strcpy(f_5fc, name);
+		n2_ev86(name, NULL, NULL, NULL, loop, 0.2f);
+		return;
+	}
+	f_598 = 0;
+	strcpy(buf, g_4f81a8);
+	// The detail level picks the base shape and the name prefix: "HI" + name, or "LOW" + name.
+	if (f_594 == 0 || f_594 == 1)
+	{
 		const float r = v151();								// the shape change below resets the radius
-		OMedia3DShapeElement::set_shape(f_590);
+		OMedia3DShapeElement::set_shape(f_594 == 0 ? f_590 : f_58c);
 		FitToShape();										// element +0xc8
 		if (f_124 != 2) v152(r);							// not a box: keep the radius
-		strcpy(buf, g_4f81a8);
+		strcpy(buf, f_594 == 0 ? "HI" : "LOW");				// 0x4ed3dc / 0x4ed3e0
 		strcpy(f_5fc, name);
-		strcat(buf, name);
-		AnimList *a = GetSequence(buf);
-		if (!a) return;
-		f_640 = a;
-		strcpy(f_5fc, name);
-		SetSequence(a->id, loop);
-		set_anim_def(a->def);								// element +0xc0
-		f_888 = current_frame;								// OMediaAnim +0x98 (2002)
 	}
-	else
-	{
-		strcpy(buf, g_4f81a8);
-		strcpy(f_5fc, name);
-		strcat(buf, name);									// (not used)
-		n2_ev86(name, NULL, NULL, NULL, loop, 0.2f);
-	}
+	strcat(buf, name);
+	AnimList *a = GetSequence(buf);							// element +0xdc
+	if (!a && buf[0]) a = GetSequence(name);				// port: classes still in Negatron form create unprefixed names
+	if (!a) return;
+	f_640 = a;
+	strcpy(f_5fc, name);
+	SetSequence(a->id, loop);								// element +0xe4
+	set_anim_def(a->def);									// element +0xc0
+	f_888 = current_frame;									// port: (Negatron's)
 }
 
 void C3DAnimated::SetSequence(int seq, unsigned char loop)	// N2:0x41b940
@@ -580,9 +505,17 @@ char *C3DAnimated::GetAnim(void)							// 0x40dab0
 	return g_4f81a8;
 }
 
-int C3DAnimated::ev62(void) { return f_5a0; }				// N2:0x41ba90
+int C3DAnimated::GetAnimCount(void) { return f_5a0; }		// 0x40db10
 
-unsigned char C3DAnimated::IsAnim(char *name)				// N2:0x41c6d0
+// 0x40df90: the shared in-memory database (a memory stream 0x4f8410 and its database 0x4f840c),
+// made once. Nothing in Boy Genius calls it.
+void C3DAnimated::InitMemDB(void)
+{
+	if (!g_anim_mem_stream) g_anim_mem_stream = new OMediaMemStream;
+	if (!g_anim_mem_db) g_anim_mem_db = new OMediaDataBase(g_anim_mem_stream);
+}
+
+unsigned char C3DAnimated::IsAnim(char *name)				// 0x40e1d0
 {
 	const char *cur;
 	if (f_6d0 == 0) cur = f_5fc;
@@ -691,9 +624,9 @@ void C3DAnimated::ev70(unsigned char show)					// 0x40e3e0
 	else { v232(); v132(0); }
 }
 
-void C3DAnimated::ev71(float alpha)							// 0x40e4a0
+void C3DAnimated::ev71(float alpha)							// 0x40e4a0: > 0 additive glow at that alpha (second pass), else opaque
 {
-	OMedia3DShape *sh = get_shape();
+	OMedia3DShape *sh = f_590;								// the HI base shape
 	if (!sh) return;
 	omt_PolygonList *polys = sh->get_polygons();
 	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
@@ -704,10 +637,14 @@ void C3DAnimated::ev71(float alpha)							// 0x40e4a0
 		{
 			m->set_flags(m->get_flags() & ~ommatf_SecondPass);
 			m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));	// +0x4c..+0x58
+			m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
 		}
 		else
+		{
 			m->set_diffuse(OMediaFARGBColor(alpha, 1.0f, 1.0f, 1.0f));
-		m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
+			m->set_blend(omblendfc_Src_Alpha, g_windowed ? omblendfc_Inv_Src_Alpha : omblendfc_One);	// 0x509a13
+			m->set_flags(m->get_flags() | ommatf_SecondPass);
+		}
 	}
 }
 
@@ -736,9 +673,9 @@ void C3DAnimated::n2_ev72(float alpha)							// N2:0x41ca20
 	}
 }
 
-void C3DAnimated::AlphaSecondPass(void)								// N2:0x41ce30
+void C3DAnimated::AlphaSecondPass(void)						// 0x40e5e0
 {
-	OMedia3DShape *sh = get_shape();
+	OMedia3DShape *sh = f_648 ? f_590 : get_shape();		// animated: the HI base shape
 	if (!sh) return;
 	omt_PolygonList *polys = sh->get_polygons();
 	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)

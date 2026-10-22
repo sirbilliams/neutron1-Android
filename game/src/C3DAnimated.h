@@ -82,7 +82,8 @@ class C3DAnimated : public C3DObject
 	virtual void SetSequence(int seq, unsigned char loop);					// ESLOT 59 N2:0x41b940 "Anim3D_SetSequence(long)" (morph only)
 	virtual void ev60(void) {}												// ESLOT 60 0x40db10 (empty) n2_ev86 found no animation of that name
 	virtual char *GetAnim(void);											// ESLOT 61 0x40dab0 "Anim3D_GetAnim": current AnimList (morph) / f_6f4[0].name (granny); "" if none
-	virtual int  ev62(void);												// ESLOT 62 N2:0x41ba90 f_5a0: number of morph animations
+	virtual int  GetAnimCount(void);										// BG ESLOT 59 0x40db10 f_5a0: number of morph animations
+	virtual void InitMemDB(void);											// BG ESLOT 62 0x40df90 the shared in-memory database (0x4f840c / 0x4f8410)
 	virtual void CreateTexture(char *file, short index);					// ESLOT 63 N2:0x41baa0 "Anim3D_CreateTexture": png\<file> into f_5ac/f_5d4[index]
 	virtual void ApplyTexture(OMedia3DShape *shape, short index);			// ESLOT 64 0x40dd60 "Anim3D_ApplyTexture"
 	virtual void ev65(short index, int src, int dst);						// ESLOT 65 N2:0x41bdc0 blend of material [index] (granny: of the whole shape)
@@ -116,26 +117,25 @@ class C3DAnimated : public C3DObject
 	virtual unsigned char n2_ev93(void);										// ESLOT 93 N2:0x41e840 culled: too far, or not in front of the viewport
 
 	// ---- not virtual
-	unsigned char IsAnim(char *name);										// N2:0x41c6d0 the current animation (ev66 / GetAnim) is <name>
+	unsigned char IsAnim(char *name);										// 0x40e1d0 the current animation (f_5fc) is <name>
 
 	// ---- CGameObject-family overrides
-	virtual void InitObject(void);											// SLOT 7   N2:0x41b0a0 properties
-	virtual void UnInitObject(void);										// SLOT 8   N2:0x41ab10 (does not call the base's)
-	virtual void Process(float dt);											// SLOT 240 N2:0x41c120
-	virtual void v242(float t);												// SLOT 242 N2:0x41b070 ShowAgain + n2_ev80
-	virtual void v260(void);												// SLOT 260 N2:0x41cec0 properties loaded
+	virtual void InitObject(void);											// SLOT 7   0x40d3c0 properties
+	virtual void UnInitObject(void);										// SLOT 8   0x40e670
+	virtual void Process(float dt);											// SLOT 241 0x40e050
+	virtual void v242(float t);												// SLOT 242 0x40d3a0 (editing) shown
+	virtual void v260(void);												// SLOT 259 0x40e7b0 properties loaded: InitiallyVisible, SecondPass
 	virtual void v267(int level);											// SLOT 267 0x40e340 RequiredLevel/ExactLevel/RemoveLevel -> ev70
 	virtual void v268(int state);											// SLOT 268 0x40e1f0 "NextState": 1 show, 0 hide
-	virtual void v270(int a, int msg);										// SLOT 270 N2:0x41e960 msg 5: end the fades (C3DHERMAN only)
 	virtual void v277(void);												// SLOT 277 0x40e770 PauseAnim(1)
 	virtual void v278(void);												// SLOT 278 0x40e790 PauseAnim(0)
 	virtual void v280(void);												// SLOT 280 N2:0x41e460 editor: list the animation names
 	virtual void v282(OMediaMatrix_4x4 &m, float *w, float *h);				// SLOT 282 N2:0x41cfd0 layer projection matrix
 
 	// ---- data members (object offsets)
-	int					f_58c;			// 0x58c  0 (InitAnim)
-	OMedia3DShape		*f_590;			// 0x590  morph: base shape (object database '3DSh' chunk 0)
-	short				f_594;			// 0x594  -1; 0 (InitAnim)
+	OMedia3DShape		*f_58c;			// 0x58c  (BG 0x578) morph: the LOW base shape (animations named "LOW...") - none so far
+	OMedia3DShape		*f_590;			// 0x590  (BG 0x57c) morph: the HI base shape (object database '3DSh' chunk 0)
+	short				f_594;			// 0x594  (BG 0x580) detail: -1 none, 0 HI (InitAnim), 1 LOW: ev58 plays "HI"/"LOW" + name
 	float				f_598;			// 0x598  morph: time in the current animation (+= dt)
 	int					f_59c;			// 0x59c  morph: current sequence (-1)
 	int					f_5a0;			// 0x5a0  morph: number of animations (AnimList ids)
