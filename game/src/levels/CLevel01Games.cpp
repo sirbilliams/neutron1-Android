@@ -29,15 +29,13 @@ CLevel01Game::~CLevel01Game()												// 0x4504f0
 // 0x4508d0 (shared with L1_A, L1_B, L1_C, LV4B): only CJimmyGame's.
 void CLevel01Game::Process(float dt)	{ CJimmyGame::Process(dt); }
 
-// Retroville by the story's time of day (GetSceneStage: SCENE < 250 day, < 320 dusk, then
-// night): the sky and the terrain's tint. The fog range and colour are set, but the fog is off.
 void CLevel01Game::InitGame(void)											// 0x450580
 {
 	Log("InitGame()");
 	CJimmyGame::InitGame();
-	v107(0);												// +0x1b0: not written to the .gam (f_00b)
-	float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
-	m_sky = CreateSky();									// 0x459cb0
+	v107(0);												// slot 108: not written to the .gam (f_00b)
+	float tint[4] = { 1.0f, 1.0f, 1.0f, 1.0f };				// the terrain colour for the time of day
+	m_sky = CreateSky();
 	if (m_sky)
 	{
 		switch (GetSceneStage())							// element +0x15c
@@ -49,27 +47,27 @@ void CLevel01Game::InitGame(void)											// 0x450580
 			case 1:
 				SkyLoad(m_sky, "omt\\dusksky.omt", false);
 				m_sky->ev51();
-				r = 1.0f; g = 0.9f; b = 0.9f;
+				tint[0] = 1.0f; tint[1] = 0.9f; tint[2] = 0.9f;
 				break;
 			case 2:
 				m_sky_rotates = 0;
 				SkyLoad(m_sky, "omt\\nightsky.omt", false);
 				m_sky->ev51();
-				r = 0.7f; g = 0.7f; b = 0.8f;
+				tint[0] = 0.7f; tint[1] = 0.7f; tint[2] = 0.8f;
 				break;
 		}
 		m_sky->place(0.0f, 0.0f, 0.0f);						// (+0x44..+0x4c written directly)
 		m_sky->InitPhysics();								// (empty for a C3DSky)
-		m_sky->v67(1.0f);									// radius (+0x110)
-		m_sky->v152(1.0f);									// (+0x264)
+		m_sky->v67(1.0f);									// radius
+		m_sky->v152(1.0f);
 	}
 	InitTerrainDatabase("level1.omt");						// element +0xe4
-	CreateTerrainTinted(r, g, b, a);						// element +0x158
+	CreateTerrainTinted(tint[0], tint[1], tint[2], tint[3]);	// element +0x158
 	ViewportToOrigin();
 	const OMediaFARGBColor fog = RGBA(0.24f, 0.56f, 0.75f, 0.0f);
 	g_layer_clear->set_fog_color(fog);						// 0x509a38 +0xc8
 	g_layer_world->set_far_clip(28000.0f);					// 0x509a3c +0xc0
-	g_layer_world->set_fog_color(fog);
+	g_layer_world->set_fog_color(fog);						// +0xc8
 	g_layer_world->set_fog_range(13000.0f, 17000.0f);		// +0xd8 / +0xdc
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
 	CaptureMouse(true);										// 0x46a400
@@ -106,7 +104,7 @@ void CLevel01AGame::InitGame(void)											// 0x44f0e0
 
 // --------------------------------------------------------------------------- CLevel01BGame 'LV1B'
 
-CLevel01BGame::CLevel01BGame()												// 0x44f300
+CLevel01BGame::CLevel01BGame()												// 0x450000
 {
 	static char name[] = "CLEVEL01AGAME";		// sic: level 1a's name
 	SetName(name);
@@ -126,13 +124,10 @@ void CLevel01BGame::InitGame(void)											// 0x44f4b0
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);
-	InitTerrainDatabase("level1b.omt");					// element +0xe4
-	CreateTerrainTinted(1.0f, 1.0f, 1.0f, 1.0f);			// element +0x158 (BG slot 86)
+	InitTerrainDatabase("level1b.omt");
+	CreateTerrainUnLit();
 	ViewportToOrigin();
-	// Far plane 10000 (through both world-layer globals), fog off (through 0x509a3c only: the
-	// same layer).
-	g_layer_world->set_far_clip(10000.0f);					// 2002 +0xc0
-	SetLayerFog(g_layer_world, false);						// 0x476910(layer, 0x800)
+	SetFog(0.0f, 0.0f, 0.0f, 1.0f, 10000.0f, 12000.0f, 12000.0f, true);
 	CaptureMouse(true);
 }
 
@@ -347,7 +342,7 @@ void CLevel01_CGame::InitGame(void)											// N2:0x486f40
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel01Game(void)		{ return new CLevel01Game; }		// 'LEV1' (0x5c4 bytes)
+CGameObject *New_CLevel01Game(void)		{ return new CLevel01Game; }		// 'LEV1' (0x690 bytes)
 CGameObject *New_CLevel01AGame(void)	{ return new CLevel01AGame; }		// 'LV1A' (0x68c bytes)
 CGameObject *New_CLevel01BGame(void)	{ return new CLevel01BGame; }		// 'LV1B'
 CGameObject *New_CLevel01CGame(void)	{ return new CLevel01CGame; }		// 'LV1C'
