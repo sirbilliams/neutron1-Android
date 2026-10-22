@@ -5,6 +5,8 @@
 #include "C3DFireStrato.h"
 #include "C3DGoddard.h"
 #include "C3DJimmy.h"
+#include "yokian/C3DMine.h"
+#include "level5a/C3DRock.h"
 #include "C2DInGameMenu.h"
 #include "Game.h"
 #include "Bridge.h"
@@ -115,12 +117,18 @@ static void ClearShocked(C3DAnimated *rider)
 }
 
 // 0x42f310 (on other - 0xc8, a C3DMine's CGameObject part): stores 2 in the object (+0x62c from
-// there). The C3DMine is not reconstructed yet; the original calls it for a C3DRock too (a quirk:
-// it writes 2 into that class's data, 8 bytes before its element).
+// there: the mine's state, it starts bursting). The original calls it for a C3DRock too (a quirk:
+// it writes 2 into that class's data, 8 bytes before its element: the last four bytes of the
+// name buffer of C3DAnimated (BG +0x624)).
 static void MineSetState(CGameObject *o)
 {
-	(void)o;
-	NEG_TODO(0x42f310, "C3DMine / C3DRock: +0x62c (from other - 0xc8) = 2");
+	if (C3DMine *m = dynamic_cast<C3DMine *>(o))
+		m->Explode();
+	else if (C3DRock *r = dynamic_cast<C3DRock *>(o))
+	{
+		const int two = 2;
+		memcpy(r->f_5fc + 60, &two, sizeof two);			// port: the same bytes, without the pointer cast
+	}
 }
 
 // --------------------------------------------------------------------------- construction

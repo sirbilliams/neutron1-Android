@@ -1,4 +1,4 @@
-/*  C3DVehicle - see C3DVehicle.h. Reconstructed from Neutron.exe 0x464b90..N2:0x4a0920. */
+/*  C3DVehicle - see C3DVehicle.h. Reconstructed from Neutron.exe 0x464b90..0x467f70. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DVehicle.h"
@@ -81,15 +81,7 @@ C3DVehicle::C3DVehicle()									// 0x464b90
 		f_988[i].z = 0;
 	}
 	f_9f0 = 100.0f;
-	f_9f4 = 100.0f;
-	f_9f8 = 700.0f;
-	f_a10 = 1485.0f;
-	f_a14 = 1485.0f;
-	f_9fc = 700.0f;
-	f_a00 = 1200.0f;
-	f_a04 = 0;
-	f_a08 = 2250.0f;
-	f_a0c = 0;
+	C3DVehicle::ev107(100.0f);								// 0x464f60 (called directly): the power values
 	f_a18 = 15.0f;
 	f_a1c = 15.0f;
 	f_a24 = 0;
@@ -125,12 +117,12 @@ C3DVehicle::~C3DVehicle()									// 0x464e20
 }
 
 namespace neg {
-CGameObject *New_C3DVehicle(void) { return new C3DVehicle; }	// '3VEH' (0xa58 bytes)
+CGameObject *New_C3DVehicle(void) { return new C3DVehicle; }	// '3VEH' (0x670 bytes)
 }
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DVehicle::HideAgain(void)							// 0x464f00: element slot 54
+void C3DVehicle::HideAgain(void)							// 0x464f00: element slot 54 (port: the name C3DJimmy calls)
 {
 	f_589 = 0;												// (port: C3DObject's "shown" flag)
 	hide(true);												// always (C3DObject::HideAgain only after a ShowAgain)
@@ -138,19 +130,19 @@ void C3DVehicle::HideAgain(void)							// 0x464f00: element slot 54
 		if (f_960[i]) f_960[i]->hide(true);					// +0x58
 }
 
-void C3DVehicle::ev106(void)								// 0x421800
+void C3DVehicle::ShowAll(void)								// 0x464f30
 {
 	hide(false);											// element +0x58
 	for (int i = 0; i < 6; i++)
 		if (f_960[i]) f_960[i]->hide(false);
 }
 
-void C3DVehicle::ev107(float power)							// N2:0x49d770
+void C3DVehicle::ev107(float power)							// 0x464f60
 {
-	f_9f8 = power + 600.0f;									// N2:0x4d0ca0
+	f_9f8 = power + 600.0f;									// 0x4a3124
 	f_a00 = 1200.0f;
 	f_9f4 = power;
-	f_a08 = power * 4.5f + 1800.0f;							// N2:0x4d92dc, N2:0x4d986c
+	f_a08 = power * 4.5f + 1800.0f;							// 0x4a3120, 0x4a311c
 	f_a04 = 0;
 	f_a0c = 0;
 	f_a10 = f_a08 * 0.66f;									// 0x4a3118
@@ -158,7 +150,7 @@ void C3DVehicle::ev107(float power)							// N2:0x49d770
 	f_a14 = f_a10;
 }
 
-void C3DVehicle::ev108(float d)								// N2:0x49d7e0
+void C3DVehicle::ev108(float d)								// 0x464fd0
 {
 	f_9f4 += d;
 	f_9f8 += d;
@@ -168,7 +160,7 @@ void C3DVehicle::ev108(float d)								// N2:0x49d7e0
 	f_a14 = f_a10;
 }
 
-void C3DVehicle::ev109(float x, float y, float z)			// N2:0x49d980
+void C3DVehicle::ev109(float x, float y, float z)			// 0x465170
 {
 	for (int i = 0; i < 6; i++)
 		if (f_960[i]) f_960[i]->v197(x + f_988[i].x, y + f_988[i].y, z + f_988[i].z);	// +0x314
@@ -178,12 +170,13 @@ void C3DVehicle::ev109(float x, float y, float z)			// N2:0x49d980
 	g_viewport->place(p[0], p[1], p[2]);					// viewport +0x44
 }
 
-void C3DVehicle::ev110(float dt)							// N2:0x49e710
+void C3DVehicle::ev110(float dt)							// 0x465e00 (68 KB of camera views)
 {
-	// The camera of a plain vehicle: the same twenty views as C3DCar's (level1/C3DCar.cpp), with
-	// other distances. No level places a '3VEH' and C3DCar overrides it.
+	// The camera of a plain vehicle: the same views as C3DCar's (level1/C3DCar.cpp), with other
+	// distances. No level places a plain vehicle (it has no factory ID) and C3DCar overrides it,
+	// so this is never run: left as the one remaining TODO of the class.
 	(void)dt;
-	NEG_TODO(/*N2*/0x49e710, "C3DVehicle::ev110, the camera of a plain vehicle");
+	NEG_TODO(0x465e00, "C3DVehicle::ev110, the camera of a plain vehicle");
 }
 
 void C3DVehicle::ev111(float dt)							// 0x4669f0
@@ -266,7 +259,7 @@ unsigned char C3DVehicle::ev128(void)						// 0x466d70
 	return KeyPressed('C') || KeyPressed('V');
 }
 
-unsigned char C3DVehicle::ev129(void) { return g_keys['B'] != 0; }	// N2:0x49f6b0
+unsigned char C3DVehicle::ev129(void) { return g_keys['B'] != 0; }	// 0x466da0
 
 unsigned char C3DVehicle::ev130(void)						// 0x466db0
 {
@@ -274,7 +267,7 @@ unsigned char C3DVehicle::ev130(void)						// 0x466db0
 	return KeyPressed(0x08);								// VK_BACK
 }
 
-void C3DVehicle::ev131(void)								// N2:0x49f910
+void C3DVehicle::ev131(void)								// 0x467000
 {
 	v154(0);												// +0x268
 	v157(0, 0, 0);											// +0x274
@@ -379,13 +372,13 @@ void C3DVehicle::ev132(void)								// 0x467080
 	v218(ax, ay, az);										// +0x368
 }
 
-void C3DVehicle::ev134(void)								// N2:0x4a02a0
+void C3DVehicle::ev134(void)								// 0x467990
 {
 	v218(340.0f, 0, 0);										// +0x368
 	f_29c = 2.0f;
 }
 
-OMedia3DVector C3DVehicle::ev135(float x, float y, float z)	// N2:0x4a02d0
+OMedia3DVector C3DVehicle::ev135(float x, float y, float z)	// 0x4679c0
 {
 	float r[4];
 	v201(r);												// +0x324
@@ -396,7 +389,7 @@ OMedia3DVector C3DVehicle::ev135(float x, float y, float z)	// N2:0x4a02d0
 	return OMedia3DVector(x * cy - z * sy, y, z * cy + x * sy, 0.0f);
 }
 
-OMedia3DVector C3DVehicle::ev136(float x, float y, float z)	// N2:0x4a03b0
+OMedia3DVector C3DVehicle::ev136(float x, float y, float z)	// 0x467aa0
 {
 	return v224(x, y, z);									// +0x380
 }
@@ -457,7 +450,7 @@ void C3DVehicle::ev139(void)								// 0x467db0
 	neg::BillsMirror(vp);									// port: Bill's UI frames it (BillsUi.h)
 }
 
-void C3DVehicle::ev140(void)								// N2:0x4a0880
+void C3DVehicle::ev140(void)								// 0x467f70
 {
 	if (!f_a4c) return;
 	neg::BillsMirrorGone(f_a4c);							// port: Bill's UI
@@ -660,9 +653,8 @@ void C3DVehicle::v243(float dt)								// 0x465830
 		float turn = (float)mx;
 		if (turn == 0)
 		{
-			bool key = false;
-			if (ev123()) { turn = turn + dt * 200.0f; key = true; }		// 0x48e5dc: Left
-			else if (ev124()) { turn = turn - dt * 200.0f; key = true; }	// Right
+			if (ev123()) { turn = turn + dt * 200.0f; f_a45 = 1; }		// 0x48e5dc: Left
+			else if (ev124()) { turn = turn - dt * 200.0f; f_a45 = 1; }	// Right
 			else if (f_a45)									// let go: centre again
 			{
 				if (f_a24 < 0)
@@ -674,15 +666,6 @@ void C3DVehicle::v243(float dt)								// 0x465830
 				{
 					f_a24 = f_a24 - dt * 200.0f;
 					if (f_a24 < 0) f_a24 = 0;
-				}
-			}
-			if (key)
-			{
-				f_a45 = 1;
-				if (!(s > 130.0f) && !ev126() && s < f_a10)	// 0x49b1fc: slow, steering speeds it up
-				{
-					s = dt * f_9f8 + s;
-					if (s > f_a10) s = f_a10;
 				}
 			}
 		}

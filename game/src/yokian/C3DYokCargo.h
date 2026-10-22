@@ -14,6 +14,8 @@
 #pragma once
 #include "../C3DAI.h"
 
+class C3DMine;
+
 class C3DYokCargo : public C3DAI
 {
 	public:
@@ -28,7 +30,7 @@ class C3DYokCargo : public C3DAI
 
 	float				m_fly_time;		// 0x994  time flown (patrolling)
 	float				m_mine_time;	// 0x998  time since the last mine
-	CGameObject			*m_mines[30];	// 0x99c  its C3DMines (the original keeps their element part; NULL in the levels without mines)
+	C3DMine				*m_mines[30];	// 0x99c  its C3DMines (NULL in the levels without mines)
 	int					m_next_mine;	// 0xa14
 };
 

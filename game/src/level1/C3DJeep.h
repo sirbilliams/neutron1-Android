@@ -31,6 +31,7 @@ class C3DJeep : public C3DCar
 	virtual unsigned char ev124(void);										// ESLOT 124 0x421c40 (slot 73) Right
 	virtual unsigned char ev125(void);										// ESLOT 125 0x421c70 (slot 74) Go (rear wheels down)
 	virtual unsigned char ev126(void);										// ESLOT 126 0x421cb0 (slot 75) Back (rear wheels down)
+	virtual void ev106(void);												// ESLOT 106 0x421800 (slot 93) shown again (hide count 1, hide(false)), with the wheels
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x4213f0 the scooter shape

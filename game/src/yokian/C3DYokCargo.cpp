@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DYokCargo.h"
+#include "C3DMine.h"
 #include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../Game.h"
@@ -58,9 +59,7 @@ C3DYokCargo::C3DYokCargo()									// 0x449360
 			m_mines[i] = NULL;
 		else
 		{
-			// new C3DMine (0x638 bytes, 0x42efa0). TODO: C3DMine is not reconstructed yet.
-			NEG_TODO(0x42efa0, "C3DYokCargo: C3DMine");
-			m_mines[i] = NULL;
+			m_mines[i] = new C3DMine;						// 0x42efa0 (0x638 bytes)
 		}
 	}
 	m_next_mine = 0;
@@ -105,12 +104,26 @@ void C3DYokCargo::Process(float dt)							// 0x4496e0
 	const float every = m_speed <= 1000.0f ? 5.0f : 2.0f;	// 0x48e5ac; 0x48d950 / 0x48d954
 	if (!(m_mine_time > every)) return;
 	m_mine_time = 0;
-	CGameObject *mine = m_mines[m_next_mine];
+	C3DMine *mine = m_mines[m_next_mine];
 	if (!mine) return;
 	if (++m_next_mine > 29) m_next_mine = 0;
-	// The mine is dropped at our position (its element slot 90, position, slot 137(1), element
-	// place, shown, its +0x62c and +0x624 cleared, its colour (1, 1, 1, 1)).
-	NEG_TODO(0x449890, "C3DYokCargo: drop a C3DMine");
+	// The mine is dropped at our position: its slot 90 and position, slot 136(1), its element
+	// placed there and shown, its state (+0x62c) and burst frame (+0x624) cleared, its colour (1, 1, 1, 1).
+	float p[4];
+	v195(p);												// +0x310
+	unsigned int w;
+	memcpy(&w, &p[3], 4);
+	mine->v89(p[0], p[1], p[2], w);							// +0x168
+	v195(p);
+	mine->v196(p[0], p[1], p[2], p[3]);						// +0x314
+	mine->v136(1);											// +0x224
+	mine->setx(p[0]);
+	mine->sety(p[1]);
+	mine->setz(p[2]);
+	mine->force_show();										// inline: hide_count = 1, hide(false)
+	mine->m_state = 0;
+	mine->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));	// +0x90..+0x9c
+	mine->m_index = 0;
 }
 
 void C3DYokCargo::RotateToDest(float dt)					// 0x449a00

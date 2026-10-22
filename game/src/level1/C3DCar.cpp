@@ -1,4 +1,4 @@
-/*  C3DCar - see C3DCar.h. Reconstructed from Neutron.exe 0x412870..N2:0x425840. */
+/*  C3DCar - see C3DCar.h. Reconstructed from Neutron.exe 0x412870..0x413a60. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DCar.h"
@@ -28,22 +28,19 @@ C3DCar::C3DCar()											// 0x412870
 	// (debug log "Test 1")
 	v64(0.2f);
 	C3DObject::SetObjectID('3CAR');							// 0x462220
-	v62(0.42f);
 	// (debug log "Test 2")
 	f_a70 = 0;
 	f_a74 = 0;
 	f_a78 = -1;
 	f_a7c = 11025;
 	f_a80 = 0;
-	f_a81 = 0;
-	f_a82 = 0;
 }
 
 C3DCar::~C3DCar() {}										// 0x4129e0
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DCar::ev110(float dt)								// N2:0x424dc0
+void C3DCar::ev110(float dt)								// 0x4130a0
 {
 	float pp[4];
 	v195(pp);												// +0x30c
@@ -59,7 +56,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 		g_viewport->place(dx * dt * 0.3f + g_viewport->getx(), g_viewport->gety(), dz * dt * 0.3f + g_viewport->getz());	// 0x49534c
 		v195(pp);
 		T = OMedia3DVector(pp[0], pp[1], pp[2], pp[3]);
-		if (!getvisible()) ev106();							// element +0x70, +0x1a8
+		if (!getvisible()) ShowAll();						// element +0x70, +0xdc
 	}
 	else
 	{
@@ -73,13 +70,11 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 				W.y += 50.0f;								// 0x48d400
 				const float dx = W.x - C.x, dy = W.y - C.y, dz = W.z - C.z;
 				double k;
-				if (ev126()) k = 3.5;						// element +0x1f8: braking (0x4b31c0)
-				else
 				{
 					OMedia3DVector d(dx, dy, dz, 0);
 					const float m = d.quick_magnitude();
-					if (m > 400.0f) k = 2.8;				// 0x495348, N2:0x4d2cc8
-					else if (m > 200.0f) k = 1.7;			// 0x48e5dc, N2:0x4d2cc0
+					if (m > 400.0f) k = 2.8;				// 0x495348, 0x495340
+					else if (m > 200.0f) k = 1.7;			// 0x48e5dc, 0x495338
 					else k = 1.0;
 				}
 				if (k == 1.0)
@@ -93,8 +88,8 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 			case 4:
 			{
 				const float s = v153();						// +0x264
-				if (f_a38 == 3) W = ev136(-f_a24, 125.0f, -250.0f - s * 0.05f);	// N2:0x4d2cb8, 0x495334
-				else W = ev136(-f_a24, 225.0f, -400.0f - s * 0.05f);			// N2:0x4d2cb4
+				if (f_a38 == 3) W = ev136(-f_a24, 125.0f, -250.0f - s * 0.05f);	// 0x495330, 0x495334
+				else W = ev136(-f_a24, 225.0f, -400.0f - s * 0.05f);			// 0x49532c
 				g_viewport->place(W.x, W.y, W.z);
 				check = true;
 				break;
@@ -106,7 +101,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 				break;
 			case 6:											// in it
 				g_viewport->place(P.x, P.y + 100.0f, P.z);
-				if (getvisible()) HideAgain();				// element +0xdc
+				if (getvisible()) HideAgain();				// element +0xd8
 				break;
 			case 7:											// just above it
 				g_viewport->place(P.x, P.y + 30.0f, P.z);	// 0x48d404
@@ -118,7 +113,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 				break;
 			case 9:											// beside a wheel
 			case 11:
-				W = ev136(f_988[2].x - 25.0f, f_988[2].y + 20.0f, f_988[2].z - 75.0f);	// N2:0x4d056c, 0x495324, N2:0x4d2cac
+				W = ev136(f_988[2].x - 25.0f, f_988[2].y + 20.0f, f_988[2].z - 75.0f);	// 0x48fe04, 0x495324, 0x495328
 				g_viewport->place(W.x, W.y, W.z);
 				break;
 			case 10:
@@ -129,7 +124,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 			case 13:										// rising high above it
 			case 16:
 			case 18:
-				P.y = P.y + 4000.0f;						// N2:0x4d2ca8 (kept for the probe below)
+				P.y = P.y + 4000.0f;						// 0x495320 (kept for the probe below)
 				g_viewport->place((P.x - C.x) * 0.1f * dt + g_viewport->getx(), (P.y - C.y) * dt + g_viewport->gety(),
 								  (P.z - C.z) * 0.1f * dt + g_viewport->getz());	// 0x48d920
 				check = true;
@@ -138,7 +133,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 			case 17:
 			case 19:
 				g_viewport->place(-C.x * dt + g_viewport->getx(), (3000.0f - C.y) * dt + g_viewport->gety(),
-								  (1500.0f - C.z) * dt + g_viewport->getz());	// N2:0x4d2ca4, N2:0x4cb1e0
+								  (1500.0f - C.z) * dt + g_viewport->getz());	// 0x495318, 0x49531c
 				check = true;
 				break;
 			case 14:										// far behind and above
@@ -152,7 +147,7 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 			default:										// 2: left where it is
 				break;
 		}
-		if (check && !getvisible()) ev106();				// element +0x70, +0x1a8
+		if (check && !getvisible()) ShowAll();				// element +0x70, +0xdc
 		if (f_a4c)											// the rear-view mirror, facing back
 		{
 			const OMedia3DVector m = v224(0, 125.0f, -30.0f);
@@ -198,9 +193,9 @@ void C3DCar::ev110(float dt)								// N2:0x424dc0
 	g_viewport->set_angley((omt_WAngle)(g_viewport->get_angley() + dyaw));
 }
 
-unsigned char C3DCar::ev126(void)							// N2:0x424d90
+unsigned char C3DCar::ev126(void)							// 0x413060
 {
-	if (!g_joy_button1 && !PlayerKeyBack()) return 0;		// N2:0x465980
+	if (!g_joy_button1 && !(g_joy_y < -0.5f) && !g_509860) return 0;	// joystick button 1 / down, Down arrow
 	return f_9ea > 0;
 }
 
@@ -285,48 +280,22 @@ void C3DCar::ResetObject(void)								// 0x412ff0
 	v202(f_a60.x, f_a60.y, f_a60.z, f_a60.w);				// +0x328: rotation
 }
 
-void C3DCar::Process(float dt)								// N2:0x424b30
+void C3DCar::Process(float dt)								// 0x412ed0
 {
 	C3DVehicle::Process(dt);								// 0x465220
-	if (v135() && g_active_sound_db)						// +0x21c
+	if (v51() && g_active_sound_db)							// +0xcc
 	{
 		if (f_a78 == -1)
 		{
-			f_a78 = PlayGameSound3D(this, -1, std::string("Scooter"), true);	// N2:0x48f200
+			f_a78 = PlayGameSound3DIndex(this, -1, 0x2e, true);	// 0x4589c0: "Scooter"
 			f_a7c = g_chan_freq[f_a78];						// 0x695e3c
 		}
 		else
 		{
-			int f = (int)((double)v153() * 0.5263157894736842 * 51.0 + f_a7c);	// N2:0x4d2c98, N2:0x4d2c90
+			int f = (int)((double)v153() * 0.5263157894736842 * 51.0 + f_a7c);	// 0x495310, 0x495308
 			if (f <= 7000) f = 7000;
 			g_chan_freq[f_a78] = f;
 		}
-	}
-	if (g_power_timers[0] > 0)								// power-up 0: more power
-	{
-		if (!f_a81)
-		{
-			f_a81 = 1;
-			ev107(350.0f);									// element +0x1ac
-		}
-	}
-	else if (f_a81)
-	{
-		ev107(0);
-		f_a81 = 0;
-	}
-	if (g_power_timers[2] > 0)								// power-up 2
-	{
-		if (!f_a82)
-		{
-			f_a82 = 1;
-			v62(0.61f);										// +0xf8
-		}
-	}
-	else if (f_a82)
-	{
-		v62(0.21f);
-		f_a82 = 0;
 	}
 	f_a74 += dt;
 	f_a70 += dt;
