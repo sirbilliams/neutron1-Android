@@ -1,107 +1,74 @@
 /*  C3DAI ('3DAI') - a computer-controlled character: it patrols a chain of C3DPatrolPoints
     ("PatrolPoint", then each point's NextPatrolPoint), watches for its target ("TargetName",
     Jimmy by default) within "VisibleRange" and its field of view ("FOV"), and then attacks,
-    follows, flees or searches according to its state. The base of C3DAIGranny ('3GRN'),
-    C3DFish ('3FIS'), C3DAIJimmy, C3DAIOmtObj and the other AI characters.
-    Reconstructed from Neutron.exe: constructor N2:0x410b30 (factory '3DAI', 0x1b58 bytes),
-    destructor 0x417e50 (deleting thunks 0x407e30 / 0x40a850 / 0x40a860 / 0x40a870).
+    follows, flees or scans according to its state. The base of C3DFriends (and through it of
+    Jimmy's friends and Goddard), C3DAIOmtObj, C3DEnemy and the other AI characters.
+    Reconstructed from Neutron.exe: constructor 0x407a40 (factory '3DAI', 0x99c bytes),
+    destructor 0x407e60 (deleting thunks 0x407e30 / 0x40a850 / 0x40a860 / 0x40a870).
 
-    Original layout (classes.json): as C3DPlayerObject (element vtable 0x499e28, 144 slots:
-    C3DPlayerObject's 106 + 106..143; OMediaAnim at +0x90, vtable 0x499dd8; listener +0x30,
-    vtable 0x499e14; CLocalGameObject at +0xc0, vtable 0x499988, 286 slots), own members
-    0x960..0x1b50, vtordisp 0x1b50, streamer 0x1b54. Derived classes put theirs from 0x1b50 on.
+    Original layout (classes.json): as C3DAnimated (element vtable 95 slots: C3DAnimated's 72 +
+    72..94; OMediaAnim at +0x90; listener +0x30; CLocalGameObject at +0xc0, 275 slots), own
+    members 0x6bc..0x994, vtordisp 0x994, streamer 0x998. Derived classes put theirs from 0x994.
+    (Negatron's C3DAI was a C3DPlayerObject with path finding over a patrol-point network,
+    states 11..18, "FallbackAIState", "InitialSpeed" and "CanHover": Boy Genius has none.)
 
-    States (f_96c, set through ev107; Process runs one case per frame):
-      0  attack: chase the target (ev111 / ev108), fall back to AIState (6 scan, 11 wander) or
-         2 when the target is no longer in reach, out of range -> 2/6
-      1  wait (stand still)              2  patrol (ev137), seeing the target -> 0
-      3  patrol only                     4  follow the target at offset f_978
-      5  flee for f_c3c seconds, then FallbackAIState (or AIState)
+    States (m_state, set through ev73; Process runs one case per frame):
+      0  attack: walk at the target (WALK); it out of reach / gone -> 6 or 2 (by AIState)
+      1  wait (stand still)              2  patrol, seeing the target -> 0
+      3  patrol only (RUN to each point; a point's WaitTime -> 7; NextPatrolPoint "WAIT" -> 1,
+         "SCAN" -> 6)
+      4  follow the target at offset m_offset (RUN; faster when far behind)
+      5  flee for m_flee_time seconds, then back to AIState; beyond m_flee_dist -> AIState
       6  scan (stand, SIT), seeing the target -> 0
       7  wait at a patrol point for its WaitTime, then back to the previous state
       8  hidden                          9  frozen (no force)
-      10 wander within WanderRange       11 wander, seeing the target -> 0
-      12 run away from the target (ev131)
-      13 walk the path found by FindBestPath (ev133) to a patrol point (AITrigger AIState 13)
-      14 lost the target: look for it, seeing it -> flee (ev138)
-      15 flee along a path, look back every 3 s       16 search: walk paths towards the
-      target's nearest point every 7 s, seeing it -> 17   17 keep the target in view, losing it -> 16
-      18 patrol, but only go on once touched by the target (f_1b4c)
-    Path finding (states 13..17): ev136 lists the patrol points of type 1 in plain view (like
-    C3DPatrolPoint::FindVisiblePoints), ev134 searches the network of their visible-point lists
-    recursively (stack f_c7c, depth f_c78 < 100) for the shortest route to the goal, which ends
-    up in f_112c (walked by ev109 with index f_1b2c). ev139/ev140 mark the type-1 points within
-    f_1b44 (in front of a direction) as candidates (f_15dc, ev141 tests them); ev135 / ev143 pick
-    the nearest / farthest of them.
+      10 wander within WanderRange (RUN; a new destination every 11 s)
+    Animations: WAG, RUN, FLY, SIT, WALK (names kept in members so subclasses can rename
+    them), each started only when not already playing and not while a cut scene animates us
+    (m_anims_disabled); the empty slots 83..86 are told before FLY / RUN / SIT / WAG start.
 
-    Animations: ev117 FLY (f_aec), ev118 RUN (f_ac4), ev119 SIT (f_b14), ev120 WALK (f_b3c),
-    ev121 WAG (f_a9c), ev122 WALK (f_b64) - each only when not already playing and not while a
-    cut scene animates us (f_c38). Subclasses rename them.
-
-    Jimmy: C3DAI never calls into C3DJimmy. It sees him as its target (a CGameObject found by
-    tag), as g_camera (Process stops while the camera is a frozen C3DJIMMY: CLocalGameObject
-    f_4ab), and through CGameObject-family slots only.
-
-    Element-family slots are `ev<n>` (`// ESLOT n`, n = vtable offset / 4) unless a log string
-    names them; CGameObject-family slots keep their CGameObject names (`// SLOT n`). Members are
-    f_<offset in the original object> (CGameObject-family code of the original sees them at
-    offset - 0xc0).                                                                           */
+    Element-family slots are `ev<n>` (`// ESLOT n`, n = vtable offset / 4, Neutron.exe's
+    numbering); CGameObject-family slots keep the names of the tree's CGameObject (`// SLOT n`
+    gives Neutron.exe's slot number, the name may be Negatron's: v176 is slot 177).
+    Members are named by what they hold; the comment gives the object offset in Neutron.exe
+    (the original's CGameObject-family code sees them at offset - 0xc0).                     */
 #pragma once
 #include "C3DAnimated.h"
 #include "OMedia3DPoint.h"
 #include "OMedia3DVector.h"
 
-class OMediaStreamOperators;
 class OMedia3DPolygon;
 
 class C3DAI : public C3DAnimated
 {
 	public:
-	C3DAI();																// N2:0x410b30
-	virtual ~C3DAI();														// 0x417e50
-
-	// One entry of the visible-point list (as C3DPatrolPoint::Visible).
-	struct Visible { CGameObject *point; float dist; };
+	C3DAI();																// 0x407a40
+	virtual ~C3DAI();														// 0x407e60
 
 	// ---- element-family slots
-	virtual void ev106(char *dst, char *src);								// ESLOT 106 0x407fa0 strcpy(dst, src)
-	virtual void ev107(int state);											// ESLOT 107 N2:0x412240 set the state (f_970 = old), its start actions
-	virtual void ev108(void);												// ESLOT 108 N2:0x412470 arrival test: f_9a0 < f_c14 -> f_998 + ev113
-	virtual void ev109(void);												// ESLOT 109 N2:0x413790 next destination (patrol point / path / PatrolPoint), then ev110
-	virtual void ev110(void);												// ESLOT 110 N2:0x413930 destination point and direction from f_b8c
-	virtual void ev111(CGameObject *dest);									// ESLOT 111 N2:0x413c50 velocity towards f_988 at f_968 (scaled by distance in state 4)
-	virtual void ev112(float dt);											// ESLOT 112 N2:0x413f50 turn towards the destination; animations on arrival
-	virtual void ev113(void);												// ESLOT 113 N2:0x414630 arrived: states 10/11 wander on (ev129 1400)
-	virtual void ev114(void) {}												// ESLOT 114 0x472970 (empty) arrived, every frame
-	virtual void ev115(void);												// ESLOT 115 0x409f80 destination = target + f_978 turned by its rotation
-	virtual void ev116(void);												// ESLOT 116 N2:0x414300 face the way the target faces, turned round
-	virtual void ev117(void);												// ESLOT 117 N2:0x4141e0 animation f_aec (FLY)
-	virtual void ev118(void);												// ESLOT 118 N2:0x414210 animation f_ac4 (RUN)
-	virtual void ev119(void);												// ESLOT 119 N2:0x414240 animation f_b14 (SIT)
-	virtual void ev120(void);												// ESLOT 120 N2:0x4142a0 animation f_b3c (WALK)
-	virtual void ev121(void);												// ESLOT 121 N2:0x414270 animation f_a9c (WAG)
-	virtual void ev122(void);												// ESLOT 122 N2:0x4142d0 animation f_b64 (WALK)
-	virtual void ev123(CGameObject *o, float time);							// ESLOT 123 N2:0x414f30 attack o for <time> s, then back to the saved state
-	virtual void ev124(void) {}												// ESLOT 124 0x472970 (empty) ev123's time is over
-	virtual void ev125(float dt);											// ESLOT 125 0x40a250 stuck check every 5 s (skip a patrol point / back to PatrolPoint)
-	virtual void ev126(void) {}												// ESLOT 126 0x472970 (empty)
-	virtual void ev127(void);												// ESLOT 127 N2:0x415440 not arrived (f_998, f_99c = 0)
-	virtual void ev128(float unused);										// ESLOT 128 0x409030 turn towards f_bb4
-	virtual void ev129(float range, OMedia3DVector away);					// ESLOT 129 0x4098c0 wander: a random destination within range (+ away * 550)
-	virtual void ev130(float unused, float height);							// ESLOT 130 0x40a6d0 bumped the head: bounce down (sound "HitHead" when we are the camera)
-	virtual unsigned char ev131(CGameObject *o);							// ESLOT 131 N2:0x413a30 run away from o (within 1500); 0
-	virtual unsigned char ev132(OMedia3DVector a, OMedia3DVector b);		// ESLOT 132 N2:0x412670 nothing between a and b
-	virtual unsigned char FindBestPath(CGameObject *goal);					// ESLOT 133 N2:0x412e50 "FindBestPath": route to goal into f_112c
-	virtual float ev134(CGameObject *from, CGameObject *to);				// ESLOT 134 N2:0x412f50 recursive search: length of the route, -1 none
-	virtual CGameObject *ev135(OMedia3DVector pos, unsigned char nearest);	// ESLOT 135 N2:0x413640 nearest / farthest candidate point of our group
-	virtual void ev136(int group);											// ESLOT 136 N2:0x412530 our visible type-1 patrol points (f_1a8c)
-	virtual void ev137(float dt);											// ESLOT 137 N2:0x411d90 patrol: walk to f_b8c, wait there, go on to the next point
-	virtual void ev138(unsigned char far);									// ESLOT 138 N2:0x412be0 flee from the target along a path (state 15), else 5
-	virtual void ev139(OMedia3DVector pos, OMedia3DVector dir, unsigned char cone);	// ESLOT 139 N2:0x4126a0 candidates within f_1b44 of pos (in front of dir)
-	virtual void ev140(OMedia3DVector pos, OMedia3DVector dir, unsigned char cone);	// ESLOT 140 N2:0x412830 the same, dir not normalised, marks not cleared
-	virtual unsigned char ev141(CGameObject *o);							// ESLOT 141 N2:0x412990 o is a candidate (or there is no candidate list)
-	virtual void ev142(unsigned char unused);								// ESLOT 142 N2:0x4129d0 search: path to the candidate nearest the target -> 16, else 17
-	virtual CGameObject *ev143(OMedia3DVector pos, unsigned char visible);	// ESLOT 143 N2:0x4133d0 nearest type-1 point of our group (in view of pos)
+	virtual void ev72(char *dst, char *src);								// ESLOT 72 0x407fa0 strcpy(dst, src)
+	virtual void ev73(int state);											// ESLOT 73 0x4089b0 set the state (m_prev_state = old), its animation
+	virtual void ev74(void);												// ESLOT 74 0x408bc0 arrival test: m_dest_dist < m_arrive_dist -> m_arrived + ev79
+	virtual void ev75(void);												// ESLOT 75 0x408c90 destination: m_dest, else "PatrolPoint" (none: wait), then ev76
+	virtual void ev76(void);												// ESLOT 76 0x408d40 destination point from m_dest, vector and distance to it
+	virtual void ev77(CGameObject *dest);									// ESLOT 77 0x408e40 velocity along m_dest_vec at m_speed (scaled by distance in state 4)
+	virtual void ev78(float dt);											// ESLOT 78 0x409140 turn towards the destination; animations on arrival
+	virtual void ev79(void);												// ESLOT 79 0x409890 arrived: state 10 wanders on (ev93 1400)
+	virtual void ev80(void) {}												// ESLOT 80 0x472970 (empty) arrived, facing on
+	virtual void ev81(void);												// ESLOT 81 0x409f80 destination = target + m_offset turned by its rotation
+	virtual void ev82(void);												// ESLOT 82 0x4093e0 face the way the target faces, turned round
+	virtual void ev83(void) {}												// ESLOT 83 0x472970 (empty) FLY starts
+	virtual void ev84(void) {}												// ESLOT 84 0x472970 (empty) RUN starts (ev73)
+	virtual void ev85(void) {}												// ESLOT 85 0x472970 (empty) SIT starts
+	virtual void ev86(void) {}												// ESLOT 86 0x472970 (empty) WAG starts
+	virtual void ev87(CGameObject *o, float time);							// ESLOT 87 0x40a1b0 attack o for <time> s, then back to the saved state
+	virtual void ev88(void) {}												// ESLOT 88 0x472970 (empty) ev87's time is over
+	virtual void ev89(float dt);											// ESLOT 89 0x40a250 stuck check every 5 s (skip a patrol point / back to PatrolPoint)
+	virtual void ev90(void) {}												// ESLOT 90 0x472970 (empty)
+	virtual void ev91(void);												// ESLOT 91 0x40a6a0 not arrived (m_arrived, m_arrived_time = 0)
+	virtual void ev92(float unused);										// ESLOT 92 0x409030 turn towards m_dest_point
+	virtual void ev93(float range, OMedia3DVector away);					// ESLOT 93 0x4098c0 wander: a random destination within range (+ away * 550)
+	virtual void ev94(float unused, float height);							// ESLOT 94 0x40a6d0 bumped the head: bounce down (sound 47 when we are the camera)
 
 	// ---- not virtual
 	unsigned char CanSeeTarget(void);										// 0x409cc0 target in range, in the field of view and not behind a wall
@@ -111,97 +78,95 @@ class C3DAI : public C3DAnimated
 	virtual void ResetObject(void);											// SLOT 10  0x407eb0
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x40a3c0
 	virtual void RemoveTouching(CGameObject *other);						// SLOT 17  0x40a390
-	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 220 0x409590 wall contact: wanderers turn away
-	virtual void Process(float dt);											// SLOT 240 N2:0x411240
-	virtual void v242(float t);												// SLOT 242 0x407fd0 (C3DAnimated's)
-	virtual void RotateToDest(float dt);									// SLOT 246 0x4096e0 rates f_b9c (1, 3, 2)
-	virtual void v258(void);												// SLOT 258 N2:0x414380 back to AIState, then v260
-	virtual void v260(void);												// SLOT 260 0x409480 properties loaded: target, state, speed
-	virtual void v261(void);												// SLOT 261 0x40a6b0 stop
-	virtual void v265(float a, float b, float c, float d);					// SLOT 265 0x4095f0 "Hitwall": hover up / wander away
-	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x415760
-	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x4155e0
+	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 221 0x409590 wall contact: wanderers turn away
+	virtual void Process(float dt);											// SLOT 241 0x408000
+	virtual void v242(float t);												// SLOT 242 0x407fd0 (C3DAnimated's, then element slot 67)
+	virtual void RotateToDest(float dt);									// SLOT 246 0x4096e0 rates m_turn_rates (1, 3, 2)
+	virtual void v258(void);												// SLOT 257 0x409460 back to AIState, then v260
+	virtual void v260(void);												// SLOT 259 0x409480 properties loaded: target, state, facing
+	virtual void v261(void);												// SLOT 260 0x40a6b0 stop
+	virtual void v265(float a, float b, float c, float d);					// SLOT 263 0x4095f0 "Hitwall": hover up / wander away
 
-	// ---- data members (object offsets)
-	float				f_930;			// N2 C3DPlayerObject 0x930  1.0 (TODO(BG): offsets)
-	int					f_934;			// N2 C3DPlayerObject 0x934  -1; != -1 while a cut scene has replaced our animation
-	char				f_938[40];		// N2 C3DPlayerObject 0x938  the animation to go back to after the cut scene
-	float				f_960;			// 0x960  time (+= dt)
-	CGameObject			*f_964;			// 0x964  target (TargetName; ev123 swaps it for a while)
-	float				f_968;			// 0x968  speed (200; InitialSpeed, a patrol point's PatrolSpeed, AITrigger AISpeed)
-	int					f_96c;			// 0x96c  state (see above; 1)
-	int					f_970;			// 0x970  previous state (-1)
-	int					f_974;			// 0x974  target's ObjectID ('3JIM')
-	OMedia3DVector		f_978;			// 0x978  where to be relative to the target (state 4, ev115)
-	OMedia3DVector		f_988;			// 0x988  destination - position
-	unsigned char		f_998;			// 0x998  arrived (ev108)
-	float				f_99c;			// 0x99c  time since arriving (ev112: SIT after 7 s, else WAG)
-	float				f_9a0;			// 0x9a0  distance to the destination
-	float				f_9a4;			// 0x9a4  that distance at the last stuck check (ev125)
-	float				f_9a8;			// 0x9a8  "VisibleRange" (2500)
-	char				f_9ac[100];		// 0x9ac  "PatrolPoint" ("none"): the first point (AITrigger AIPatrol)
-	char				f_a10[100];		// 0xa10  "TargetName" ("JIM1")
-	char				f_a74[40];		// 0xa74  ("none") an animation name subclasses use
-	char				f_a9c[40];		// 0xa9c  "WAG" animation (ev121)
-	char				f_ac4[40];		// 0xac4  "RUN" animation (ev118)
-	char				f_aec[40];		// 0xaec  "FLY" animation (ev117)
-	char				f_b14[40];		// 0xb14  "SIT" animation (ev119)
-	char				f_b3c[40];		// 0xb3c  "WALK" animation (ev120)
-	char				f_b64[40];		// 0xb64  "WALK" animation (ev122)
-	CGameObject			*f_b8c;			// 0xb8c  destination: a patrol point, a path point or an object
-	CGameObject			*f_b94;			// 0xb94  the patrol point we left last
-	float				f_b98;			// 0xb98  "FOV" in degrees (90; > 358: all round)
-	OMedia3DPoint		f_b9c;			// 0xb9c  turn rates x, y, z (1, 3, 2) (RotateToDest)
-	float				f_bac;			// 0xbac  time (+= dt)
-	unsigned char		f_bb0;			// 0xbb0  keep f_bb4 as it is (ev110 / ev115)
-	OMedia3DPoint		f_bb4;			// 0xbb4  destination point
-	OMedia3DPoint		f_bc4;			// 0xbc4  (0, 0, 0)
-	unsigned char		f_bd4;			// 0xbd4  hovering: no gravity (CanHover, AITrigger AIHover)
-	unsigned char		f_bd5;			// 0xbd5  0
-	float				f_bd8;			// 0xbd8  wait time left at a patrol point (state 7)
-	unsigned char		f_bdc;			// 0xbdc  don't turn until the speed is over 1 (ev112)
-	int					f_be0;			// 0xbe0  state saved by ev123 (1)
-	OMedia3DVector		f_be4;			// 0xbe4  f_978 saved by ev123
-	CGameObject			*f_bf4;			// 0xbf4  target saved by ev123
-	float				f_bf8;			// 0xbf8  ev123 time left
-	float				f_bfc;			// 0xbfc  stuck check timer (ev125)
-	float				f_c00;			// 0xc00  > 0: the target is seen even when it is hidden (counts down)
-	unsigned char		f_c04;			// 0xc04  0
-	int					f_c08;			// 0xc08  "AIState" (1): the state to start in / go back to
-	int					f_c0c;			// 0xc0c  "FallbackAIState" (-1): after fleeing
-	float				f_c10;			// 0xc10  flee distance (1500): state 5 ends beyond it
-	float				f_c14;			// 0xc14  arrival distance (110; 440 for patrol points with f_c18)
-	unsigned char		f_c18;			// 0xc18  move the way we face (ev111)
-	float				f_c1c;			// 0xc1c  > 0: state 5 keeps going (v261); wanderers flee a seen target
-	unsigned char		f_c20;			// 0xc20  wander started
-	float				f_c24;			// 0xc24  wander time (new destination after 11 s)
-	unsigned char		f_c28;			// 0xc28  0
-	float				f_c2c;			// 0xc2c  "WanderRange" (1500)
-	float				f_c30;			// 0xc30  last yaw step (RotateToDest)
-	unsigned char		f_c34;			// 0xc34  sees through walls (CanSeeTarget)
-	int					f_c38;			// 0xc38  animations disabled (a cut scene animates us)
-	float				f_c3c;			// 0xc3c  flee time left (state 5; ev138 10 s)
-	unsigned char		f_c40;			// 0xc40  state locked (ev107 ignored)
-	int					f_c44;			// 0xc44  0
-	unsigned char		f_c48;			// 0xc48  1
-	OMedia3DPoint		f_c4c;			// 0xc4c  position held while touched (f_c5c)
-	unsigned char		f_c5c;			// 0xc5c  touched by the camera or Goddard: held at f_c4c
-	unsigned char		f_c5d;			// 0xc5d  is held when touched
-	float				f_c60;			// 0xc60  150
-	unsigned char		f_c64;			// 0xc64  bank into turns while airborne
-	OMedia3DPoint		f_c68;			// 0xc68  where ev131 runs to
-	int					f_c78;			// 0xc78  ev134 recursion depth
-	CGameObject			*f_c7c[300];	// 0xc7c  ev134 recursion stack (the route so far)
-	CGameObject			*f_112c[300];	// 0x112c the route FindBestPath found
-	CGameObject			*f_15dc[300];	// 0x15dc candidate points (ev139 / ev140)
-	Visible				f_1a8c[20];		// 0x1a8c our visible type-1 patrol points (ev136)
-	int					f_1b2c;			// 0x1b2c next index in f_112c
-	float				f_1b30;			// 0x1b30 look-around timer (states 15 / 16)
-	unsigned char		f_1b34;			// 0x1b34 f_15dc is valid
-	CGameObject			*f_1b38;		// 0x1b38 point the search heads for
-	float				f_1b3c;			// 0x1b3c "InitialSpeed" (200)
-	int					f_1b40;			// 0x1b40 "CanHover" (0)
-	float				f_1b44;			// 0x1b44 candidate radius (3500; ev138 4000 / 9000)
-	int					f_1b48;			// 0x1b48 "GroupID" (0)
-	unsigned char		f_1b4c;			// 0x1b4c touched by the target (state 18 goes on)
+	// ---- data members (Neutron.exe object offsets)
+	float				m_time;					// 0x6bc  time (+= dt)
+	CGameObject			*m_target;				// 0x6c0  target (TargetName; ev87 swaps it for a while)
+	float				m_speed;				// 0x6c4  speed (200)
+	int					m_state;				// 0x6c8  state (see above; 1)
+	int					m_prev_state;			// 0x6cc  previous state (-1)
+	int					m_target_id;			// 0x6d0  target's ObjectID ('3JIM')
+	OMedia3DVector		m_offset;				// 0x6d4  where to be relative to the target (state 4, ev81)
+	OMedia3DVector		m_dest_vec;				// 0x6e4  destination - position
+	unsigned char		m_arrived;				// 0x6f4  arrived (ev74)
+	float				m_arrived_time;			// 0x6f8  time since arriving (ev78: SIT after 7 s, else WAG)
+	float				m_dest_dist;			// 0x6fc  distance to the destination
+	float				m_stuck_dist;			// 0x700  that distance at the last stuck check (ev89)
+	float				m_visible_range;		// 0x704  "VisibleRange" (2500)
+	char				m_patrol_point[100];	// 0x708  "PatrolPoint" ("none"): the first point (AITrigger AIPatrol)
+	char				m_target_name[100];		// 0x76c  "TargetName" ("JIM1")
+	char				m_anim_none[40];		// 0x7d0  ("none") an animation name subclasses use
+	char				m_anim_wag[40];			// 0x7f8  "WAG"
+	char				m_anim_run[40];			// 0x820  "RUN"
+	char				m_anim_fly[40];			// 0x848  "FLY"
+	char				m_anim_sit[40];			// 0x870  "SIT"
+	char				m_anim_walk[40];		// 0x898  "WALK"
+	CGameObject			*m_dest;				// 0x8c0  destination: a patrol point or an object
+	CGameObject			*m_prev_point;			// 0x8c8  the patrol point we left last
+	float				m_fov;					// 0x8cc  "FOV" in degrees (90; > 358: all round)
+	OMedia3DPoint		m_turn_rates;			// 0x8d0  turn rates x, y, z (1, 3, 2) (RotateToDest)
+	float				m_time2;				// 0x8e0  time (+= dt)
+	unsigned char		m_keep_point;			// 0x8e4  keep m_dest_point as it is (ev76 / ev81)
+	OMedia3DPoint		m_dest_point;			// 0x8e8  destination point
+	OMedia3DPoint		m_8f8;					// 0x8f8  (0, 0, 0)
+	unsigned char		m_hover;				// 0x908  hovering: no gravity (AITrigger AIHover)
+	unsigned char		m_909;					// 0x909  0 (set with the hover rise in v265)
+	float				m_wait_time;			// 0x90c  wait time left at a patrol point (state 7)
+	unsigned char		m_no_turn;				// 0x910  don't turn until the speed is over 1 (ev78)
+	int					m_saved_state;			// 0x914  state saved by ev87 (1)
+	OMedia3DVector		m_saved_offset;			// 0x918  m_offset saved by ev87
+	CGameObject			*m_saved_target;		// 0x928  target saved by ev87
+	float				m_attack_time;			// 0x92c  ev87 time left
+	float				m_stuck_timer;			// 0x930  stuck check timer (ev89)
+	float				m_seen_time;			// 0x934  > 0: the target is seen even when it is hidden (counts down)
+	unsigned char		m_938;					// 0x938  0
+	int					m_ai_state;				// 0x93c  "AIState" (1): the state to start in / go back to
+	float				m_flee_dist;			// 0x940  flee distance (1500): state 5 ends beyond it
+	float				m_arrive_dist;			// 0x944  arrival distance (110; 440 for patrol points with m_move_forward)
+	unsigned char		m_move_forward;			// 0x948  move the way we face (ev77)
+	float				m_keep_fleeing;			// 0x94c  > 0: state 5 stops (v261) beyond m_flee_dist; wanderers flee a seen target
+	unsigned char		m_wander_started;		// 0x950  wander started
+	float				m_wander_time;			// 0x954  wander time (new destination after 11 s)
+	unsigned char		m_958;					// 0x958  0
+	float				m_wander_range;			// 0x95c  "WanderRange" (1500)
+	float				m_last_yaw_step;		// 0x960  last yaw step (RotateToDest)
+	unsigned char		m_see_through_walls;	// 0x964  (CanSeeTarget)
+	int					m_anims_disabled;		// 0x968  animations disabled (a cut scene animates us)
+	float				m_flee_time;			// 0x96c  flee time left (state 5)
+	unsigned char		m_state_locked;			// 0x970  state locked (ev73 ignores 0 and 6)
+	int					m_974;					// 0x974  0
+	unsigned char		m_check_stuck;			// 0x978  1: patrols run the stuck check (ev89)
+	OMedia3DPoint		m_hold_pos;				// 0x97c  position held while touched (m_held)
+	unsigned char		m_held;					// 0x98c  touched by the camera or Goddard: held at m_hold_pos
+	unsigned char		m_hold_when_touched;	// 0x98d  is held when touched
+	float				m_990;					// 0x990  150
+
+	// ---- Negatron's C3DAI pieces some subclasses still use (TODO(BG): not in Neutron.exe; remove
+	// once the subclasses are ported). The animation starters were slots 117..122 there.
+	void n2_ev117(void)	{ PlayAnimN2(m_anim_fly); }						// N2 ESLOT 117 FLY
+	void n2_ev118(void)	{ PlayAnimN2(m_anim_run); }						// N2 ESLOT 118 RUN
+	void n2_ev119(void)	{ PlayAnimN2(m_anim_sit); }						// N2 ESLOT 119 SIT
+	void n2_ev120(void)	{ PlayAnimN2(m_anim_walk); }					// N2 ESLOT 120 WALK
+	void n2_ev121(void)	{ PlayAnimN2(m_anim_wag); }						// N2 ESLOT 121 WAG
+	void n2_ev122(void)	{ PlayAnimN2(m_anim_walk); }					// N2 ESLOT 122 WALK (its second WALK name)
+	unsigned char n2_FindBestPath(CGameObject *goal) { (void)goal; return 0; }	// N2 ESLOT 133: no path finding in Boy Genius
+	void n2_ev138(unsigned char far) { (void)far; ev73(5); }				// N2 ESLOT 138 flee along a path (none: plain flee)
+	void PlayAnimN2(char *name);
+	unsigned char		f_c64;					// N2 0xc64  bank into turns while airborne
+	float				f_1b30;					// N2 0x1b30 look-around timer
+	unsigned char		f_1b34;					// N2 0x1b34 candidate list valid
+	float				f_1b3c;					// N2 0x1b3c "InitialSpeed" (200)
+	float				f_1b44;					// N2 0x1b44 candidate radius
+	// ---- Negatron's C3DPlayerObject members some subclasses still use (TODO(BG): not in Neutron.exe)
+	float				f_930;					// N2 0x930  1.0
+	int					f_934;					// N2 0x934  -1; != -1 while a cut scene has replaced our animation
+	char				f_938[40];				// N2 0x938  the animation to go back to after the cut scene
 };

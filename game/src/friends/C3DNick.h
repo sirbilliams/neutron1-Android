@@ -26,7 +26,7 @@ class C3DNick : public C3DFriends
 
 	// ---- element-family slots
 	virtual void ev69(void);												// ESLOT 69  0x433730 load the morph animations and the texture (once)
-	virtual void ev126(void);												// ESLOT 126 N2:0x45aac0 skate the NICPAT1 patrol
+	virtual void ev90(void);												// ESLOT 126 N2:0x45aac0 skate the NICPAT1 patrol
 	virtual void ev145(void);												// ESLOT 145 0x433b80 talked to: the SCENE task moves on
 
 	// ---- CGameObject-family overrides

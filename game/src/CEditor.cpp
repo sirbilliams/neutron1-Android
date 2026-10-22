@@ -664,6 +664,32 @@ void CEditor::CheckLoadLevel(void)
 
 // --------------------------------------------------------------------------- 0x46e170
 
+// port: while the reconstruction is incomplete, an object of a class whose factory entry is still
+// a stub (it logs TODO and returns NULL) is loaded as an inert CLocalGameObject instead, so the
+// rest of the .gam loads: its properties are read (by name, as the file describes them) and
+// dropped, it does nothing, and NameContains/dynamic_cast tests never take it for the real
+// class. The original would stop loading at it ("NULL object spawned"). Set
+// NEG_NO_PLACEHOLDERS=1 to get the original behaviour.
+class CPortPlaceholder : public CLocalGameObject
+{
+	public:
+	CPortPlaceholder()	{ SetName((char *)"CPORTPLACEHOLDER"); }
+	virtual void Process(float dt)	{ (void)dt; }
+};
+
+static CGameObject *PortPlaceholder(int id)
+{
+	static int off = -1;
+	if (off < 0) { const char *e = getenv("NEG_NO_PLACEHOLDERS"); off = e && *e && *e != '0'; }
+	if (off) return NULL;
+	char ids[5];
+	IdString(ids, id);
+	SDL_Log("PORT: '%s' is not reconstructed yet: loaded as an inert placeholder", ids);
+	CGameObject *o = new CPortPlaceholder;
+	o->InitObject();
+	return o;
+}
+
 void CEditor::LoadGame(char *name, int level_id)
 {
 	g_new_game = 0;
@@ -737,6 +763,7 @@ void CEditor::LoadGame(char *name, int level_id)
 		int id;
 		fs >> id;
 		CGameObject *o = IsSingletonLoaded(id) ? FindObject(id) : neg::CreateObject(id);
+		if (!o && !IsSingletonLoaded(id)) o = PortPlaceholder(id);	// port: a class not reconstructed yet
 		if (o)
 		{
 			for (;;)
@@ -764,6 +791,7 @@ void CEditor::LoadGame(char *name, int level_id)
 				else
 				{
 					o = neg::CreateObject(id);
+					if (!o) o = PortPlaceholder(id);			// port: a class not reconstructed yet
 					if (!o) { ErrorLog("ERROR: NULL object spawned in LoadGame for %s", ids); break; }
 				}
 				Trace("Object %d Spawned in LoadGame", id);

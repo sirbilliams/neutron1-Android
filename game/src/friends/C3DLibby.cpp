@@ -11,17 +11,17 @@ C3DLibby::C3DLibby()										// 0x42cd40
 	f_649 = 0;												// ev69 loads the animations later (morph: f_6d0 stays 0)
 	FriendInitObjectAnim();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3LIB');							// 0x462220
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 200.0f;											// speed
-	f_96c = 3;												// patrolling only
-	f_c08 = 3;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 300.0f;
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 200.0f;											// speed
+	m_state = 3;												// patrolling only
+	m_ai_state = 3;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 300.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"RUN");
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"RUN");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	// (then a call to the empty 0x472970)
 }
 
@@ -67,7 +67,7 @@ void C3DLibby::ResetObject(void)							// 0x42d190 (as C3DSheen's, without InitP
 	y = qy;
 	z = qz;
 	C3DFriends::ResetObject();								// 0x41b790
-	f_b8c = NULL;											// no destination
+	m_dest = NULL;											// no destination
 }
 
 void C3DLibby::ev69(void)									// 0x42cf30

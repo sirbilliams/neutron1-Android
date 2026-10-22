@@ -4,7 +4,7 @@
             camera object) touching it plays its line ("libbyghost", "carlghost", "cindyghost",
             "jimmynick28", "sheenhi" by ObjectTag), at most every 10 s. While power timer 7 runs
             it FALLs (ev67: back to state 3 at the end).
-      3     a mummy: hits Jimmy (SWING; Jimmy ev134 -10 energy, -10 points, 5 s) unless power 1
+      3     a mummy: hits Jimmy (SWING; Jimmy n2_ev134 -10 energy, -10 points, 5 s) unless power 1
             runs. A water balloon pops on it and sends it RUNning away (state 15, twice the
             speed, back to WALK after 20 s); hit again while fleeing it DIEs (20 points; DEAD,
             back after 6000 s). Every "NumToKill" (3) deaths call "ActivateWhenShot"'s NextState(-1).

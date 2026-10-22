@@ -19,7 +19,7 @@ C3DNeuCar2::C3DNeuCar2()										// N2:0x4594f0
 	v67(300.0f);											// radius
 	ev58((char *)"DEFAULT", 1);								// +0xe8 looped
 	C3DObject::SetObjectID('3NC2');							// 0x462220
-	f_968 = 20.0f;											// speed
+	m_speed = 20.0f;											// speed
 	CGameObject::v42(0);									// 0x470fd0 (direct call)
 	C3DObject::InitPhysics();								// 0x4623d0
 }

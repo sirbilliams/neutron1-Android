@@ -129,7 +129,7 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
 		g_view_restore = 1;								// N2:0x54a498
-		p->ev79(1);										// element +0x13c
+		p->PauseAnim(1);										// element +0x13c
 		StartFade(ll->m_fade_type, ll->m_fade_time);	// N2:0x406a40
 	}
 }

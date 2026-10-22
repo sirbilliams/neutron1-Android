@@ -81,7 +81,7 @@ static void TargetSetAnimation(CGameObject *target, const char *name, bool loop)
 static void AISetAnimationsDisabled(CGameObject *ai, int off)
 {
 	C3DAI *a = ai ? dynamic_cast<C3DAI *>(ai) : NULL;		// port: a name with "C3DAI" that is not one is left alone
-	if (a) a->f_c38 = off;
+	if (a) a->m_anims_disabled = off;
 }
 
 // C3DJimmy element slot 138 (+0x228)(this, jimmy, 0, 0): put the gadget in hand away.

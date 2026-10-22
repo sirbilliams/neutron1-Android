@@ -38,10 +38,10 @@ class C3DGoddard : public C3DAI
 	// ---- element-family slots
 	virtual void ev60(void);												// ESLOT 60  N2:0x43b570 no such animation: SIT
 	virtual void ev67(void);												// ESLOT 67  N2:0x43b510 FIX / LOSTWING over: ROCK
-	virtual void ev107(int state);											// ESLOT 107 N2:0x439b50 + state 3: speed 400, props on; 7: props off
-	virtual void ev116(void);												// ESLOT 116 N2:0x439c30 face the way the target faces (until arrived)
-	virtual void ev118(void);												// ESLOT 118 N2:0x43a140 f_1b54 = -1 (no RUN animation)
-	virtual void ev124(void);												// ESLOT 124 0x429a00 stop the sound f_1b58
+	virtual void ev73(int state);											// ESLOT 107 N2:0x439b50 + state 3: speed 400, props on; 7: props off
+	virtual void ev82(void);												// ESLOT 116 N2:0x439c30 face the way the target faces (until arrived)
+	virtual void n2_ev118(void);												// ESLOT 118 N2:0x43a140 f_1b54 = -1 (no RUN animation)
+	virtual void ev88(void);												// ESLOT 124 0x429a00 stop the sound f_1b58
 	virtual void ev144(short side);											// ESLOT 144 N2:0x438b90 follow at kSides[side]
 	virtual unsigned char ev145(short side);								// ESLOT 145 0x41e9e0 that side free (nothing between us)? then take it
 	virtual void ev146(float dt);											// ESLOT 146 0x41cea0 steered: turn, run along the heading
@@ -52,7 +52,7 @@ class C3DGoddard : public C3DAI
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x41cd70 model, animations
 	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x43a830 Jimmy / a bone
-	virtual void v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly);	// SLOT 219 N2:0x43a9a0 ceiling: f_bb0 = 0
+	virtual void v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly);	// SLOT 219 N2:0x43a9a0 ceiling: m_keep_point = 0
 	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 220 0x41e700 wall: state 4 -> ev148
 	virtual void Process(float dt);											// SLOT 240 N2:0x439170
 	virtual void v243(float dt);											// SLOT 243 0x41d0c0 steered by the player (keys / mouse), arrows
@@ -63,8 +63,8 @@ class C3DGoddard : public C3DAI
 
 	// ---- data members (object offsets)
 	C3DShadow			*f_1b50;		// 0x1b50 blob shadow
-	int					f_1b54;			// 0x1b54 sound channel (-1; ev118 forgets it)
-	int					f_1b58;			// 0x1b58 sound channel (-1; ev124 stops it)
+	int					f_1b54;			// 0x1b54 sound channel (-1; n2_ev118 forgets it)
+	int					f_1b58;			// 0x1b58 sound channel (-1; ev88 stops it)
 	short				f_1b5c;			// 0x1b5c side we follow at (ev144, 0..5)
 	short				f_1b5e;			// 0x1b5e side ev148 started from
 	unsigned char		f_1b60;			// 0x1b60 sitting / riding along (state 1, C3DFish, C3DJimmy); ev149 ends it when far
@@ -83,9 +83,9 @@ class C3DGoddard : public C3DAI
 	float				f_1b94;			// 0x1b94 steering: highest he flies (1500; VR06 3500)
 	float				f_1b98;			// 0x1b98 steering: mouse x, summed
 	float				f_1b9c;			// 0x1b9c steering: mouse y, summed
-	float				f_1ba0;			// 0x1ba0 time since the jump (f_bb0, 5 s)
+	float				f_1ba0;			// 0x1ba0 time since the jump (m_keep_point, 5 s)
 	unsigned char		f_1ba4;			// 0x1ba4 not in this level (LV3C)
-	unsigned char		f_1ba5;			// 0x1ba5 fetching a bone (back to f_be4 at Jimmy)
+	unsigned char		f_1ba5;			// 0x1ba5 fetching a bone (back to m_saved_offset at Jimmy)
 	OMediaElement		*f_1ba8;		// 0x1ba8 an element kept at our head (never set: 0)
 	int					f_1bac;			// 0x1bac next trick when waiting (0..4)
 	float				f_1bb0;			// 0x1bb0 time left of the trick

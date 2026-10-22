@@ -105,15 +105,15 @@ C3DEnemy::C3DEnemy()										// N2:0x42e610
 	f_649 = 0;												// ev69 loads the animations later
 	C3DEnemy::InitObject();									// (inlined)
 	C3DObject::SetObjectID('3ENE');							// 0x462220
-	f_9a8 = 1000.0f;										// VisibleRange
-	f_968 = 160.0f;											// speed
-	f_96c = 6;
-	f_c08 = 6;												// AIState
+	m_visible_range = 1000.0f;										// VisibleRange
+	m_speed = 160.0f;											// speed
+	m_state = 6;
+	m_ai_state = 6;												// AIState
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// running is walking
-	C3DAI::ev106(f_aec, (char *)"WALK");					// flying too
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// running is walking
+	C3DAI::ev72(m_anim_fly, (char *)"WALK");					// flying too
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	v50(0);
 	v40(1);
 	v42(1);
@@ -184,7 +184,7 @@ void C3DEnemy::ev69(void)									// N2:0x42f8b0
 			CreateAnim((char *)"RUN", (char *)"mummyrun.grn");
 			CreateAnim((char *)"SWING", (char *)"mummyswing.grn");
 			CreateAnim((char *)"DEAD", (char *)"mummydead.grn");
-			ev106(f_b3c, (char *)"WALK");					// +0x1a8
+			ev72(m_anim_walk, (char *)"WALK");					// +0x1a8
 			f_1b44 = 10000.0f;
 			v67(90.0f);
 			ev58((char *)"STOP", 1);
@@ -192,7 +192,7 @@ void C3DEnemy::ev69(void)									// N2:0x42f8b0
 			break;
 		case 4:
 			SetupBarElements(f_1b68, f_1c6c);
-			f_b9c.y = 3.0f;									// turn rate
+			m_turn_rates.y = 3.0f;									// turn rate
 			InitModel(std::string("nummeyscooterbase.grn"));
 			CreateAnim((char *)"STOP", (char *)"nummeyscooter.grn");
 			CreateAnim((char *)"TALK", (char *)"nummeyscootertalk.grn");
@@ -205,9 +205,9 @@ void C3DEnemy::ev69(void)									// N2:0x42f8b0
 			break;
 		case 5:
 			SetupBarElements(f_1b68, f_1c6c);
-			f_b9c.x = 1.0f;									// turn rates
-			f_b9c.y = 1.0f;
-			f_b9c.z = 1.0f;
+			m_turn_rates.x = 1.0f;									// turn rates
+			m_turn_rates.y = 1.0f;
+			m_turn_rates.z = 1.0f;
 			f_c64 = 1;										// bank into turns
 			InitModel(std::string("nummeyflyerbase.grn"));
 			CreateAnim((char *)"STOP", (char *)"nummeyflytalk.grn");
@@ -221,7 +221,7 @@ void C3DEnemy::ev69(void)									// N2:0x42f8b0
 			break;
 		case 6:
 			SetupBarElements(f_1b68, f_1c6c);
-			f_b9c.y = 1.0f;
+			m_turn_rates.y = 1.0f;
 			InitModel(std::string("ghostnummeybase.grn"));
 			CreateAnim((char *)"TALK", (char *)"ghoststop.grn");
 			CreateAnim((char *)"WALK", (char *)"ghostnummeyrun.grn");
@@ -243,14 +243,14 @@ void C3DEnemy::ev67(void)									// N2:0x430490
 {
 	if (strcasecmp(ev66(), "FALL") == 0)					// +0x108
 	{
-		if (f_1b50 != 2) ev107(f_970);						// +0x1ac: back to what it was doing
-		else ev107(3);
+		if (f_1b50 != 2) ev73(m_prev_state);						// +0x1ac: back to what it was doing
+		else ev73(3);
 		return;
 	}
 	if (strcasecmp(ev66(), "DIE") == 0)
 	{
 		ev58((char *)"DEAD", 0);
-		ev107(1);
+		ev73(1);
 	}
 }
 
@@ -262,7 +262,7 @@ void C3DEnemy::ev144(float amount)							// N2:0x42f6e0
 		f_1b68.Hide();										// N2:0x4826f0
 		f_1c6c.Hide();
 		f_1b60 = 0;
-		ev107(1);
+		ev73(1);
 		CGameObject *t = FindObjectByTag("OUTOFENERGY");
 		if (!t) ErrorLog("ERROR: Could not find OUTOFENERGY TRIGGER");
 		else if (t->NameContains((char *)"C3DAITRIGGER"))	// +0x18
@@ -282,7 +282,7 @@ void C3DEnemy::ev144(float amount)							// N2:0x42f6e0
 
 void C3DEnemy::ev145(void)									// N2:0x42ea10
 {
-	f_968 = f_1b3c;											// InitialSpeed
+	m_speed = f_1b3c;											// InitialSpeed
 }
 
 // --------------------------------------------------------------------------- CGameObject slots
@@ -294,19 +294,19 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 	{
 		if (f_1b50 != 3) return;
 		// TODO(BG): C3DWaterBalloon is Negatron only (Pop)
-		if (f_96c == 1) return;
-		if (f_96c != 15)									// hit: run away
+		if (m_state == 1) return;
+		if (m_state != 15)									// hit: run away
 		{
 			ev58((char *)"HIT", 0);							// +0xe8
-			f_964 = FindObjectByTag("JIM1");
-			ev138(1);										// +0x228
+			m_target = FindObjectByTag("JIM1");
+			n2_ev138(1);										// +0x228
 			f_1b30 = 3.0f;
-			ev106(f_ac4, (char *)"RUN");					// +0x1a8
-			f_968 = f_1b3c + f_1b3c;
+			ev72(m_anim_run, (char *)"RUN");					// +0x1a8
+			m_speed = f_1b3c + f_1b3c;
 			f_1b58 = 20.0f;
 			return;
 		}
-		ev107(1);											// hit while running away: dies
+		ev73(1);											// hit while running away: dies
 		ev58((char *)"DIE", 0);
 		AddScore(20);										// N2:0x482b50
 		f_1b54 = 6000.0f;
@@ -335,8 +335,8 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 		}
 		case 3:
 		{
-			if (f_96c == 1 || g_N2_54a428 > 0) return;			// power 1 protects Jimmy
-			ev106(f_b3c, (char *)"SWING");
+			if (m_state == 1 || g_N2_54a428 > 0) return;			// power 1 protects Jimmy
+			ev72(m_anim_walk, (char *)"SWING");
 			if (!other->NameContains((char *)"C3DJIMMY")) return;
 			C3DJimmy *j = dynamic_cast<C3DJimmy *>(other);	// (other - 0xc0)
 			if (j) j->ev134(-10.0f, -10, 5.0f, 1);			// element +0x218
@@ -356,7 +356,7 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 			PlayGameSound(-1, std::string("pickup2"), false);
 			C3DJimmy *j = Jimmy();
 			j->f_4d58 = 0;									// his sparkles
-			if (f_1b50 != 5) j->ev90(1);					// element +0x168: drop his props
+			if (f_1b50 != 5) j->n2_ev90(1);					// element +0x168: drop his props
 			return;
 		}
 	}
@@ -365,7 +365,7 @@ void C3DEnemy::AddTouching(CGameObject *other)				// N2:0x42f250
 void C3DEnemy::RemoveTouching(CGameObject *other)			// N2:0x42f860
 {
 	C3DAI::RemoveTouching(other);							// 0x40a390
-	if (other == g_camera && f_1b50 == 3) ev106(f_b3c, (char *)"WALK");
+	if (other == g_camera && f_1b50 == 3) ev72(m_anim_walk, (char *)"WALK");
 }
 
 unsigned char C3DEnemy::v231(CGameObject *other)			// N2:0x430520
@@ -390,18 +390,18 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 				f_1b64 -= dt;
 				if (f_1b64 <= 0) f_1b64 = 0;
 			}
-			if (g_N2_54a440 > 0 && f_96c != 1 && g_game_mode != 3 && !IsAnim((char *)"FALL"))	// power 7
+			if (g_N2_54a440 > 0 && m_state != 1 && g_game_mode != 3 && !IsAnim((char *)"FALL"))	// power 7
 			{
-				ev107(1);
+				ev73(1);
 				ev58((char *)"FALL", 0);
 			}
 			return;
 		case 3:
 			if (Countdown(&f_1b54, dt) || (f_1b54 == 0 && Countdown(&f_1b58, dt)))	// N2:0x48fcb0
 			{
-				ev107(6);									// up again / done running away
-				ev106(f_ac4, (char *)"WALK");
-				f_968 = f_1b3c;
+				ev73(6);									// up again / done running away
+				ev72(m_anim_run, (char *)"WALK");
+				m_speed = f_1b3c;
 				ev58((char *)"STOP", 1);
 			}
 			return;
@@ -443,39 +443,39 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 		f_1ddc -= dt;
 		if (f_1ddc < 0) f_1ddc = 0;
 	}
-	if (g_N2_54a440 > 0 && f_96c != 1 && !IsAnim((char *)"FALL") && g_game_mode != 3)
+	if (g_N2_54a440 > 0 && m_state != 1 && !IsAnim((char *)"FALL") && g_game_mode != 3)
 	{
-		ev107(1);
+		ev73(1);
 		ev58((char *)"FALL", 0);
 	}
-	if (f_96c == 15)										// running away: slows down
+	if (m_state == 15)										// running away: slows down
 	{
 		if (f_1b50 == 4)
 		{
-			if (g_difficulty == 0) f_968 -= dt * 12.0f;
-			else if (g_difficulty == 1) f_968 -= dt * 9.5f;
-			else if (g_difficulty == 2) f_968 -= dt * 5.5f;
-			if (f_968 < 400.0f) f_968 = 400.0f;
+			if (g_difficulty == 0) m_speed -= dt * 12.0f;
+			else if (g_difficulty == 1) m_speed -= dt * 9.5f;
+			else if (g_difficulty == 2) m_speed -= dt * 5.5f;
+			if (m_speed < 400.0f) m_speed = 400.0f;
 		}
 		else if (f_1b50 == 5)
 		{
-			f_bd4 = 1;										// hovering
-			if (g_difficulty == 0) f_968 -= dt * 7.2f;
-			else if (g_difficulty == 1) f_968 -= dt * 5.8f;
-			else if (g_difficulty == 2) f_968 -= dt * 4.5f;
-			if (f_968 < 200.0f) f_968 = 200.0f;
+			m_hover = 1;										// hovering
+			if (g_difficulty == 0) m_speed -= dt * 7.2f;
+			else if (g_difficulty == 1) m_speed -= dt * 5.8f;
+			else if (g_difficulty == 2) m_speed -= dt * 4.5f;
+			if (m_speed < 200.0f) m_speed = 200.0f;
 		}
 		else if (f_1b50 == 6)
 		{
-			f_bd4 = 0;
-			if (g_difficulty == 0) f_968 -= dt * 7.0f;
-			else if (g_difficulty == 1) f_968 -= dt * 6.0f;
-			else if (g_difficulty == 2) f_968 -= dt * 5.0f;
-			if (f_968 < 250.0f) f_968 = 250.0f;
+			m_hover = 0;
+			if (g_difficulty == 0) m_speed -= dt * 7.0f;
+			else if (g_difficulty == 1) m_speed -= dt * 6.0f;
+			else if (g_difficulty == 2) m_speed -= dt * 5.0f;
+			if (m_speed < 250.0f) m_speed = 250.0f;
 		}
 	}
 	// the glow sprite: towards the camera, fading in within 600 of the target
-	if (!f_1b5c || !f_964) return;
+	if (!f_1b5c || !m_target) return;
 #if 0	// TODO(BG): the glow sprite was a Negatron C3DSpriteObject (f_1b5c stays NULL)
 	if (!(f_1b60 > 0))
 	{
@@ -488,7 +488,7 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 	v.x *= s;
 	v.y *= s;
 	v.z *= s;
-	const OMedia3DVector t = Position(f_964);
+	const OMedia3DVector t = Position(m_target);
 	const float dx = me.x - t.x, dy = me.y - t.y, dz = me.z - t.z;
 	const float d = sqrtf(dx * dx + dy * dy + dz * dz);
 	if (!(d < 600.0f))
@@ -504,7 +504,7 @@ void C3DEnemy::Process(float dt)							// N2:0x42ea30
 
 void C3DEnemy::v258(void)									// N2:0x42ea20
 {
-	f_96c = f_c08;											// AIState
+	m_state = m_ai_state;											// AIState
 	v260();													// +0x410
 }
 

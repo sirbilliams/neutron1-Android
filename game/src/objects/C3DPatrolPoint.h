@@ -1,48 +1,32 @@
 /*  C3DPatrolPoint ('3PAT') - a waypoint of an AI character's patrol ("icons.omt" canvas 6,
-    size 50): the AI walks to "NextPatrolPoint", plays "ActivateAnim" / "WaitAnim" for
-    "WaitTime", may call "CallObjectTag" or play "SoundName" there. A point with PatrolType 1
-    is a node of a free network instead: it lists the other type-1 points of its "GroupID" in
-    plain view (no wall in between, at most 20) with their distances, and shows green in the
-    editor when it has any, yellow when it has none.
-    Reconstructed from Neutron.exe: constructor N2:0x45c4c0, destructor 0x434da0 (only resets the
-    vtables, then ~C3DSprite; deleting thunks 0x434f20 / 0x434d70 / 0x434f30). Vtables 0x4ad348
-    (element, 55 slots, all C3DSprite's) / 0x4ad334 (listener) / 0x4acee4 (game object) /
-    0x4aced4 (streamer). 0x97c bytes: C3DSpriteType's 0x668, own members 0x668..0x974,
-    vtordisp 0x974, the streamer at 0x978.
+    size 50): the AI (C3DAI states 2/3) walks to it, plays "WaitAnim" for "WaitTime" there,
+    then goes on to "NextPatrolPoint" ("WAIT" / "SCAN" in place of a tag: stand / scan).
+    Reconstructed from Neutron.exe: constructor 0x434b30 (factory '3PAT', 0x7ec bytes),
+    destructor 0x434da0 (deleting thunks 0x434f20 / 0x434d70 / 0x434f30). A C3DSprite (element
+    vtable: all C3DSprite's slots), own members 0x5e8..0x7e4, vtordisp 0x7e4, streamer 0x7e8.
+    (Negatron's C3DPatrolPoint added a "PatrolType" 1 network with visible-point lists, path
+    finding for C3DAI, "GroupID", "PatrolSpeed" and "AttachObj": Boy Genius has none of them.)
 
-    Members are named after their 2002 offset from the object start (element view; the
+    Members are named after their offset from the object start (element view; the
     CGameObject-family methods of the original see them 0xc8 lower). C3DAI reads them.       */
 #pragma once
-#include "../C3DSpriteType.h"
+#include "../C3DSprite.h"
 
-class C3DPatrolPoint : public C3DSpriteType
+class C3DPatrolPoint : public C3DSprite
 {
 	public:
-	C3DPatrolPoint();														// N2:0x45c4c0
+	C3DPatrolPoint();														// 0x434b30
 	virtual ~C3DPatrolPoint();												// 0x434da0
 
-	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x434de0
-	virtual void Process(float dt);											// SLOT 240 0x4732a0 (empty: patrol points do nothing per frame)
-	virtual void v242(float t);												// SLOT 242 N2:0x45c9b0 editor: holding A lists the visible points
-	virtual void v260(void);												// SLOT 260 N2:0x45c8d0 (re)load: find the visible points, colour
-	virtual void v266(void);												// SLOT 266 N2:0x45c990 find the visible points
+	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x434ea0 (logs "PatrolPoint %s hit")
 
-	void FindVisiblePoints(int group);										// N2:0x45ca90
-
-	struct Visible { CGameObject *point; float dist; };
-
-	// FIELD 0x668 0x30c
-	char		m_call_object_tag[100];	// 0x668  "CallObjectTag" (= "none")
-	char		m_activate_anim[100];	// 0x6cc  "ActivateAnim" (= "none")
-	char		m_next_patrol_point[100];	// 0x730  "NextPatrolPoint" (= "none")
-	char		m_wait_anim[100];		// 0x794  "WaitAnim" (= "none")
-	char		m_sound_name[100];		// 0x7f8  "SoundName" (= "none")
-	char		m_attach_obj[100];		// 0x85c  "AttachObj" (= "none")
-	float		m_wait_time;			// 0x8c0  "WaitTime" (= 0)
-	int			m_patrol_type;			// 0x8c4  "PatrolType" (= 0; 1: a node of the GroupID network)
-	Visible		m_visible_points[20];	// 0x8c8  FindVisiblePoints: the type-1 points of the group in view
-	unsigned char f_968;				// 0x968  = 1
-	int			m_group_id;				// 0x96c  "GroupID" (= 0)
-	float		m_patrol_speed;			// 0x970  "PatrolSpeed" (= -1)
+	// FIELD 0x5e8 0x1fc
+	char		m_call_object_tag[100];	// 0x5e8  "CallObjectTag" (= "none")
+	char		m_activate_anim[100];	// 0x64c  "ActivateAnim" (= "none")
+	char		m_next_patrol_point[100];	// 0x6b0  "NextPatrolPoint" (= "none"; "WAIT", "SCAN")
+	char		m_sound_db[100];		// 0x714  "SoundDatabase" (= "none")
+	char		m_wait_anim[100];		// 0x778  "WaitAnim" (= "none")
+	int			m_sound_index;			// 0x7dc  "SoundIndex" (= -1)
+	float		m_wait_time;			// 0x7e0  "WaitTime" (= 0)
 };

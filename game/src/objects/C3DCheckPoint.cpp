@@ -202,25 +202,19 @@ void C3DCheckPoint::SendGoddard(void)
 	if (strcasecmp(m_send_goddard_to, "none") == 0) return;
 	if (strcasecmp(m_send_goddard_to, "WAIT") == 0)
 	{
-		g->ev107(1);										// element +0x1ac
+		g->ev73(1);										// element +0x1ac
 		return;
 	}
 	if (strcasecmp(m_send_goddard_to, "FOLLOW") == 0)
 	{
-		g->ev107(4);
+		g->ev73(4);
 		return;
 	}
 	CGameObject *to = FindObjectByTag(m_send_goddard_to);
 	if (!to) return;
-	C3DPatrolPoint *pp = dynamic_cast<C3DPatrolPoint *>(to);	// port: the original reads +0x7fc of any object
-	if (pp && pp->m_patrol_type == 1)
-	{
-		if (!g->FindBestPath(to)) g->ev107(4);				// element +0x214
-		else g->ev107(13);
-		g->f_1b34 = 0;
-		return;
-	}
-	g->ev107(3);
-	strcpy(g->f_9ac, m_send_goddard_to);					// PatrolPoint
-	g->f_b8c = NULL;
+	// TODO(BG): Negatron sent Goddard along a path when <to> was a PatrolType 1 point; Boy
+	// Genius's patrol points have no type (check this function against Neutron.exe).
+	g->ev73(3);
+	strcpy(g->m_patrol_point, m_send_goddard_to);					// PatrolPoint
+	g->m_dest = NULL;
 }

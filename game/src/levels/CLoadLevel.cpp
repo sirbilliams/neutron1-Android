@@ -59,7 +59,7 @@ static void JimmyLoadLevel(CGameObject *jim, const char *level, const char *star
 // C3DJimmy element slot 79 (+0x13c)(1), when the exit has a FadeType: pause the morph animation.
 static void JimmySlot79(CGameObject *jim, int a)
 {
-	if (C3DPlayer *p = PlayerOf(jim)) p->ev79((unsigned char)a);
+	if (C3DPlayer *p = PlayerOf(jim)) p->PauseAnim((unsigned char)a);
 }
 
 // --------------------------------------------------------------------------- small helpers

@@ -23,8 +23,8 @@ class C3DBus : public C3DAICar
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x418290 C3DAI's, then InitAnim
-	virtual void v277(void);												// SLOT 277 N2:0x423850 ev79(1)
-	virtual void v278(void);												// SLOT 278 N2:0x423860 ev79(0)
+	virtual void v277(void);												// SLOT 277 N2:0x423850 PauseAnim(1)
+	virtual void v278(void);												// SLOT 278 N2:0x423860 PauseAnim(0)
 
 	int					f_1b6c;			// 0x1b6c (= -1, not used)
 };

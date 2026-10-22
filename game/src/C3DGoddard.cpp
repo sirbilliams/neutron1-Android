@@ -163,17 +163,17 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	f_649 = 0;
 	C3DGoddard::InitObject();								// 0x41cd70 (called directly)
 	C3DObject::SetObjectID('3GOD');							// 0x462220
-	f_960 = 0;
-	f_968 = 1.0f;
-	f_b9c.x = 0;											// turn rates
-	f_b9c.y = 3.2f;
-	f_b9c.z = 0.3f;
-	f_96c = 1;
-	f_c08 = 1;												// "AIState"
+	m_time = 0;
+	m_speed = 1.0f;
+	m_turn_rates.x = 0;											// turn rates
+	m_turn_rates.y = 3.2f;
+	m_turn_rates.z = 0.3f;
+	m_state = 1;
+	m_ai_state = 1;												// "AIState"
 	C3DGoddard::ev144(0);									// N2:0x438b90
 	f_1b5e = 0;
 	v136(1);
-	f_974 = '3JIM';
+	m_target_id = '3JIM';
 	v50(0);
 	f_1b50 = new C3DShadow;									// 0x60c bytes
 	v107(0);
@@ -181,24 +181,24 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	f_1b54 = -1;
 	f_1b58 = -1;
 	f_009 = 1;
-	f_bd4 = 1;												// hovering
+	m_hover = 1;												// hovering
 	f_1b60 = 0;
 	f_1b64 = 0;
 	f_1b68 = 0;
 	f_1b6c = 0;
 	f_1b70 = 700.0f;
 	f_1b74 = 30.0f;
-	f_968 = 0;
+	m_speed = 0;
 	f_1bb4 = 0;
 	f_1b78 = 1;
 	f_1b94 = 1500.0f;
 	f_1b7c = -1;
-	ev106(f_a9c, (char *)"none");							// WAG
-	ev106(f_ac4, (char *)"RUN");							// RUN
-	ev106(f_aec, (char *)"FLY");							// FLY
-	ev106(f_b14, (char *)"none");							// SIT
-	ev106(f_a74, (char *)"none");
-	ev106(f_b3c, (char *)"RUN");							// WALK
+	ev72(m_anim_wag, (char *)"none");							// WAG
+	ev72(m_anim_run, (char *)"RUN");							// RUN
+	ev72(m_anim_fly, (char *)"FLY");							// FLY
+	ev72(m_anim_sit, (char *)"none");							// SIT
+	ev72(m_anim_none, (char *)"none");
+	ev72(m_anim_walk, (char *)"RUN");							// WALK
 	C3DCursor *c = new C3DCursor;							// 0x92c bytes
 	f_1b80 = c ? static_cast<CGameObject *>(c) : NULL;
 	Arrow(f_1b80)->HideAgain();								// element +0xdc
@@ -210,7 +210,7 @@ C3DGoddard::C3DGoddard()									// N2:0x4383d0
 	f_1b8c = NULL;
 	f_1b90 = 0;
 	v42(1);
-	f_c60 = 150.0f;
+	m_990 = 150.0f;
 	f_1ba0 = 0;
 	f_1ba4 = 0;
 	f_1ba5 = 0;
@@ -256,31 +256,31 @@ void C3DGoddard::ev67(void)									// N2:0x43b510
 	ev58((char *)"ROCK", 1);
 }
 
-void C3DGoddard::ev107(int state)							// N2:0x439b50
+void C3DGoddard::ev73(int state)							// N2:0x439b50
 {
-	C3DAI::ev107(state);									// N2:0x412240
+	C3DAI::ev73(state);									// N2:0x412240
 	if (state == 3)
 	{
-		f_968 = 400.0f;
-		ev90(1);											// +0x168
+		m_speed = 400.0f;
+		n2_ev90(1);											// +0x168
 		return;
 	}
-	if (state == 7) ev90(0);
+	if (state == 7) n2_ev90(0);
 }
 
-void C3DGoddard::ev116(void)								// N2:0x439c30
+void C3DGoddard::ev82(void)								// N2:0x439c30
 {
 	float r[4];
-	f_964->v201(r);											// +0x324
-	if (!f_998) v218(0, r[1], 0);							// CGameObject +0x368
+	m_target->v201(r);											// +0x324
+	if (!m_arrived) v218(0, r[1], 0);							// CGameObject +0x368
 }
 
-void C3DGoddard::ev118(void)								// N2:0x43a140
+void C3DGoddard::n2_ev118(void)								// N2:0x43a140
 {
 	if (f_1b54 != -1) f_1b54 = -1;							// (not stopped)
 }
 
-void C3DGoddard::ev124(void)								// 0x429a00
+void C3DGoddard::ev88(void)								// 0x429a00
 {
 	if (f_1b58 != -1)
 	{
@@ -293,9 +293,9 @@ void C3DGoddard::ev144(short side)							// N2:0x438b90
 {
 	if (side >= 0 && side <= 5)
 	{
-		f_978.x = kSides[side][0];
-		f_978.y = kSides[side][1];
-		f_978.z = kSides[side][2];
+		m_offset.x = kSides[side][0];
+		m_offset.y = kSides[side][1];
+		m_offset.z = kSides[side][2];
 	}
 	f_1b5c = side;
 }
@@ -307,7 +307,7 @@ unsigned char C3DGoddard::ev145(short side)					// 0x41e9e0
 	if (side < 0 || side > 5) return 0;
 	float t[4];
 	{
-		const OMedia3DVector v = f_964->v224(kSides[side][0], 20.0f, kSides[side][2]);	// +0x380
+		const OMedia3DVector v = m_target->v224(kSides[side][0], 20.0f, kSides[side][2]);	// +0x380
 		t[0] = v.x; t[1] = v.y; t[2] = v.z; t[3] = v.w;
 	}
 	if (PhysicsLineBlocked(me, OMedia3DVector(t[0], t[1], t[2], t[3]), false)) return 0;	// 0x47c210
@@ -327,7 +327,7 @@ void C3DGoddard::ev146(float dt)							// 0x41cea0
 		AddRotation(0, f_1b68 * dt, 0);						// +0x330
 		// leaning out of the turn: (a, 0, 0) turned by our heading (the inlined rotation of
 		// angles (0, y, 0): sin 0 / cos 0 from the table)
-		const float a = (1.0f - v145()) * (f_1b6c * (1.0f / 45.0f)) * f_968 * dt;	// +0x244; 0x49fabc
+		const float a = (1.0f - v145()) * (f_1b6c * (1.0f / 45.0f)) * m_speed * dt;	// +0x244; 0x49fabc
 		float r[4];
 		v201(r);											// +0x324
 		const int ay = (int)(r[1] * kDegToAngle) & omc_MaxAngleMask;	// _ftol
@@ -339,7 +339,7 @@ void C3DGoddard::ev146(float dt)							// 0x41cea0
 		side_x = u * cy - w * sy;
 		side_z = w * cy + u * sy;
 	}
-	const OMedia3DVector f = ObjectDir(this, 0, 0, f_968);	// +0x388
+	const OMedia3DVector f = ObjectDir(this, 0, 0, m_speed);	// +0x388
 	v176(side_x + f.x, vy, side_z + f.z);					// +0x2c0: velocity (y kept)
 	if (f_1b64 > 0)
 	{
@@ -367,7 +367,7 @@ void C3DGoddard::ev147(unsigned char on)					// N2:0x439a40
 	v152(f_034);											// +0x260 (CGameObject +0x34)
 	Arrow(f_1b80)->HideAgain();								// element +0xdc
 	Arrow(f_1b84)->HideAgain();
-	f_968 = 450.0f;
+	m_speed = 450.0f;
 	if (f_1b7c != -1)
 	{
 		StopGameSound(f_1b7c, true);						// 0x458a00
@@ -381,7 +381,7 @@ void C3DGoddard::ev148(void)								// 0x41e720
 	static const short next[6][2] = { { 5, 1 }, { 0, 4 }, { 3, 5 }, { 2, 4 }, { 1, 3 }, { 0, 2 } };
 	const short s = f_1b5c;
 	if (s < 0 || s > 5) return;
-	f_960 = 0;
+	m_time = 0;
 	f_1b5e = s;
 	short a = next[s][0], b = next[s][1];
 	if (s == 4)
@@ -394,29 +394,29 @@ void C3DGoddard::ev148(void)								// 0x41e720
 	}
 	if (ev145(a)) return;									// +0x244
 	if (ev145(b)) return;
-	if (f_bd4) ev144(s);									// +0x240
+	if (m_hover) ev144(s);									// +0x240
 }
 
 void C3DGoddard::ev149(void)								// N2:0x439c80
 {
 	const OMedia3DVector p = Position(this);
-	const OMedia3DVector q = Position(f_964);
+	const OMedia3DVector q = Position(m_target);
 	const float dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z;
 	const float d = (float)sqrt((double)dx * dx + (double)dy * dy + (double)dz * dz);	// fsqrt
 	if (d > 350.0f && f_1b60)								// N2:0x4d783c
 	{
 		f_1b60 = 0;
-		f_bd4 = 1;
+		m_hover = 1;
 	}
-	if (d > 440.0f) f_968 = 600.0f;							// 0x49fac0
-	else f_968 = 450.0f;
+	if (d > 440.0f) m_speed = 600.0f;							// 0x49fac0
+	else m_speed = 450.0f;
 	if (d > 1500.0f && !f_1ba5)								// N2:0x4cb1e0: left behind - jump there
 	{
-		f_bb0 = 0;
-		const OMedia3DVector t = f_964->v224(0, 0, -800.0f);	// +0x380
+		m_keep_point = 0;
+		const OMedia3DVector t = m_target->v224(0, 0, -800.0f);	// +0x380
 		v196(t.x, t.y, t.z, t.w);							// +0x310
 	}
-	if (f_1b5c != 2 && f_1b5c != 0 && f_960 > 2.0f) ev148();	// 0x48d954; +0x250
+	if (f_1b5c != 2 && f_1b5c != 0 && m_time > 2.0f) ev148();	// 0x48d954; +0x250
 	if (v133())												// +0x214 on the floor
 	{
 		float v[4];
@@ -478,57 +478,57 @@ void C3DGoddard::AddTouching(CGameObject *other)			// N2:0x43a830
 	{
 		if (f_1ba5)											// brought the bone: back to our place
 		{
-			f_978.x = f_be4.x;
-			f_978.y = f_be4.y;
-			f_978.z = f_be4.z;
+			m_offset.x = m_saved_offset.x;
+			m_offset.y = m_saved_offset.y;
+			m_offset.z = m_saved_offset.z;
 			f_1ba5 = 0;
 			return;
 		}
-		if (f_96c == 4)										// following: jump over him
+		if (m_state == 4)										// following: jump over him
 		{
-			f_bb0 = 1;
+			m_keep_point = 1;
 			f_1ba0 = 0;
-			f_bb4.y = Position(f_964).y + 500.0f;			// 0x4d5fdc
+			m_dest_point.y = Position(m_target).y + 500.0f;			// 0x4d5fdc
 		}
 		return;
 	}
 	if (!other->NameContains((char *)"C3DBONE")) return;
 	// (debug log "MEBTEMP touched a 3dbone")
-	ev107(4);												// element +0x1ac
+	ev73(4);												// element +0x1ac
 	CGameObject *jim = FindObjectByTag("JIM1");				// 0x474070
 	BoneTaken(other);
 	f_1ba5 = 1;
 	if (!jim) return;
-	f_964 = jim;											// bring it to Jimmy
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = -100.0f;
-	f_bf8 = 0;
-	ev124();												// element +0x1f0
+	m_target = jim;											// bring it to Jimmy
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = -100.0f;
+	m_attack_time = 0;
+	ev88();												// element +0x1f0
 }
 
 void C3DGoddard::v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly)	// N2:0x43a9a0
 {
 	(void)nx; (void)ny; (void)nz; (void)nw; (void)poly;
-	f_bb0 = 0;
+	m_keep_point = 0;
 }
 
 void C3DGoddard::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	// 0x41e700
 {
 	(void)a; (void)b; (void)c; (void)d; (void)poly;
-	if (f_96c == 4) ev148();								// element +0x250
+	if (m_state == 4) ev148();								// element +0x250
 }
 
 void C3DGoddard::Process(float dt)							// N2:0x439170
 {
 	if (g_gametype->IsPaused()) return;						// +0x114
-	if (f_bb0)												// the jump lasts 5 s at most
+	if (m_keep_point)												// the jump lasts 5 s at most
 	{
 		f_1ba0 = dt + f_1ba0;
 		if (f_1ba0 > 5.0f)									// 0x48d950
 		{
 			f_1ba0 = 0;
-			f_bb0 = 0;
+			m_keep_point = 0;
 		}
 	}
 	if (!GameIsRunning()) return;							// 0x475ca0
@@ -582,13 +582,13 @@ void C3DGoddard::Process(float dt)							// N2:0x439170
 		{
 			f_1bbc = NewProp(this, "headspinbase.grn", "head");
 		}
-		ev107(1);											// element +0x1ac: wait
+		ev73(1);											// element +0x1ac: wait
 	}
 	float v[4];
 	v174(v);												// +0x2b8
-	if (v[1] > 0) ev130(dt, 115.0f);						// element +0x208
+	if (v[1] > 0) ev94(dt, 115.0f);						// element +0x208
 	C3DAI::Process(dt);										// N2:0x411240
-	switch (f_96c)
+	switch (m_state)
 	{
 		case 1:												// waiting: sit and do tricks for Jimmy
 		{
@@ -658,7 +658,7 @@ void C3DGoddard::v243(float dt)								// 0x41d0c0
 	GetMouseDelta(&mx, &my);								// 0x46a460
 	float v[4];
 	v174(v);												// +0x2b8
-	if (v[1] > 0) ev130(dt, 115.0f);						// element +0x208
+	if (v[1] > 0) ev94(dt, 115.0f);						// element +0x208
 	f_1b98 = (float)mx * dt * 14.4f + f_1b98;				// 0x49fadc
 	f_1b9c = (float)my * dt * 14.4f + f_1b9c;
 	int anim;												// the animation wanted
@@ -679,42 +679,42 @@ void C3DGoddard::v243(float dt)								// 0x41d0c0
 	goto speed;
 turning:
 	anim = 0;
-	if (f_968 <= 50.0f)										// 0x48d400: turning gets him moving
+	if (m_speed <= 50.0f)										// 0x48d400: turning gets him moving
 	{
-		if (f_968 < 40.0f) f_968 = 40.0f;					// 0x49fad4
-		f_968 = f_1b74 + f_968;
+		if (m_speed < 40.0f) m_speed = 40.0f;					// 0x49fad4
+		m_speed = f_1b74 + m_speed;
 	}
 speed:
 	if (PlayerKeyGo() || f_1b9c > 1.0f)						// N2:0x465910; 0x48d924
 	{
 		anim = 0;
-		if (f_968 < f_1b70)
+		if (m_speed < f_1b70)
 		{
-			if (f_968 < 20.0f) f_968 = 20.0f;				// 0x495324
-			f_968 = f_1b74 + f_968;
-			if (f_968 > f_1b70) f_968 = f_1b70;
+			if (m_speed < 20.0f) m_speed = 20.0f;				// 0x495324
+			m_speed = f_1b74 + m_speed;
+			if (m_speed > f_1b70) m_speed = f_1b70;
 		}
 	}
 	else if (PlayerKeyBack() || f_1b9c < -1.0f)				// N2:0x465980; 0x49b1f8
 	{
 		anim = 0;
-		if (f_968 > -200.0f) f_968 = f_968 - f_1b74;		// 0x49facc
+		if (m_speed > -200.0f) m_speed = m_speed - f_1b74;		// 0x49facc
 	}
-	else if (f_968 <= 0) anim = 1;
+	else if (m_speed <= 0) anim = 1;
 	else
 	{
-		f_968 = f_968 - f_1b74 * 0.25f;						// 0x49fad0
-		if (f_968 < 10.0f)									// 0x48e5ec
+		m_speed = m_speed - f_1b74 * 0.25f;						// 0x49fad0
+		if (m_speed < 10.0f)									// 0x48e5ec
 		{
 			anim = 1;
-			f_968 = 0;
+			m_speed = 0;
 		}
 	}
-	if (f_968 > 10.0f) f_968 = f_968 - f_1b74 * (1.0f / 3.0f);	// 0x49fac8
-	else if (f_968 < -10.0f) f_968 = f_1b74 * (1.0f / 3.0f) + f_968;	// 0x49d5d0
+	if (m_speed > 10.0f) m_speed = m_speed - f_1b74 * (1.0f / 3.0f);	// 0x49fac8
+	else if (m_speed < -10.0f) m_speed = f_1b74 * (1.0f / 3.0f) + m_speed;	// 0x49d5d0
 	else
 	{
-		f_968 = 0;
+		m_speed = 0;
 		anim = 1;
 	}
 	f_1b98 = 0;
@@ -857,7 +857,7 @@ void C3DGoddard::v266(void)									// N2:0x43a090
 {
 	if (!f_1bc0) return;
 	f_1bc0->ev65(0, 2, 0);									// +0x104: blend Dst_Color, Zero
-	f_1bc0->ev91(1);										// +0x16c: second pass
+	f_1bc0->n2_ev91(1);										// +0x16c: second pass
 	// (N2: f_1bbc +0xd7c = 0.5, +0xd70 = NULL: C3DGrannyObj fields) TODO(BG)
 }
 
@@ -874,10 +874,10 @@ void C3DGoddard::v270(int old_mode, int new_mode)			// N2:0x43b410
 		if (f_934 == -1)
 		{
 			// (debug log "MEBTEMP C3DGoddard::Swithing to WAITING %d  %d")
-			if (f_96c == 4)
+			if (m_state == 4)
 			{
 				f_934 = 4;
-				ev107(1);									// element +0x1ac
+				ev73(1);									// element +0x1ac
 			}
 		}
 	}
@@ -886,7 +886,7 @@ void C3DGoddard::v270(int old_mode, int new_mode)			// N2:0x43b410
 		// (debug log "MEBTEMP C3DGoddard::Swithing back to AI %d   %d  %d")
 		if (f_934 == 4)
 		{
-			ev107(4);
+			ev73(4);
 			f_934 = -1;
 		}
 	}
@@ -895,9 +895,9 @@ void C3DGoddard::v270(int old_mode, int new_mode)			// N2:0x43b410
 void C3DGoddard::ReadState(OMediaStreamOperators &s)		// N2:0x43a0f0
 {
 	C3DAI::ReadState(s);									// N2:0x4155e0
-	if (f_96c == 3)
+	if (m_state == 3)
 	{
-		f_968 = 400.0f;
-		ev90(1);											// element +0x168
+		m_speed = 400.0f;
+		n2_ev90(1);											// element +0x168
 	}
 }

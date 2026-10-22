@@ -87,7 +87,7 @@ C3DAnimated::C3DAnimated()									// 0x40d110
 	f_6e8[0] = f_6e8[1] = 0;
 	memset(f_6f4, 0, sizeof(f_6f4));						// 4 x 25 dwords
 	f_6f0 = 1.0f;
-	g_N2_545f30 = 0;											// debug line counter of ev80
+	g_N2_545f30 = 0;											// debug line counter of n2_ev80
 	f_898 = 0;
 	f_8b0 = 1;
 	f_894 = 0;
@@ -237,7 +237,7 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 	}
 	if (f_8ac == 1)											// CanClip
 	{
-		f_8a8 = ev93();
+		f_8a8 = n2_ev93();
 		if (f_8a8) return;
 	}
 	if (f_890 && f_8b0 && f_898 > 0.0f)						// fading out
@@ -252,8 +252,8 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 		{
 			ShowAgain();
 			if (f_89c > 0.0f) ev71(f_898 / f_894 * f_89c);
-			else if (f_8a0 > 0.0f) ev72(f_898 / f_894 * f_8a0);
-			else { ev71(f_898 / f_894); ev91(1); }
+			else if (f_8a0 > 0.0f) n2_ev72(f_898 / f_894 * f_8a0);
+			else { ev71(f_898 / f_894); n2_ev91(1); }
 		}
 	}
 	if (f_891)												// fading in
@@ -271,14 +271,14 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 			{
 				f_891 = 0;
 				ShowAgain();
-				if (f_89c == 0.0f) { ev71(0.0f); ev91(0); }
+				if (f_89c == 0.0f) { ev71(0.0f); n2_ev91(0); }
 			}
 			else
 			{
 				ShowAgain();
-				if (f_89c > 0.0f) { ev71((1.0f - f_898 / f_894) * f_89c); ev91(1); }
-				else if (f_8a0 > 0.0f) ev72((1.0f - f_898 / f_894) * f_8a0);
-				else { ev71(1.0f - f_898 / f_894); ev91(1); }
+				if (f_89c > 0.0f) { ev71((1.0f - f_898 / f_894) * f_89c); n2_ev91(1); }
+				else if (f_8a0 > 0.0f) n2_ev72((1.0f - f_898 / f_894) * f_8a0);
+				else { ev71(1.0f - f_898 / f_894); n2_ev91(1); }
 			}
 		}
 	}
@@ -296,8 +296,8 @@ void C3DAnimated::Process(float dt)							// N2:0x41c120
 		}
 		else if (f_6d0 == 1)
 		{
-			if (f_8a4) { ev80(); return; }
-			if (!f_8a5) ev80();
+			if (f_8a4) { n2_ev80(); return; }
+			if (!f_8a5) n2_ev80();
 		}
 	}
 }
@@ -306,7 +306,7 @@ void C3DAnimated::v242(float t)								// N2:0x41b070
 {
 	(void)t;
 	ShowAgain();
-	ev80();
+	n2_ev80();
 }
 
 void C3DAnimated::v260(void)								// N2:0x41cec0
@@ -315,10 +315,10 @@ void C3DAnimated::v260(void)								// N2:0x41cec0
 	else if (f_65c == 1) ShowAgain();
 	if (f_88c == 1) set_flags(get_flags() | omelf_FaceViewport);	// element +0x7c |= 0x200
 	if (f_89c > 0.0f) ev71(f_89c);
-	if (f_8a0 > 0.0f) ev72(f_8a0);
+	if (f_8a0 > 0.0f) n2_ev72(f_8a0);
 	if (f_658 == 1) v234();
 	if (f_658 == 0) v136(0);
-	if (f_664 == 1) ev91(1);
+	if (f_664 == 1) n2_ev91(1);
 	if (f_8ac == 0) f_8a8 = 0;
 }
 
@@ -367,7 +367,7 @@ void C3DAnimated::v270(int a, int msg)						// N2:0x41e960
 		f_898 = 0;
 		f_891 = 0;
 		ShowAgain();
-		if (f_89c <= 0.0f) { ev71(1.0f); ev91(0); }
+		if (f_89c <= 0.0f) { ev71(1.0f); n2_ev91(0); }
 		else ev71(f_89c);
 	}
 	if (f_890)
@@ -379,8 +379,8 @@ void C3DAnimated::v270(int a, int msg)						// N2:0x41e960
 	}
 }
 
-void C3DAnimated::v277(void) { ev79(1); }					// 0x40e770
-void C3DAnimated::v278(void) { ev79(0); }					// 0x40e790
+void C3DAnimated::v277(void) { PauseAnim(1); }					// 0x40e770
+void C3DAnimated::v278(void) { PauseAnim(0); }					// 0x40e790
 
 void C3DAnimated::v280(void)								// N2:0x41e460: the editor lists our animation names
 {
@@ -420,7 +420,7 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 	{
 		char path[112];
 		strcpy(path, file);
-		ev87(path, (char *)"grn", (char *)"grn");			// only checks: the result is not used
+		n2_ev87(path, (char *)"grn", (char *)"grn");			// only checks: the result is not used
 		AddAnimation(std::string(file), name);
 		return;
 	}
@@ -447,7 +447,7 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 	a->id = f_5a0;
 	char path[112];
 	strcpy(path, file);
-	ev87(path, (char *)"ase", (char *)"ase");				// path = ase\<file> if it exists
+	n2_ev87(path, (char *)"ase", (char *)"ase");				// path = ase\<file> if it exists
 	OMediaFilePath fp(std::string(path), 'null', 'null');
 	OMediaFileStream fs;
 	fs.setpath(&fp);
@@ -534,7 +534,7 @@ void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 		strcpy(buf, g_4f81a8);
 		strcpy(f_5fc, name);
 		strcat(buf, name);									// (not used)
-		ev86(name, NULL, NULL, NULL, loop, 0.2f);
+		n2_ev86(name, NULL, NULL, NULL, loop, 0.2f);
 	}
 }
 
@@ -711,7 +711,7 @@ void C3DAnimated::ev71(float alpha)							// 0x40e4a0
 	}
 }
 
-void C3DAnimated::ev72(float alpha)							// N2:0x41ca20
+void C3DAnimated::n2_ev72(float alpha)							// N2:0x41ca20
 {
 	OMedia3DShape *sh = get_shape();
 	if (!sh) return;
@@ -736,7 +736,7 @@ void C3DAnimated::ev72(float alpha)							// N2:0x41ca20
 	}
 }
 
-void C3DAnimated::ev73(void)								// N2:0x41ce30
+void C3DAnimated::AlphaSecondPass(void)								// N2:0x41ce30
 {
 	OMedia3DShape *sh = get_shape();
 	if (!sh) return;
@@ -750,7 +750,7 @@ void C3DAnimated::ev73(void)								// N2:0x41ce30
 	}
 }
 
-void C3DAnimated::ev74(float alpha, float r, float g, float b)	// N2:0x41cbc0
+void C3DAnimated::n2_ev74(float alpha, float r, float g, float b)	// N2:0x41cbc0
 {
 	OMedia3DShape *sh = get_shape();
 	if (!sh) return;
@@ -774,7 +774,7 @@ void C3DAnimated::ev74(float alpha, float r, float g, float b)	// N2:0x41cbc0
 	}
 }
 
-void C3DAnimated::ev75(float time)							// N2:0x41b2e0
+void C3DAnimated::n2_ev75(float time)							// N2:0x41b2e0
 {
 	if (!f_8b0) return;
 	// (debug log "now im fading", empty)
@@ -784,7 +784,7 @@ void C3DAnimated::ev75(float time)							// N2:0x41b2e0
 	f_890 = 0;
 }
 
-void C3DAnimated::ev76(float time)							// N2:0x41b320
+void C3DAnimated::n2_ev76(float time)							// N2:0x41b320
 {
 	if (!f_8b0) return;
 	// (debug log "now im fading out", empty)
@@ -794,10 +794,10 @@ void C3DAnimated::ev76(float time)							// N2:0x41b320
 	f_898 = time;
 }
 
-unsigned char C3DAnimated::ev77(char *state) { return strcasecmp(f_8b1, state) == 0; }	// N2:0x41c6b0
-void C3DAnimated::ev78(char *state) { strcpy(f_8b1, state); }							// N2:0x41c680
+unsigned char C3DAnimated::n2_ev77(char *state) { return strcasecmp(f_8b1, state) == 0; }	// N2:0x41c6b0
+void C3DAnimated::n2_ev78(char *state) { strcpy(f_8b1, state); }							// N2:0x41c680
 
-void C3DAnimated::ev79(unsigned char pause)					// 0x40d350
+void C3DAnimated::PauseAnim(unsigned char pause)					// 0x40d350
 {
 	if (f_6d0 != 0) return;
 	if (!pause)
@@ -811,7 +811,7 @@ void C3DAnimated::ev79(unsigned char pause)					// 0x40d350
 	}
 }
 
-void C3DAnimated::ev91(unsigned char on)					// N2:0x41cb60
+void C3DAnimated::n2_ev91(unsigned char on)					// N2:0x41cb60
 {
 	OMedia3DShape *sh = get_shape();
 	if (!sh) return;
@@ -825,13 +825,13 @@ void C3DAnimated::ev91(unsigned char on)					// N2:0x41cb60
 	}
 }
 
-void C3DAnimated::ev92(int src, int dst)					// N2:0x41c9d0
+void C3DAnimated::n2_ev92(int src, int dst)					// N2:0x41c9d0
 {
 	OMedia3DShape *sh = get_shape();
 	if (sh) SetAllBlend(sh, (omt_BlendFunc)src, (omt_BlendFunc)dst);
 }
 
-unsigned char C3DAnimated::ev93(void)						// N2:0x41e840
+unsigned char C3DAnimated::n2_ev93(void)						// N2:0x41e840
 {
 	if (f_8a4) return 0;
 	float p[4];
@@ -861,7 +861,7 @@ unsigned char C3DAnimated::ev93(void)						// N2:0x41e840
 
 // --------------------------------------------------------------------------- granny
 
-void C3DAnimated::ev80(void)								// N2:0x41e120
+void C3DAnimated::n2_ev80(void)								// N2:0x41e120
 {
 	if (g_gametype->IsPaused() || !f_589) return;
 	// the original prints the playing animations' names with the debug text routine (empty in
@@ -1071,7 +1071,7 @@ void C3DAnimated::BuildTex(void)							// N2:0x41d7a0
 	GrannyUnlockRendering(lock[0], lock[1]);
 }
 
-void C3DAnimated::ev83(OMedia3DShape *sh)					// N2:0x41dc90
+void C3DAnimated::n2_ev83(OMedia3DShape *sh)					// N2:0x41dc90
 {
 	granny_uint32 lock[2];
 	if (GrannyLockSequenceForRendering(f_6e8[0], f_6e8[1], 0x3b, lock) != GrannyOK) return;
@@ -1115,7 +1115,7 @@ void C3DAnimated::AddAnimation(std::string file, char *name)	// N2:0x41df00
 	GrannyAddControlledAnimation(f_6e8[0], f_6e8[1], ai->anim[0], ai->anim[1], ai->control);
 }
 
-void C3DAnimated::ev86(char *a, char *b, char *c, char *d, unsigned char loop, float blend)	// N2:0x41d470
+void C3DAnimated::n2_ev86(char *a, char *b, char *c, char *d, unsigned char loop, float blend)	// N2:0x41d470
 {
 	bool none = true;
 	for (int s = 0; s < 4; s++)
@@ -1151,7 +1151,7 @@ void C3DAnimated::ev86(char *a, char *b, char *c, char *d, unsigned char loop, f
 	if (none) ev60();
 }
 
-unsigned char C3DAnimated::ev87(char *file, char *dir, char *ext)	// N2:0x41e6a0
+unsigned char C3DAnimated::n2_ev87(char *file, char *dir, char *ext)	// N2:0x41e6a0
 {
 	(void)ext;
 	char path[120];
@@ -1174,7 +1174,7 @@ unsigned char C3DAnimated::ev87(char *file, char *dir, char *ext)	// N2:0x41e6a0
 	return 1;
 }
 
-void C3DAnimated::ev88(char *bone, CGameObject *other)		// N2:0x41af40
+void C3DAnimated::n2_ev88(char *bone, CGameObject *other)		// N2:0x41af40
 {
 	if (!other->NameContains((char *)"C3DANIMATED")) return;
 	granny_uint32 index = 0;
@@ -1183,14 +1183,14 @@ void C3DAnimated::ev88(char *bone, CGameObject *other)		// N2:0x41af40
 	GrannyAttachSequence(o->f_6e8[0], o->f_6e8[1], 0, f_6e8[0], f_6e8[1], index, 0x1ff, 0x1ff);
 }
 
-void C3DAnimated::ev89(CGameObject *other)					// N2:0x41afd0
+void C3DAnimated::n2_ev89(CGameObject *other)					// N2:0x41afd0
 {
 	if (!other->NameContains((char *)"C3DANIMATED")) return;
 	C3DAnimated *o = other ? dynamic_cast<C3DAnimated *>(other) : NULL;
 	GrannyDetachSequence(o->f_6e8[0], o->f_6e8[1]);
 }
 
-void C3DAnimated::ev90(unsigned char detach)				// N2:0x439ba0
+void C3DAnimated::n2_ev90(unsigned char detach)				// N2:0x439ba0
 {
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 	{

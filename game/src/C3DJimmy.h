@@ -77,7 +77,7 @@ class C3DJimmy : public C3DPlayer
 	C3DObject			*f_cd0[20];		// TODO(BG): was N2 C3DWaterBalloon (NULL now); 0xcd0  C3DWaterBalloon pool
 	C3DGraplingHook		*f_d20;			// 0xd20  C3DGraplingHook (ev163)
 	// 0xd24 never used
-	// props on Jimmy's bones (ev88), dropped by v260 (in the order d28 d2c d30 d38 d34)
+	// props on Jimmy's bones (n2_ev88), dropped by v260 (in the order d28 d2c d30 d38 d34)
 	C3DAnimated			*f_d28;			// TODO(BG): was N2 C3DGrannyObj (NULL now); 0xd28  water gun in the right hand ("newgunbase.grn")
 	C3DAnimated			*f_d2c;			// TODO(BG): was N2 C3DGrannyObj; 0xd2c  burp gun ("megaburpgun.grn")
 	C3DAnimated			*f_d30;			// TODO(BG): was N2 C3DGrannyObj; 0xd30  shades on the head ("Shades.grn")

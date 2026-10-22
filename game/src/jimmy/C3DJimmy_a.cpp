@@ -441,17 +441,17 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	f_4cb8 = 0;
 	f_4ca5 = 0;
 	f_4ca4 = 0;
-	ev79(0);												// element +0x13c: animation not paused
+	PauseAnim(0);												// element +0x13c: animation not paused
 	g_music_volume = g_N2_6f7518;
 	f_4ef0 = NULL;
-	if (f_d5c) f_d5c->ev79(0);
+	if (f_d5c) f_d5c->PauseAnim(0);
 	// drop the props on Jimmy's bones
 	C3DObject *props[5] = { f_d28, f_d2c, f_d30, f_d38, f_d34 };
 	for (int i = 0; i < 5; i++)
 		if (props[i])
 		{
 			props[i]->HideAgain();							// element +0xdc
-			ev88((char *)"none", static_cast<CGameObject *>(props[i]));	// element +0x160
+			n2_ev88((char *)"none", static_cast<CGameObject *>(props[i]));	// element +0x160
 		}
 	f_d20->HideAgain();
 	if (f_d44)
@@ -501,7 +501,7 @@ void C3DJimmy::v260(void)									// N2:0x445740
 	if (f_d4c)
 	{
 		f_d4c->HideAgain();
-		f_d4c->ev91(1);										// element +0x16c
+		f_d4c->n2_ev91(1);										// element +0x16c
 	}
 	ev138(static_cast<CGameObject *>(this), static_cast<CGameObject *>(this), 0, 0.0f);	// element +0x228: nothing in hand
 	g_N2_537634 = -1.0f;
@@ -950,20 +950,20 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 #if 0	// TODO(BG): C3DBot is Negatron only
 		C3DBot *bot = dynamic_cast<C3DBot *>(other);		// N2:0x44512a (port: the original subtracts 0xc0 without looking)
 		if (!bot) return;
-		if (bot->f_c40) return;								// state locked
+		if (bot->m_state_locked) return;								// state locked
 		if (f_4cb8)											// we are hurt: an unstunned bot only backs off
 		{
 			if (bot->f_1b50 > 0) return;
-			bot->ev107(5);									// flee ...
-			bot->f_c10 = 1500.0f;							// ... beyond 1500
-			bot->f_c3c = 5.0f;								// for 5 s
+			bot->ev73(5);									// flee ...
+			bot->m_flee_dist = 1500.0f;							// ... beyond 1500
+			bot->m_flee_time = 5.0f;								// for 5 s
 			return;
 		}
-		if (bot->f_96c != 0 && bot->f_96c != 11) return;	// only an attacking bot hurts
+		if (bot->m_state != 0 && bot->m_state != 11) return;	// only an attacking bot hurts
 		if (bot->f_1b50 > 0) return;						// stunned
-		bot->ev107(5);
-		bot->f_c10 = 1500.0f;
-		bot->f_c3c = 10.0f;
+		bot->ev73(5);
+		bot->m_flee_dist = 1500.0f;
+		bot->m_flee_time = 10.0f;
 		if (f_8a7) return;
 		ev134(-2.0f, -1, 3.0f, 1);
 		ev114((char *)"HIT");
@@ -1105,9 +1105,9 @@ void C3DJimmy::Process(float dt)							// N2:0x446260
 		f_4cbc.x = p.x; f_4cbc.y = p.y; f_4cbc.z = p.z; f_4cbc.w = p.w;
 	}
 	ev133(dt);												// element +0x214
-	if (f_d5c && f_d5c->f_1b5c == 4 && f_d5c->f_960 > 9.0f)	// Goddard in front for 9 s: back beside us
+	if (f_d5c && f_d5c->f_1b5c == 4 && f_d5c->m_time > 9.0f)	// Goddard in front for 9 s: back beside us
 	{
-		f_d5c->f_960 = 0;
+		f_d5c->m_time = 0;
 		if (f_d5c->f_1b5e == 1) { f_d5c->ev144(2); return; }	// element +0x240
 		if (f_d5c->f_1b5e == 3) { f_d5c->ev144(0); return; }
 	}
@@ -1249,7 +1249,7 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 				}
 				if (again) f_4ee4 = 0.15f;
 			}
-			if (ev77((char *)"SHOOT")) return;				// element +0x134
+			if (n2_ev77((char *)"SHOOT")) return;				// element +0x134
 			if (!g_menu->IsCurrentGadget(6) && !g_menu->IsCurrentGadget(10)) return;
 			ev116();
 			if (!f_4cd4)
@@ -1301,6 +1301,6 @@ void C3DJimmy::v243(float dt)								// N2:0x447e40
 	if (f_4cd4) ev144();
 	StopSound(&f_4c10);
 	StopSound(&f_4c24);
-	if (f_96c < 10.0f && ev77((char *)"SHOOT")) ev116();
+	if (f_96c < 10.0f && n2_ev77((char *)"SHOOT")) ev116();
 	if (f_cbc) f_cbc->HideAgain();
 }

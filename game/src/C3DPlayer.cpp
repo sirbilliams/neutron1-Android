@@ -469,7 +469,7 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 	if (g_4f83e0)
 	{
 		v176(0, 0, 0);
-		ev80();
+		n2_ev80();
 		return;
 	}
 	f_ad0 += dt;
@@ -492,7 +492,7 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 					if (f_96c > 10.0f)
 					{
 						if (f_a68 == 1) JimmyJetpackOff(g_jimmy);	// N2:0x443370
-						if (f_c04 <= 0 && !ev77((char *)"RUN")) ev114((char *)"RUN");
+						if (f_c04 <= 0 && !n2_ev77((char *)"RUN")) ev114((char *)"RUN");
 					}
 					else
 					{
@@ -503,18 +503,18 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 							{
 								if (g_menu && !g_menu->IsCurrentGadget(4)) ev116();
 							}
-							else if (!ev77((char *)"STOP")) ev114((char *)"STOP");
+							else if (!n2_ev77((char *)"STOP")) ev114((char *)"STOP");
 						}
 						else if (f_ac6 == -1)
 						{
 							if (f_c04 <= 0 && !PlayerKeyAction() && !PlayerKeyBack() &&
-								!ev77((char *)"BACK") && !ev77((char *)"LEFT"))
+								!n2_ev77((char *)"BACK") && !n2_ev77((char *)"LEFT"))
 								ev58((char *)"LEFT", 1);
 						}
 						else
 						{
 							if (f_c04 <= 0 && !PlayerKeyAction() && !PlayerKeyBack() &&
-								!ev77((char *)"BACK") && !ev77((char *)"RIGHT"))
+								!n2_ev77((char *)"BACK") && !n2_ev77((char *)"RIGHT"))
 								ev58((char *)"RIGHT", 1);
 						}
 					}
@@ -528,7 +528,7 @@ void C3DPlayer::Process(float dt)							// N2:0x460510
 		else if (f_a68 == 5) ev106(dt);
 		else
 		{
-			if (g_camera && f_96c < 10.0f && f_c04 <= 0 && ev77((char *)"RUN")) ev114((char *)"STOP");
+			if (g_camera && f_96c < 10.0f && f_c04 <= 0 && n2_ev77((char *)"RUN")) ev114((char *)"STOP");
 			ev108(dt);
 		}
 		break;
@@ -644,8 +644,8 @@ void C3DPlayer::ev67(void)									// N2:0x4639b0 "AnimEnded"
 {
 	if (strcasecmp(ev66(), "FENCE") == 0)
 	{
-		ev78((char *)"STOP");
-		ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"STOP");
+		n2_ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
 		f_8a4 = 1;
 		f_8a7 = 1;
 		f_b20 = 0;
@@ -657,8 +657,8 @@ void C3DPlayer::ev67(void)									// N2:0x4639b0 "AnimEnded"
 	}
 	else if (strcasecmp(ev66(), "LADDER") == 0)
 	{
-		ev78((char *)"STOP");
-		ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"STOP");
+		n2_ev86((char *)"FULLSTOP", NULL, NULL, NULL, 0, 0.0f);
 		f_8a5 = 1;
 		f_8a4 = 0;
 		f_8a7 = 1;
@@ -770,8 +770,8 @@ void C3DPlayer::ev114(char *name)							// 0x43aff0
 		f_ad0 = 0;
 		f_c10 = 150.0f;
 		// (debug log "Playing animation FENCE! Damnit", empty)
-		ev78((char *)"FENCE");
-		ev86((char *)"FENCE", NULL, NULL, NULL, 0, 0.0f);
+		n2_ev78((char *)"FENCE");
+		n2_ev86((char *)"FENCE", NULL, NULL, NULL, 0, 0.0f);
 		f_8a7 = 1;
 		PlayGameSound(-1, std::string("umph climb"), false);	// 0x458b40
 		return;
@@ -968,7 +968,7 @@ void C3DPlayer::ev112(float dt)								// N2:0x461010
 			else
 			{
 				f_96c = 1200.0f;
-				if (!ev77((char *)"FLY")) ev58((char *)"FLY", 1);
+				if (!n2_ev77((char *)"FLY")) ev58((char *)"FLY", 1);
 				v174(t);
 				if (t[1] < 380.0f) v178(0, 80.0f, 0);			// vtable +0x2c8
 			}
@@ -1049,7 +1049,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 	float k = 1.0f;
 	if (!v133())
 	{
-		if (f_a68 == 4) { if (ev77((char *)"FALL")) ev58((char *)"SWIM", 1); }
+		if (f_a68 == 4) { if (n2_ev77((char *)"FALL")) ev58((char *)"SWIM", 1); }
 		else if (!f_aed) ev114((char *)"FALL");
 	}
 	f_9b8.x = g_viewport->getx();
@@ -1149,7 +1149,7 @@ void C3DPlayer::ev109(float dt)								// N2:0x461b50
 	else moved = turning;
 	if (f_aec)
 	{
-		if (f_c04 <= 0 && !ev77((char *)"BACK")) ev58((char *)"BACK", 1);
+		if (f_c04 <= 0 && !n2_ev77((char *)"BACK")) ev58((char *)"BACK", 1);
 		f_988 = 1;
 		f_96c = (float)(f_96c - f_964 * 1.5);
 		const float lim = f_968 * -0.5f;

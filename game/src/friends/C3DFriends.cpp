@@ -1,4 +1,4 @@
-/*  C3DFriends - see C3DFriends.h. Reconstructed from Neutron.exe 0x41b490..N2:0x436fe0 and the
+/*  C3DFriends - see C3DFriends.h. Reconstructed from Neutron.exe 0x41b490..0x41e580 and the
     shared copies 0x415090, 0x418290, N2:0x417110, N2:0x4369f0, 0x419aa0, N2:0x436900, 0x4418e0, N2:0x44fa60,
     N2:0x436920 / N2:0x427a40 / N2:0x45b120. */
 #pragma GCC diagnostic push
@@ -8,6 +8,8 @@
 #include "../Game.h"
 #include "../Globals.h"
 #include "../SaveGame.h"
+#include "../InterfaceElement.h"
+#include "../Physics.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include <string.h>
@@ -15,33 +17,37 @@
 
 using namespace neg;
 
+// 0x474070: the first object of the global list whose ObjectTag matches (_stricmp).
+static CGameObject *FindObjectByTag(const char *tag)
+{
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
+	return NULL;
+}
+
 // --------------------------------------------------------------------------- construction
 
 C3DFriends::C3DFriends()									// 0x41b490
 {
-	f_1d60.w = 0;											// 0x1d6c
-	f_bd4 = 0;												// no hovering
-	v64(0.05f);												// 0x4711e0
-	f_1b50[0] = 0;											// TalkState0..4
-	f_1b50[1] = -1;
-	f_1b50[2] = -1;
-	f_1b50[3] = -1;
-	f_1b50[4] = -1;
-	for (int i = 0; i < 5; i++) strcpy(f_1b64[i], "none");	// TalkTrigger0..4
-	f_1d58 = 0;
-	f_1d5c = 100.0f;
+	m_hover = 0;											// no hovering
+	v64(0.05f);
+	m_talk_state[0] = 0;									// TalkState0..4
+	m_talk_state[1] = -1;
+	m_talk_state[2] = -1;
+	m_talk_state[3] = -1;
+	m_talk_state[4] = -1;
+	for (int i = 0; i < 5; i++) strcpy(m_talk_trigger[i], "none");	// TalkTrigger0..4
+	m_talks = 0;
+	m_timer = 100.0f;
 	f_008 = 1;												// CGameObject +0x8
-	f_c5d = 1;												// held when touched
-	f_1d60.x = 0;											// the shadow 60 below our origin
-	f_1d60.y = -60.0f;
-	f_1d60.z = 0;
-	if (g_windowed) f_1d70 = NULL;							// 0x509a13
-	else f_1d70 = new C3DShadow;							// 0x60c bytes (the original keeps its CGameObject part)
-	// (debug log "C3DShadow", 0x60c)
-	if (f_1d70)
+	m_hold_when_touched = 1;								// held when touched
+	if (g_windowed) m_shadow = NULL;						// 0x509a13
+	else m_shadow = new C3DShadow;							// 0x5f4 bytes (the original keeps its CGameObject part)
+	// (debug log "C3DShadow", 0x5f4)
+	if (m_shadow)
 	{
-		f_1d70->v36(1);										// CGameObject +0x90
-		f_1d70->SetSize(90, 30);							// 0x43f870
+		m_shadow->v36(1);									// CGameObject +0x90
+		m_shadow->SetSize(90, 30);							// 0x43f870
 	}
 }
 
@@ -55,45 +61,94 @@ C3DFriends::~C3DFriends()									// 0x41b740
 void C3DFriends::InitObject(void)							// 0x41b840
 {
 	C3DAI::InitObject();
-	RegisterProperty("TalkState0", &f_1b50[0], PROP_LONG, 0);
-	RegisterProperty("TalkTrigger0", f_1b64[0], PROP_ALPHA, 0);
-	RegisterProperty("TalkState1", &f_1b50[1], PROP_LONG, 0);
-	RegisterProperty("TalkTrigger1", f_1b64[1], PROP_ALPHA, 0);
-	RegisterProperty("TalkState2", &f_1b50[2], PROP_LONG, 0);
-	RegisterProperty("TalkTrigger2", f_1b64[2], PROP_ALPHA, 0);
-	RegisterProperty("TalkState3", &f_1b50[3], PROP_LONG, 0);
-	RegisterProperty("TalkTrigger3", f_1b64[3], PROP_ALPHA, 0);
-	RegisterProperty("TalkState4", &f_1b50[4], PROP_LONG, 0);
-	RegisterProperty("TalkTrigger4", f_1b64[4], PROP_ALPHA, 0);
+	RegisterProperty("TalkState0", &m_talk_state[0], PROP_LONG, 0);
+	RegisterProperty("TalkTrigger0", m_talk_trigger[0], PROP_ALPHA, 0);
+	RegisterProperty("TalkState1", &m_talk_state[1], PROP_LONG, 0);
+	RegisterProperty("TalkTrigger1", m_talk_trigger[1], PROP_ALPHA, 0);
+	RegisterProperty("TalkState2", &m_talk_state[2], PROP_LONG, 0);
+	RegisterProperty("TalkTrigger2", m_talk_trigger[2], PROP_ALPHA, 0);
+	RegisterProperty("TalkState3", &m_talk_state[3], PROP_LONG, 0);
+	RegisterProperty("TalkTrigger3", m_talk_trigger[3], PROP_ALPHA, 0);
+	RegisterProperty("TalkState4", &m_talk_state[4], PROP_LONG, 0);
+	RegisterProperty("TalkTrigger4", m_talk_trigger[4], PROP_ALPHA, 0);
 }
 
 void C3DFriends::ResetObject(void)							// 0x41b790
 {
 	C3DAI::ResetObject();
-	f_1d58 = 0;
-	f_1d5c = 100.0f;
+	m_talks = 0;
+	m_timer = 100.0f;
 }
 
-void C3DFriends::Process(float dt)							// N2:0x436eb0
+void C3DFriends::Process(float dt)							// 0x41b950
 {
 	C3DAI::Process(dt);
-	if (f_8a8)												// culled this frame
+	m_timer += dt;
+	if (m_state == 0) ev80();								// attacking a friend means: talk (element +0x140)
+	if (!f_13e)												// (CGameObject +0x13e)
 	{
-		if (f_1d70) f_1d70->HideAgain();					// sprite +0xd8
+		if (m_shadow) m_shadow->hide(true);					// element +0x58
 		return;
 	}
-	f_1d5c += dt;
-	if (!f_1d70) return;
-	f_1d70->ShowAgain();									// sprite +0xd4
-	const OMedia3DVector p = v224(f_1d60.x, f_1d60.y, f_1d60.z);	// +0x380
-	f_1d70->v196(p.x, p.y, p.z, p.w);						// +0x310
+	if (g_windowed) return;									// 0x509a13
+	float p[4];
+	v195(p);
+	const OMedia3DVector a(p[0], p[1], p[2], p[3]);
+	const OMedia3DVector b(p[0], p[1] - 500.0f, p[2], p[3]);	// 0x48e5bc
+	if (!PhysicsClosestHit(a, b, false)) return;			// 0x47c6e0: the floor under us
+	if (!m_shadow) return;
+	const float floor_y = g_phys_ray.end.y;					// 0x5cfc64
+	v195(p);
+	m_shadow->v197(p[0], floor_y + 10.0f, p[2]);			// slot 198 (+0x318); 0x48e5ec
+	if (m_shadow->get_collision_level() != 0)				// (2002 element +0x70)
+	{
+		m_shadow->set_collision_level((omt_CollisionLevel)1);
+		m_shadow->hide(false);
+	}
 }
 
 // --------------------------------------------------------------------------- element family
 
-void C3DFriends::ev113(void)								// N2:0x436d90 (jmp N2:0x414630)
+void C3DFriends::ev79(void)									// 0x41e580
 {
-	C3DAI::ev113();
+	if (m_state == 10) ev93(1400.0f, OMedia3DVector(0, 0, 0, 0));
+}
+
+void C3DFriends::ev80(void)									// 0x41b7b0
+{
+	// (debug log)
+	CGameObject *o = ev95();								// element +0x17c
+	if (!o) return;
+	ev96();													// element +0x180
+	o->v23(o);												// its slot 23 (+0x5c): activated (by itself, as the original passes it)
+	m_talks++;
+	m_timer = 0;
+	m_state = 9;
+	ev82();													// element +0x148: face the way the target faces, turned round
+}
+
+void C3DFriends::ev90(void)									// 0x41bc20
+{
+	// (debug log)
+	m_state = 3;
+}
+
+CGameObject *C3DFriends::ev95(void)							// 0x41bb20
+{
+	// (debug log "GetActivatedObject TaskState is %d")
+	for (int i = 0; i < 5; i++)
+	{
+		CGameObject *o = FindObjectByTag(m_talk_trigger[i]);
+		const int s = m_talk_state[i];
+		if (o && s != -1 && (s == (int)f_4a0 || s == -2)) return o;	// our task state (CLocalGameObject +0x494)
+	}
+	return NULL;
+}
+
+void C3DFriends::ev96(void)									// 0x41b810
+{
+	AddScore(100);											// 0x42adc0
+	v261();													// slot 260 (+0x410): stop
 }
 
 // --------------------------------------------------------------------------- shared copies

@@ -84,46 +84,46 @@ static void ObjSetAnimation(CGameObject *o, const char *name, bool loop)	// +0xe
 }
 static void ObjSetLit(CGameObject *o, float lit)							// +0x120 (slot 72)
 {
-	if (C3DAnimated *a = Anim(o)) a->ev72(lit);
+	if (C3DAnimated *a = Anim(o)) a->n2_ev72(lit);
 }
 static void ObjFadeIn(CGameObject *o, float t)								// +0x12c (slot 75)
 {
-	if (C3DAnimated *a = Anim(o)) a->ev75(t);
+	if (C3DAnimated *a = Anim(o)) a->n2_ev75(t);
 }
 static void ObjFadeOut(CGameObject *o, float t)							// +0x130 (slot 76)
 {
-	if (C3DAnimated *a = Anim(o)) a->ev76(t);
+	if (C3DAnimated *a = Anim(o)) a->n2_ev76(t);
 }
 // C3DAI (the original goes from the CGameObject part to the object by -0xc0 once NameContains
 // said "C3DAI"; port: an object whose name only contains it, a C3DAITRIGGER, is left alone).
 static C3DAI *AI(CGameObject *o)											{ return o ? dynamic_cast<C3DAI *>(o) : NULL; }
 static void AISetState(CGameObject *ai, int state)							// C3DAI +0x1ac (slot 107)
 {
-	if (C3DAI *a = AI(ai)) a->ev107(state);
+	if (C3DAI *a = AI(ai)) a->ev73(state);
 }
 static int AIInitialState(CGameObject *ai)									// C3DAI +0xc08 "AIState"
 {
 	C3DAI *a = AI(ai);
-	return a ? a->f_c08 : 0;
+	return a ? a->m_ai_state : 0;
 }
 static void AISetHover(CGameObject *ai, unsigned char on)					// C3DAI +0xbd4
 {
-	if (C3DAI *a = AI(ai)) a->f_bd4 = on;
+	if (C3DAI *a = AI(ai)) a->m_hover = on;
 }
 static void AISetSpeed(CGameObject *ai, float speed)						// C3DAI +0x968
 {
-	if (C3DAI *a = AI(ai)) a->f_968 = speed;
+	if (C3DAI *a = AI(ai)) a->m_speed = speed;
 }
 static void AISetPatrolTarget(CGameObject *ai, CGameObject *p)				// C3DAI +0x214 (slot 133 FindBestPath), AIState 13
 {
-	if (C3DAI *a = AI(ai)) a->FindBestPath(p);
+	if (C3DAI *a = AI(ai)) a->n2_FindBestPath(p);
 }
 static void AISetPatrolPoint(CGameObject *ai, const char *name)			// C3DAI +0x9ac = name, +0xb8c = 0
 {
 	if (C3DAI *a = AI(ai))
 	{
-		strcpy(a->f_9ac, name);
-		a->f_b8c = NULL;
+		strcpy(a->m_patrol_point, name);
+		a->m_dest = NULL;
 	}
 }
 static int GrannyObjFlag(CGameObject *o)									// C3DAnimated +0x6d0: 1 = Granny

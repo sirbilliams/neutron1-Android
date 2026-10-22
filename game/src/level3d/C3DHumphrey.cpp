@@ -18,15 +18,15 @@ C3DHumphrey::C3DHumphrey()									// 0x417100
 	C3DHumphrey::InitObject();								// 0x420950 (called directly)
 	C3DObject::InitPhysics();								// 0x4623d0
 	v64(0.6f);												// 0x4711e0
-	C3DAI::ev106(f_a9c, (char *)"STOP");
-	C3DAI::ev106(f_ac4, (char *)"WALK");
-	C3DAI::ev106(f_b14, (char *)"STOP");
-	C3DAI::ev106(f_b3c, (char *)"ATTACK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
+	C3DAI::ev72(m_anim_walk, (char *)"ATTACK");
 	C3DObject::SetObjectID('3HUM');							// 0x462220
-	f_bd4 = 0;												// no hovering
-	f_c28 = 1;
+	m_hover = 0;												// no hovering
+	m_958 = 1;
 	f_008 = 1;
-	f_c5d = 0;												// not held when touched
+	m_hold_when_touched = 0;												// not held when touched
 }
 
 C3DHumphrey::~C3DHumphrey()									// 0x4208c0
@@ -59,7 +59,7 @@ void C3DHumphrey::AddTouching(CGameObject *other)			// N2:0x441ff0
 	if (other->NameContains((char *)"C3DJIMMY"))			// +0x18
 	{
 		JimmyHurt(other, -10.0f, -10, 5.0f, 1);				// Jimmy's element +0x218
-		ev107(5);											// element +0x1ac
+		ev73(5);											// element +0x1ac
 	}
 }
 

@@ -783,7 +783,7 @@ unsigned char C3DJimmy::ev140(float dt)								// N2:0x44b490
 	if (PlayerKeyAction() && !PlayerKeyJump())
 	{
 		if (f_4e60 <= 100.0f) return 0;
-		if (ev77((char *)"CLIMBROPE")) ev58((char *)"CLIMBROPE", 1);
+		if (n2_ev77((char *)"CLIMBROPE")) ev58((char *)"CLIMBROPE", 1);
 		if (f_4c08 == -1) f_4c08 = PlayGameSound(-1, std::string("ropeclimb"), true);
 		f_4e60 = f_4e60 - dt * 100.0f;
 		return 0;
@@ -791,7 +791,7 @@ unsigned char C3DJimmy::ev140(float dt)								// N2:0x44b490
 	if (PlayerKeyClimbDown())
 	{
 		if (f_4e74 - 200.0f <= f_4e60) return 0;
-		if (ev77((char *)"CLIMBROPE")) ev58((char *)"CLIMBROPE", 1);
+		if (n2_ev77((char *)"CLIMBROPE")) ev58((char *)"CLIMBROPE", 1);
 		if (f_4c08 == -1) f_4c08 = PlayGameSound(-1, std::string("ropeclimb"), true);
 		f_4e60 = dt * 100.0f + f_4e60;
 	}
@@ -1438,9 +1438,9 @@ void C3DJimmy::ev137(int which)										// N2:0x44de40
 
 unsigned char C3DJimmy::ev162(char *name, char *anim)				// N2:0x44c390
 {
-	if (strcasecmp(name, anim) == 0 && !ev77(anim))
+	if (strcasecmp(name, anim) == 0 && !n2_ev77(anim))
 	{
-		ev78(anim);
+		n2_ev78(anim);
 		return 1;
 	}
 	return 0;
@@ -1466,8 +1466,8 @@ static void PlayGesture(C3DJimmy *j, char *name, char *anim, bool clear_4ca0)
 	j->f_8a7 = 1;
 	j->v132(0);
 	j->C3DPlayer::v261();
-	j->ev78(anim);
-	j->ev86(anim, NULL, NULL, NULL, 0, 0.2f);
+	j->n2_ev78(anim);
+	j->n2_ev86(anim, NULL, NULL, NULL, 0, 0.2f);
 }
 
 // The Granny props attached to someone ('3GRO' with f_d88) are dropped (inline in the original).
@@ -1495,32 +1495,32 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 	if (f_8a7) return;
 	if (ev162(name, (char *)"RUN"))
 	{
-		if (g_menu->IsCurrentGadget(6)) ev86((char *)"FULLRUNGUN", o, o, o, 1, b);
-		else if (g_menu->IsCurrentGadget(10)) ev86((char *)"FULLBURPRUN", o, o, o, 1, b);
-		else if (f_d38) ev86((char *)"FULLRUNHOLD", o, o, o, 1, b);
-		else ev86((char *)"FULLRUN", o, o, o, 1, b);
+		if (g_menu->IsCurrentGadget(6)) n2_ev86((char *)"FULLRUNGUN", o, o, o, 1, b);
+		else if (g_menu->IsCurrentGadget(10)) n2_ev86((char *)"FULLBURPRUN", o, o, o, 1, b);
+		else if (f_d38) n2_ev86((char *)"FULLRUNHOLD", o, o, o, 1, b);
+		else n2_ev86((char *)"FULLRUN", o, o, o, 1, b);
 	}
-	if (ev162(name, (char *)"SHOOT")) ev86((char *)"FULLGUNSHOOT", o, o, o, 0, b);
+	if (ev162(name, (char *)"SHOOT")) n2_ev86((char *)"FULLGUNSHOOT", o, o, o, 0, b);
 	if (strcasecmp(name, "STOP") == 0)
 	{
-		if (ev77((char *)"SHOOT")) return;					// the shot finishes first
-		if (!ev77((char *)"STOP") && g_menu)
+		if (n2_ev77((char *)"SHOOT")) return;					// the shot finishes first
+		if (!n2_ev77((char *)"STOP") && g_menu)
 		{
-			ev78((char *)"STOP");
-			if (g_menu->IsCurrentGadget(6)) ev86((char *)"FULLSTOPHOLD", o, o, o, 1, b);
-			else if (g_menu->IsCurrentGadget(10)) ev86((char *)"FULLBURPSTOP", o, o, o, 1, b);
-			else if (f_d38) ev86((char *)"FULLSTOPHOLD", o, o, o, 1, b);
-			else ev86((char *)"FULLSTOP", o, o, o, 1, b);
+			n2_ev78((char *)"STOP");
+			if (g_menu->IsCurrentGadget(6)) n2_ev86((char *)"FULLSTOPHOLD", o, o, o, 1, b);
+			else if (g_menu->IsCurrentGadget(10)) n2_ev86((char *)"FULLBURPSTOP", o, o, o, 1, b);
+			else if (f_d38) n2_ev86((char *)"FULLSTOPHOLD", o, o, o, 1, b);
+			else n2_ev86((char *)"FULLSTOP", o, o, o, 1, b);
 		}
 	}
-	if (ev162(name, (char *)"POINT")) ev86((char *)"FULLGUNPOINT", o, o, o, 1, b);
+	if (ev162(name, (char *)"POINT")) n2_ev86((char *)"FULLGUNPOINT", o, o, o, 1, b);
 	if (ev162(name, (char *)"RIGHT"))
 	{
 		ev116();
 		if (g_menu)
 		{
-			if (g_menu->IsCurrentGadget(6)) ev86((char *)"FULLRIGHTHOLDGUN", o, o, o, 1, b);
-			else ev86((char *)"FULLRIGHT", o, o, o, 1, b);
+			if (g_menu->IsCurrentGadget(6)) n2_ev86((char *)"FULLRIGHTHOLDGUN", o, o, o, 1, b);
+			else n2_ev86((char *)"FULLRIGHT", o, o, o, 1, b);
 		}
 	}
 	if (ev162(name, (char *)"LEFT"))
@@ -1528,8 +1528,8 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 		ev116();
 		if (g_menu)
 		{
-			if (g_menu->IsCurrentGadget(6)) ev86((char *)"FULLLEFTHOLDGUN", o, o, o, 1, b);
-			else ev86((char *)"FULLLEFT", o, o, o, 1, b);
+			if (g_menu->IsCurrentGadget(6)) n2_ev86((char *)"FULLLEFTHOLDGUN", o, o, o, 1, b);
+			else n2_ev86((char *)"FULLLEFT", o, o, o, 1, b);
 		}
 	}
 	if (strcasecmp(GetAnim(), "PICKUPGLASSES") != 0 && strcasecmp(name, "PICKUPGLASSES") == 0)
@@ -1542,9 +1542,9 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 		f_8a7 = 1;
 		v132(0);
 		C3DPlayer::v261();
-		ev86((char *)"PICKUPFLOOR", o, o, o, 0, b);
+		n2_ev86((char *)"PICKUPFLOOR", o, o, o, 0, b);
 	}
-	if (!ev77((char *)"GETITEM") && strcasecmp(name, "GETITEM") == 0 && g_menu && !g_menu->IsCurrentGadget(6))
+	if (!n2_ev77((char *)"GETITEM") && strcasecmp(name, "GETITEM") == 0 && g_menu && !g_menu->IsCurrentGadget(6))
 	{
 		if (!self->v133()) strcpy(f_4e80, name);
 		else
@@ -1557,25 +1557,25 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 			f_8a7 = 1;
 			v132(0);
 			C3DPlayer::v261();
-			ev78((char *)"GETITEM");
-			ev86((char *)"GETITEM", o, o, o, 0, b);
+			n2_ev78((char *)"GETITEM");
+			n2_ev86((char *)"GETITEM", o, o, o, 0, b);
 			ActivateMenuItem(self, self, 6, 12.0f);			// the water gun comes out
 		}
 	}
-	if (strcasecmp(name, "INVENT") == 0 && !ev77((char *)"INVENT"))
+	if (strcasecmp(name, "INVENT") == 0 && !n2_ev77((char *)"INVENT"))
 		PlayGesture(this, name, (char *)"INVENT", true);
-	if (ev162(name, (char *)"NO")) ev86((char *)"NO", o, o, o, 0, b);
+	if (ev162(name, (char *)"NO")) n2_ev86((char *)"NO", o, o, o, 0, b);
 	if (ev162(name, (char *)"LOOKPDA"))
 	{
 		v176(0, 0, 0);
 		g_4f83e0 = 1;
 		v132(0);
 		C3DPlayer::v261();
-		ev86((char *)"LOOKPDA", o, o, o, 0, b);
+		n2_ev86((char *)"LOOKPDA", o, o, o, 0, b);
 	}
-	if (ev162(name, (char *)"TALKPDA")) ev86((char *)"TALKPDA", o, o, o, 1, b);
-	if (ev162(name, (char *)"GIVEFLURP")) ev86((char *)"GIVEFLURP", o, o, o, 1, b);
-	if (ev162(name, (char *)"JUMPJOY")) ev86((char *)"JUMPJOY", o, o, o, 1, b);
+	if (ev162(name, (char *)"TALKPDA")) n2_ev86((char *)"TALKPDA", o, o, o, 1, b);
+	if (ev162(name, (char *)"GIVEFLURP")) n2_ev86((char *)"GIVEFLURP", o, o, o, 1, b);
+	if (ev162(name, (char *)"JUMPJOY")) n2_ev86((char *)"JUMPJOY", o, o, o, 1, b);
 	if (ev162(name, (char *)"GETPDA"))
 	{
 		v176(0, 0, 0);
@@ -1587,10 +1587,10 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 			v132(0);
 			C3DPlayer::v261();
 		}
-		ev86((char *)"GETPDA", o, o, o, 0, b);
+		n2_ev86((char *)"GETPDA", o, o, o, 0, b);
 		ev137(3);
 	}
-	if (ev162(name, (char *)"DRIVE")) ev86((char *)"DRIVE", o, o, o, 1, b);
+	if (ev162(name, (char *)"DRIVE")) n2_ev86((char *)"DRIVE", o, o, o, 1, b);
 	if (ev162(name, (char *)"PUTAWAY"))
 	{
 		ShowAgain();
@@ -1599,68 +1599,68 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 		f_8a7 = 1;
 		v132(0);
 		C3DPlayer::v261();
-		ev86((char *)"PUTAWAY", o, o, o, 0, b);
+		n2_ev86((char *)"PUTAWAY", o, o, o, 0, b);
 	}
-	if (ev162(name, (char *)"SITWAVE")) ev86((char *)"SITWAVE", o, o, o, 1, b);
-	if (ev162(name, (char *)"PANIC")) ev86((char *)"PANIC", o, o, o, 1, b);
-	if (ev162(name, (char *)"AFTERBURN")) ev86((char *)"AFTERBURN", o, o, o, 1, b);
-	if (ev162(name, (char *)"SCOOT")) ev86((char *)"SCOOT", o, o, o, 1, b);
-	if (ev162(name, (char *)"SCOOTSTOP")) ev86((char *)"SCOOTSTOP", o, o, o, 1, b);
-	if (ev162(name, (char *)"SLIDE")) ev86((char *)"SLIDE", o, o, o, 1, b);
-	if (ev162(name, (char *)"SWIM")) ev86((char *)"SWIM", o, o, o, 1, b);
-	if (ev162(name, (char *)"FLOAT")) ev86((char *)"FLOAT", o, o, o, 1, b);
+	if (ev162(name, (char *)"SITWAVE")) n2_ev86((char *)"SITWAVE", o, o, o, 1, b);
+	if (ev162(name, (char *)"PANIC")) n2_ev86((char *)"PANIC", o, o, o, 1, b);
+	if (ev162(name, (char *)"AFTERBURN")) n2_ev86((char *)"AFTERBURN", o, o, o, 1, b);
+	if (ev162(name, (char *)"SCOOT")) n2_ev86((char *)"SCOOT", o, o, o, 1, b);
+	if (ev162(name, (char *)"SCOOTSTOP")) n2_ev86((char *)"SCOOTSTOP", o, o, o, 1, b);
+	if (ev162(name, (char *)"SLIDE")) n2_ev86((char *)"SLIDE", o, o, o, 1, b);
+	if (ev162(name, (char *)"SWIM")) n2_ev86((char *)"SWIM", o, o, o, 1, b);
+	if (ev162(name, (char *)"FLOAT")) n2_ev86((char *)"FLOAT", o, o, o, 1, b);
 	if (ev162(name, (char *)"PICKUP"))
 	{
 		ShowAgain();
 		v176(0, 0, 0);
 		g_4f83e0 = 1;
 		f_8a7 = 1;
-		ev86((char *)"PICKUP", o, o, o, 0, b);
+		n2_ev86((char *)"PICKUP", o, o, o, 0, b);
 	}
-	if (strcasecmp(name, "GET") == 0 && !ev77((char *)"GET"))
+	if (strcasecmp(name, "GET") == 0 && !n2_ev77((char *)"GET"))
 		PlayGesture(this, name, (char *)"GET", false);
 	if (ev162(name, (char *)"JUMP") && g_menu)
 	{
-		if (g_menu->IsCurrentGadget(6)) ev86((char *)"JUMPGUN", o, o, o, 0, b);
-		else ev86((char *)"JUMP", o, o, o, 0, b);
+		if (g_menu->IsCurrentGadget(6)) n2_ev86((char *)"JUMPGUN", o, o, o, 0, b);
+		else n2_ev86((char *)"JUMP", o, o, o, 0, b);
 	}
-	if (ev162(name, (char *)"FALL")) ev86((char *)"FALL", o, o, o, 1, b);
-	if (ev162(name, (char *)"LEVER")) ev86((char *)"LEVER", o, o, o, 1, b);
-	if (f_a68 != 4 && ev162(name, (char *)"BACK")) ev86((char *)"FULLBACK", o, o, o, 1, b);
-	if (ev162(name, (char *)"TALK")) ev86((char *)"TALK", o, o, o, 1, b);
+	if (ev162(name, (char *)"FALL")) n2_ev86((char *)"FALL", o, o, o, 1, b);
+	if (ev162(name, (char *)"LEVER")) n2_ev86((char *)"LEVER", o, o, o, 1, b);
+	if (f_a68 != 4 && ev162(name, (char *)"BACK")) n2_ev86((char *)"FULLBACK", o, o, o, 1, b);
+	if (ev162(name, (char *)"TALK")) n2_ev86((char *)"TALK", o, o, o, 1, b);
 	if (ev162(name, (char *)"SHOCK"))
 	{
 		g_4f83e0 = 1;
 		f_8a7 = 1;
 		v132(0);
 		C3DPlayer::v261();
-		ev86((char *)"SHOCK", o, o, o, 0, b);
+		n2_ev86((char *)"SHOCK", o, o, o, 0, b);
 	}
-	if (ev162(name, (char *)"FLY")) ev86((char *)"FLY", o, o, o, 1, b);
+	if (ev162(name, (char *)"FLY")) n2_ev86((char *)"FLY", o, o, o, 1, b);
 	if (ev162(name, (char *)"LADDER"))
 	{
-		ev86((char *)"LADDER", o, o, o, 0, b);
+		n2_ev86((char *)"LADDER", o, o, o, 0, b);
 		f_4da0 = 0;
 	}
 	if (ev162(name, (char *)"FENCE"))
 	{
-		ev86((char *)"FENCE", o, o, o, 0, b);
+		n2_ev86((char *)"FENCE", o, o, o, 0, b);
 		f_4da0 = 0;
 	}
-	if (ev162(name, (char *)"SWING")) ev86((char *)"SWING", o, o, o, 1, b);
-	if (ev162(name, (char *)"TALKBODY")) ev86((char *)"TALKBODY", o, o, o, 1, b);
-	if (ev162(name, (char *)"CLIMBROPE")) ev86((char *)"CLIMBROPE", o, o, o, 1, b);
-	if (ev162(name, (char *)"TALKHERMAN")) ev86((char *)"TALKHERMAN", o, o, o, 1, b);
-	if (ev162(name, (char *)"WORRYIDLE")) ev86((char *)"WORRYIDLE", o, o, o, 1, b);
-	if (ev162(name, (char *)"WORRYTALK")) ev86((char *)"WORRYTALK", o, o, o, 1, b);
-	if (ev162(name, (char *)"PROUD")) ev86((char *)"PROUD", o, o, o, 1, b);
-	if (ev162(name, (char *)"EXCITETALK")) ev86((char *)"EXCITETALK", o, o, o, 1, b);
-	if (ev162(name, (char *)"EXCITEIDLE")) ev86((char *)"EXCITEIDLE", o, o, o, 1, b);
-	if (ev162(name, (char *)"ARGGH")) ev86((char *)"ARGGH", o, o, o, 1, b);
-	if (ev162(name, (char *)"YAWN")) ev86((char *)"YAWN", o, o, o, 1, b);
-	if (ev162(name, (char *)"ORDER")) ev86((char *)"ORDER", o, o, o, 1, b);
-	if (ev162(name, (char *)"IDLE")) ev86((char *)"IDLE", o, o, o, 1, b);
-	if (ev162(name, (char *)"HANGTALK")) ev86((char *)"HANGTALK", o, o, o, 1, b);
+	if (ev162(name, (char *)"SWING")) n2_ev86((char *)"SWING", o, o, o, 1, b);
+	if (ev162(name, (char *)"TALKBODY")) n2_ev86((char *)"TALKBODY", o, o, o, 1, b);
+	if (ev162(name, (char *)"CLIMBROPE")) n2_ev86((char *)"CLIMBROPE", o, o, o, 1, b);
+	if (ev162(name, (char *)"TALKHERMAN")) n2_ev86((char *)"TALKHERMAN", o, o, o, 1, b);
+	if (ev162(name, (char *)"WORRYIDLE")) n2_ev86((char *)"WORRYIDLE", o, o, o, 1, b);
+	if (ev162(name, (char *)"WORRYTALK")) n2_ev86((char *)"WORRYTALK", o, o, o, 1, b);
+	if (ev162(name, (char *)"PROUD")) n2_ev86((char *)"PROUD", o, o, o, 1, b);
+	if (ev162(name, (char *)"EXCITETALK")) n2_ev86((char *)"EXCITETALK", o, o, o, 1, b);
+	if (ev162(name, (char *)"EXCITEIDLE")) n2_ev86((char *)"EXCITEIDLE", o, o, o, 1, b);
+	if (ev162(name, (char *)"ARGGH")) n2_ev86((char *)"ARGGH", o, o, o, 1, b);
+	if (ev162(name, (char *)"YAWN")) n2_ev86((char *)"YAWN", o, o, o, 1, b);
+	if (ev162(name, (char *)"ORDER")) n2_ev86((char *)"ORDER", o, o, o, 1, b);
+	if (ev162(name, (char *)"IDLE")) n2_ev86((char *)"IDLE", o, o, o, 1, b);
+	if (ev162(name, (char *)"HANGTALK")) n2_ev86((char *)"HANGTALK", o, o, o, 1, b);
 	// (debug log "Exiting Playing Animation %s")
 #endif
 }
@@ -1668,13 +1668,13 @@ void C3DJimmy::ev58(char *name, unsigned char loop)				// N2:0x44c3e0
 void C3DJimmy::ev67(void)											// N2:0x44e0b0
 {
 	C3DPlayer::ev67();
-	if (ev77((char *)"PICKUP"))
+	if (n2_ev77((char *)"PICKUP"))
 	{
 		f_8a7 = 0;
 		g_4f83e0 = 0;
 		ev58((char *)"STOP", 0);
 	}
-	if (ev77((char *)"PUTAWAY"))
+	if (n2_ev77((char *)"PUTAWAY"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
@@ -1683,38 +1683,38 @@ void C3DJimmy::ev67(void)											// N2:0x44e0b0
 		DropAttachedProps();
 		if (!g_camera) ev58((char *)"TALK", 1);
 	}
-	if (ev77((char *)"GET"))
+	if (n2_ev77((char *)"GET"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 	}
-	if (ev77((char *)"SHOCK"))
+	if (n2_ev77((char *)"SHOCK"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 	}
-	if (ev77((char *)"GETPDA")) ev58((char *)"LOOKPDA", 0);
-	if (ev77((char *)"LOOKPDA"))
+	if (n2_ev77((char *)"GETPDA")) ev58((char *)"LOOKPDA", 0);
+	if (n2_ev77((char *)"LOOKPDA"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 	}
-	if (ev77((char *)"INVENT"))
+	if (n2_ev77((char *)"INVENT"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 	}
-	if (ev77((char *)"GETITEM"))
+	if (n2_ev77((char *)"GETITEM"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 	}
-	if (ev77((char *)"PICKUPFLOOR"))
+	if (n2_ev77((char *)"PICKUPFLOOR"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
@@ -1722,14 +1722,14 @@ void C3DJimmy::ev67(void)											// N2:0x44e0b0
 		DropAttachedProps();
 		if (f_4ca0) ev137(f_4ca0);
 	}
-	if (ev77((char *)"PICKUPGLASSES"))
+	if (n2_ev77((char *)"PICKUPGLASSES"))
 	{
 		g_4f83e0 = 0;
 		f_8a7 = 0;
 		v132(1);
 		if (f_4ca0 == 1) ev137(1);
 	}
-	if (ev77((char *)"SHOOT")) ev86((char *)"STOP", NULL, NULL, NULL, 1, 0.2f);
+	if (n2_ev77((char *)"SHOOT")) n2_ev86((char *)"STOP", NULL, NULL, NULL, 1, 0.2f);
 }
 
 // --------------------------------------------------------------------------- CGameObject family
@@ -1798,10 +1798,10 @@ void C3DJimmy::v270(int old_mode, int new_mode)						// N2:0x44e590 "C3DJimmy::C
 			f_898 = 0;
 			ShowAgain();
 			ev71(0);
-			ev91(0);
+			n2_ev91(0);
 			if (f_d34)
 			{
-				ev88((char *)"none", f_d34);
+				n2_ev88((char *)"none", f_d34);
 				f_d34->HideAgain();
 				f_d34->v136(0);
 			}

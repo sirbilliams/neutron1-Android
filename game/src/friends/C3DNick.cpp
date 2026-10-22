@@ -50,17 +50,17 @@ C3DNick::C3DNick()											// N2:0x45a350
 	f_649 = 0;												// ev69 loads the animations later
 	C3DNick::InitObject();									// 0x415090 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3NIC');							// 0x462220
-	f_9a8 = 1000.0f;										// VisibleRange
-	f_968 = 160.0f;											// speed
-	f_96c = 1;												// waiting
-	f_c08 = 1;												// AIState
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 300.0f;
+	m_visible_range = 1000.0f;										// VisibleRange
+	m_speed = 160.0f;											// speed
+	m_state = 1;												// waiting
+	m_ai_state = 1;												// AIState
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 300.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// running is walking
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// running is walking
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	f_1d74 = new C3DSkateBoard;								// 0x92c bytes
 	// (debug log of the new object: its CGameObject part, 0x92c, "C3DSkateBoard")
 	v40(1);													// CGameObject +0xa0
@@ -87,8 +87,8 @@ void C3DNick::v266(void)			{ FriendTaskStateRewrite(); }		// 0x419aa0
 void C3DNick::Process(float dt)								// 0x4339f0
 {
 	C3DFriends::Process(dt);								// N2:0x436eb0
-	if (f_96c != 3) return;									// patrolling only
-	f_c5c = 0;												// not held
+	if (m_state != 3) return;									// patrolling only
+	m_held = 0;												// not held
 	if (f_1d74)												// the board under us
 	{
 		float p[4];
@@ -100,19 +100,19 @@ void C3DNick::Process(float dt)								// 0x4339f0
 	f_1d78 += dt;
 	if (!(f_1d78 > 5.0f)) return;							// 0x48d950
 	const char *next;
-	if (strcasecmp(f_ac4, "SKATE") == 0)
+	if (strcasecmp(m_anim_run, "SKATE") == 0)
 	{
-		f_968 = (float)((6 - f_1d7c) * 100);
-		if (f_968 < 200.0f) f_968 = 200.0f;
+		m_speed = (float)((6 - f_1d7c) * 100);
+		if (m_speed < 200.0f) m_speed = 200.0f;
 		next = "GLIDE";
 	}
 	else
 	{
-		f_968 = (float)((9 - f_1d7c) * 100);
-		if (f_968 < 400.0f) f_968 = 400.0f;
+		m_speed = (float)((9 - f_1d7c) * 100);
+		if (m_speed < 400.0f) m_speed = 400.0f;
 		next = "SKATE";
 	}
-	strcpy(f_ac4, next);
+	strcpy(m_anim_run, next);
 	f_1d78 = 0;
 }
 
@@ -162,12 +162,12 @@ void C3DNick::ev69(void)									// 0x433730
 	v64(0.5f);												// CGameObject +0x100
 }
 
-void C3DNick::ev126(void)									// N2:0x45aac0
+void C3DNick::ev90(void)									// N2:0x45aac0
 {
-	C3DFriends::ev126();									// 0x41ee20 (a jump to the empty 0x472970)
-	ev106(f_ac4, (char *)"SKATE");							// element +0x1a8
-	strcpy(f_9ac, "NICPAT1");								// PatrolPoint
-	f_b8c = NULL;											// no destination yet
+	C3DFriends::ev90();									// 0x41ee20 (a jump to the empty 0x472970)
+	ev72(m_anim_run, (char *)"SKATE");							// element +0x1a8
+	strcpy(m_patrol_point, "NICPAT1");								// PatrolPoint
+	m_dest = NULL;											// no destination yet
 }
 
 void C3DNick::ev145(void)									// 0x433b80

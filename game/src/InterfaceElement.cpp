@@ -37,7 +37,7 @@ InterfaceElt	g_elt_545a70;			// N2:0x545a70
 InterfaceElt	g_elt_545b78;			// N2:0x545b78
 InterfaceElt	g_elt_545c80;			// N2:0x545c80
 
-int		g_score = 0;					// N2:0x54a458
+int		g_score = 0;					// 0x4f83c0
 int		g_score_popup = 0;				// 0x4f83c4
 float	g_score_popup_time = 0.0f;		// 0x4f83c8
 bool	g_flag_545e54 = false;			// N2:0x545e54
@@ -626,15 +626,13 @@ void neg::SetFlag545e54(bool on)
 	g_flag_545e54 = on;
 }
 
-void neg::AddScore(int points)
+void neg::AddScore(int points)								// 0x42adc0
 {
+	g_score += points;
 	if (points > 0)
 	{
-		if (g_N2_53b5b0 == 0) points = (int)(points * 0.5);			// 0x48e5d0
-		else if (g_N2_53b5b0 == 2) points = (int)(points * 1.5);		// N2:0x4cb1d0
+		g_score_popup = points;
 		g_score_popup_time = 1.2f;
-		g_score_popup += points;
 	}
-	g_score += points;
 	if (g_score < 0) g_score = 0;
 }

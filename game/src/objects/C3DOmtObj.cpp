@@ -227,7 +227,7 @@ void C3DOmtObj::Process(float dt)							// N2:0x45bcf0
 			if (g_N2_54a434 != 0)
 			{
 				const float k = (float)((double)(g_4f81a0 * 0.5f) + 0.5);	// 0x48e5d0 (double)
-				ev74(0.8f, 1.0f, k, k);						// element +0x128
+				n2_ev74(0.8f, 1.0f, k, k);						// element +0x128
 				return;
 			}
 			{
@@ -239,7 +239,7 @@ void C3DOmtObj::Process(float dt)							// N2:0x45bcf0
 				if (d < f_a1c)
 				{
 					ev71(d / f_a1c);						// element +0x11c
-					ev91(1);								// element +0x16c
+					n2_ev91(1);								// element +0x16c
 				}
 			}
 			return;
@@ -260,7 +260,7 @@ void C3DOmtObj::v260(void)									// N2:0x45b570
 		set_shape(Load3DShape(m_db, f_988));				// element +0xac
 		MakeShapeUnLit(get_shape());						// element +0xb0
 	}
-	if (f_664 == 1) ev73();									// "SecondPass"
+	if (f_664 == 1) AlphaSecondPass();									// "SecondPass"
 	if (f_98c == 7) v94(1);
 	if (f_658 == 0)											// "HasCollision" 0
 	{
@@ -352,7 +352,7 @@ void C3DOmtObj::v271(void)									// N2:0x45c130
 	if (g_N2_54a434 == 0 && f_98c == 12)
 	{
 		ev71(0);											// element +0x11c
-		ev91(1);											// element +0x16c
+		n2_ev91(1);											// element +0x16c
 	}
 }
 

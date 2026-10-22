@@ -1,28 +1,25 @@
 /*  C3DFriends - the base of Jimmy's friends and the other talking characters of the story
-    (C3DFowl '3FOW', C3DSheen '3SHE', C3DLibby '3LIB', C3DCarl '3CAR', C3DCindy '3CIN',
-    C3DNick '3NIC', C3DBenny '3BEN', C3DAIJimmy '3AIJ', C3DNumey '3NUM'): a C3DAI that does not
-    hover, with a blob shadow (a C3DShadow, 90 x 30, placed at v224(f_1d60) every frame, not made
-    in windowed mode) and five TalkState / TalkTrigger property pairs (read by the cut scene code).
-    No factory ID of its own.
+    (C3DSheen, C3DLibby, C3DCarl, C3DCindy, C3DNick, C3DBenny, C3DHugh, C3DJudy, ...): a C3DAI
+    that does not hover, is held where it stands while Jimmy or Goddard touch it, with a blob
+    shadow on the floor under it (a C3DShadow, 90 x 30, not made in windowed mode) and five
+    TalkState / TalkTrigger property pairs: ev95 finds the trigger to activate for the current
+    task state, ev80 activates it (once arrived and facing the target). No factory ID of its own.
     Reconstructed from Neutron.exe: constructor 0x41b490, destructor 0x41b740 (only resets the
     vtables, then ~C3DAI; deleting thunks 0x41b710 / 0x41bc70 / 0x41bc80 / 0x41bc90).
 
-    Original layout (classes.json): as C3DAI (element vtable 0x49e0e4, 147 slots: C3DAI's 144 +
-    144..146; OMediaAnim at +0x90, vtable 0x49e094; listener +0x30, vtable 0x49e0d0;
-    CLocalGameObject at +0xc0, vtable 0x49dc44, 286 slots), own members 0x1b50..0x1d74,
-    vtordisp 0x1d74, streamer 0x1d78 (size 0x1d7c). Derived classes put theirs from 0x1d74 on.
-    Element slots 114 and 126 point at 0x41ee20 (a jump to the empty 0x472970): the same as
-    C3DAI's, so they are not overridden here; slot 113 is a jump to C3DAI's (declared anyway).
-    The streamer vtable's read_class / write_class (0x410820 / 0x410830) are jumps to
-    OMedia3DShapeElement's, as in C3DAI.
+    Original layout (classes.json): as C3DAI (element vtable 98 slots: C3DAI's 95 + 95..97;
+    CLocalGameObject at +0xc0, 275 slots), own members 0x994..0xba8, vtordisp 0xba8, streamer
+    0xbac. Derived classes put theirs from 0xba8 on. The streamer vtable's read_class /
+    write_class (0x410820 / 0x410830) are jumps to OMedia3DShapeElement's.
 
     Shared compiled code: several subclass overrides are one function in the exe, used by
     several classes (MSVC folded identical code). They are the protected helpers below
     (Friend*), each named after what it does with its address; a subclass override that is such
     a copy just calls the helper (e.g. C3DFowl::InitObject() { FriendInitObjectAnim(); }).
+    (Some are Negatron's and still to be checked against Neutron.exe: those carry N2: addresses.)
 
-    Element-family slots are `ev<n>` (`// ESLOT n`); members are f_<offset in the original
-    object> (CGameObject-family code of the original sees them at offset - 0xc0).            */
+    Element-family slots are `ev<n>` (`// ESLOT n`, Neutron.exe's numbering); members are named
+    by what they hold, with their Neutron.exe object offset.                                 */
 #pragma once
 #include "../C3DAI.h"
 #include "OMedia3DVector.h"
@@ -36,15 +33,17 @@ class C3DFriends : public C3DAI
 	virtual ~C3DFriends();													// 0x41b740
 
 	// ---- element-family slots
-	virtual void ev113(void);												// ESLOT 113 N2:0x436d90 (a jump to C3DAI's)
-	virtual unsigned char ev144(void) { return 0; }							// ESLOT 144 N2:0x436f80 (0)
-	virtual void ev145(void) {}												// ESLOT 145 0x472970 (empty; Sheen/Libby/Benny: FriendTouchScene, Nick his own)
-	virtual void ev146(int unused) { (void)unused; }						// ESLOT 146 0x4732a0 (empty, one stack argument: type unknown)
+	virtual void ev79(void);												// ESLOT 79 0x41e580 (a copy of C3DAI's: state 10 wanders on)
+	virtual void ev80(void);												// ESLOT 80 0x41b7b0 activate ev95's trigger: ev96, count it, state 9, face round
+	virtual void ev90(void);												// ESLOT 90 0x41bc20 state 3
+	virtual CGameObject *ev95(void);										// ESLOT 95 0x41bb20 "GetActivatedObject": TalkTrigger<i> whose TalkState<i> is the task state (or -2)
+	virtual void ev96(void);												// ESLOT 96 0x41b810 before activating: 0x42adc0(100), stop
+	virtual void ev97(int unused) { (void)unused; }						// ESLOT 97 0x4732a0 (empty, one stack argument)
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7   0x41b840 TalkState0..4 / TalkTrigger0..4
 	virtual void ResetObject(void);											// SLOT 10  0x41b790
-	virtual void Process(float dt);											// SLOT 240 N2:0x436eb0 timer f_1d5c, the shadow under us
+	virtual void Process(float dt);											// SLOT 241 0x41b950 timer, ev80 while attacking, the shadow
 
 	protected:
 	// ---- shared compiled copies (see above)
@@ -60,11 +59,11 @@ class C3DFriends : public C3DAI
 																			// N2:0x45b120 (Numey "SCHEME") SLOT 270: a cut scene interrupts STOP with <anim>
 
 	public:
-	// ---- data members (object offsets)
-	int					f_1b50[5];		// 0x1b50 "TalkState0".."TalkState4" (0, -1, -1, -1, -1)
-	char				f_1b64[5][100];	// 0x1b64 "TalkTrigger0".."TalkTrigger4" ("none"; 0x1b64 0x1bc8 0x1c2c 0x1c90 0x1cf4)
-	short				f_1d58;			// 0x1d58 0 (ResetObject)
-	float				f_1d5c;			// 0x1d5c timer: 100 (ResetObject), += dt while not culled
-	OMedia3DVector		f_1d60;			// 0x1d60 where the shadow goes, in our frame (0, -60, 0; w 0 at 0x1d6c)
-	C3DShadow			*f_1d70;		// 0x1d70 blob shadow (90 x 30; NULL in windowed mode)
+	// ---- data members (Neutron.exe object offsets)
+	int					m_talk_state[5];		// 0x994  "TalkState0".."TalkState4" (0, -1, -1, -1, -1)
+	char				m_talk_trigger[5][100];	// 0x9a8  "TalkTrigger0".."TalkTrigger4" ("none")
+	short				m_talks;				// 0xb9c  triggers activated (ev80; 0 by ResetObject)
+	float				m_timer;				// 0xba0  100 (ResetObject), += dt; 0 when ev80 activates
+	C3DShadow			*m_shadow;				// 0xba4  blob shadow (90 x 30; NULL in windowed mode; the original keeps its CGameObject part)
+	OMedia3DVector		f_1d60;					// N2 0x1d60 Negatron's shadow offset (TODO(BG): Boy Genius puts the shadow on the floor)
 };

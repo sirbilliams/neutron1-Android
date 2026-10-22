@@ -82,18 +82,18 @@ C3DCarl::C3DCarl()											// N2:0x425840
 	f_649 = 0;												// ev69 loads the animations later
 	C3DCarl::InitObject();									// 0x418290 inlined: InitObject() called directly
 	C3DObject::SetObjectID('3CAR');							// 0x462220
-	f_96c = 1;												// waiting
-	f_c08 = 1;												// AIState
-	f_9a8 = 500.0f;											// VisibleRange
-	f_968 = 200.0f;											// speed
-	f_978.x = 0;
-	f_978.y = 0;
-	f_978.z = 400.0f;
+	m_state = 1;												// waiting
+	m_ai_state = 1;												// AIState
+	m_visible_range = 500.0f;											// VisibleRange
+	m_speed = 200.0f;											// speed
+	m_offset.x = 0;
+	m_offset.y = 0;
+	m_offset.z = 400.0f;
 	C3DObject::InitPhysics();								// 0x4623d0
-	C3DAI::ev106(f_ac4, (char *)"WALK");					// running is walking
-	C3DAI::ev106(f_b3c, (char *)"WALK");
-	C3DAI::ev106(f_a9c, (char *)"STOP");					// waiting and sitting are stopping
-	C3DAI::ev106(f_b14, (char *)"STOP");
+	C3DAI::ev72(m_anim_run, (char *)"WALK");					// running is walking
+	C3DAI::ev72(m_anim_walk, (char *)"WALK");
+	C3DAI::ev72(m_anim_wag, (char *)"STOP");					// waiting and sitting are stopping
+	C3DAI::ev72(m_anim_sit, (char *)"STOP");
 	f_1d7c.db = g_screens_db;								// the hunger bar's frame (set up like Create)
 	f_1d7c.canvas_id = 411;
 	f_1d7c.x = 0;
@@ -178,7 +178,7 @@ void C3DCarl::AddTouching(CGameObject *other)				// N2:0x425e90
 		if (!(f_1f84 < 100.0f) && !g_N2_545f34)				// fed enough
 		{
 			ev58((char *)"SHRINK", 0);						// element +0xe8
-			ev107(1);										// +0x1ac
+			ev73(1);										// +0x1ac
 			f_1d7c.Hide();									// N2:0x4826f0
 			f_1e80.Hide();
 			return;
@@ -188,7 +188,7 @@ void C3DCarl::AddTouching(CGameObject *other)				// N2:0x425e90
 		else if (g_difficulty == 2) f_1f84 += 1.0f;
 		ev58((char *)"EAT", 1);
 		PlayGameSound(-1, std::string("bigcarlsound2"), false);	// 0x458b40
-		ev107(1);
+		ev73(1);
 		C3DSprite *balloon = dynamic_cast<C3DSprite *>(other);	// (other - 0xc8)
 		if (balloon) balloon->HideAgain();					// sprite +0xd8
 		other->v132(0);
@@ -197,7 +197,7 @@ void C3DCarl::AddTouching(CGameObject *other)				// N2:0x425e90
 		if (f_1f84 > 0.0f) return;
 		f_1d7c.Hide();
 		f_1e80.Hide();
-		ev107(1);
+		ev73(1);
 		return;
 	}
 	// it bounces off: reflected about itself (sic: r = v - 2 (v.v) v, i.e. back the way it
@@ -241,7 +241,7 @@ void C3DCarl::Process(float dt)								// N2:0x426380
 		if (f_1f88 <= 0.0f)									// done eating: walk on
 		{
 			f_1f88 = 0;
-			ev107(3);										// element +0x1ac
+			ev73(3);										// element +0x1ac
 			ev58((char *)"WALK", 1);						// +0xe8
 		}
 		OMedia3DVector p = v224(0, 1800.0f, 400.0f);		// +0x380: over his head
@@ -268,11 +268,11 @@ void C3DCarl::v260(void)									// N2:0x425da0
 	f_1d74 = 0;
 	f_1d75 = 0;
 	if (g_gametype->m_object_id != 'LV5F') return;			// +0x490: small Carl
-	ev106(f_ac4, (char *)"RUN");							// element +0x1a8
-	ev106(f_a9c, (char *)"SMALLSTOP");
-	ev106(f_b14, (char *)"SMALLSTOP");
-	ev106(f_b14, (char *)"SMALLSTOP");						// (twice, as shipped)
-	ev106(f_a74, (char *)"SMALLSTOP");
+	ev72(m_anim_run, (char *)"RUN");							// element +0x1a8
+	ev72(m_anim_wag, (char *)"SMALLSTOP");
+	ev72(m_anim_sit, (char *)"SMALLSTOP");
+	ev72(m_anim_sit, (char *)"SMALLSTOP");						// (twice, as shipped)
+	ev72(m_anim_none, (char *)"SMALLSTOP");
 }
 
 void C3DCarl::v267(int level)								// N2:0x425e60
