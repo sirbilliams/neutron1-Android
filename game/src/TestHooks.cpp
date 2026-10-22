@@ -79,7 +79,7 @@ void neg::TestPlayHook(const char *level)
 				char ids[5] = { (char)(id >> 24), (char)(id >> 16), (char)(id >> 8), (char)id, 0 };
 				int w = 0;
 				for (int k = 0; want[k]; k++) if (strcmp(want[k], ids) == 0) w = 1;
-				if (getenv("NEG_TEST_EXITS")[1] == 'a' && strcmp(ids, "3PAT") && strcmp(ids, "3TER") && strcmp(ids, "3PIC") && strcmp(ids, "3LIO")) w = 1;
+				if (getenv("NEG_TEST_EXITS")[1] == 'a' && strcmp(ids, "3PAT") && strcmp(ids, "3TER") && strcmp(ids, "3LIO")) w = 1;
 				if (!w) continue;
 				char line[1500];
 				int n = snprintf(line, sizeof line, "PROPS %s %s:", (*i)->m_tag, ids);
