@@ -505,6 +505,7 @@ void CJimmyGame::CreateTerrainTinted(float r, float g, float b, float a)	// 0x44
 void CJimmyGame::PauseGame(bool pause)										// N2:0x485410
 {
 	Log("Inside PauseGame");
+	g_game_paused = pause;			// port: was set by CGameType::PauseGame (Negatron); Neutron.exe's only logs (TODO(BG): who sets 0x5099ad)
 	if (!pause)
 	{
 		g_5099ab = 0;

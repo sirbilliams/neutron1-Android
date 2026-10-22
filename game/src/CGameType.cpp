@@ -432,8 +432,7 @@ void CGameType::SetTerrainUnLit(void)			{ ForEachTerrainShape(ApplyUnLit, 0); }	
 
 void CGameType::PauseGame(bool pause)										// 0x475a00
 {
-	Log("PauseGame(%d)", (int)pause);
-	g_game_paused = pause;
+	Log("PauseGame(%d)", (int)pause);	// Neutron.exe: only the log (Negatron also set 0x5099ad)
 }
 
 bool CGameType::IsPaused(void)												// 0x475a30
