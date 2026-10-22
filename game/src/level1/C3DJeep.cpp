@@ -54,7 +54,6 @@ C3DJeep::C3DJeep()											// 0x4211a0
 	v44(0);
 	f_a43 = 0;												// walls do not crash it
 	f_a88 = 0;
-	f_6d0 = 2;												// port: a plain shape for the Negatron-shaped C3DAnimated base
 }
 
 C3DJeep::~C3DJeep()											// 0x421330
@@ -67,6 +66,13 @@ CGameObject *New_C3DJeep(void) { return new C3DJeep; }		// '3JEE' (0x6ac bytes)
 }
 
 // --------------------------------------------------------------------------- element slots
+
+void C3DJeep::ev106(void)									// 0x421800
+{
+	if (!getvisible()) force_show();						// hide count 1, hide(false)
+	for (int i = 0; i < 6; i++)								// the wheels (+0x578..)
+		if (f_960[i] && !f_960[i]->getvisible()) f_960[i]->force_show();
+}
 
 unsigned char C3DJeep::ev123(void)							// 0x421c10: Left arrow, joystick left
 {
