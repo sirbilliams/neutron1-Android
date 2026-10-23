@@ -10,11 +10,10 @@
       newgame.png   149 "LoadingNeighborhood" (Retroville, where the story starts)
       loading.png   252 "loadscreen"
       inventory.png 53 "menucollectedItems2" credits.png 246 "Credits"
-    and level-<gam, lower case>.png: the loading picture (CLoadLevel "LoadScreen") of every exit
-    of the levels played, so Continue can show the autosave's level.
-    TODO(BG): BG's CLoadLevel has no LoadScreen field (its .gam files have none) and BG has no
-    dat\menu.dat: find how Neutron.exe picks a level's loading picture (the "Loading<Area>"
-    canvases 146..155) and its main menu background, then fill ScanExits / MainMenuBackground. */
+    Negatron also wrote level-<gam>.png (each exit's "LoadScreen" picture); Boy Genius's CLoadLevel
+    has no LoadScreen field (its .gam files have none) and it has no dat\menu.dat: it shows the one
+    loading picture, canvas 0xf4 (C2DInGameMenu::ShowLoadingPicture 0x4073b0), so there is nothing
+    to scan (ScanExits) and the main menu background is the PDA page's canvas (MainMenuBackground). */
 
 #include "LauncherArt.h"
 #include "../C2DInGameMenu.h"

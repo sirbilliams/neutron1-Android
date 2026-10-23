@@ -160,10 +160,9 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   hidden but unverified; a black ball on the floor, unidentified).
 - **How the port was made:** the Negatron source retargeted with tools/decomp/addrmap.py +
   retarget.py, then class by class against Neutron.exe. Unported Negatron code still exists:
-  grep `N2:` / `g_N2_` / `TODO(BG)` / `n2_ev`; `/home/claude/decomp1/retarget.tsv` lists every
-  address that wasn't an exact match (`check func~<1`). gen/n2globals.h holds zero-filled stand-ins
-  for unresolved Negatron globals.
-- **Ported to Neutron.exe:** CGameObject (BG slot numbers; Negatron-only marked N2SLOT),
+  grep `TODO(BG)`; `/home/claude/decomp1/retarget.tsv` lists every address that wasn't an exact
+  match (`check func~<1`). (`N2:`, `g_N2_` and the gen/n2globals.h stand-ins are gone.)
+- **Ported to Neutron.exe:** CGameObject (BG slot numbers),
   CLocalGameObject names (offsets still Negatron's), C3DAnimated, CGameType, CJimmyGame, CEditor
   (splash.omt, LoadGame, LoadLevelNow), CViewPort, CLoadLevel, fades, C2DInGameMenu + CMainMenu +
   saves + CTaskList, C3DPlayer, C3DJimmy (+ jimmy/C3DJimmy_menu.cpp), both cut-scene cameras, the
