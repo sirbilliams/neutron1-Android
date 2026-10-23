@@ -30,6 +30,7 @@
 #include "C3DJimmy.h"
 #include "level1/C3DJeep.h"
 #include "C3DAI.h"
+#include "C3DRocketShip.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
 #include "levels/CLoadLevel.h"
@@ -200,6 +201,8 @@ static void TestGoto(CGameObject *o, float dt)
 				o->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// riding the scooter: it goes too
 					if (jm->f_a30 && jm->f_a30->f_a84 == jm) jm->f_a30->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// flying the rocket ship (level5a/5b/6): it goes too
+					if (jm->f_ab0) jm->f_ab0->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				SDL_Log("NEG_TEST_GOTO: Jimmy to %s (%.0f %.0f %.0f)", tag, d[0] + dx, d[1] + 60.0f, d[2] + dz);
 			}
 		}
@@ -210,7 +213,7 @@ static void TestGoto(CGameObject *o, float dt)
 void neg::TestPosLog(CGameObject *o, float dt)
 {
 	if (o) TestGoto(o, dt);
-	static const char *answer = getenv("NEG_TEST_CONFIRM");		// "y" or "n": answers the yes/no boxes
+	static const char *answer = getenv("NEG_TEST_ANSWER");		// "y" or "n": answers the yes/no boxes
 	if (answer && *answer) g_keys[(*answer == 'y' || *answer == 'Y') ? 'Y' : 'N'] = ConfirmOpen() ? 1 : 0;
 	static float every = -1, t = 0;
 	if (every < 0) { const char *e = getenv("NEG_TEST_POSLOG"); every = e && *e ? (float)atof(e) : 0; }
