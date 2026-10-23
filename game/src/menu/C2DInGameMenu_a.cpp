@@ -15,6 +15,7 @@
 #include "../Game.h"
 #include "../Globals.h"
 #include "../Todo.h"
+#include "../port/BillsUi.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaCanvas.h"
 #include "OMediaDataBase.h"
@@ -338,6 +339,7 @@ C2DInGameMenu::C2DInGameMenu()
 
 C2DInGameMenu::~C2DInGameMenu()
 {
+	neg::BillsUiShutdown();							// port: Bill's UI pieces (BillsUi.h)
 	OMediaCanvasElement **elts[] = {
 		&g_hud_lives, &g_health_bar, &g_health_frame, &g_gadget_bar_frame, &g_gadget_bar,
 		&g_box_level, &g_box_quit, &g_box_save, &g_box_load, &g_box_delete, &g_box_yes, &g_box_no,

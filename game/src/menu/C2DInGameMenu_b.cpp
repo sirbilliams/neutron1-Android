@@ -26,6 +26,7 @@
 #include "../Sound.h"
 #include "../InterfaceElement.h"
 #include "../Todo.h"
+#include "../port/BillsUi.h"
 #include "../JimmySlots.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaViewPort.h"
@@ -212,6 +213,7 @@ void neg::ShowLoadingPicture(bool show)									// 0x4073b0
 void C2DInGameMenu::Process(float dt)
 {
 	CGameObject::Process(dt);								// (0x473240, CGameObject's)
+	neg::BillsUiFrame(dt);									// port: Bill's UI (port/BillsUi.h)
 	const float sx = (float)(short)g_screen_w * 0.0015625f;
 	const float sy = (float)(short)g_screen_h * 0.0020833334f;
 	short mx, my;

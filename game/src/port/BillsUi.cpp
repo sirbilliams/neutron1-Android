@@ -1087,13 +1087,21 @@ static void MirrorFrame(bool on)
 //     its hologram in the middle, energy LEDs above;
 //   off: the game's own icon (as Vanilla).
 // The holograms are the game's pictures recoloured at run time (green-cyan, scan lines, a bright
-// rim), never stored. "Has": the vehicles in this level, the water gun / burp gun once collected
-// (pickups page items 1 / 19), the other gadgets once used in this level, and the current one.
-// TODO(BG): Negatron's gadget numbering (g_cur_gadget 0..13) and pickup items; BG's C3DJimmy has
-// its own gadgets / vehicles (and no burp gun / VR tank / lander as these): renumber and rename from
-// BG's C3DJimmy / C2DInGameMenu once ported. Same for Companion.cpp's gadget and inventory lists.
-static const char *const kGadgetName[14] = { "ON FOOT", "ROCKET", "INVISIBLE", "JETPACK", "SCOOTER", "VR TANK",
-	"WATER GUN", "GRAPPLE", "SWIM", "MINI SUB", "BURP GUN", "CRANE", "HOVER CYCLE", "LANDER" };
+// rim), never stored.
+// "Has": the gadgets Jimmy has (the PDA's gadget page, items 0..7 shown) and the current one.
+// Numbering: g = gadget + 1 (g_4f0588 = -1 none is 0), 1..8 as C3DJimmy's gadgets: bubble, rocket
+// ship, invisible (power), shrink ray, scooter, remote (Goddard), baseball, grappler. The picture
+// of gadget g is g_gadget_icons[g - 1] (C2DInGameMenu, screens.omt).
+static const char *const kGadgetName[14] = { "NONE", "BUBBLE", "ROCKET SHIP", "INVISIBLE", "SHRINK RAY", "SCOOTER",
+	"REMOTE", "BASEBALL", "GRAPPLER", "", "", "", "", "" };
+static inline int HoloGadget(void)
+{
+	static int test = -2;										// NEG_UI_TESTGADGET=0..7: shows that gadget (screenshots)
+	if (test == -2) { const char *e = getenv("NEG_UI_TESTGADGET"); test = e ? atoi(e) : -1; }
+	const int cur = test >= 0 ? test : g_4f0588;
+	return (cur >= 0 && cur < 8) ? cur + 1 : 0;
+}
+static inline OMediaCanvasElement *HoloIcon(int g) { return (g >= 1 && g <= 8) ? g_gadget_icons[g - 1] : NULL; }
 
 static volatile int s_holo_design = -1;
 void SetHoloDesign(int design) { s_holo_design = design; }
@@ -1113,8 +1121,8 @@ static int HoloDesign(void)
 	return d;
 }
 
-// The gadgets Jimmy has (bits 1..13).
-static unsigned s_holo_level_mask, s_holo_seen, s_holo_scan_frame;
+// The gadgets Jimmy has (bits 1..8).
+static unsigned s_holo_seen;
 static char s_holo_level[64];
 
 static unsigned OwnedGadgets(int g)
@@ -1123,27 +1131,14 @@ static unsigned OwnedGadgets(int g)
 	{
 		strncpy(s_holo_level, g_game_file, sizeof s_holo_level - 1);
 		s_holo_seen = 0;
-		s_holo_scan_frame = 0;
 	}
-	if (s_holo_scan_frame == 0 || s_frame - s_holo_scan_frame > 120)	// the vehicles here (every 2 s)
-	{
-		static const struct { const char *tag; int g; } kVehicles[] = {
-			{ "C3DROCKETSHIP", 1 }, { "C3DJEEP", 4 }, { "C3DVRTANK", 5 }, { "C3DMINISUB", 9 },
-			{ "C3DCRANEBOOM", 11 }, { "C3DHOVERCYCLE", 12 }, { "C3DLUNARLANDER", 13 } };
-		unsigned m = 0;
-		for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
-			if (*it)
-				for (unsigned k = 0; k < sizeof kVehicles / sizeof kVehicles[0]; k++)
-					if (strcasecmp((*it)->m_tag, kVehicles[k].tag) == 0) m |= 1u << kVehicles[k].g;
-		s_holo_level_mask = m;
-		s_holo_scan_frame = s_frame ? s_frame : 1;
-	}
-	unsigned m = s_holo_level_mask;
-	C2DInGameMenu::MenuPage *p2 = C2DInGameMenu::GetPage(2);
-	if (p2 && p2->items[1].type) m |= 1u << 6;				// WATERGUN collected
-	if (p2 && p2->items[19].type) m |= 1u << 10;			// MEGABURP collected
-	if (g > 0 && g < 14) s_holo_seen |= 1u << g;
-	return (m | s_holo_seen) & 0x3ffeu;
+	unsigned m = 0;
+	C2DInGameMenu::MenuPage *p0 = C2DInGameMenu::GetPage(0);
+	if (p0)
+		for (int i = 0; i < 8; i++)
+			if (p0->items[i].type == 1) m |= 1u << (i + 1);		// has it (4: not usable here)
+	if (g > 0 && g < 9) s_holo_seen |= 1u << g;
+	return (m | s_holo_seen) & 0x1feu;
 }
 
 static OMediaCanvas *s_holo_can[14], *s_holo_src[14];
@@ -1151,8 +1146,8 @@ static OMediaCanvas *s_holo_can[14], *s_holo_src[14];
 // Gadget i's picture as a hologram (cached per source canvas).
 static OMediaCanvas *HoloCanvas(int i)
 {
-	if (i < 0 || i >= 14 || !g_help_icons[i]) return NULL;
-	OMediaCanvas *src = g_help_icons[i]->get_canvas();
+	if (i < 1 || i > 8 || !HoloIcon(i)) return NULL;
+	OMediaCanvas *src = HoloIcon(i)->get_canvas();
 	if (!src || src->get_width() < 8) return NULL;
 	if (s_holo_can[i] && s_holo_src[i] == src) return s_holo_can[i];
 	const int w = src->get_width(), h = src->get_height();
@@ -1328,14 +1323,14 @@ static void HoloHideAll(void)
 static void HoloFrame(float dt, bool on)
 {
 	const int design = on ? HoloDesign() : 0;
-	OMediaCanvasElementWrapper *icon = (g_help_index >= 0 && g_help_index < 14) ? g_help_icons[g_help_index] : NULL;
+	OMediaCanvasElement *icon = HoloIcon(HoloGadget());
 	const bool playing = PortGameMode() == 5 && g_menu;
 	if (design == 0 || !playing)
 	{
 		HoloHideAll();
 		if (design == 0 && s_icon_hidden)						// the game's icon back
 		{
-			if (icon && playing && g_help_index != 0) icon->force_show();
+			if (icon && playing) icon->force_show();
 			s_icon_hidden = false;
 		}
 		return;
@@ -1343,14 +1338,14 @@ static void HoloFrame(float dt, bool on)
 	if (icon && icon->getvisible()) icon->hide(true);		// ours instead
 	s_icon_hidden = true;
 	s_holo_t += dt;
-	const int g = g_help_index;
+	const int g = HoloGadget();
 	if (g != s_holo_last) { s_holo_change = 1.0f; s_holo_last = g; }
 	s_holo_change -= dt * 2.5f;
 	if (s_holo_change < 0) s_holo_change = 0;
-	const bool any = g > 0 && g < 14 && HoloCanvas(g);
+	const bool any = g > 0 && g < 9 && HoloCanvas(g);
 	const unsigned owned = OwnedGadgets(g);
 	int list[14], n = 0;
-	for (int i = 1; i < 14; i++)
+	for (int i = 1; i < 9; i++)
 		if ((owned >> i) & 1) list[n++] = i;
 	s_pool_used = 0;
 	const float L = -WideMargin();
