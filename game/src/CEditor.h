@@ -18,7 +18,7 @@
         rest of the game asks for a level change (C3DPlayer's PlayerLoadLevel, CLoadLevel, the
         fades of C2DInGameMenu set m_load_pending directly).
       * OpenEditorDatabase / DrawSplash (slots 70/75, vtable +0x118 / +0x12c) are called by the
-        game-type factory N2:0x480230 after it creates a new game type: open omt\splash.omt and
+        game-type factory 0x44d0e0 after it creates a new game type: open omt\splash.omt and
         show splash canvas 3.
 
     Element-family layout: offsets < 0x8c are OMediaElement (use the OMT accessors); own members
@@ -55,7 +55,7 @@ class CEditor : public OMediaElement
 	virtual void UnInitEditor(void);										// SLOT 46 0x46bdc0
 	virtual void InitGrid(void);											// SLOT 47 0x46be80
 	virtual void UnInitGrid(void);											// SLOT 48 0x46bea0
-	virtual void UpdateGame(float dt);										// SLOT 49 N2:0x4a5c70
+	virtual void UpdateGame(float dt);										// SLOT 49 0x46bec0
 	virtual void UpdateEditor(float dt);									// SLOT 50 0x46c070
 	virtual void ViewportClicked(OMediaPickRequest *req);					// SLOT 51 0x46d270 (omsg_ViewPortClicked)
 	virtual void ev52(void);												// SLOT 52 0x46da80
@@ -72,26 +72,17 @@ class CEditor : public OMediaElement
 	virtual void LoadGame(char *name);										// SLOT 63 0x46e170
 	virtual void CheckLoadLevel(void);										// SLOT 64 0x46dff0
 	virtual void MakeBackupName(char *name);								// SLOT 65 0x46e7b0
-	virtual void ListObjects(void);											// SLOT 66 N2:0x4a8c70
+	virtual void ListObjects(void);											// SLOT 67 0x46e710
 	virtual CGameObject *FindObject(int id);								// SLOT 67 0x46e6e0
 	virtual void LoadLevelNow(char *name);									// SLOT 64 0x46df70 (BG numbering) m_load_pending + name
 	virtual void RequestLevel(char *name);									// SLOT 69 0x46dfb0 (BG numbering) m_load_countdown = 2 + name
-	void RequestLevelDelayed(char *name, float delay);						// port: Negatron's N2:0x4a83b0 (SaveGame.cpp)
+	void RequestLevelDelayed(char *name, float delay);						// port: delayed load (SaveGame.cpp)
 	virtual void OpenEditorDatabase(void);									// SLOT 70 0x46f760 (vtable +0x118)
 	virtual bool IsSingletonLoaded(int id);									// SLOT 71 0x46e6a0
-	virtual void ShowObjectList(void);										// SLOT 72 N2:0x4a9d20
+	virtual void ShowObjectList(void);										// SLOT 72 0x46f480
 	virtual void ShowCatalogue(void);										// SLOT 73 0x46f250
 	virtual void ResetLevel(void);											// SLOT 74 0x46e570
 	virtual void DrawSplash(int canvas_id);									// SLOT 75 0x46f830 (vtable +0x12c)
-	virtual void PlaceSprite(OMediaCanvasElement *e, float x, float y, int canvas_id, float unused, bool scaled);	// SLOT 76 N2:0x4aa500
-	virtual void SetSpriteCanvas(OMediaCanvasElement *e, int canvas_id, bool scaled);	// SLOT 77 N2:0x4aa5c0
-	virtual OMediaCanvas *GetCanvas(int canvas_id);							// SLOT 78 0x403690
-	virtual void PlaceSplash(OMediaCanvasElement *e, int unused1, int unused2, int canvas_id);	// SLOT 79 N2:0x4aa3e0
-	virtual void ShowPanel(bool on);										// SLOT 80 N2:0x4aa7e0
-	virtual int  CountObjects(void);										// SLOT 81 N2:0x4a9c80
-	virtual int  CountCollisionObjects(void);								// SLOT 82 N2:0x4a9ce0
-	virtual int  CountSavedObjects(void);									// SLOT 83 N2:0x4a9ca0
-	virtual void PasteObject(CGameObject *src);								// SLOT 85 N2:0x4aa6c0
 
 	// ---- helpers (inline in the original)
 	void ClearSelection(void);			// zeroes m_sel_element/object/material/polygon and m_pick
@@ -126,25 +117,17 @@ class CEditor : public OMediaElement
 	int					m_list_offset;			// 0x800 first list entry shown (scroll by 20)
 	unsigned char		m_key_latch;			// 0x804
 	float				m_start_timer;			// 0x804 time in the start-up state
+	unsigned char		f_80c;					// 0x80c
 	unsigned char		m_splash_key;			// 0x80d Escape held (skips one splash per press)
 	int					m_start_state;			// 0x808 0 wait, 1 splash 0 shown, 2 splash 1 shown + level1d requested, 3 running
-	unsigned char		f_810;					// 0x810
-	unsigned char		f_811;					// 0x811
-	unsigned char		m_panel_open;			// 0x812 list panel shown (arrow keys scroll instead of fly)
-	int					m_label_mode;			// 0x814 object labels: 0 off, 1 near (1000), 2 all
-	int					m_list_filter;			// 0x818 object list: 0 all, 1 3D, 2 cutscene, 3 pickups
-	CGameObject			*m_copied;				// 0x81c Ctrl-C
-	unsigned char		m_paste_latch;			// 0x820 Ctrl-V
 };
 
 // --- globals owned by the editor
 namespace neg {
+extern char						g_game_file[128];		// port: the .gam file of the running game (BillsUi, Companion)
 extern OMediaCanvas				*g_editor_font_canvas;	// 0x509978 png\fontsmall.png
 extern OMediaCanvasFont			*g_editor_font;			// 0x50997c
 extern OMediaCanvasElement		*g_splash;				// 0x509984
 extern OMediaDataBase			*g_editor_db;			// 0x509988 omt\splash.omt
 extern OMediaFileStream			*g_editor_stream;		// 0x50998c
-extern OMediaCanvasElement		*g_editor_menu_panel;	// N2:0x56af1c canvas 5
-extern OMediaCanvasElement		*g_editor_list_panel;	// N2:0x56af20 canvas 6
-extern OMediaCanvasElement		*g_editor_props_panel;	// N2:0x56af24 canvas 7
 }

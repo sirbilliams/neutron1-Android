@@ -21,80 +21,30 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_N2_537634 (*(float *)&neg::g_n2_data[0x5634])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53b5b0 (*(int *)&neg::g_n2_data[0x95b0])	// initialised in Neutron2.exe: port gets 0
 #define g_N2_53f27c (*(int *)&neg::g_n2_data[0xd27c])	// initialised in Neutron2.exe: port gets 0
-#define g_N2_5446ec (*(OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bb])
-#define g_N2_545d98 (*(char *)&neg::g_n2_data[0x13d98])
-#define g_N2_545e57 (*(bool *)&neg::g_n2_data[0x13e57])
-#define g_N2_545ef8 (*(bool *)&neg::g_n2_data[0x13ef8])
-#define g_N2_545efc (*(unsigned int *)&neg::g_n2_data[0x13efc])
-#define g_N2_545f00 (*(int *)&neg::g_n2_data[0x13f00])
-#define g_N2_545f04 (*(int *)&neg::g_n2_data[0x13f04])
-#define g_N2_545f08 (*(int *)&neg::g_n2_data[0x13f08])
-#define g_N2_545f30 (*(int *)&neg::g_n2_data[0x13f30])
-#define g_N2_545f48 (*(int *)&neg::g_n2_data[0x13f48])
-#define g_N2_545f4c (*(int *)&neg::g_n2_data[0x13f4c])
-#define g_N2_545f54 (*(unsigned int *)&neg::g_n2_data[0x13f54])
-#define g_N2_545fd0 (*(CGameObject* *)&neg::g_n2_ptrs[0x4ff4])
 #define g_N2_545fdc (*(int *)&neg::g_n2_data[0x13fdc])
 #define g_N2_545fe0 (*(int *)&neg::g_n2_data[0x13fe0])
 #define g_N2_545fe4 (*(int *)&neg::g_n2_data[0x13fe4])
-#define g_N2_5461cc (*(char *)&neg::g_n2_data[0x141cc])
-#define g_N2_54a468 (*(char *)&neg::g_n2_data[0x18468])
-#define g_N2_54a48c g_view_restore_w	// Neutron.exe global (n2_aliases.txt)
-#define g_N2_56aebe (*(short *)&neg::g_n2_data[0x38ebe])
-#define g_N2_56aec0 (*(short *)&neg::g_n2_data[0x38ec0])
-#define g_N2_56aed0 (*(char *)&neg::g_n2_data[0x38ed0])
-#define g_N2_6f7518 (*(int *)&neg::g_n2_data[0x1c5518])
-#define g_checkpoint_num (*(int *)&neg::g_n2_data[0x13f38])
-#define g_checkpoint_pending (*(bool *)&neg::g_n2_data[0x13f3c])
-#define g_checkpoint_toucher (*(CGameObject* *)&neg::g_n2_ptrs[0x4fd0])
 #define g_cur_gadget (*(int *)&neg::g_n2_data[0x13d9c])
-#define g_cutscene_element (*(OMediaElement* *)&neg::g_n2_ptrs[0x4fd1])
 #define g_cutscene_skipped (*(bool *)&neg::g_n2_data[0x183d4])
 #define g_difficulty (*(int *)&neg::g_n2_data[0x95b0])	// initialised in Neutron2.exe: port gets 0
-#define g_enemy_time_scale (*(float *)&neg::g_n2_data[0xe594])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_done (*(bool *)&neg::g_n2_data[0x4ec])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_duration (*(float *)&neg::g_n2_data[0x4e8])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_in_time (*(float *)&neg::g_n2_data[0x4f0])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_setting (*(int *)&neg::g_n2_data[0x4fc])	// initialised in Neutron2.exe: port gets 0
-#define g_frame_rate (*(float *)&neg::g_n2_data[0x18474])
-#define g_frame_rate_acc (*(float *)&neg::g_n2_data[0x18478])
-#define g_frame_rate_now (*(float *)&neg::g_n2_data[0x18470])
 #define g_gadget_bar_on (*(unsigned char *)&neg::g_n2_data[0x13da0])
-#define g_game_file ((char *)&neg::g_n2_data[0x1c6a4])
 #define g_game_mode (*(int *)&neg::g_n2_data[0x95b4])	// initialised in Neutron2.exe: port gets 0
-#define g_game_state (*(int *)&neg::g_n2_data[0x95b4])	// initialised in Neutron2.exe: port gets 0
 #define g_has_focus (*(unsigned char *)&neg::g_n2_data[0x95c0])	// initialised in Neutron2.exe: port gets 0
 #define g_help_icons ((OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bd])
 #define g_help_index (*(int *)&neg::g_n2_data[0x13d9c])
 #define g_help_menu_elt (*(InterfaceElt* *)&neg::g_n2_ptrs[0x4933])
 #define g_hud_picture_id (*(int *)&neg::g_n2_data[0x4e4])	// initialised in Neutron2.exe: port gets 0
-#define g_joy_frames (*(int *)&neg::g_n2_data[0x39088])
-#define g_key_action ((int *)&neg::g_n2_data[0x14064])
-#define g_key_back ((int *)&neg::g_n2_data[0x1412c])
-#define g_key_brake ((int *)&neg::g_n2_data[0x141a4])
-#define g_key_cutscene_bypass ((int *)&neg::g_n2_data[0x14014])
-#define g_key_deactivate_item ((int *)&neg::g_n2_data[0x1408c])
-#define g_key_go ((int *)&neg::g_n2_data[0x14154])
-#define g_key_jump ((int *)&neg::g_n2_data[0x14104])
-#define g_key_speed ((int *)&neg::g_n2_data[0x13fec])
-#define g_key_turn_left ((int *)&neg::g_n2_data[0x140dc])
-#define g_key_turn_right ((int *)&neg::g_n2_data[0x1417c])
-#define g_key_turnaround ((int *)&neg::g_n2_data[0x140b4])
-#define g_level_requested (*(char *)&neg::g_n2_data[0x18469])
-#define g_level_table ((char *)&neg::g_n2_data[0xb818])	// initialised in Neutron2.exe: port gets 0
 #define g_menu (*(C2DInGameMenu* *)&neg::g_n2_ptrs[0x4f9e])
 #define g_menu_item_sprites ((OMediaCanvasElementWrapper* *)&neg::g_n2_ptrs[0x49bd])
 #define g_mode_before_pause (*(int *)&neg::g_n2_data[0x95bc])	// initialised in Neutron2.exe: port gets 0
-#define g_player_hud (*(OMediaElement* *)&neg::g_n2_ptrs[0x611b])
-#define g_power_timers ((float *)&neg::g_n2_data[0x18424])
 #define g_prev_game_mode (*(int *)&neg::g_n2_data[0x95b8])	// initialised in Neutron2.exe: port gets 0
-#define g_prev_game_state (*(int *)&neg::g_n2_data[0x95b8])	// initialised in Neutron2.exe: port gets 0
-#define g_promotion_rank (*(int *)&neg::g_n2_data[0x18464])
 #define g_queued_sfx_after (*(unsigned int *)&neg::g_n2_data[0xa550])	// initialised in Neutron2.exe: port gets 0
 #define g_save_slots ((SaveSlotInfo *)&neg::g_n2_data[0x13984])
-#define g_score_box2_on (*(char *)&neg::g_n2_data[0x13f0d])
 #define g_score_box_y (*(int *)&neg::g_n2_data[0x500])	// initialised in Neutron2.exe: port gets 0
 #define g_screens_db (*(OMediaDataBase* *)&neg::g_n2_ptrs[0x4f94])
-#define g_task_file ((char *)&neg::g_n2_data[0x1c71c])
 #define g_teletype_rate (*(float *)&neg::g_n2_data[0x4f4])	// initialised in Neutron2.exe: port gets 0
 #define g_tex_scroll_on (*(bool *)&neg::g_n2_data[0xc644])	// initialised in Neutron2.exe: port gets 0

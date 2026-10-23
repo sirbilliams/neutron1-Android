@@ -183,6 +183,8 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_4f2928 ((char *)&neg::g_data[0x6928])
 #define g_object_catalogue ((char *)&neg::g_data[0x6928])
 #define g_4f292c (&neg::g_data[0x692c])		// address only
+#define g_4f3a78 ((char *)&neg::g_data[0x7a78])
+#define g_level_table ((char *)&neg::g_data[0x7a78])
 #define g_4f3a7c (&neg::g_data[0x7a7c])		// address only
 #define g_4f3ed4 (&neg::g_data[0x7ed4])		// address only
 #define g_4f47e4 (&neg::g_data[0x87e4])		// address only

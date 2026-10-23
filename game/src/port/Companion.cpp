@@ -10,6 +10,7 @@
 #include "../CGameType.h"
 #include "../Game.h"
 #include "../Globals.h"
+#include "../CEditor.h"
 #include "../SaveGame.h"
 #include "../InterfaceElement.h"
 #include "../gen/globals.h"

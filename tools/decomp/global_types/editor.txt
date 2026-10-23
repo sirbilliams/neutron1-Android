@@ -3,12 +3,7 @@
 0x4f5410 array char g_editor_menu           # 32-byte entries "Select Object", ... "" (exe data)
 0x4f56b0 array char g_editor_toggles        # 32-byte entries "Sky", "Far Plane", ... ""
 0x4f2928 array char g_object_catalogue      # {int id; char class[32]} x 0x24, id -1 ends
-# unresolved (Neutron2 address): N2:0x53d818 array char g_level_table           # {int id; char file[32]} x 0x24, id -1 ends
-# unresolved (Neutron2 address): N2:0x54e6a4 array char g_game_file             # .gam file of the running game (LoadGame)
-# unresolved (Neutron2 address): N2:0x54e71c array char g_task_file             # savegame (.tsk) being restored
-# unresolved (Neutron2 address): N2:0x53b5b4 val int g_game_state               # SetGameState N2:0x485360
-# unresolved (Neutron2 address): N2:0x53b5b8 val int g_prev_game_state
-# unresolved (Neutron2 address): N2:0x54a469 val char g_level_requested         # RequestLevel: skip the "loading" fade once
+0x4f3a78 array char g_level_table           # {int id; char file[32]} x 0x24, id -1 ends (VR08.gam ... "")
 0x509834 val char g_mouse_down              # omsg_Event 1/2
 0x50993a val char g_mouse_rdown             # omsg_Event 3/4
 0x50993c val char g_mouse_captured          # 0x46a400

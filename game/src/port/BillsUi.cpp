@@ -4,6 +4,7 @@
 #include "Widescreen.h"
 #include "../Game.h"
 #include "../Globals.h"
+#include "../CEditor.h"
 #include "../C2DInGameMenu.h"
 #include "../CanvasWrapper.h"
 #include "OMediaCanvas.h"
