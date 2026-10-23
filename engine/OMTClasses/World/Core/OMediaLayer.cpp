@@ -38,6 +38,8 @@
 #include "OMediaViewPort.h"
 
 #include <algorithm>
+#include "OMedia3DShapeElement.h"
+#include "OMedia3DShape.h"
 
 OMediaLayer::OMediaLayer()
 {
@@ -345,10 +347,13 @@ class OMediaPreSortElementPtr
 	public:
 	
 	OMediaRenderPreSortedElement	*psortelementptr;
+	float							tie_value;		// port: see render_presorted_element
 	
 	inline bool operator < (const OMediaPreSortElementPtr &x) const
 	{
-		return psortelementptr->sort_value < x.psortelementptr->sort_value;
+		if (psortelementptr->sort_value != x.psortelementptr->sort_value)
+			return psortelementptr->sort_value < x.psortelementptr->sort_value;
+		return tie_value < x.tie_value;
 	}
 };
 
@@ -379,10 +384,31 @@ void OMediaLayer::render_presorted_element(OMediaRendererInterface *rdr_i,
 			else ptr.psortelementptr->sort_value = (*i).model_matrix.m[3][2];
 		}
 		
+		// port: elements are sorted by their origin only, so all the terrain chunks of a level
+		// (one element each, all at the origin) have the same key, and the order the second
+		// pass draws them in (alpha cards, no z-write) is whatever order the sort leaves equal
+		// keys in. That changes from frame to frame with the other visible elements (and with
+		// the host's std::sort): in Retroville the school front was drawn over the nearer
+		// tree cards and the tree cards over each other (Thor report). Equal keys are ordered
+		// by the depth of the shape's centre instead, the same way round as the key; elements
+		// with different keys keep the original order.
+		ptr.tie_value = ptr.psortelementptr->sort_value;
+		if (OMedia3DShapeElement *se = dynamic_cast<OMedia3DShapeElement*>((*i).element))
+		{
+			OMedia3DShape *sh = se->get_shape();
+			if (sh)
+			{
+				const OMediaMatrix_4x4 &m = (*i).model_matrix;
+				const float z = sh->get_vcenterx()*m.m[0][2] + sh->get_vcentery()*m.m[1][2] +
+								sh->get_vcenterz()*m.m[2][2] + m.m[3][2];
+				ptr.tie_value = back2frontsort ? -z : z;
+			}
+		}
+		
 		sorter.push_back(ptr);
 	}
 	
-	sort(sorter.begin(),sorter.end());
+	stable_sort(sorter.begin(),sorter.end());	// port: (was sort) equal keys and centres keep the list order
 	for(vector<OMediaPreSortElementPtr>::iterator si = sorter.begin();
 		si!=sorter.end();
 		si++)
