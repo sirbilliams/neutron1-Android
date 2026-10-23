@@ -1,10 +1,9 @@
 /*  C3DAnimated - see C3DAnimated.h. */
 #include "C3DAnimated.h"
-// TODO(BG): #include "C3DGrannyObj.h" (Negatron-only class, deleted)
 #include "Game.h"
 #include "Bridge.h"
 #include "Todo.h"
-#include "CGameType.h"
+#include "CJimmyGame.h"
 #include "CEditor.h"
 #include "gen/globals.h"
 #include "OMediaWorld.h"
@@ -28,8 +27,6 @@
 
 using namespace neg;
 
-std::list<ModelInfo_t *> neg::g_granny_models;				// N2:0x545f20
-
 // --------------------------------------------------------------------------- helpers
 
 // 0x474070: the first object of the global list whose ObjectTag matches (_stricmp).
@@ -43,14 +40,7 @@ static CGameObject *FindObjectByTag(const char *tag)
 // The original reads C3DPickupItem's member +0x6d8 (game-object offset; object +0x7a0), the
 // item's index into g_object_states (pickups/CPickupType.cpp).
 namespace neg { int PickupIndexOf(CGameObject *o); }
-static int PickupItemIndex(CGameObject *item)	{ return neg::PickupIndexOf(item); }	// N2:0x41c203
-
-static void SetAllBlend(OMedia3DShape *sh, omt_BlendFunc src, omt_BlendFunc dst)
-{
-	omt_PolygonList *polys = sh->get_polygons();
-	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
-		if ((*p).get_material()) (*p).get_material()->set_blend(src, dst);
-}
+static int PickupItemIndex(CGameObject *item)	{ return neg::PickupIndexOf(item); }
 
 // --------------------------------------------------------------------------- construction
 
@@ -80,42 +70,12 @@ C3DAnimated::C3DAnimated()									// 0x40d110
 	f_668 = 0;
 	strcpy(f_669, "none");									// PickupLink
 	f_6cd = 0;
-	f_6d0 = 0;
-	f_884 = 1;												// CanRotate
-	f_88c = 0;												// FaceViewport
-	f_6d4.clear();
-	f_6e0[0] = f_6e0[1] = 0;
-	f_6e8[0] = f_6e8[1] = 0;
-	memset(f_6f4, 0, sizeof(f_6f4));						// 4 x 25 dwords
-	f_6f0 = 1.0f;
-	g_N2_545f30 = 0;											// debug line counter of n2_ev80
-	f_898 = 0;
-	f_8b0 = 1;
-	f_894 = 0;
-	f_89c = 0;												// Translucent
-	f_8a0 = 0;												// Lit
-	f_8a4 = 0;
-	f_8a5 = 0;
-	f_8a6 = 0;
-	f_8a7 = 0;
-	f_8a8 = 0;
-	f_8ac = 1;												// CanClip
-	f_891 = 0;
-	f_890 = 0;
-	strcpy(f_8b1, "none");
-	f_918 = NULL;
-	f_91c = NULL;
-	f_920 = 0;
-	f_58c = NULL;
-	f_590 = NULL;											// port: not set by the original until InitAnim
-	f_888 = NULL;											// port: idem
+	f_58c = NULL;											// port: not set by the original until InitAnim
+	f_590 = NULL;											// port: idem
 }
 
-C3DAnimated::~C3DAnimated()									// N2:0x41a9f0
+C3DAnimated::~C3DAnimated()									// 0x40d300 (only resets the vtables, then ~C3DObject)
 {
-	if (f_918) { delete f_918; f_918 = NULL; }				// vtable at +0x24, slot 0 (deleting)
-	if (f_91c) { delete f_91c; f_91c = NULL; }
-	f_6d4.clear();											// the AnimInfo_t themselves are not freed (as shipped)
 }
 
 // --------------------------------------------------------------------------- CGameObject family
@@ -131,30 +91,17 @@ void C3DAnimated::InitObject(void)							// 0x40d3c0
 	RegisterProperty("CanMove", &f_660, PROP_LONG, 0);
 	RegisterProperty("SecondPass", &f_664, PROP_LONG, 0);
 	RegisterProperty("PickupLink", f_669, PROP_ALPHA, 0);
-	// (Negatron also had CanRotate, FaceViewport, Translucent, Lit and CanClip; their members
-	// keep their defaults here.)
-	if (f_6d0 == 1)											// port: Negatron's granny objects (none in Boy Genius)
-	{
-		OMedia3DShape *sh = new OMedia3DShape;
-		set_shape(sh);
-	}
 }
 
 void C3DAnimated::UnInitObject(void)						// 0x40e670
 {
-	if (f_6d0 == 1)											// port: Negatron's granny objects own their shape
-	{
-		OMedia3DShape *sh = get_shape();
-		set_shape(NULL);
-		if (sh) delete sh;
-	}
-	else if (OMedia3DShape *sh = get_shape())				// element +0xb0
+	if (OMedia3DShape *sh = get_shape())					// element +0xb0
 	{
 		sh->set_material(NULL);								// shape vtable +0x70
 		sh->set_modified(false);							// +8
 	}
 	C3DObject::UnInitObject();								// 0x462390
-	if (f_63c && f_6d0 == 0)								// InitAnim done (+0x570)
+	if (f_63c)												// InitAnim done (+0x570)
 	{
 		set_anim_def(NULL);									// element +0xc0
 		// (debug log)
@@ -182,33 +129,6 @@ void C3DAnimated::UnInitObject(void)						// 0x40e670
 		f_5a4 = NULL;
 		f_640 = NULL;
 		f_63c = 0;
-	}
-	if (f_6d0 == 1)
-	{
-		if (f_6e8[1]) GrannyCloseSequence(f_6e8[0], f_6e8[1]);
-		while (f_6d4.size() != 0)
-		{
-			AnimInfo_t *ai = f_6d4.front();
-			GrannyReleaseControlledAnimation(ai->control[0], ai->control[1], ai->control[2]);
-			GrannyCloseAnimation(ai->anim[0], ai->anim[1]);
-			f_6d4.pop_front();
-			delete ai;
-		}
-		if (f_6e0[1])
-		{
-			for (std::list<ModelInfo_t *>::iterator i = g_granny_models.begin(); i != g_granny_models.end(); ++i)
-			{
-				ModelInfo_t *mi = *i;
-				if (mi->model[1] != f_6e0[1]) continue;
-				if (--mi->refs == 0)
-				{
-					GrannyCloseModel(f_6e0[0], f_6e0[1]);
-					g_granny_models.remove(mi);
-					delete mi;
-					return;
-				}
-			}
-		}
 	}
 }
 
@@ -240,17 +160,9 @@ void C3DAnimated::Process(float dt)							// 0x40e050
 	}
 	if (f_648 && f_649)
 	{
-		if (f_6d0 == 0)
-		{
-			f_598 += dt;
-			if (!getplay_loop() && f_640 && getcurrentframe_pos() >= f_640->nframes - 1)	// OMediaAnim +0xad, vtable +0x1c
-				ev67();												// element +0x104
-		}
-		else if (f_6d0 == 1)								// port: Negatron's granny objects
-		{
-			if (f_8a4) { n2_ev80(); return; }
-			if (!f_8a5) n2_ev80();
-		}
+		f_598 += dt;
+		if (!getplay_loop() && f_640 && getcurrentframe_pos() >= f_640->nframes - 1)	// OMediaAnim +0xad, vtable +0x1c
+			ev67();													// element +0x104
 	}
 }
 
@@ -258,7 +170,6 @@ void C3DAnimated::v242(float t)								// 0x40d3a0: while editing, always shown
 {
 	(void)t;
 	ShowAgain();											// hide count 1, hide(false)
-	if (f_6d0 == 1) n2_ev80();								// port: Negatron's granny objects
 }
 
 void C3DAnimated::v260(void)								// 0x40e7b0
@@ -308,32 +219,8 @@ void C3DAnimated::v268(int state)							// 0x40e1f0
 void C3DAnimated::v277(void) { PauseAnim(1); }					// 0x40e770
 void C3DAnimated::v278(void) { PauseAnim(0); }					// 0x40e790
 
-void C3DAnimated::v280(void)								// N2:0x41e460: the editor lists our animation names
-{
-	if (!g_editor) return;
-	int i = 0;
-	if (f_6d0 == 0)
-	{
-		if (!f_649 || !f_648) return;
-		for (AnimList *a = f_5a4; a; a = a->next, i++)
-		{
-			OMediaStringField *f = g_editor->m_list_fields[i];	// editor +0x28c
-			f->set_string(std::string(a->name));			// vtable +0xc8
-			f->force_show();
-		}
-	}
-	else
-	{
-		for (std::list<AnimInfo_t *>::iterator a = f_6d4.begin(); a != f_6d4.end(); ++a, i++)
-		{
-			OMediaStringField *f = g_editor->m_list_fields[i];
-			f->set_string(std::string((*a)->name));
-			f->force_show();
-		}
-	}
-}
-
-void C3DAnimated::v282(OMediaMatrix_4x4 &m, float *w, float *h)	// N2:0x41cfd0
+// port: Negatron's N2SLOT 282 (Neutron.exe has no such slot); CEditor's object markers use it.
+void C3DAnimated::v282(OMediaMatrix_4x4 &m, float *w, float *h)
 {
 	get_layer()->prepare_projection_matrix(0, m, *w, *h);	// element +0x64 its_layer, vtable +0xc
 }
@@ -342,14 +229,6 @@ void C3DAnimated::v282(OMediaMatrix_4x4 &m, float *w, float *h)	// N2:0x41cfd0
 
 void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 {
-	if (f_6d0 != 0)
-	{
-		char path[112];
-		strcpy(path, file);
-		n2_ev87(path, (char *)"grn", (char *)"grn");			// only checks: the result is not used
-		AddAnimation(std::string(file), name);
-		return;
-	}
 	AnimList *a;
 	bool first = (f_5a4 == NULL);
 	if (first)
@@ -373,7 +252,8 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 	a->id = f_5a0;
 	char path[112];
 	strcpy(path, file);
-	n2_ev87(path, (char *)"ase", (char *)"ase");				// path = ase\<file> if it exists
+	if (CJimmyGame *g = dynamic_cast<CJimmyGame *>(g_gametype))	// port: the original assumes a CJimmyGame
+		g->FileIsThere(path, "ase", "ase");					// game element +0x16c: path = ase\<file> (else c:\ase\<file>)
 	OMediaFilePath fp(std::string(path), 'null', 'null');
 	OMediaFileStream fs;
 	fs.setpath(&fp);
@@ -421,28 +301,16 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 
 AnimList *C3DAnimated::GetSequence(char *name)				// 0x40d9e0
 {
-	if (f_6d0 == 0)
-	{
-		if (f_649 && f_648)
-			for (AnimList *a = f_5a4; a; a = a->next)
-				if (strcasecmp(name, a->name) == 0) return a;
-	}
-	else
-		ErrorLog("ERROR: Anim3D_GetSequence should never be called for granny system %s", m_tag);
+	if (f_649 && f_648)
+		for (AnimList *a = f_5a4; a; a = a->next)
+			if (strcasecmp(name, a->name) == 0) return a;
 	return NULL;
 }
 
 void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 {
-	if (f_8a7) return;										// port: Negatron's animation lock (no Neutron.exe code sets it)
 	if (!f_648 || !f_649) return;
 	char buf[80];
-	if (f_6d0 != 0)											// port: Negatron's granny objects
-	{
-		strcpy(f_5fc, name);
-		n2_ev86(name, NULL, NULL, NULL, loop, 0.2f);
-		return;
-	}
 	f_598 = 0;
 	strcpy(buf, g_4f81a8);
 	// The detail level picks the base shape and the name prefix: "HI" + name, or "LOW" + name.
@@ -463,49 +331,30 @@ void C3DAnimated::ev58(char *name, unsigned char loop)		// 0x40dd90
 	strcpy(f_5fc, name);
 	SetSequence(a->id, loop);								// element +0xe4
 	set_anim_def(a->def);									// element +0xc0
-	f_888 = current_frame;									// port: (Negatron's)
 }
 
-void C3DAnimated::SetSequence(int seq, unsigned char loop)	// N2:0x41b940
+void C3DAnimated::SetSequence(int seq, unsigned char loop)	// 0x40da30
 {
-	if (!f_649) return;
-	if (f_6d0 != 0)
-	{
-		ErrorLog("ERROR: Anim3D_SetSequence(long) should never be called for granny system %s", m_tag);
-		return;
-	}
-	if (seq < 0) return;
+	if (!f_649 || seq < 0) return;
 	f_59c = seq;
 	setcurrentsequence(seq, loop != 0);						// OMediaAnim +0x90 vtable +0x10
-	setcurrentframe(current_sequence, 0);					// +0x14
 	setplay_loop(loop != 0);								// +0xad
 	setplay_timebased(true);								// +0x24
 	AnimList *a = f_640;
 	OMediaAnimDef *def = a ? a->def : NULL;
 	if (a && def && def->getnsequences() != 0)
-	{
-		omt_FrameList *frames = (*def->getsequence_list())[current_sequence];
-		a->nframes = (int)frames->size();					// list +8
-		// port: the original stores the value of the frame list's sentinel node here (MSVC6
-		// list head +8, never initialised); nothing reads it back
-		f_888 = NULL;
-	}
+		a->nframes = (int)(*def->getsequence_list())[current_sequence]->size();	// list +8
 }
 
 char *C3DAnimated::GetAnim(void)							// 0x40dab0
 {
 	if (f_649 && f_648)
 	{
-		if (f_6d0 == 0)
-		{
-			for (AnimList *a = f_5a4; a; a = a->next)
-				if (a->id == f_59c) return a->name;
-			// (debug log "Animation  not found in Anim3D_GetAnim for %s", empty)
-			return g_4f81a8;
-		}
-		return f_6f4[0].name;
+		for (AnimList *a = f_5a4; a; a = a->next)
+			if (a->id == f_59c) return a->name;
+		// (debug log "Animation  not found in Anim3D_GetAnim for %s", empty)
 	}
-	return g_4f81a8;
+	return g_4f81a8;										// port: the original returns NULL (its callers would _stricmp it)
 }
 
 int C3DAnimated::GetAnimCount(void) { return f_5a0; }		// 0x40db10
@@ -520,20 +369,11 @@ void C3DAnimated::InitMemDB(void)
 
 unsigned char C3DAnimated::IsAnim(char *name)				// 0x40e1d0
 {
-	const char *cur;
-	if (f_6d0 == 0) cur = f_5fc;
-	else if (f_6d0 == 1) cur = GetAnim();					// element +0xf4
-	else return 0;
-	return strcasecmp(name, cur) == 0;
+	return strcasecmp(name, f_5fc) == 0;
 }
 
-void C3DAnimated::CreateTexture(char *file, short index)	// N2:0x41baa0
+void C3DAnimated::CreateTexture(char *file, short index)	// 0x40db20
 {
-	if (f_6d0 != 0)
-	{
-		ErrorLog("ERROR: Anim3D_CreateTexture should not be called for granny system %s", m_tag);
-		return;
-	}
 	char path[112];
 	strcpy(path, "png\\");
 	strcat(path, file);
@@ -554,47 +394,18 @@ void C3DAnimated::CreateTexture(char *file, short index)	// N2:0x41baa0
 
 void C3DAnimated::ApplyTexture(OMedia3DShape *shape, short index)	// 0x40dd60
 {
-	if (f_6d0 == 0)
-	{
-		if (shape) shape->set_material(f_5d4[index]);		// shape vtable +0x70
-	}
-	else
-		ErrorLog("ERROR: Anim3D_ApplyTexture was called using granny system for %s", m_tag);
+	if (shape) shape->set_material(f_5d4[index]);			// shape vtable +0x70
 }
 
-void C3DAnimated::ev65(short index, int src, int dst)		// N2:0x41bdc0
+void C3DAnimated::ev65(short index, int src, int dst)		// 0x40dd40
 {
-	if (f_6d0 != 0)
-	{
-		OMedia3DShape *sh = get_shape();
-		if (!sh) return;
-		omt_PolygonList *polys = sh->get_polygons();
-		for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
-		{
-			OMedia3DMaterial *m = (*p).get_material();
-			if (!m) continue;
-			if (!g_windowed) m->set_blend((omt_BlendFunc)src, (omt_BlendFunc)dst);
-			else m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		}
-		return;
-	}
-	f_5d4[index]->set_blend((omt_BlendFunc)src, (omt_BlendFunc)dst);
+	f_5d4[index]->set_blend((omt_BlendFunc)src, (omt_BlendFunc)dst);	// +0x30 / +0x34
 }
 
-char *C3DAnimated::ev66(void)								// N2:0x41c0f0
-{
-	if (f_6d0 == 0) return f_5fc;
-	if (f_6d0 == 1) return f_6f4[0].name;
-	return g_4f81a8;
-}
+char *C3DAnimated::ev66(void) { return f_5fc; }				// 0x40df80
 
 void C3DAnimated::InitAnim(void)							// 0x40e270
 {
-	if (f_6d0 != 0)
-	{
-		// (debug log "Error: Invalid InitAnim for granny %s", empty)
-		return;
-	}
 	if (m_db) return;
 	OpenObjectDatabase();									// CGameObject vtable +0x448
 	OMediaDataBase::register_object(OMediaCanvas::db_type, OMediaCanvas::db_builder);
@@ -651,31 +462,6 @@ void C3DAnimated::ev71(float alpha)							// 0x40e4a0: > 0 additive glow at that
 	}
 }
 
-void C3DAnimated::n2_ev72(float alpha)							// N2:0x41ca20
-{
-	OMedia3DShape *sh = get_shape();
-	if (!sh) return;
-	omt_PolygonList *polys = sh->get_polygons();
-	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
-	{
-		OMedia3DMaterial *m = (*p).get_material();
-		if (!m) continue;
-		if (alpha <= 0.0f)
-		{
-			m->set_flags(m->get_flags() & ~ommatf_SecondPass);
-			m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 1.0f, 1.0f));
-			m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		}
-		else
-		{
-			m->set_diffuse(OMediaFARGBColor(alpha, 1.0f, 1.0f, 1.0f));
-			if (!g_windowed) m->set_blend(omblendfc_Src_Color, omblendfc_One);
-			else m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-			m->set_flags(m->get_flags() | ommatf_SecondPass);
-		}
-	}
-}
-
 void C3DAnimated::AlphaSecondPass(void)						// 0x40e5e0
 {
 	OMedia3DShape *sh = f_648 ? f_590 : get_shape();		// animated: the HI base shape
@@ -690,56 +476,8 @@ void C3DAnimated::AlphaSecondPass(void)						// 0x40e5e0
 	}
 }
 
-void C3DAnimated::n2_ev74(float alpha, float r, float g, float b)	// N2:0x41cbc0
-{
-	OMedia3DShape *sh = get_shape();
-	if (!sh) return;
-	omt_PolygonList *polys = sh->get_polygons();
-	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
-	{
-		OMedia3DMaterial *m = (*p).get_material();
-		if (!m) continue;
-		if (alpha <= 0.0f)
-		{
-			m->set_flags(m->get_flags() & ~ommatf_SecondPass);
-			m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-			m->set_diffuse(OMediaFARGBColor(1.0f, r, g, b));
-		}
-		else
-		{
-			m->set_diffuse(OMediaFARGBColor(alpha, r, g, b));
-			m->set_flags(m->get_flags() | ommatf_SecondPass);
-			m->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-		}
-	}
-}
-
-void C3DAnimated::n2_ev75(float time)							// N2:0x41b2e0
-{
-	if (!f_8b0) return;
-	// (debug log "now im fading", empty)
-	f_891 = 1;
-	f_894 = time;
-	f_898 = time;
-	f_890 = 0;
-}
-
-void C3DAnimated::n2_ev76(float time)							// N2:0x41b320
-{
-	if (!f_8b0) return;
-	// (debug log "now im fading out", empty)
-	f_890 = 1;
-	f_891 = 0;
-	f_894 = time;
-	f_898 = time;
-}
-
-unsigned char C3DAnimated::n2_ev77(char *state) { return strcasecmp(f_8b1, state) == 0; }	// N2:0x41c6b0
-void C3DAnimated::n2_ev78(char *state) { strcpy(f_8b1, state); }							// N2:0x41c680
-
 void C3DAnimated::PauseAnim(unsigned char pause)					// 0x40d350
 {
-	if (f_6d0 != 0) return;
 	if (!pause)
 	{
 		if (f_668) { OMediaAnim::pause(false); f_668 = 0; }
@@ -748,395 +486,5 @@ void C3DAnimated::PauseAnim(unsigned char pause)					// 0x40d350
 	{
 		OMediaAnim::pause(true);
 		f_668 = 1;
-	}
-}
-
-void C3DAnimated::n2_ev91(unsigned char on)					// N2:0x41cb60
-{
-	OMedia3DShape *sh = get_shape();
-	if (!sh) return;
-	omt_PolygonList *polys = sh->get_polygons();
-	for (omt_PolygonList::iterator p = polys->begin(); p != polys->end(); ++p)
-	{
-		OMedia3DMaterial *m = (*p).get_material();
-		if (!m) continue;
-		if (on) m->set_flags(m->get_flags() | ommatf_SecondPass);
-		else m->set_flags(m->get_flags() & ~ommatf_SecondPass);
-	}
-}
-
-void C3DAnimated::n2_ev92(int src, int dst)					// N2:0x41c9d0
-{
-	OMedia3DShape *sh = get_shape();
-	if (sh) SetAllBlend(sh, (omt_BlendFunc)src, (omt_BlendFunc)dst);
-}
-
-unsigned char C3DAnimated::n2_ev93(void)						// N2:0x41e840
-{
-	if (f_8a4) return 0;
-	float p[4];
-	v195(p);
-	OMedia3DVector d(g_viewport->getx() - p[0], g_viewport->gety() - p[1], g_viewport->getz() - p[2]);
-	d.w = 0;
-	if (d.quick_magnitude() > g_layer_world->get_far_clip()) return 1;	// 0x509a3c layer +0xc0 (2002)
-	float f[4];
-	{
-		// 0x476f10: the viewport's forward direction (0, 0, 1)
-		const float sx = omd_Sin(g_viewport->get_anglex()), cx = omd_Cos(g_viewport->get_anglex());
-		const float sy = omd_Sin(g_viewport->get_angley()), cy = omd_Cos(g_viewport->get_angley());
-		const float sz = omd_Sin(g_viewport->get_anglez()), cz = omd_Cos(g_viewport->get_anglez());
-		const float t = cz * 0.0f - sz * 0.0f;
-		const float u = sz * 0.0f + cz * 0.0f;
-		const float v = cx * 1.0f - t * sx;
-		f[0] = u * cy - v * sy;
-		f[1] = sx * 1.0f + t * cx;
-		f[2] = u * sy + v * cy;
-	}
-	const float inv = 1.0f / d.quick_magnitude();
-	d.x *= inv;
-	d.y *= inv;
-	const double dot = (double)f[2] * ((double)inv * d.z) + (double)f[1] * d.y + (double)d.x * f[0];
-	return dot > -0.75 ? 1 : 0;								// N2:0x4cdb24: not in the 41-degree cone ahead
-}
-
-// --------------------------------------------------------------------------- granny
-
-void C3DAnimated::n2_ev80(void)								// N2:0x41e120
-{
-	if (g_gametype->IsPaused() || !f_589) return;
-	// the original prints the playing animations' names with the debug text routine (empty in
-	// the shipped build); its line counter g_N2_545f30 still moves on
-	g_N2_545f30++;
-	if (f_6f4[0].control[2])
-	{
-		granny_uint32 expired = 0;
-		GrannyHasControlExpired(f_6f4[0].control[0], f_6f4[0].control[1], f_6f4[0].control[2], &expired);
-		if (expired) { f_8a5 = 1; f_8a6 = 1; }
-		g_N2_545f30++;
-	}
-	if (f_6f4[1].control[2]) g_N2_545f30++;
-	if (f_6f4[2].control[2]) g_N2_545f30++;
-	if (f_6f4[3].control[2]) g_N2_545f30++;
-	granny_uint32 lock[2];
-	if (g_granny && GrannyLockSequenceForRendering(f_6e8[0], f_6e8[1], GrannyStreamPositions | GrannyStreamNormals, lock) == GrannyOK)
-	{
-		granny_uint32 n = 0;
-		if (GrannyGetRenderingStatesLeft(lock[0], lock[1], &n) == GrannyOK)
-		{
-			omt_VertexList::iterator vx = get_shape()->get_vertices()->begin();	// shape +0x68
-			omt_NormalList::iterator nx = get_shape()->get_normals()->begin();	// shape +0x78
-			for (granny_uint32 i = 0; i < n; i++)
-			{
-				granny_rendering_state st;
-				if (GrannyLockNextRenderingState(lock[0], lock[1], &st) != GrannyOK) continue;
-				if (st.positions.present)
-				{
-					const float *s = (const float *)st.positions.data;
-					for (granny_uint32 k = st.positions.count; k; k--, ++vx, s += 3)
-					{
-						(*vx).z = s[0];
-						(*vx).x = -s[1];
-						(*vx).y = s[2];
-					}
-				}
-				if (st.normals.present)
-				{
-					const float *s = (const float *)st.normals.data;
-					for (granny_uint32 k = st.normals.count; k; k--, ++nx, s += 3)
-					{
-						(*nx).z = s[0];
-						(*nx).x = -s[1];
-						(*nx).y = s[2];
-					}
-				}
-				GrannyUnlockRenderingState(&st);
-			}
-			if (f_6f0 != 1.0f) get_shape()->scale(f_6f0, f_6f0, f_6f0);	// shape vtable +0x34
-			get_shape()->prepare(ompfc_ComputeShapeSphere);		// +0x28 (1)
-			shape->set_modified(true);							// element +0x8c -> +8
-		}
-		GrannyUnlockRendering(lock[0], lock[1]);
-	}
-	if (strcasecmp(f_6f4[0].name, "STOP") == 0) f_8a5 = 1;
-	if (f_8a6)
-	{
-		f_8a6 = 0;
-		ev67();
-	}
-}
-
-void C3DAnimated::InitModel(std::string file)				// N2:0x41cff0
-{
-	// (debug log "Entered InitModel", empty)
-	for (std::list<ModelInfo_t *>::iterator i = g_granny_models.begin(); i != g_granny_models.end(); ++i)
-	{
-		ModelInfo_t *mi = *i;
-		if (mi->name == file)								// (no break: as shipped)
-		{
-			f_6e0[0] = mi->model[0];
-			f_6e0[1] = mi->model[1];
-			mi->refs++;
-		}
-	}
-	char path[120];
-	strcpy(path, "grn\\");
-	strcat(path, file.c_str());
-	// (debug log "%s" path, empty)
-	if (f_6e0[1] == 0 && GrannyOpenModel(g_granny, path, f_6e0) == GrannyOK)
-	{
-		ModelInfo_t *mi = new ModelInfo_t;					// (debug log "ModelInfo_t " + tag, empty)
-		mi->model[0] = mi->model[1] = 0;
-		mi->refs = 0;
-		mi->name = file;
-		mi->model[0] = f_6e0[0];
-		mi->model[1] = f_6e0[1];
-		mi->refs++;
-		g_granny_models.push_back(mi);
-	}
-	if (f_6e0[1] != 0 && GrannyOpenSequence(f_6e0[0], f_6e0[1], f_6e8) == GrannyOK)
-	{
-		f_918 = new OMediaCanvas;							// (debug log "OMediaCanvas " + tag, empty)
-		f_91c = new OMedia3DMaterial;						// (debug log "OMedia3DMaterial " + tag, empty)
-		// (debug log "Calling BindTex", empty)
-		BindTex();
-		// (debug log "Calling BuildTex", empty)
-		BuildTex();
-		// (debug log "Calling MakeShapeUnlit", empty)
-		MakeShapeUnLit(shape);								// 0x477550 on element +0x8c
-	}
-	// (debug log "Exiting InitModel", empty)
-}
-
-void C3DAnimated::BindTex(void)								// N2:0x41ae10
-{
-	granny_uint32 n = 0;
-	GrannyGetNewTexturesLeft(g_granny, &n);
-	for (granny_uint32 i = 0; i < n; i++)
-	{
-		granny_new_texture tex;
-		if (GrannyLockNextNewTexture(g_granny, &tex) != GrannyOK) continue;
-		f_918->create(tex.width, tex.height, NULL);			// canvas vtable +0x1c
-		f_918->lock(omlf_Write);							// +0x24 vtable +4 (2)
-		unsigned char *dst = (unsigned char *)f_918->get_pixels();	// canvas +0x58
-		const unsigned char *src = tex.pixels;
-		for (short y = (short)f_918->get_height(); y > 0; y--)		// +0x44 / +0x40 (shorts)
-			for (short x = (short)f_918->get_width(); x > 0; x--)
-			{
-				dst[0] = src[0];							// RGB -> RGBA (memory order)
-				dst[1] = src[1];
-				dst[2] = src[2];
-				src += 3;
-				dst[3] = 0xff;
-				dst += 4;
-			}
-		f_918->unlock();									// +0x24 vtable +8
-		omhd::tag(f_918, std::string("grn/") + GrannyCompatTextureName(&tex) + ".png");	// port: HD texture pack
-		f_91c->set_texture(f_918);							// vtable +0x20
-		f_91c->set_shade_mode(omshademc_Gouraud);			// +0x28 = 1
-		f_91c->set_light_mode(ommlmc_Light);				// +0x2c = 2
-		f_91c->set_flags(f_91c->get_flags() | 0x81c);		// +0x38 |= 0x81c (2002 flag bits, kept as is)
-		GrannyUnlockNewTexture(&tex, (granny_cookie)f_91c);
-	}
-}
-
-void C3DAnimated::BuildTex(void)							// N2:0x41d7a0
-{
-	granny_uint32 lock[2];
-	if (GrannyLockSequenceForRendering(f_6e8[0], f_6e8[1], 0x3b, lock) != GrannyOK) return;
-	granny_uint32 n = 0;
-	if (GrannyGetRenderingStatesLeft(lock[0], lock[1], &n) == GrannyOK)
-	{
-		unsigned int base = 0;								// first vertex of the current state
-		get_shape();
-		get_shape();
-		for (granny_uint32 i = 0; i < n; i++)
-		{
-			granny_rendering_state st;
-			if (GrannyLockNextRenderingState(lock[0], lock[1], &st) != GrannyOK) continue;
-			if (st.positions.present)
-			{
-				const float *s = (const float *)st.positions.data;
-				for (granny_uint32 k = 0; k < st.positions.count; k++, s += 3)
-				{
-					OMedia3DPoint v(-s[1], s[2], s[0], 1.0f);
-					omt_VertexList *vl = get_shape()->get_vertices();	// shape +0x64
-					vl->insert(vl->end(), 1, v);
-				}
-			}
-			if (st.normals.present)
-			{
-				const float *s = (const float *)st.normals.data;
-				for (granny_uint32 k = 0; k < st.normals.count; k++, s += 3)
-				{
-					OMedia3DVector nv(-s[1], s[2], s[0]);
-					nv.w = 0.0f;
-					omt_NormalList *nl = get_shape()->get_normals();	// +0x74
-					nl->insert(nl->end(), 1, nv);
-					OMediaFARGBColor c(1.0f, 1.0f, 1.0f, 1.0f);
-					omt_ColorList *cl = get_shape()->get_colors();		// +0xa4
-					cl->insert(cl->end(), 1, c);
-				}
-			}
-			std::vector<OMedia3DPoint> uv;					// texture coordinates of this state
-			if (st.texcoords.present)
-			{
-				const float *s = (const float *)st.texcoords.data;
-				for (short k = 0; (granny_uint32)k < st.texcoords.count; k++, s += 3)
-					uv.insert(uv.end(), 1, OMedia3DPoint(s[0], s[1], s[2], 1.0f));
-			}
-			if (st.triangles.present)
-			{
-				const unsigned short *t = (const unsigned short *)st.triangles.data;
-				for (granny_uint32 k = 0; k < st.triangles.count; k++, t += 3)
-				{
-					OMedia3DPolygon poly;
-					poly.set_triangle();
-					for (short c = 0; c < 3; c++)
-					{
-						poly.set_point(c, t[c] + base, true);
-						poly.set_text_coord_u(c, uv[t[c]].x);
-						poly.set_text_coord_v(c, uv[t[c]].y);
-					}
-					poly.set_material((OMedia3DMaterial *)st.texture_cookie);	// state +0x18
-					omt_PolygonList *pl = get_shape()->get_polygons();			// +0x84
-					pl->insert(pl->end(), 1, poly);
-				}
-			}
-			base += st.positions.count;
-			GrannyUnlockRenderingState(&st);
-		}
-		get_shape()->prepare(0x33);							// shape vtable +0x28
-		// (debug log "SHAPEINFO: VERTS=%ld POLYS=%ld", empty)
-	}
-	GrannyUnlockRendering(lock[0], lock[1]);
-}
-
-void C3DAnimated::n2_ev83(OMedia3DShape *sh)					// N2:0x41dc90
-{
-	granny_uint32 lock[2];
-	if (GrannyLockSequenceForRendering(f_6e8[0], f_6e8[1], 0x3b, lock) != GrannyOK) return;
-	granny_uint32 n = 0;
-	if (GrannyGetRenderingStatesLeft(lock[0], lock[1], &n) == GrannyOK)
-	{
-		for (granny_uint32 i = 0; i < n; i++)
-		{
-			granny_rendering_state st;
-			if (GrannyLockNextRenderingState(lock[0], lock[1], &st) != GrannyOK) continue;
-			if (st.positions.present) sh->get_vertices()->clear();
-			if (st.normals.present)
-			{
-				sh->get_normals()->clear();
-				sh->get_colors()->clear();
-			}
-			if (st.triangles.present) sh->get_polygons()->clear();
-			GrannyUnlockRenderingState(&st);
-		}
-		// (debug log "SHAPEINFO: VERTS=%ld POLYS=%ld" of our own shape, empty)
-	}
-	GrannyUnlockRendering(lock[0], lock[1]);
-}
-
-void C3DAnimated::AddAnimation(std::string file, char *name)	// N2:0x41df00
-{
-	AnimInfo_t info;
-	memset(&info, 0, sizeof info);
-	char path[120];
-	strcpy(path, "grn\\");
-	strcat(path, file.c_str());
-	if (GrannyOpenAnimation(g_granny, path, info.anim) != GrannyOK)
-	{
-		ErrorLog("ERROR: opening file %s in AddAnimation", name);
-		return;
-	}
-	strcpy(info.name, name);
-	AnimInfo_t *ai = new AnimInfo_t;						// (debug log "AnimInfo_t " + tag, empty)
-	*ai = info;
-	f_6d4.push_back(ai);
-	GrannyAddControlledAnimation(f_6e8[0], f_6e8[1], ai->anim[0], ai->anim[1], ai->control);
-}
-
-void C3DAnimated::n2_ev86(char *a, char *b, char *c, char *d, unsigned char loop, float blend)	// N2:0x41d470
-{
-	bool none = true;
-	for (int s = 0; s < 4; s++)
-		if (f_6f4[s].control[2])
-			GrannyRemoveControlledAnimation(f_6f4[s].control[0], f_6f4[s].control[1], f_6f4[s].control[2]);
-	f_8a5 = 0;
-	for (std::list<AnimInfo_t *>::iterator i = f_6d4.begin(); i != f_6d4.end(); ++i)
-	{
-		AnimInfo_t *ai = *i;
-		int which = 0;
-		if (a && strcasecmp(ai->name, a) == 0) which = 1;
-		if (b && strcasecmp(ai->name, b) == 0) which = 2;
-		if (c && strcasecmp(ai->name, c) == 0) which = 3;
-		if (d && strcasecmp(ai->name, d) == 0) which = 4;
-		if (!which) continue;
-		granny_uint32 *k = ai->control;
-		GrannyAddControlledAnimation(f_6e8[0], f_6e8[1], ai->anim[0], ai->anim[1], k);
-		GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamSpeed, (double)f_430);	// time scale
-		GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamLoopCount, loop ? 9999.0 : 1.0);
-		if (f_920)
-		{
-			GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamBlendInTime, 0.0);
-			GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamBlendOutTime, 0.0);
-		}
-		else
-		{
-			GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamBlendInTime, (double)blend);
-			GrannySetAnimationParameter(k[0], k[1], k[2], GrannyParamBlendOutTime, (double)blend);
-		}
-		f_6f4[which - 1] = *ai;
-		none = false;
-	}
-	if (none) ev60();
-}
-
-unsigned char C3DAnimated::n2_ev87(char *file, char *dir, char *ext)	// N2:0x41e6a0
-{
-	(void)ext;
-	char path[120];
-	strcpy(path, dir);
-	strcat(path, "\\");									// 0x4f1b18
-	strcat(path, file);
-	OMediaFilePath fp(std::string(path), 'null', 'null');
-	OMediaFileStream fs;
-	fs.setpath(&fp);
-	if (!fs.fileexists())
-	{
-		fs.close();
-		ErrorLog("ERROR: File does not exist %s looking in directory %s", file, path);
-	}
-	else
-	{
-		fs.close();
-		strcpy(file, path);
-	}
-	return 1;
-}
-
-void C3DAnimated::n2_ev88(char *bone, CGameObject *other)		// N2:0x41af40
-{
-	if (!other->NameContains((char *)"C3DANIMATED")) return;
-	granny_uint32 index = 0;
-	GrannyGetBoneIndexFromName(f_6e8[0], f_6e8[1], bone, &index);
-	C3DAnimated *o = other ? dynamic_cast<C3DAnimated *>(other) : NULL;		// other - 0xc0
-	GrannyAttachSequence(o->f_6e8[0], o->f_6e8[1], 0, f_6e8[0], f_6e8[1], index, 0x1ff, 0x1ff);
-}
-
-void C3DAnimated::n2_ev89(CGameObject *other)					// N2:0x41afd0
-{
-	if (!other->NameContains((char *)"C3DANIMATED")) return;
-	C3DAnimated *o = other ? dynamic_cast<C3DAnimated *>(other) : NULL;
-	GrannyDetachSequence(o->f_6e8[0], o->f_6e8[1]);
-}
-
-void C3DAnimated::n2_ev90(unsigned char detach)				// N2:0x439ba0
-{
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
-	{
-		CGameObject *o = *i;
-		if (!o || o->m_object_id != '3GRO') continue;
-		// TODO(BG): Negatron dropped the C3DGrannyObj props ('3GRO') attached to us; no such class in Neutron.exe
-		(void)detach;
 	}
 }

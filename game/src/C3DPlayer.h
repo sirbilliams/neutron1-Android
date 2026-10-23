@@ -37,16 +37,6 @@
 class OMedia3DPolygon;
 class C3DJetpackFire;
 
-namespace neg {
-// port: the chase-camera helpers of Negatron's C3DPlayerObject (N2:0x465010 / N2:0x464ef0 /
-// N2:0x465110 / N2:0x4651c0), still used by the Negatron-derived C3DFlyingObject. CamWallPull is
-// also Neutron.exe's C3DPlayer slot 91 (0x43b820, the same code).
-float CamWallPull(C3DAnimated *self, OMedia3DVector *cam);
-float CamReach(OMedia3DVector target, OMedia3DVector *out, float max);
-void CamPlace(OMedia3DVector pos, OMedia3DVector target);
-void CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want,
-			 OMedia3DVector target, OMedia3DVector axis);
-}
 
 class C3DPlayer : public C3DAnimated
 {
@@ -158,21 +148,3 @@ class C3DPlayer : public C3DAnimated
 	unsigned char		f_9f8;			// 0x9f8  0
 };
 
-namespace neg {
-// Negatron's key-list input tests (0 or the joystick, then the key list: 0x1f5 left mouse, 0x1f4
-// right mouse, else a key of g_keys). Neutron.exe's player reads the keys directly (VK codes in
-// g_keys); these remain for the Negatron-derived classes that still call them.
-bool PlayerKeyAction(void);					// N2:0x465750 joystick button 0, g_key_action
-bool PlayerKeyTurnAround(void);				// N2:0x4657c0 joystick button 8, g_key_turnaround
-bool PlayerKeySpeed(void);					// N2:0x465830 joystick button 1, g_key_speed
-bool PlayerKeyJump(void);					// N2:0x4658a0 joystick button 1, g_key_jump
-bool PlayerKeyGo(void);						// N2:0x465910 joystick y > 0.5, g_key_go
-bool PlayerKeyBack(void);					// N2:0x465980 joystick y < -0.5, g_key_back
-bool PlayerKeyLeft(void);					// N2:0x4659f0 joystick x < -0.5, g_key_turn_left
-bool PlayerKeyRight(void);					// N2:0x465a60 joystick x > 0.5, g_key_turn_right
-bool PlayerKeyCutsceneBypass(void);			// N2:0x465ad0 joystick button 0, g_key_cutscene_bypass
-
-// Negatron C3DJimmy hooks still called by Negatron-derived classes (C3DJeep, C3DGoddard, the
-// menu): its ESLOT 138 "ActivateMenuItem". Neutron.exe's Jimmy has no such slot; weak TODO.
-void JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value);	// N2:0x449df0
-}
