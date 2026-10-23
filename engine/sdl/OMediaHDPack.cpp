@@ -256,7 +256,11 @@ void omhd::tag_file(OMediaCanvas *c, OMediaStreamOperators *stream)
 	if (s == string::npos) return;
 	const string head = p.substr(0, s);
 	const size_t s2 = head.find_last_of('/');
-	if ((s2 == string::npos ? head : head.substr(s2 + 1)) == "png") tag(c, "png/" + p.substr(s + 1));
+	const string file = p.substr(s + 1);
+	if ((s2 == string::npos ? head : head.substr(s2 + 1)) == "png") tag(c, "png/" + file);
+	// port: Boy Genius also keeps two loose pictures next to Neutron.exe (fontsmall.png, green_font.png):
+	// they use the same hd/png/<name>.png names
+	else if (file.size() > 4 && file.compare(file.size() - 4, 4, ".png") == 0) tag(c, "png/" + file);
 }
 
 string omhd::db_name(OMediaStream *stream)

@@ -11,7 +11,9 @@ A folder `hd/` in the game folder (Android: the game data folder, next to `omt/`
 |---|---|
 | `hd/omt/<database>/<id>.png` | canvas `<id>` of `omt/<database>.omt` (lower case, no extension): menus, HUD, font, sprites, the 3D levels' textures |
 | `hd/png/<name>.png` | the loose texture `png/<name>.png` |
-| `hd/grn/<model>_<n>.png` | texture `n` (0, 1 ... in GrannyLockNextNewTexture order) of `grn/<model>.grn` |
+| `hd/grn/<model>_<n>.png` | Negatron only (Granny models): texture `n` of `grn/<model>.grn`. Boy Genius has no .grn files; its models are `ASE/*.ASE` and take their textures from `png/` (below) |
+
+Boy Genius (Neutron.exe): the game folder holds `omt/` (menus, HUD, sprites, level and sky textures: `hd/omt/level1/12.png` ...), `png/` (the character and object textures the ASE models use, 126 files such as `png/jimycarl.png`: `hd/png/jimycarl.png`) and two loose pictures next to the exe, `fontsmall.png` and `green_font.png` (`hd/png/fontsmall.png`, `hd/png/green_font.png`, in the same `hd/png/`). The `.omt` database names are the file names in `omt/` (`alpha.omt` in the game folder too), lower case without extension.
 
 Each picture is an integer multiple (2x, 3x, 4x ...) of the original size, same aspect; alpha is
 used as is (keep transparent pixels transparent). Names are matched without regard to case. Any PNG
@@ -23,7 +25,7 @@ works (all colour types and bit depths, palette transparency, interlaced).
   the counts are reported), "HD texture pack: remove".
 - Desktop: `neg_hdtool install <game dir> <pack.zip>`, `neg_hdtool remove <game dir>`.
 
-The zip may have `omt/ png/ grn/` at its top or inside one folder; other files (README,
+The zip may have `omt/ png/` (and `grn/` for Negatron) at its top or inside one folder; other files (README,
 manifest.tsv) are left out. `neg_hdtool extract <game dir> <out> [db.omt ...]` writes the omt canvases
 with these names (plus manifest.tsv) for upscaling.
 
@@ -31,7 +33,7 @@ with these names (plus manifest.tsv) for upscaling.
 
 - `hd/` is scanned once at start (`NEG_HD_DIR` overrides the folder).
 - A canvas read from an .omt database (OMediaCanvas::read_class, the database's file name in
-  OMediaDataBase::hd_name), from a loose png/ file, or filled from a granny texture (C3DAnimated::BindTex,
+  OMediaDataBase::hd_name), from a loose png file (Boy Genius: C3DAnimated's `png\\<name>` textures, and the two in the game folder), or filled from a granny texture (Negatron only, C3DAnimated::BindTex,
   GrannyCompatTextureName) is tagged with its pack name when the pack has it.
 - When its GL texture is made (OMediaGLCanvas::create_texture), the picture is uploaded instead of the
   canvas pixels: one texture (exact / scaled canvases: normalised coordinates) or the 2D subdivided tiles,
