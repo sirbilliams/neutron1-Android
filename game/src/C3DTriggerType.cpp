@@ -89,7 +89,6 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	if (ll->m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
-		g_editor->m_load_countdown = -1;				// port: until PlayerLoadLevel is Neutron.exe's (load now, slot 64), not RequestLevel (TODO(E))
 		g_view_restore = 1;								// 0x4f8430
 		p->PauseAnim(1);								// element +0x11c
 		// (debug log "MEBTEMP using LCP %d" with the SCENE task state)
@@ -106,9 +105,7 @@ static float *ObjectRelativePoint(CGameObject *o, float *out, float a, float b, 
 	return out;
 }
 
-// C3DJeep: the jeep can take the camera when it has a driver. TODO(BG): Neutron.exe reads the
-// driver at the jeep's CGameObject +0x5dc (C3DJeep.c param_1[0x177]); f_a84 is C3DJeep's field
-// until its port names that one.: the jeep can take the camera when it has a driver.
+// C3DJeep: the jeep can take the camera when it has a driver (CGameObject +0x69c: C3DJeep's f_a84).
 static int JeepField9c4(CGameObject *jeep)
 {
 	C3DJeep *j = jeep ? dynamic_cast<C3DJeep *>(jeep) : NULL;
