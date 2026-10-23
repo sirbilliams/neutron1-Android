@@ -371,6 +371,7 @@ bool C3DMultiCutSceneCamera::NextShot(void)
 		TargetSetAnimation(m_target, m_target_anim[m_shot], true);
 	}
 	m_time = 0;
+	if (getenv("NEG_TRIGGER_TRACE")) SDL_Log("[trigger] 3MCA %s shot %d (target %s, sound %d)", m_tag, m_shot, m_camera_target[m_shot], m_sound_index[m_shot]);	// port
 	// (debug log "GNSC Got sound channel %d")
 	return true;
 }
