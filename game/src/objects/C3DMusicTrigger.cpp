@@ -1,4 +1,4 @@
-/*  C3DMusicTrigger - see C3DMusicTrigger.h. Reconstructed from Neutron.exe 0x431a20..0x432130. */
+/*  C3DMusicTrigger - see C3DMusicTrigger.h. Reconstructed from Neutron.exe 0x431a20..0x432160. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DMusicTrigger.h"
@@ -16,11 +16,11 @@
 
 using namespace neg;
 
-// 0x474070: the object whose tag ("ObjectTag") is `tag`, case-insensitive.
+// 0x474070: the first object of the global list whose ObjectTag matches (_stricmp).
 static CGameObject *FindObjectByTag(const char *tag)
 {
-	for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
-		if (*it && strcasecmp((*it)->m_tag, tag) == 0) return *it;
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (*i && strcasecmp((*i)->m_tag, tag) == 0) return *i;
 	return NULL;
 }
 
@@ -39,14 +39,16 @@ C3DMusicTrigger::C3DMusicTrigger()							// 0x431a20
 	m_music_index[2] = -1;
 	m_music_index[3] = -1;
 	m_music_index[4] = -1;
-	v67(150.0f);											// radius
+	v67(150.0f);
 	C3DSprite::InitPhysics();								// 0x464210
 	m_touch_activated = 1;
 	v52(0);
 	v46(0);
 	v34(1);
 	f_008 = 1;												// element +0xd0
-	// (an empty debug log; RequiredLevel, ExactLevel and RemoveLevel are not initialised)
+	m_required_level = -1;									// port: the original leaves these three unset
+	m_exact_level = -1;
+	m_remove_level = -1;
 }
 
 C3DMusicTrigger::~C3DMusicTrigger() {}						// 0x431c10
@@ -86,15 +88,15 @@ void C3DMusicTrigger::AddTouching(CGameObject *other)		// 0x431dc0
 void C3DMusicTrigger::v260(void)							// 0x431d80
 {
 	C3DSprite::v260();										// 0x464810
-	if (m_touch_activated == 0) v136(0);					// +0x224
+	if (m_touch_activated == 0) v136(0);					// +0x220
 	if (m_touch_activated == 1) v136(1);
 }
 
-// 0x432080: not touch activated: ExactLevel, else RequiredLevel <= level < RemoveLevel (-1: no
-// upper bound) fires it.
-void C3DMusicTrigger::v267(int level)
+// Not touch activated: ExactLevel, else RequiredLevel <= level < RemoveLevel (-1: no upper bound)
+// fires it.
+void C3DMusicTrigger::v267(int level)						// 0x432080
 {
-	CLocalGameObject::v267(level);							// 0x458880
+	CLocalGameObject::v267(level);							// 0x4588d0
 	if (m_touch_activated != 0) return;
 	if (m_exact_level == -1)
 	{
@@ -103,36 +105,32 @@ void C3DMusicTrigger::v267(int level)
 		if (m_remove_level != -1 && m_remove_level <= level) return;
 	}
 	else if (level != m_exact_level) return;
-	Trigger();
+	Trigger();												// element +0xd8
 }
 
-// 0x431df0: Jimmy (JIM1) drops the music he plays (channel 0xa38, database 0xa4c, the global
-// 0x696004) and takes this trigger's database; the first of the five indices that is not -1
-// plays, looped.
+// 0x431df0: Jimmy ("JIM1") keeps the music channel (+0xa38) and the database name (+0xa4c); the
+// loaded database is g_696004.
 void C3DMusicTrigger::Trigger(void)
 {
-	if (g_cutscene_skipped) return;							// 0x4f83e4
-	CGameObject *jo = FindObjectByTag("JIM1");				// 0x474070
-	C3DJimmy *jim = jo ? dynamic_cast<C3DJimmy *>(jo) : NULL;	// (jo - 0xc0; the original does not check)
+	if (g_4f83e4) return;									// (a cut scene skipped)
+	C3DJimmy *jim = dynamic_cast<C3DJimmy *>(FindObjectByTag("JIM1"));	// 0x474070 (the original does not test it)
+	if (!jim) return;										// port: (it would write through a null pointer)
 	if (g_696004)
 	{
-		if (jim)
+		StopChannel(jim->f_a38, false);						// 0x47d7a0
+		if (strcasecmp(jim->f_a4c, "none") != 0)			// 0x487c20
 		{
-			StopChannel(jim->f_a38, false);					// 0x47d7a0
-			if (strcasecmp(jim->f_a4c, "none") != 0)
-			{
-				CloseDatabase(jim->f_a4c);					// 0x46aef0
-				jim->f_a38 = -1;
-			}
+			CloseDatabase(jim->f_a4c);						// 0x46aef0
+			jim->f_a38 = -1;
 		}
 		g_696004 = NULL;
 	}
 	if (strcasecmp(m_music_db, "none") == 0) return;
-	if (jim) strcpy(jim->f_a4c, m_music_db);
+	strcpy(jim->f_a4c, m_music_db);
 	g_696004 = GetDatabase(m_music_db);						// 0x46a910
 	if (!g_696004) return;
-	if (!jim || jim->f_a38 != -1) return;
-	*g_random_seed = *g_random_seed * 0x19660d + 0x7fff;	// (a random number is drawn and not used)
+	if (jim->f_a38 != -1) return;
+	*g_random_seed = *g_random_seed * 0x19660d + 0x7fff;	// (a draw that is not used)
 	for (int i = 0; i < 5; i++)
 		if (m_music_index[i] != -1)
 		{

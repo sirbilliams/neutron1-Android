@@ -1,14 +1,14 @@
 /*  C3DMusicTrigger ('3MUS') - switches the level music: when fired (by a trigger chain, by the
     camera touching it with "TouchActivated", or at a level load whose level matches
-    "RequiredLevel" / "ExactLevel" / "RemoveLevel") it stops the music of Jimmy ("JIM1": his
-    channel 0xa38, database 0xa4c, the global 0x696004) and plays the first of
-    "MusicIndex0".."MusicIndex4" that is not -1 from "MusicDatabase" (not "none"), looped.
-    Fired by a trigger chain it is the end of that chain (no NextTrigger), and does nothing
-    while a cut scene is skipped.
+    "RequiredLevel" / "ExactLevel" / "RemoveLevel") it stops the music playing (Jimmy's channel,
+    the database in g_696004), opens "MusicDatabase" and plays the first of "MusicIndex0..4"
+    that is not -1 (looping) on Jimmy's channel. Nothing happens while g_4f83e4 is set (a cut
+    scene skipped); it is the end of its trigger chain.
     Reconstructed from Neutron.exe: constructor 0x431a20 (factory '3MUS', 0x74c bytes),
     destructor 0x431c10 (only resets the vtables, then ~C3DTriggerType; deleting thunks 0x431be0
-    / 0x432130 / 0x432140). Element vtable (55 slots: C3DTriggerType's 54 + Trigger); game object
-    slots 7, 16, 259, 265 overridden. Own members 0x6bc..0x738, vtordisp 0x744, streamer 0x748.
+    / 0x432130 / 0x432140). Element vtable: 54 is new (Trigger); game object vtable (+0xc8): 0, 7,
+    16, 259, 265 overridden. Own members 0x6bc..0x740, vtordisp 0x744, streamer 0x748.
+    Slot numbers are Boy Genius's.
 
     Members are named after their 2002 offset from the object start (element view; the
     CGameObject-family methods of the original see them 0xc8 lower).                          */
@@ -32,14 +32,14 @@ class C3DMusicTrigger : public C3DTriggerType
 
 	// FIELD 0x6bc 0x88
 	char		m_music_db[100];		// 0x6bc  "MusicDatabase" (= "none")
-	int			m_music_index[5];		// 0x720  "MusicIndex0".."MusicIndex4" (= 0, -1, -1, -1, -1)
+	int			m_music_index[5];		// 0x720  "MusicIndex0" (= 0), "MusicIndex1".."4" (= -1)
 	int			m_touch_activated;		// 0x734  "TouchActivated" (= 1)
-	int			m_required_level;		// 0x738  "RequiredLevel"
-	int			m_exact_level;			// 0x73c  "ExactLevel"
-	int			m_remove_level;			// 0x740  "RemoveLevel"
+	int			m_required_level;		// 0x738  "RequiredLevel" (the original leaves it unset; port: -1)
+	int			m_exact_level;			// 0x73c  "ExactLevel" (as above)
+	int			m_remove_level;			// 0x740  "RemoveLevel" (as above)
 };
 
 namespace neg {
-// Trigger (element slot 56) of a C3DMusicTrigger known as a CGameObject (C3DTriggerType).
+// Trigger (element slot 54) of a C3DMusicTrigger known as a CGameObject (C3DTriggerType).
 void MusicTriggerTrigger(CGameObject *o);
 }
