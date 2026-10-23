@@ -72,7 +72,6 @@ OMedia3DShape *neg::Load3DShape(OMediaDataBase *db, int id)
 		if (g_509a12) NEG_TODO(0x477ba0, "debug database call (db vtable +0x4c)");
 		if (shape) shape->db_unlock();
 		AddShapeTextureAnims(db, shape);					// 0x468ec0
-		AddShapeMaterialAnims(db, shape);					// N2:0x490300
 		g_509a14 = 0;
 		// Translucent materials (diffuse alpha != 1) are drawn in the second pass, alpha blended.
 		omt_PolygonList *polys = shape->get_polygons();			// (no NULL test in the original)

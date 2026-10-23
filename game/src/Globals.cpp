@@ -50,7 +50,6 @@ void neg::N2GlobalsInit(void)
 	g_prev_game_mode = 9;
 	g_mode_before_pause = 9;
 	g_has_focus = 1;
-	g_enemy_time_scale = 1.0f;
 	g_fade_done = 1;
 	g_fade_duration = 1.0f;
 	g_fade_in_time = 1.0f;

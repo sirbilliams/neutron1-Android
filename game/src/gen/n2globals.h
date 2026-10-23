@@ -27,7 +27,6 @@ extern void *g_n2_ptrs[N2_DATA_SIZE / 4];
 #define g_cur_gadget (*(int *)&neg::g_n2_data[0x13d9c])
 #define g_cutscene_skipped (*(bool *)&neg::g_n2_data[0x183d4])
 #define g_difficulty (*(int *)&neg::g_n2_data[0x95b0])	// initialised in Neutron2.exe: port gets 0
-#define g_enemy_time_scale (*(float *)&neg::g_n2_data[0xe594])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_done (*(bool *)&neg::g_n2_data[0x4ec])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_duration (*(float *)&neg::g_n2_data[0x4e8])	// initialised in Neutron2.exe: port gets 0
 #define g_fade_in_time (*(float *)&neg::g_n2_data[0x4f0])	// initialised in Neutron2.exe: port gets 0
