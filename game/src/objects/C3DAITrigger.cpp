@@ -13,6 +13,7 @@
 #include "../Globals.h"
 #include "../InterfaceElement.h"
 #include "../Todo.h"
+#include "../level5a/C3DStalagtite.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include <string.h>
@@ -334,8 +335,8 @@ void C3DAITrigger::Trigger(CGameObject *caller)
 			}
 			else if (t->NameContains((char *)"C3DSTALAGTITE"))
 			{
-				// its element slot 72 (+0x120). TODO: C3DStalagtite is not reconstructed yet.
-				NEG_TODO(0x40c981, "C3DAITrigger: C3DStalagtite slot 72");
+				C3DStalagtite *st = dynamic_cast<C3DStalagtite *>(t);	// (t - 0xc0)
+				if (st) st->ev72();									// element +0x120: falls at once
 			}
 		}
 	}
