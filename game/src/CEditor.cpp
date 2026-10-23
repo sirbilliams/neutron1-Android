@@ -28,7 +28,6 @@
 #include "gen/globals.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
-#include "objects/C3DMultiCutSceneCamera.h"
 #pragma GCC diagnostic pop
 
 #include "OMediaStringField.h"
@@ -62,14 +61,12 @@ using namespace neg;
 std::string omf_SDLResolvePath(const std::string &in);		// engine/sdl: DOS path -> real file
 
 namespace neg {
+char					g_game_file[128] = "";			// port: the .gam file of the running game (BillsUi, Companion)
 OMediaCanvas			*g_editor_font_canvas = NULL;	// 0x509978
 OMediaCanvasFont		*g_editor_font = NULL;			// 0x50997c
 OMediaCanvasElement		*g_splash = NULL;				// 0x509984
 OMediaDataBase			*g_editor_db = NULL;			// 0x509988
 OMediaFileStream		*g_editor_stream = NULL;		// 0x50998c
-OMediaCanvasElement		*g_editor_menu_panel = NULL;	// N2:0x56af1c
-OMediaCanvasElement		*g_editor_list_panel = NULL;	// N2:0x56af20
-OMediaCanvasElement		*g_editor_props_panel = NULL;	// N2:0x56af24
 }
 
 // Windows virtual keys read through g_keys[]
@@ -98,9 +95,9 @@ typedef char MenuName[32];
 static MenuName *Menu(void)			{ return (MenuName *)g_editor_menu; }		// 0x4f5410
 static MenuName *Toggles(void)		{ return (MenuName *)g_editor_toggles; }	// 0x4f56b0
 static NamedID *Catalogue(void)		{ return (NamedID *)g_object_catalogue; }	// 0x4f2928
-static NamedID *Levels(void)		{ return (NamedID *)g_level_table; }		// N2:0x53d818
+static NamedID *Levels(void)		{ return (NamedID *)g_level_table; }		// 0x4f3a78
 enum { MENU_MAX = 100,								// loops stop at 0x4f6090 / 0x4f6330
-	   LEVELS_MAX = 0x24 };	// TODO(BG): N2 (0x53ddb8 - 0x53d818) / 0x24; find g_level_table in Neutron.exe
+	   LEVELS_MAX = 100 };								// 0x4f3a7c .. 0x4f488c
 
 // --------------------------------------------------------------------------- small helpers
 
@@ -144,8 +141,8 @@ static float *CameraPoint(float out[4], float x, float y, float z)
 	return out;
 }
 
-// N2:0x490890: given an object's 4cc and either its game object or its element, find the other.
-// The original switches on the 4cc to know the subobject offsets; RTTI does the same here.
+// 0x4592f0: given an object's 4cc and either its game object or its element, find the other.
+// The original switches on the 4cc to know the subobject offsets; port: RTTI does the same here.
 static void ObjectElement(int id, CGameObject **obj, OMediaElement **elem)
 {
 	(void)id;
@@ -181,52 +178,17 @@ static void DeleteFlaggedObjects(void)
 }
 
 
-static void MenuShowLoading(int a)	{ neg::CutsceneLetterbox(a != 0); }	// N2:0x40c0f0 (C2DInGameMenu.h)
-
-// N2:0x485360: the game state (0 menu/new game, 1 loading, 3, 5 playing...), told to every object
-static void SetGameState(int state)
-{
-	if (state == g_game_state) return;
-	g_prev_game_state = g_game_state;
-	g_game_state = state;
-	if (state == 1)
-	{
-		if (g_N2_545d98)
-		{
-			if (!g_level_requested) { g_N2_54a468 = 1; MenuShowLoading(0); }
-			else g_level_requested = 0;
-		}
-	}
-	else
-	{
-		if (g_N2_54a468 && state == 3) MenuShowLoading(1);
-		g_N2_54a468 = 0;
-	}
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i) static_cast<CLocalGameObject *>(*i)->v270(g_prev_game_state, state);
-}
-
-
-// N2:0x482b40
-
-
 static void DeleteFile(const char *dos_path)	// KERNEL32 DeleteFileA
 {
 	if (neg::AssetViewLevel()) return;		// port: the Asset Viewer keeps the saves (level1d.gam wipes the autosaves)
 	remove(omf_SDLResolvePath(dos_path).c_str());
 }
 
-// --- not reconstructed yet
 using neg::CloseAllDatabases;							// 0x46b000 (DatabaseCache.cpp)
 using neg::DatabaseName;								// 0x46b0f0
-// (the savegame functions ReadTaskFile 0x460210, LoadTask N2:0x498af0, RestoreTask N2:0x498440: SaveGame.h)
-static void MenuDrawCountdown(int a, int b, int c)	{ NEG_TODO(/*N2*/0x409d50, "C2DInGameMenu N2:0x409d50 (level-change countdown)"); (void)a; (void)b; (void)c; }
-static void CutsceneCameraPlay(CGameObject *o)	{ NEG_TODO(/*N2*/0x4a64e2, "C3DCutSceneCamera element slot 59"); (void)o; }
-// C3DMultiCutSceneCamera element slot 61 (+0xf4, N2:0x4588a0): start the preview.
-static void MultiCutscenePlay(CGameObject *o)	{ static_cast<C3DMultiCutSceneCamera *>(o)->StartPreview(); }
+// (the savegame functions ReadTaskFile 0x460210, LoadTask, RestoreTask: SaveGame.h)
 
-// Windows cursor (N2:0x4a38c0 / 0x46a400 / 0x46a460); the editor flies the camera with the mouse.
-static void ShowWinCursor(bool on)				{ NEG_TODO(/*N2*/0x4a38c0, "ShowCursor"); (void)on; }
+// 0x46a400 / 0x46a460: the editor flies the camera with the mouse.
 static void CaptureMouse(bool capture)			// 0x46a400
 {
 	if (capture)
@@ -241,10 +203,6 @@ static void CaptureMouse(bool capture)			// 0x46a400
 	g_mouse_captured = 0;
 }
 using neg::GetMouseDelta;							// 0x46a460 (Mouse.h)
-
-// CLocalGameObject slot 283 takes a float (the frame time); the generator typed it as unsigned int,
-// so the bits are passed through unchanged.
-static unsigned int FloatBits(float f)	{ unsigned int u; memcpy(&u, &f, 4); return u; }
 
 // --------------------------------------------------------------------------- neg::EditorIsEditing
 
@@ -276,7 +234,6 @@ CEditor::CEditor()
 	m_sel_shape = NULL;
 
 	Trace("CEditor()");
-	SetGameState(0);
 	g_editor = this;
 	f_7f9 = 0;
 
@@ -307,9 +264,6 @@ CEditor::CEditor()
 		g_editor_font->create_proportional_tab();
 		g_editor_font->set_space_size(3);
 		g_editor_font->set_char_space(1);
-
-		m_paste_latch = 0;
-		m_copied = NULL;
 
 		const int half_h = g_viewport->getbheight() / 2;
 
@@ -384,12 +338,8 @@ CEditor::CEditor()
 	m_key_latch = 0;
 	m_start_timer = 0;
 	m_start_state = 0;
+	f_80c = 0;
 	m_splash_key = 0;
-	f_810 = 0;
-	f_811 = 0;
-	m_panel_open = 0;
-	m_list_filter = 0;
-	m_label_mode = 1;
 	Trace("CEditor() done");
 }
 
@@ -459,67 +409,30 @@ void CEditor::UnInitGrid(void)		{ Trace("UnInitGrid()"); }		// 0x46bea0
 void CEditor::InitEditor(void)
 {
 	Trace("InitEditor()");
-	Trace("Entering InitEditor");
-
-	g_editor_menu_panel = new OMediaCanvasElement;
-	if (g_editor_menu_panel)
-	{
-		g_editor_menu_panel->link_layer(g_layer_hud2d);
-		PlaceSprite(g_editor_menu_panel, 520.0f, 0.0f, 5, 1.0f, true);
-	}
-	Trace("EI 1");
-	g_editor_menu_panel->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	SetDiffuse(g_editor_menu_panel, 1.0f, 1.0f, 1.0f, 0.6f);
-	Trace("EI 2");
-	g_editor_menu_panel->force_show();
-
-	g_editor_list_panel = new OMediaCanvasElement;
-	if (g_editor_list_panel) g_editor_list_panel->link_layer(g_layer_hud2d);
-	Trace("EI 3");
-	PlaceSprite(g_editor_list_panel, 370.0f, 0.0f, 6, 1.0f, true);
-	g_editor_list_panel->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	Trace("EI 4");
-	SetDiffuse(g_editor_list_panel, 1.0f, 1.0f, 1.0f, 0.6f);
-	g_editor_list_panel->hide(true);
-
-	g_editor_props_panel = new OMediaCanvasElement;
-	if (g_editor_props_panel) g_editor_props_panel->link_layer(g_layer_hud2d);
-	PlaceSprite(g_editor_props_panel, 0.0f, 0.0f, 7, 1.0f, true);
-	g_editor_props_panel->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
-	SetDiffuse(g_editor_props_panel, 1.0f, 1.0f, 1.0f, 0.6f);
-	Trace("EI 5");
-	g_editor_props_panel->hide(true);
-
 	CGfx::UnInitCaptions();									// 0x4766e0
-	ResetLevel();
+	ResetLevel();											// vtable +0x128
 	m_cam_save[0] = g_viewport->getx();
 	m_cam_save[1] = g_viewport->gety();
 	m_cam_save[2] = g_viewport->getz();
 	g_viewport->set_flags(omcvpf_EnableMouseClick | omcvpf_ClickActivateSupervisor);	// 5
-	Trace("EI 6");
 	if (g_layer_clear) g_layer_clear->remove_flags(omlayerf_DisablePicking);
 	if (g_layer_world) g_layer_world->remove_flags(omlayerf_DisablePicking);	// (0x509a3c: the world layer again)
-	Trace("EI 7");
 	for (int i = 0; i < MENU_MAX; i++)
 	{
 		if (strcasecmp(Menu()[i], "") == 0) break;
 		m_menu_fields[i]->force_show();
 	}
-	Trace("EI 8");
-	ShowWinCursor(true);
 	g_viewport->place(m_cam_save[0], m_cam_save[1], m_cam_save[2]);
 	SetMenuSelection("Select Object");
 	m_mode = 0;
-	CaptureMouse(false);
-	Trace("Leaving EI ");
+	CaptureMouse(false);									// 0x46a400
 }
 
 // 0x46bdc0
 void CEditor::UnInitEditor(void)
 {
 	Trace("UnInitEditor()");
-	Trace("Entering UnInitEditor");
-	CaptureMouse(true);
+	CaptureMouse(true);										// 0x46a400
 	ResetLevel();
 	g_viewport->set_flags(g_viewport->get_flags() & 0xfffa);
 	for (int i = 0; i < MENU_MAX; i++)
@@ -528,10 +441,10 @@ void CEditor::UnInitEditor(void)
 		m_menu_fields[i]->hide(true);
 	}
 	HideList(true);
-	ShowWinCursor(false);
+	// (ShowCursor(0): port: no Windows cursor)
 	HighlightSelection(false);
-	CGfx::UnInitCaptions();
-	ClearSelection();										// (Negatron also hid the panels and ran slot 264 on every object)
+	CGfx::UnInitCaptions();									// 0x4766e0
+	ClearSelection();
 }
 
 void CEditor::ClearSelection(void)
@@ -607,8 +520,6 @@ void CEditor::UpdateGame(float dt)
 					}
 					else
 					{
-						Trace("MEBTEMP GFN:%s", g_game_file);
-						Trace("MEBTEMP TFN:%s", g_task_file);
 						LoadTask(task, false);
 						strcpy(name, m_level_name);
 					}
@@ -702,7 +613,7 @@ static CGameObject *PortPlaceholder(int id)
 void CEditor::LoadGame(char *name)
 {
 	strcpy(m_game_name, name);
-	strcpy(g_game_file, name);								// port: Negatron's current-game global (SaveGame.cpp)
+	strcpy(neg::g_game_file, name);							// port: the level's name for the Bill's UI / companion
 	if (strcasecmp(name, "level1d.gam") == 0)
 	{
 		// port: a new game forgets the port's autosaves (Neutron.exe has none; StartMode.h)
@@ -760,8 +671,17 @@ void CEditor::LoadGame(char *name)
 	{
 		int id;
 		fs >> id;
-		CGameObject *o = IsSingletonLoaded(id) ? FindObject(id) : neg::CreateObject(id);
-		if (!o && !IsSingletonLoaded(id)) o = PortPlaceholder(id);	// port: a class not reconstructed yet
+		CGameObject *o;
+		if (IsSingletonLoaded(id))
+		{
+			Trace("Item is loaded already");
+			o = FindObject(id);
+		}
+		else
+		{
+			o = neg::CreateObject(id);
+			if (!o) o = PortPlaceholder(id);				// port: a class not reconstructed yet
+		}
 		if (o)
 		{
 			for (;;)
@@ -799,7 +719,6 @@ void CEditor::LoadGame(char *name)
 	fs.close();
 	Trace("File closed, Calling ResetLevel 1");
 	ResetLevel();											// vtable +0x128
-	if (g_task_file[0]) RestoreTask(g_task_file);			// port: Negatron's savegame restore (TODO(F))
 	Trace("File closed, Calling ResetLevel 2");
 	g_splash->hide(true);
 	TestPlayHook(name);										// port: test-only (NEG_TEST_PLAY)
@@ -878,7 +797,7 @@ void CEditor::RequestLevel(char *name)						// slot 69 0x46dfb0: load in two fra
 	strcpy(m_level_name, name);
 }
 
-// port: Negatron's (N2:0x4a83b0); Neutron.exe has no delayed load. Only SaveGame.cpp calls it.
+// port: Neutron.exe has no delayed load. Only SaveGame.cpp calls it.
 void CEditor::RequestLevelDelayed(char *name, float delay)
 {
 	m_load_delay = delay;
@@ -910,52 +829,19 @@ CGameObject *CEditor::FindObject(int id)				// 0x46e6e0
 	return NULL;
 }
 
-int CEditor::CountObjects(void)							// N2:0x4a9c80
-{
-	int n = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i) n++;
-	return n;
-}
-
-int CEditor::CountSavedObjects(void)					// N2:0x4a9ca0: objects written by SaveGame (v108 = f_00b)
-{
-	int n = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && (*i)->v108()) n++;
-	return n;
-}
-
-int CEditor::CountCollisionObjects(void)				// N2:0x4a9ce0: v135 = f_140
-{
-	int n = 0;
-	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		if (*i && (*i)->v135()) n++;
-	return n;
-}
-
-// N2:0x4a8c70: writes the object list to the (empty) debug log
+// 0x46e710: writes the object list to the (empty) debug log
 void CEditor::ListObjects(void)
 {
 	Trace("             *********************************");
 	Trace("             ******** LIST OF OBJECTS ********");
 	Trace("             *********************************");
-	int n = 0;
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 	{
 		CGameObject *o = *i;
 		if (!o) continue;
-		n++;
 		char ids[5];
 		IdString(ids, o->m_object_id);
-		char coll[80];
-		strcpy(coll, "");
-		if (o->v135())
-		{
-			strcpy(coll, "YES");
-			if (o->f_124 == 2) strcpy(coll, "CUBE COLLISION");
-		}
-		Trace("%3d) %18s  ID=%s   %s  %s", n, o->m_tag, ids, o->m_name, coll);
+		Trace("%18s  ID=%s   %s", o->m_tag, ids, o->m_name);
 	}
 }
 
@@ -1045,84 +931,6 @@ void CEditor::DrawSplash(int canvas_id)
 	Trace("3 DrawSplash after allocation ALL:%d", (int)OMediaDataBase::get_memory_used_all());
 }
 
-// N2:0x4aa3e0: same as DrawSplash's set-up, on an element of the caller's
-void CEditor::PlaceSplash(OMediaCanvasElement *e, int unused1, int unused2, int canvas_id)
-{
-	(void)unused1; (void)unused2;
-	if (!e) return;
-	const float sx = (short)g_screen_w * (1.0f / 640.0f);
-	const float sy = (short)g_screen_h * (1.0f / 480.0f);
-	OMediaCanvas *c = LoadCanvasID(g_editor_db, canvas_id);
-	if (c)
-	{
-		c->db_unlock();
-		c->set_filtering(omtfc_Linear, omtfc_Linear);
-		e->set_size(c->get_width() * sx, c->get_height() * sy);
-	}
-	e->set_canvas(c);
-	e->set_canvas_flags(omcanef_FreeWorldSize);
-	e->set_auto_align(omaac_Center, omaac_Center);
-	e->setz(0);
-	e->setx((float)-((short)g_screen_w / 2));
-	e->sety((float)((short)g_screen_h / 2) - g_splash->get_height());	// g_splash's height, as shipped
-	e->force_show();
-}
-
-// N2:0x4aa500: a sprite at (x, y) in 640x480 screen space, top-left origin
-void CEditor::PlaceSprite(OMediaCanvasElement *e, float x, float y, int canvas_id, float unused, bool scaled)
-{
-	(void)unused;
-	const float sx = (short)g_screen_w * (1.0f / 640.0f);
-	const float sy = (short)g_screen_h * (1.0f / 480.0f);
-	if (!e) return;
-	SetSpriteCanvas(e, canvas_id, scaled);
-	e->set_canvas_flags(omcanef_FreeWorldSize);
-	e->set_auto_align(omaac_Center, omaac_Center);
-	e->setz(0);
-	e->setx(sx * x - (float)((short)g_screen_w / 2));
-	e->sety(((float)((short)g_screen_h / 2) - e->get_height()) - sy * y);
-}
-
-// N2:0x4aa5c0
-void CEditor::SetSpriteCanvas(OMediaCanvasElement *e, int canvas_id, bool scaled)
-{
-	const float sx = (short)g_screen_w * (1.0f / 640.0f);
-	const float sy = (short)g_screen_h * (1.0f / 480.0f);
-	if (canvas_id == -1)
-	{
-		// As shipped this passes the flag itself as the canvas; no caller uses -1.
-		e->set_canvas((OMediaCanvas *)(intptr_t)scaled);
-		return;
-	}
-	OMediaCanvas *c = GetCanvas(canvas_id);
-	if (!c) { e->set_canvas(NULL); return; }
-	if (scaled) e->set_size(c->get_width() * sx, c->get_height() * sy);
-	else e->set_size((float)c->get_width(), (float)c->get_height());
-	e->set_canvas(c);
-}
-
-// 0x403690
-OMediaCanvas *CEditor::GetCanvas(int canvas_id)
-{
-	OMediaCanvas *c = LoadCanvasID(g_editor_db, canvas_id);
-	if (c) c->db_unlock();
-	return c;
-}
-
-// N2:0x4aa7e0: the list panel (and the property panel when closing)
-void CEditor::ShowPanel(bool on)
-{
-	if (on)
-	{
-		g_editor_list_panel->force_show();
-		m_panel_open = 1;
-		return;
-	}
-	g_editor_list_panel->hide(true);
-	m_panel_open = 0;
-	g_editor_props_panel->hide(true);
-}
-
 // ===========================================================================================
 // The interactive editor (only while m_editing is set; nothing in the shipped game sets it).
 // Screen-space fields: x from the screen centre, y from the viewport's top.
@@ -1147,178 +955,108 @@ static void MoveSelectedObject(CEditor *ed)
 
 void CEditor::UpdateEditor(float dt)
 {
-	ev52();
+	Trace("KENS start edit tick");
+	ev52();													// vtable +0xd0
+	Trace("ET 1");
 	if (m_editing)
 	{
-		int coll = CountCollisionObjects();
-		int saved = CountSavedObjects();
-		int all = CountObjects();
-		DrawText(0xe1, 3, 'SMAL', "NUMOBJS  %d  SAVE %d  COLLOBJS  %d", all, saved, coll);
-		if (m_copied)
-		{
-			DrawText(0x1e0, 0xf0, 'SMAL', "COPIED");
-			DrawText(0x1e0, 0xfc, 'SMAL', "%s", m_copied->m_tag);
-		}
-
-		// Ctrl-C copies the selection, Ctrl-V pastes a copy in front of the camera
-		if (g_keys[VK_CONTROL_])
-		{
-			if (g_keys['C'] && m_sel_element && m_sel_object) m_copied = m_sel_object;
-			if (g_keys[VK_CONTROL_] && g_keys['V'])
-			{
-				if (!m_paste_latch)
-				{
-					m_paste_latch = 1;
-					if (m_copied) PasteObject(m_copied);
-				}
-			}
-			else m_paste_latch = 0;
-		}
-		else m_paste_latch = 0;
-
+		Trace("ET 2");
 		if (g_keys[VK_DELETE_] && m_sel_element && m_sel_object)
 		{
 			m_sel_object->f_006 = 1;
 			HighlightSelection(false);
 			ClearSelection();
-			DeleteFlaggedObjects();
+			DeleteFlaggedObjects();							// 0x473710
 		}
-		if (g_keys[VK_OEM_3_])
-		{
-			HighlightSelection(false);
-			ClearSelection();
-		}
-
-		// arrows scroll the lists by 20; Shift-N cycles the object labels
+		// the arrows scroll the object list / the catalogue by 20 entries
 		if (g_keys[VK_UP_])
 		{
+			Trace("ET 3");
 			if (!m_key_latch)
 			{
+				Trace("ET 4");
 				m_key_latch = 1;
 				if (m_mode == 5)
 				{
+					Trace("ET 5");
 					m_list_offset -= 20;
 					if (m_list_offset < 0) m_list_offset = 0;
-					ShowObjectList();
+					ShowObjectList();						// vtable +0x120
 				}
 				else if (m_mode == 1)
 				{
+					Trace("ET 6");
 					m_list_offset -= 20;
 					if (m_list_offset < 0) m_list_offset = 0;
-					ShowCatalogue();
+					ShowCatalogue();						// vtable +0x124
 				}
 			}
 		}
 		else if (g_keys[VK_DOWN_])
 		{
+			Trace("ET 7");
 			if (!m_key_latch)
 			{
+				Trace("ET 8");
 				m_key_latch = 1;
-				if (m_mode == 5) { m_list_offset += 20; ShowObjectList(); }
-				else if (m_mode == 1) { m_list_offset += 20; ShowCatalogue(); }
-			}
-		}
-		else if (g_keys[VK_SHIFT_] && g_keys['N'])
-		{
-			if (!m_key_latch)
-			{
-				m_key_latch = 1;
-				if (m_label_mode == 0) m_label_mode = 1;
-				else if (m_label_mode == 1) m_label_mode = 2;
-				else if (m_label_mode == 2) m_label_mode = 0;
+				if (m_mode == 5)
+				{
+					Trace("ET 9");
+					m_list_offset += 20;
+					ShowObjectList();
+				}
+				else if (m_mode == 1)
+				{
+					Trace("ET 10");
+					m_list_offset += 20;
+					ShowCatalogue();
+				}
 			}
 		}
 		else m_key_latch = 0;
 	}
-
-	// Camera angles shown in degrees; past 360 they are pulled back (by 16384, the full turn
-	// in OMT units, subtracted from the degree value - as shipped).
-	const float k = 360.0f / 16384.0f;		// 0x48e5b4
-	OMediaViewPort *vp = g_viewport;
-	if (vp->get_anglex() * k > 360.0f) vp->set_anglex((short)(int)(vp->get_anglex() * k - 16384.0f));
-	if (vp->get_angley() * k > 360.0f) vp->set_angley((short)(int)(vp->get_angley() * k - 16384.0f));
-	if (vp->get_anglez() * k > 360.0f) vp->set_anglez((short)(int)(vp->get_anglez() * k - 16384.0f));
-	DrawText(0x1e, 10, 'SMAL', "ROT %6.0f   %6.0f   %6.0f", (double)(vp->get_anglex() * k),
-			 (double)(vp->get_angley() * k), (double)(vp->get_anglez() * k));
-	DrawText(0x1e, 20, 'SMAL', "POS %6.0f   %6.0f   %6.0f", (double)g_viewport->getx(),
-			 (double)g_viewport->gety(), (double)g_viewport->getz());
-
-	// object labels
-	if (m_label_mode != 0)
-	{
-		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
-		{
-			CGameObject *o = *i;
-			if (!o || !o->f_00b) continue;
-			const float cx = g_viewport->getx(), cy = g_viewport->gety(), cz = g_viewport->getz();
-			float p[4];
-			o->v195(p);
-			const float dx = cx - p[0], dy = cy - p[1], dz = cz - p[2];
-			if (m_label_mode == 1 && !(sqrtf(dz * dz + dy * dy + dx * dx) <= 1000.0f)) continue;
-			float q[4];
-			o->v195(q);
-			float sx, sy;
-			if (static_cast<CLocalGameObject *>(o)->v281(g_viewport, q, &sx, &sy))
-				DrawText((short)(int)(sx + 320.0f), (short)(int)(240.0f - sy), 'SMAL', "%s", o->m_tag);
-		}
-	}
-
-	// the selection: its label; Ctrl-L previews a cutscene
-	if (m_sel_object)
-	{
-		static_cast<CLocalGameObject *>(m_sel_object)->v283(FloatBits(dt));
-		float q[4];
-		m_sel_object->v195(q);
-		float sx, sy;
-		if (static_cast<CLocalGameObject *>(m_sel_object)->v281(g_viewport, q, &sx, &sy))
-			DrawText((short)(int)(sx + 320.0f), (short)(int)(240.0f - sy), 'SMAL', "%s", m_sel_object->m_tag);
-		if (g_keys['L'] && g_keys[VK_CONTROL_])
-		{
-			if (m_sel_object->NameContains("C3DCUTSCENECAMERA")) CutsceneCameraPlay(m_sel_object);
-			else if (m_sel_object->NameContains("C3DMULTICUTSCENE")) MultiCutscenePlay(m_sel_object);
-		}
-	}
+	Trace("ET 11");
+	DrawText(0x14, 100, 'SMAL', "%d", m_list_offset);		// 0x468660
+	Trace("ET 12");
 
 	// Enter applies the property being edited; otherwise the arrows fly the camera
-	if (KeyPressed(VK_RETURN_))
+	float d[4];
+	if (!KeyPressed(VK_RETURN_))							// 0x46a3e0
 	{
-		if (m_edit_name && m_edit_value && m_sel_object) ApplyPropertyEdit();
-	}
-	else if (!(g_keys[VK_CONTROL_] && KeyPressed('E')))
-	{
-		float d[4];
-		if (g_keys[VK_DOWN_])
+		if (!(g_keys[VK_CONTROL_] && KeyPressed('E')))
 		{
-			if (!m_panel_open)
+			if (g_keys[VK_DOWN_])
 			{
-				CameraDir(d, 0, 0, -10.0f);
-				g_viewport->setx(d[0] * dt * 300.0f + g_viewport->getx());
+				CameraDir(d, 0, 0, -10.0f);					// 0x476f10
+				g_viewport->setx(d[0] * dt * 300.0f + g_viewport->getx());		// 0x48d930
 				g_viewport->sety(d[1] * dt * 300.0f + g_viewport->gety());
 				g_viewport->setz(d[2] * dt * 300.0f + g_viewport->getz());
 			}
-		}
-		else if (g_keys[VK_UP_])
-		{
-			if (!m_panel_open)
+			else if (g_keys[VK_UP_])
 			{
 				CameraDir(d, 0, 0, 10.0f);
-				g_viewport->setx(d[0] * dt * 500.0f + g_viewport->getx());
-				g_viewport->sety(d[1] * dt * 500.0f + g_viewport->gety());
-				g_viewport->setz(d[2] * dt * 500.0f + g_viewport->getz());
+				g_viewport->setx(d[0] * dt * 900.0f + g_viewport->getx());		// 0x4d5fdc
+				g_viewport->sety(d[1] * dt * 900.0f + g_viewport->gety());
+				g_viewport->setz(d[2] * dt * 900.0f + g_viewport->getz());
 			}
 		}
+		else Trace("ET 15");
+	}
+	else if (m_edit_name)
+	{
+		Trace("ET 13");
+		if (m_edit_value && m_sel_object) ApplyPropertyEdit();	// vtable +0xec
+		Trace("ET 14");
 	}
 	if (g_keys[VK_LEFT_])
 	{
-		float d[4];
 		CameraDir(d, -10.0f, 0, 0);
-		g_viewport->setx(d[0] * dt * 100.0f + g_viewport->getx());
+		g_viewport->setx(d[0] * dt * 100.0f + g_viewport->getx());				// 0x48d96c
 		g_viewport->sety(d[1] * dt * 100.0f + g_viewport->gety());
 		g_viewport->setz(d[2] * dt * 100.0f + g_viewport->getz());
 	}
 	if (g_keys[VK_RIGHT_])
 	{
-		float d[4];
 		CameraDir(d, 10.0f, 0, 0);
 		g_viewport->setx(d[0] * dt * 100.0f + g_viewport->getx());
 		g_viewport->sety(d[1] * dt * 100.0f + g_viewport->gety());
@@ -1328,73 +1066,90 @@ void CEditor::UpdateEditor(float dt)
 	// Mouse: both buttons move up/down, left moves in the ground plane, right turns. With Shift
 	// the selection moves instead of the camera; with Ctrl both move (Ctrl-right turns the selection).
 	const float speed = m_move_speed;
-	if (g_mouse_down)
+	if (!g_mouse_down)
 	{
-		if (g_mouse_captured)
+		if (g_mouse_rdown)
 		{
-			short mdx = 0, mdy = 0;
-			GetMouseDelta(&mdx, &mdy);
-			float d[4];
-			if (g_mouse_rdown)
+			if (g_mouse_captured)
 			{
-				CameraDir(d, (float)-mdx, (float)mdy, 0);
-				if (m_sel_element && g_keys[VK_SHIFT_])
-				{
-					m_sel_element->sety(d[1] * speed * dt + m_sel_element->gety());
-					MoveSelectedObject(this);
-				}
-				else
-				{
-					g_viewport->sety(d[1] * speed * dt + g_viewport->gety());
-					if (g_keys[VK_CONTROL_] && m_sel_object)
-					{
-						m_sel_element->sety(d[1] * speed * dt + m_sel_element->gety());
-						MoveSelectedObject(this);
-					}
-				}
+				Trace("ET 28");
+				short mdx = 0, mdy = 0;
+				GetMouseDelta(&mdx, &mdy);					// 0x46a460
+				OMediaElement *e = (m_sel_element && g_keys[VK_CONTROL_]) ? m_sel_element : (OMediaElement *)g_viewport;
+				const short ry = (short)(int)(mdx * speed * dt);
+				const short rx = (short)(int)(mdy * speed * dt);
+				e->set_anglex((short)(e->get_anglex() + rx));
+				e->set_angley((short)(e->get_angley() + ry));
 			}
-			else
+		}
+		else if (g_mouse_captured == 1)
+		{
+			Trace("ET 30");
+			CaptureMouse(false);
+		}
+	}
+	else
+	{
+		if (!g_mouse_rdown)
+		{
+			if (g_mouse_captured)
 			{
+				Trace("ET 24");
+				short mdx = 0, mdy = 0;
+				GetMouseDelta(&mdx, &mdy);
 				CameraDir(d, (float)-mdx, 0, (float)mdy);
 				if (m_sel_element && g_keys[VK_SHIFT_])
 				{
-					m_sel_element->setx(d[0] * speed * dt + m_sel_element->getx());
-					m_sel_element->setz(d[2] * speed * dt + m_sel_element->getz());
+					Trace("ET 25");
+					m_sel_element->setx(d[0] * dt * speed + m_sel_element->getx());
+					m_sel_element->setz(d[2] * dt * speed + m_sel_element->getz());
 					MoveSelectedObject(this);
 				}
 				else
 				{
-					g_viewport->setx(d[0] * speed * dt + g_viewport->getx());
-					g_viewport->setz(d[2] * speed * dt + g_viewport->getz());
+					Trace("ET 26");
+					g_viewport->setx(d[0] * dt * speed + g_viewport->getx());
+					g_viewport->setz(d[2] * dt * speed + g_viewport->getz());
 					if (g_keys[VK_CONTROL_] && m_sel_object)
 					{
-						m_sel_element->setx(d[0] * speed * dt + m_sel_element->getx());
-						m_sel_element->setz(d[2] * speed * dt + m_sel_element->getz());
+						Trace("ET 27");
+						m_sel_element->setx(d[0] * dt * speed + m_sel_element->getx());
+						m_sel_element->setz(d[2] * dt * speed + m_sel_element->getz());
 						MoveSelectedObject(this);
 					}
 				}
 			}
 		}
-	}
-	else if (g_mouse_rdown)
-	{
-		if (g_mouse_captured)
+		else if (g_mouse_captured)
 		{
+			Trace("ET 22");
 			short mdx = 0, mdy = 0;
 			GetMouseDelta(&mdx, &mdy);
-			OMediaElement *e = (m_sel_element && g_keys[VK_CONTROL_]) ? m_sel_element : (OMediaElement *)g_viewport;
-			const short ry = (short)(int)(mdx * speed * dt);
-			const short rx = (short)(int)(mdy * speed * dt);
-			e->set_anglex((short)(e->get_anglex() + rx));
-			e->set_angley((short)(e->get_angley() + ry));
+			CameraDir(d, (float)-mdx, (float)mdy, 0);
+			if (m_sel_element && g_keys[VK_SHIFT_])
+			{
+				m_sel_element->sety(d[1] * speed * dt + m_sel_element->gety());
+				MoveSelectedObject(this);
+			}
+			else
+			{
+				g_viewport->sety(d[1] * dt * speed + g_viewport->gety());
+				if (g_keys[VK_CONTROL_] && m_sel_object)
+				{
+					Trace("ET 23");
+					m_sel_element->sety(d[1] * dt * speed + m_sel_element->gety());
+					MoveSelectedObject(this);
+				}
+			}
 		}
 	}
 	if (g_mouse_down || g_mouse_rdown)
 	{
+		Trace("ET 29");
 		if (!g_mouse_captured) CaptureMouse(true);
 	}
-	else if (g_mouse_captured == 1)
-		CaptureMouse(false);
+	if (m_sel_element && m_sel_object) Trace("ET 31");
+	Trace("KENS end edit tick");
 }
 
 // 0x46da80: computes the point at the camera and drops it
@@ -1441,7 +1196,6 @@ void CEditor::ViewportClicked(OMediaPickRequest *req)
 		m_sel_shape = req->closer_hit.shape;
 		const int id = m_sel_object->m_object_id;
 		if (id == ID_TERRAIN || id == ID_SKY) { ClearSelection(); return; }
-		ShowPanel(false);
 		HighlightSelection(true);
 	}
 	else if (m_mode == 2)
@@ -1507,9 +1261,6 @@ void CEditor::ClickList(int x, int y)
 				for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); it++)
 				{
 					CGameObject *o = *it;
-					if (m_list_filter == 1 && !o->NameContains("C3DANIMATED")) continue;
-					if (m_list_filter == 3 && !o->NameContains("C3DPICKUPITEM")) continue;
-					if (m_list_filter == 2 && !o->NameContains("C3DTRIGGERTYPE") && !o->NameContains("C3DFLYINGCAMERA")) continue;
 					if (shown >= 100) break;
 					if (!o || o->m_object_id == ID_TERRAIN || !o->f_00b) continue;
 					if (n > m_list_offset)
@@ -1543,12 +1294,18 @@ void CEditor::ClickList(int x, int y)
 				break;
 			}
 			case 6:		// load the clicked level
+				Trace("MEBTEMP Clicked Load Game 4");
 				HighlightSelection(false);
+				Trace("MEBTEMP Clicked Load Game 4.1");
 				ClearSelection();
-				DeleteAllObjects();
+				Trace("MEBTEMP Clicked Load Game 4.2");
+				DeleteAllObjects();									// 0x4736c0
+				Trace("MEBTEMP Clicked Load Game 5");
 				HideList(true);
 				m_mode = 0;
+				Trace("MEBTEMP Clicked Load Game 6");
 				LoadGame(Levels()[i].name);
+				Trace("MEBTEMP Clicked Load Game 7");
 				break;
 		}
 	}
@@ -1645,8 +1402,6 @@ void CEditor::HighlightSelection(bool on)
 {
 	const OMediaFARGBColor picked(0.5f, 0.0f, 1.0f, 0.0f);		// green, half transparent
 	const OMediaFARGBColor normal(1.0f, 0.8f, 0.8f, 0.8f);		// 0x46faa0(0.8, 0.8, 0.8), a = 1
-	if (on) g_editor_props_panel->force_show();
-	else g_editor_props_panel->hide(true);
 	if (!m_sel_object) return;
 	if (on)
 	{
@@ -1663,16 +1418,10 @@ void CEditor::HighlightSelection(bool on)
 			m_sel_shape->unlock();
 		}
 		ShowProperties(true);
-		for (int i = 0; i < 100; i++)
-		{
-			g_editor->m_list_fields[i]->set_string(" ");
-			g_editor->m_list_fields[i]->force_show();
-		}
-		static_cast<CLocalGameObject *>(m_sel_object)->v280();
 	}
 	else
 	{
-		if (m_sel_shape)
+		if (m_sel_shape && m_pick)
 		{
 			m_sel_shape->lock(omlf_Write);
 			omt_PolygonList *polys = m_sel_shape->get_polygons();
@@ -1711,7 +1460,6 @@ void CEditor::SetMenuSelection(const char *entry)
 
 void CEditor::HideList(bool hide)
 {
-	g_editor_list_panel->force_show();
 	for (int i = 0; i < 100; i++)
 	{
 		if (!hide) m_list_fields[i]->force_show();
@@ -1761,7 +1509,6 @@ void CEditor::ShowProperties(bool on)
 		{
 			CProperty *p = *it;
 			m_prop_names[i]->set_string(p->name);
-			SetDiffuse(m_prop_names[i], 1.0f, 1.0f, 1.0f, 0.7f);
 			m_prop_names[i]->hide(false);
 			char text[100];
 			strcpy(text, "");
@@ -1813,19 +1560,14 @@ void CEditor::ClickMenu(int x, int y)
 		if (strcasecmp(entry, "Select Object") == 0)
 		{
 			HideList(true);
-			ShowPanel(false);
 			m_mode = 0;
-			Trace("Caption %s", entry);
 			SetMenuSelection(entry);
 			if (m_sel_element && m_sel_object) HighlightSelection(false);
-			Trace("MEBTEMP selected object");
 			return;
 		}
-		if (strcasecmp(entry, "(C)reate Object") == 0)
+		if (strcasecmp(entry, "Create Object") == 0)
 		{
-			Trace("MEBTEMP CreateObj");
 			HideList(true);
-			ShowPanel(true);
 			SetMenuSelection(entry);
 			ShowCatalogue();
 			m_mode = 1;
@@ -1838,6 +1580,23 @@ void CEditor::ClickMenu(int x, int y)
 			SetMenuSelection(entry);
 			if (m_sel_element && m_sel_object) HighlightSelection(false);
 			ClearSelection();
+			return;
+		}
+		if (strcasecmp(entry, "Lock Object") == 0)
+		{
+			if (!m_sel_object) return;
+			if (m_sel_object->NameContains("C3DTERRAIN")) return;	// slot 6 (+0x18)
+			HideList(true);
+			SetMenuSelection(entry);
+			m_mode = 3;
+			return;
+		}
+		if (strcasecmp(entry, "UnLock Object") == 0)
+		{
+			if (m_mode != 3) return;
+			HideList(true);
+			SetMenuSelection(entry);
+			m_mode = 0;
 			return;
 		}
 		if (strcasecmp(entry, "Toggles") == 0)
@@ -1873,7 +1632,6 @@ void CEditor::ClickMenu(int x, int y)
 			SetMenuSelection(entry);
 			m_mode = 6;
 			HideList(true);
-			ShowPanel(true);
 			Trace("MEBTEMP Clicked Load Game 2");
 			for (int j = 0; j < LEVELS_MAX; j++)
 			{
@@ -1900,7 +1658,6 @@ void CEditor::ClickMenu(int x, int y)
 		if (strcasecmp(entry, "Databases") == 0)
 		{
 			HideList(true);
-			ShowPanel(true);
 			m_mode = 7;
 			for (int j = 0; j < 100; j++)
 			{
@@ -1914,15 +1671,9 @@ void CEditor::ClickMenu(int x, int y)
 			}
 			return;
 		}
-		int filter = -1;
-		if (strcasecmp(entry, "List All") == 0) filter = 0;
-		else if (strcasecmp(entry, "List 3D") == 0) filter = 1;
-		else if (strcasecmp(entry, "List CutScene") == 0) filter = 2;
-		else if (strcasecmp(entry, "List Pickups") == 0) filter = 3;
-		if (filter >= 0)
+		if (strcasecmp(entry, "List Objects") == 0)
 		{
 			HideList(true);
-			ShowPanel(true);
 			SetMenuSelection(entry);
 			if (m_sel_element && m_sel_object)
 			{
@@ -1930,7 +1681,6 @@ void CEditor::ClickMenu(int x, int y)
 				ClearSelection();
 			}
 			m_mode = 5;
-			m_list_filter = filter;
 			ShowObjectList();
 			return;
 		}
@@ -1958,7 +1708,7 @@ void CEditor::ShowCatalogue(void)
 	}
 }
 
-// --------------------------------------------------------------------------- N2:0x4a9d20
+// --------------------------------------------------------------------------- 0x46f480
 
 void CEditor::ShowObjectList(void)
 {
@@ -1967,9 +1717,6 @@ void CEditor::ShowObjectList(void)
 	for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); it++)
 	{
 		CGameObject *o = *it;
-		if (m_list_filter == 1 && !o->NameContains("C3DANIMATED")) continue;
-		if (m_list_filter == 3 && !o->NameContains("C3DPICKUPITEM")) continue;
-		if (m_list_filter == 2 && !o->NameContains("C3DTRIGGERTYPE") && !o->NameContains("C3DFLYINGCAMERA")) continue;
 		if (shown > 99) return;
 		if (!o || o->m_object_id == ID_TERRAIN || !o->f_00b) continue;
 
@@ -2003,26 +1750,4 @@ void CEditor::ShowObjectList(void)
 		m_list_fields[i]->set_string(text);
 		m_list_fields[i]->hide(true);
 	}
-}
-
-// --------------------------------------------------------------------------- N2:0x4aa6c0
-
-// A copy of src (same class, same properties) in front of the camera.
-void CEditor::PasteObject(CGameObject *src)
-{
-	if (!src) return;
-	OMediaElement *elem = NULL;
-	CGameObject *o = neg::CreateObject(src->m_object_id);
-	src->CopyPropertiesTo(o);
-	o->v197(g_viewport->getx(), g_viewport->gety(), g_viewport->getz());
-	o->v258();
-	ObjectElement(src->m_object_id, &o, &elem);
-	float p[4];
-	CameraPoint(p, 0, 0, 500.0f);
-	if (elem) elem->place(p[0], p[1], p[2]);
-	o->v197(p[0], p[1], p[2]);
-	o->v90(p[0], p[1], p[2]);
-	HideList(true);
-	SetMenuSelection("Select Object");
-	m_mode = 0;
 }
