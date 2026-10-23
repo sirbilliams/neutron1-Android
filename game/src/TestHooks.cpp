@@ -158,6 +158,8 @@ void neg::TestPlayHook(const char *level)
 		if (C3DStartPoint *s = dynamic_cast<C3DStartPoint *>(*i)) s->m_trigger_armed = 0;
 	g_gametype->SetCamera(jim);
 	SetGameMode(5);
+	if (const char *eq = getenv("NEG_TEST_EQUIP"))	// NEG_TEST_EQUIP=<g>: Jimmy holds gadget g (as picked on the PDA)
+		if (*eq) { jim->DeactivateGadget(); jim->ActivateGadget((short)atoi(eq)); }
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
 }
 

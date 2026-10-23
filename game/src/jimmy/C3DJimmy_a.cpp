@@ -428,12 +428,12 @@ void C3DJimmy::v243(float dt)								// 0x426030
 		// (debug log "MEBTEMP calling SHOOT")
 		ev58((char *)"SHOOT", 1);
 		StepSoundOff();
-		Show(MenuShotSprite(f_a18));
+		Hide(MenuShotSprite(f_a18));						// 0x426737: menu +0x4e4 hide(true) for every gadget
 		if (g_4f0588 == 6)
 		{
 			// the baseball launcher: aim with the camera height, throw when the key is let go
 			DrawText(0x11e, (short)(int)((45.0f - f_1e28) * 4.3 + 100.0), 'TIME', "% .2d", (int)f_1e28);	// the aim, beside its bar
-			Show(MenuShotSprite(f_a18));
+			Show(MenuShotSprite(f_a18));					// 0x4267a1: force_show, only the baseball launcher's aim bar
 			if (!f_1e26)
 			{
 				f_1e26 = 1;
