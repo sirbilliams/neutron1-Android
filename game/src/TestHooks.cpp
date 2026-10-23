@@ -74,6 +74,8 @@ static void DumpObjects(void)
 	}
 }
 
+static CGameObject *TestFindTag(char *tag);
+
 void neg::TestPlayHook(const char *level)
 {
 	const char *want = getenv("NEG_TEST_PLAY");
@@ -147,6 +149,13 @@ void neg::TestPlayHook(const char *level)
 				SDL_Log("EXIT %s -> %s @%s needs %s >= %d exact %d", e->m_tag, e->m_level_name, e->m_start_point,
 						e->m_required_task, e->m_required_level, e->m_exact_level);
 	if (getenv("NEG_DUMP_OBJECTS")) DumpObjects();
+	if (const char *fire = getenv("NEG_TEST_FIRE"))		// NEG_TEST_FIRE=<tag>: calls that trigger as a StartPoint does at the level's start
+	{
+		char tag[100];
+		strncpy(tag, fire, sizeof tag - 1); tag[sizeof tag - 1] = 0;
+		if (CGameObject *t = TestFindTag(tag)) { t->v23(Jimmy()); SDL_Log("NEG_TEST_FIRE: %s", fire); }
+		else SDL_Log("NEG_TEST_FIRE: no object %s", fire);
+	}
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
