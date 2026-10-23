@@ -13,7 +13,7 @@
 	virtual void v258(void);												// BG SLOT 257 0x423580 + become the camera
 	virtual void v260(void);												// BG SLOT 259 0x423610 "PostLoad": Goddard, the jeep, gadgets by level, the start point
 	virtual void v261(void);												// BG SLOT 260 0x42afc0 stop + StepSoundOff + "STOP"
-	virtual void v271(void);												// BG SLOT 270 0x42ae00 gadget off, the cursor off, menu blocked
+	virtual void v275(void);												// SLOT 270 0x42ae00 gadget off, the cursor off, menu blocked
 	virtual void v277(void);												// BG SLOT 272 0x425c40 pause: the music and the loops off
 	virtual void v278(void);												// BG SLOT 273 0x425db0 resume: the music and the loops again
 

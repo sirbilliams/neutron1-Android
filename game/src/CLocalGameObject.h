@@ -31,23 +31,12 @@ class CLocalGameObject : public CGameObject
 	virtual void PauseAll(bool pause);										// SLOT 274 0x458db0
 	// Slots Neutron.exe gives CLocalGameObject that the base does nothing with (a bare ret, 0x472970 /
 	// 0x4732a0); the gen tool does not list them because it sees them as inherited. The names are
-	// the port's (Negatron's numbering).
+	// the port's names.
 	virtual void v266(void) {}												// SLOT 264 0x472970 (Humphrey, friends, pickups, rocket: task state written back)
 	virtual void v268(int state) { (void)state; }							// SLOT 266 0x4732a0 "NextState" (ToggleObject)
 	virtual void v275(void) {}												// SLOT 270 0x472970 (Jimmy's: cut scene camera, jeep)
 	virtual void v277(void) {}												// SLOT 272 0x472970 pause
 	virtual void v278(void) {}												// SLOT 273 0x472970 unpause
-	// Negatron-only slots (Neutron.exe's table is 275 slots long; these are the 2002 editor and
-	// game-mode hooks other classes of the port still use):
-	virtual void v269(float a2) { (void)a2; }								// N2SLOT 269
-	virtual void v270(int prev, int mode) { (void)prev; (void)mode; }		// N2SLOT 270 game mode change
-	virtual void v271(void) {}												// N2SLOT 271 refresh (CJimmyGame::RefreshObjects)
-	virtual void v280(void) {}												// N2SLOT 280 editor
-	virtual void v283(unsigned int a2) { (void)a2; }						// N2SLOT 283 editor
-	virtual unsigned char v281(OMediaViewPort *vp, float *pos, float *sx, float *sy);	// N2SLOT 281 N2:0x48f900 project pos (x, y, z) to the screen (centre-relative, y up); 0: off screen
-	virtual void v282(OMediaMatrix_4x4 &m, float *w, float *h) { (void)m; (void)w; (void)h; }	// N2SLOT 282 0x4735e0 (empty) projection matrix for v281 (C3DSpriteType, C3DAnimated: layer's)
-	virtual void WriteState(OMediaStreamOperators &s);						// N2SLOT 284 N2:0x48fbb0
-	virtual void ReadState(OMediaStreamOperators &s);						// N2SLOT 285 N2:0x48fbf0
 
 #include "gen/CLocalGameObject_slots.inc"
 

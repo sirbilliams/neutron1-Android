@@ -732,8 +732,6 @@ void neg::SetGameMode(int mode)
 	if (mode == g_game_mode) return;
 	g_prev_game_mode = g_game_mode;
 	g_game_mode = mode;
-	for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
-		if (*it) static_cast<CLocalGameObject *>(*it)->v270(g_prev_game_mode, mode);
 }
 
 void neg::SetLevelItems(int which)					{ (void)which; }

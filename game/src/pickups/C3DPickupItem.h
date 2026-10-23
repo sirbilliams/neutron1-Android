@@ -54,7 +54,7 @@ class C3DPickupItem : public CPickupType
 	int			m_req_pic_num_amount;	// 0x6f4  "ReqPicNumAmount" (= 1)
 	int			m_initially_active;		// 0x6f8  "InitallyActive" (sic; = 1)
 	char		m_activate_object[100];	// 0x6fc  "ActivateObject" (= "none")
-	int			f_760;					// 0x760  0 (not used)
+	int			f_760;					// 0x760  0: the baseball hits C3DMovingTarget has counted
 	int			m_pass_thru;			// 0x764  "PassThru" (= 1; not used)
 	int			m_show_arrow;			// 0x768  "ShowArrow" (= 1): Jimmy's point cursor over it
 };
