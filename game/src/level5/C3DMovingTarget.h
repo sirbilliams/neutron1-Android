@@ -1,48 +1,34 @@
-/*  C3DMovingTarget ('3TAR') - a shooting-gallery target: a sprite (sprites.omt canvas 98, size
-    100) that glides from the position of "StartObj" towards "DestObj" at "Speed" (100; x 0.6 /
-    0.9 / 1.2 by difficulty), jumping back to the start within 100 of the end. Hit by a water
-    balloon or an energy projectile, both vanish ("vrzap", "pickup blip3") and Jimmy scores
-    "NumPoints" (10); every "HitsRequired" (5) hits on targets of the same "TargetID" (0..2,
-    counters shared by all targets and saved) fire "ActivateObject": an AI trigger, or anything
-    else, which is dropped 10000 below where it is.
-    Reconstructed from Neutron.exe: constructor N2:0x456320 (factory '3TAR', 0x7dc bytes),
-    destructor 0x430530 (deleting thunks 0x430500 / 0x430890 / 0x4308a0). Vtables 0x4a8e74
-    (element, 55 slots: C3DSprite's) / 0x4a8e60 (listener) / 0x4a8a10 (game object at +0xc8:
-    0, 16, 231, 240, 260, 278, 284, 285 overridden; 277 is 0x41ee20, a jump to the empty
-    0x472970) / 0x4a8a00 (streamer). Own members 0x668..0x7d4, vtordisp 0x7d4, streamer 0x7d8.
-
-    Members are named after their 2002 offset from the object start (element view; the
-    CGameObject-family methods of the original see them 0xc8 lower).                          */
+/*  C3DMovingTarget ('3TAR') - a shooting-gallery target (VR07): a sprite (sprites.omt canvas 98, size
+    100) that glides from "StartPos" to "DestPos" at "Speed" (100) and jumps back to the start
+    within 100 of the end. A C3DBaseball that touches it (when it is not waiting to come back) hides
+    it for "RespawnTime" (15 s) and scores "NumPoints" (10); on a C3DTrophy or a C3DPickupItem named
+    "ActivateObject" the hit is counted in that object, and above "HitsRequired" (5) it is shown
+    (NextState 1), its count reset.
+    Reconstructed from Neutron.exe: constructor 0x430220 (factory '3TAR', 0x68c bytes), destructor
+    0x430530 (deleting thunks 0x430500 / 0x430890 / 0x4308a0), AddTouching 0x430570, Process
+    0x4306b0. Vtables 0x4a8a10 (game object at +0xc8: 0, 16, 241 overridden) / 0x4a8a00 (streamer).
+    Members are named after their offset from the object start (element view).             */
 #pragma once
 #include "../C3DSpriteType.h"
 
 class C3DMovingTarget : public C3DSpriteType
 {
 	public:
-	C3DMovingTarget();														// N2:0x456320
+	C3DMovingTarget();														// 0x430220
 	virtual ~C3DMovingTarget();												// 0x430530
 
 	// ---- CGameObject-family overrides
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x456670 hit by a water balloon / energy projectile
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 N2:0x456a10 collides with '3EPR' / '3WBL' only
-	virtual void Process(float dt);											// SLOT 240 N2:0x456a40 glide to DestObj, back to the start
-	virtual void v260(void);												// SLOT 260 N2:0x4568f0 properties loaded: the two ends, the speed
-	virtual void v278(void);												// SLOT 278 N2:0x456d20 the speed for the difficulty
-	virtual void WriteState(OMediaStreamOperators &s);						// SLOT 284 N2:0x456b80 hit counters, position, active
-	virtual void ReadState(OMediaStreamOperators &s);						// SLOT 285 N2:0x456c30
+	virtual void AddTouching(CGameObject *other);							// SLOT 16  0x430570 hit by a baseball
+	virtual void Process(float dt);											// SLOT 241 0x4306b0 glide to DestPos, respawn
 
 	// ---- data members (object offsets)
-	int				f_668;				// 0x668  = 0 (unused)
-	float			f_66c[4];			// 0x66c  the start: StartObj's position
-	float			f_67c[4];			// 0x67c  the end: DestObj's position
-	float			f_68c;				// 0x68c  "Speed" (100)
-	int				f_690;				// 0x690  = 0 (unused)
-	char			f_694[100];			// 0x694  "ActivateObject" ("none")
-	int				f_6f8;				// 0x6f8  "HitsRequired" (5)
-	int				f_6fc;				// 0x6fc  "NumPoints" (10)
-	float			f_700;				// 0x700  = 15 (unused)
-	char			f_704[100];			// 0x704  "StartObj" ("none")
-	char			f_768[100];			// 0x768  "DestObj" ("none")
-	int				f_7cc;				// 0x7cc  "TargetID" (0): which hit counter (g_N2_545fdc / e0 / e4)
-	float			f_7d0;				// 0x7d0  the speed now (Speed for the difficulty)
+	int				f_5e8;				// 0x5e8  = 0 (unused)
+	float			m_start[4];			// 0x5ec  "StartPosX/Y/Z" (0, w 1)
+	float			m_dest[4];			// 0x5fc  "DestPosX/Y/Z" (0, w 1)
+	float			m_speed;			// 0x60c  "Speed" (100)
+	float			m_respawn;			// 0x610  seconds until it is shown again (0)
+	char			m_activate[100];	// 0x614  "ActivateObject" ("none")
+	int				m_hits_required;	// 0x678  "HitsRequired" (5)
+	int				m_num_points;		// 0x67c  "NumPoints" (10)
+	float			m_respawn_time;		// 0x680  "RespawnTime" (15)
 };
