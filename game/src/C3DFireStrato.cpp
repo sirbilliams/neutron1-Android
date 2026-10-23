@@ -1,4 +1,4 @@
-/*  C3DFireStrato - see C3DFireStrato.h. */
+/*  C3DFireStrato - see C3DFireStrato.h. Reconstructed from Neutron.exe 0x4192e0..0x419540. */
 #include "C3DFireStrato.h"
 
 C3DFireStrato::C3DFireStrato()								// 0x4192e0
@@ -10,7 +10,7 @@ C3DFireStrato::C3DFireStrato()								// 0x4192e0
 	C3DAnimated::CreateTexture((char *)"fire.png", 0);
 	C3DAnimated::ApplyTexture(f_590, 0);					// 0x40dd60
 	C3DAnimated::ev58((char *)"DEFAULT", 1);				// 0x40dd90
-	C3DAnimated::ev65(0, 6, 1);								// N2:0x41bdc0 material 0: Src_Alpha, One
+	C3DAnimated::ev65(0, 6, 1);								// 0x40dd40 (called directly): material 0 blend Src_Alpha, One
 	C3DObject::SetObjectID('3FST');							// 0x462220
 	v107(0);
 	v36(0);

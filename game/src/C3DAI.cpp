@@ -186,7 +186,8 @@ C3DAI::C3DAI()												// 0x407a40
 	m_state_locked = 0;
 	m_wander_range = 1500.0f;
 	m_see_through_walls = 0;
-	// (C3DAnimated +0x644 = 1 here: TODO(BG) that member is not known in the tree's C3DAnimated yet)
+	// (C3DAnimated's dword +0x644 = 1 here (-1 in its ctor; C3DAnimated slot 68 shows/hides the collision shape from it):
+	// not in the tree's C3DAnimated yet; C3DAnimated is the core lane's: 0x407dce, slot 68 0x40e3e0)
 	m_anims_disabled = 0;
 	m_flee_time = 0;
 	m_974 = 0;
@@ -197,14 +198,6 @@ C3DAI::C3DAI()												// 0x407a40
 	m_hold_pos.z = 0;
 	m_hold_when_touched = 0;
 	m_990 = 150.0f;
-	f_c64 = 0;												// port: Negatron-only members (TODO(BG))
-	f_1b30 = 0;
-	f_1b34 = 0;
-	f_1b3c = 200.0f;
-	f_1b44 = 0;
-	f_930 = 1.0f;											// port: Negatron's C3DPlayerObject members (TODO(BG))
-	f_934 = -1;
-	strcpy(f_938, g_4f81a8);
 	// (debug log)
 }
 
@@ -984,13 +977,6 @@ unsigned char C3DAI::CanSeeTarget(void)						// 0x409cc0
 	a.y += 200.0f;											// 0x48e5dc: eye height
 	b.y += 200.0f;
 	return !PhysicsLineBlocked(a, b, false);				// 0x47c210
-}
-
-// port: Negatron's animation starters (its slots 117..122): <name> unless it plays already or a
-// cut scene animates us. TODO(BG): remove with the subclasses' Negatron code.
-void C3DAI::PlayAnimN2(char *name)
-{
-	PlayUnlessPlaying(this, name);
 }
 
 namespace neg {

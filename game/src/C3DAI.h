@@ -148,25 +148,4 @@ class C3DAI : public C3DAnimated
 	unsigned char		m_held;					// 0x98c  touched by the camera or Goddard: held at m_hold_pos
 	unsigned char		m_hold_when_touched;	// 0x98d  is held when touched
 	float				m_990;					// 0x990  150
-
-	// ---- Negatron's C3DAI pieces some subclasses still use (TODO(BG): not in Neutron.exe; remove
-	// once the subclasses are ported). The animation starters were slots 117..122 there.
-	void n2_ev117(void)	{ PlayAnimN2(m_anim_fly); }						// N2 ESLOT 117 FLY
-	void n2_ev118(void)	{ PlayAnimN2(m_anim_run); }						// N2 ESLOT 118 RUN
-	void n2_ev119(void)	{ PlayAnimN2(m_anim_sit); }						// N2 ESLOT 119 SIT
-	void n2_ev120(void)	{ PlayAnimN2(m_anim_walk); }					// N2 ESLOT 120 WALK
-	void n2_ev121(void)	{ PlayAnimN2(m_anim_wag); }						// N2 ESLOT 121 WAG
-	void n2_ev122(void)	{ PlayAnimN2(m_anim_walk); }					// N2 ESLOT 122 WALK (its second WALK name)
-	unsigned char n2_FindBestPath(CGameObject *goal) { (void)goal; return 0; }	// N2 ESLOT 133: no path finding in Boy Genius
-	void n2_ev138(unsigned char far) { (void)far; ev73(5); }				// N2 ESLOT 138 flee along a path (none: plain flee)
-	void PlayAnimN2(char *name);
-	unsigned char		f_c64;					// N2 0xc64  bank into turns while airborne
-	float				f_1b30;					// N2 0x1b30 look-around timer
-	unsigned char		f_1b34;					// N2 0x1b34 candidate list valid
-	float				f_1b3c;					// N2 0x1b3c "InitialSpeed" (200)
-	float				f_1b44;					// N2 0x1b44 candidate radius
-	// ---- Negatron's C3DPlayerObject members some subclasses still use (TODO(BG): not in Neutron.exe)
-	float				f_930;					// N2 0x930  1.0
-	int					f_934;					// N2 0x934  -1; != -1 while a cut scene has replaced our animation
-	char				f_938[40];				// N2 0x938  the animation to go back to after the cut scene
 };
