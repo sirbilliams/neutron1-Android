@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel04Games.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "LevelHelpers.h"
 #include <string.h>
 #pragma GCC diagnostic pop
@@ -66,9 +67,9 @@ void CLevel04Game::InitGame(void)											// 0x4544a0
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.24f, 0.56f, 0.75f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 2002 +0xc8
-	g_layer_world->set_far_clip(30000.0f);					// (0x509a30) 2002 +0xc0
+	neg::LodFarClip(g_layer_world, 30000.0f);					// (0x509a30) 2002 +0xc0
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(30000.0f);					// (0x509a3c)
+	neg::LodFarClip(g_layer_world, 30000.0f);					// (0x509a3c)
 	g_layer_world->set_fog_color(c);
 	SetLayerFog(g_layer_clear, false);						// 0x476910(layer, 0x800)
 	SetLayerFog(g_layer_world, false);						// (0x509a3c)
@@ -106,11 +107,11 @@ void CLevel04AGame::InitGame(void)
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.24f, 0.96f, 0.25f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 2002 +0xc8
-	g_layer_world->set_far_clip(10000.0f);					// (0x509a30)
+	neg::LodFarClip(g_layer_world, 10000.0f);					// (0x509a30)
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(10000.0f);					// (0x509a3c)
+	neg::LodFarClip(g_layer_world, 10000.0f);					// (0x509a3c)
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_fog_range(1000.0f, 9600.0f);			// (0x509a3c) 2002 +0xd8 / +0xdc
+	neg::LodFogRange(g_layer_world, 1000.0f, 9600.0f);			// (0x509a3c) 2002 +0xd8 / +0xdc
 	SetLayerFog(g_layer_world, false);						// (0x509a30) 0x476910(layer, 0x800)
 	CaptureMouse(true);
 }
@@ -148,20 +149,20 @@ void CLevel04BGame::Process(float dt)
 	const OMediaFARGBColor c = RGBA(0.1f, 0.56f, 0.1f, 0.0f);
 	const float t = m_sweep_time * 19000.0f;
 	g_layer_clear->set_fog_color(c);						// 0x509a38
-	g_layer_clear->set_fog_range(t + 11000.0f, t + 12000.0f);
+	neg::LodFogRange(g_layer_clear, t + 11000.0f, t + 12000.0f);
 	SetLayerFog(g_layer_clear, true);
-	g_layer_world->set_far_clip(t + 12000.0f);				// 0x509a30
+	neg::LodFarClip(g_layer_world, t + 12000.0f);				// 0x509a30
 	g_layer_world->set_fog_color(c);
 	SetLayerFog(g_layer_world, true);
-	g_layer_world->set_fog_range(500.0f, t + 10000.0f);
-	g_layer_world->set_fog_range(500.0f, t + 10000.0f);		// 0x509a3c
-	g_layer_world->set_far_clip(t + 12000.0f);
+	neg::LodFogRange(g_layer_world, 500.0f, t + 10000.0f);
+	neg::LodFogRange(g_layer_world, 500.0f, t + 10000.0f);		// 0x509a3c
+	neg::LodFarClip(g_layer_world, t + 12000.0f);
 	g_layer_world->set_fog_color(c);
 	if (m_sweep_time >= 3.0f)
 	{
 		m_sweeping = 0;
 		SetLayerFog(g_layer_world, false);					// 0x509a3c, then 0x509a30
-		g_layer_world->set_far_clip(22000.0f);
+		neg::LodFarClip(g_layer_world, 22000.0f);
 	}
 }
 
@@ -234,9 +235,9 @@ void CLevel04CGame::InitGame(void)											// 0x453b10
 	const OMediaFARGBColor c = RGBA(0.031f, 0.34f, 0.58f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 2002 +0xc8
 	g_layer_clear->set_clear_color(c);						// 2002 +0x10c
-	g_layer_world->set_far_clip(30000.0f);					// (0x509a30)
+	neg::LodFarClip(g_layer_world, 30000.0f);					// (0x509a30)
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(30000.0f);					// (0x509a3c)
+	neg::LodFarClip(g_layer_world, 30000.0f);					// (0x509a3c)
 	g_layer_world->set_fog_color(c);
 	SetLayerFog(g_layer_world, false);						// (0x509a3c) 0x476910(layer, 0x800)
 	SetLayerFog(g_layer_world, false);						// (0x509a30)
@@ -278,11 +279,11 @@ void CLevel04DGame::InitGame(void)
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.24f, 0.96f, 0.25f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 2002 +0xc8
-	g_layer_world->set_far_clip(10000.0f);					// (0x509a30)
+	neg::LodFarClip(g_layer_world, 10000.0f);					// (0x509a30)
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(10000.0f);					// (0x509a3c)
+	neg::LodFarClip(g_layer_world, 10000.0f);					// (0x509a3c)
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_fog_range(1000.0f, 9600.0f);			// (0x509a3c) 2002 +0xd8 / +0xdc
+	neg::LodFogRange(g_layer_world, 1000.0f, 9600.0f);			// (0x509a3c) 2002 +0xd8 / +0xdc
 	SetLayerFog(g_layer_world, false);						// (0x509a30) 0x476910(layer, 0x800)
 	CaptureMouse(true);
 }

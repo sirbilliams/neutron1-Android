@@ -328,7 +328,7 @@ public class SetupActivity extends Activity {
         return hdItems(LauncherPages.settings(p.getBoolean(PREF_WIDESCREEN, true), p.getBoolean(PREF_BILLS_UI, true),
                 p.getString(PREF_ENERGY, "a"), p.getString(PREF_HOLO, "a"), CompanionPanel.wanted(p, second), second,
                 boxArtFile().isFile(),
-                backgroundFile().isFile()));
+                backgroundFile().isFile(), p.getString(PREF_LOD, "2")));
     }
 
     // ------------------------------------------------------------------ port: the HD texture pack (HdPack)
@@ -399,6 +399,9 @@ public class SetupActivity extends Activity {
         else if (id.equals("quit")) finish();
         else if (id.equals("wide")) {
             p.edit().putBoolean(PREF_WIDESCREEN, !p.getBoolean(PREF_WIDESCREEN, true)).commit();
+            mMenu.replace(settingsPage());
+        } else if (id.equals("lod")) {
+            p.edit().putString(PREF_LOD, LauncherPages.lodStep(p.getString(PREF_LOD, "2"), mStepDir)).commit();
             mMenu.replace(settingsPage());
         } else if (id.equals("energy")) {
             p.edit().putString(PREF_ENERGY, LauncherPages.energyStep(p.getString(PREF_ENERGY, "a"), mStepDir)).commit();
@@ -702,7 +705,7 @@ public class SetupActivity extends Activity {
         else if (repeat) return true;
         else if (act == 3) {                                    // left / right flip a setting
             LauncherModel.Item it = mMenu.selected();
-            if (it != null && (it.id.equals("wide") || it.id.equals("ui") || it.id.equals("energy") || it.id.equals("holo")
+            if (it != null && (it.id.equals("wide") || it.id.equals("lod") || it.id.equals("ui") || it.id.equals("energy") || it.id.equals("holo")
                     || it.id.equals("panel"))) {
                 mStepDir = k == android.view.KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1;
                 choose();
@@ -1191,6 +1194,8 @@ public class SetupActivity extends Activity {
     static final String PREF_ENERGY = "energy_meter";
     /** port: Bill's UI's gadget hologram, "a" BAY (default) / "b" CONSOLE / "c" WHEEL / "off" (NEG_UI_HOLO). */
     static final String PREF_HOLO = "gadget_hologram";
+    /** port: the draw distance, "1" (the original), "2" (default) or "3" (NegatronActivity passes it as NEG_LOD). */
+    static final String PREF_LOD = "draw_distance";
     /** Left / right on a cycling setting: -1 / 1. */
     private int mStepDir = 1;
 

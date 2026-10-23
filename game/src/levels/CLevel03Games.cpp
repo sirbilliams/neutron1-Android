@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel03Games.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "LevelHelpers.h"
 #pragma GCC diagnostic pop
 
@@ -37,9 +38,9 @@ void CLevel03Game::InitGame(void)											// 0x452c20
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.24f, 0.56f, 0.75f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
-	g_layer_world->set_far_clip(40000.0f);					// 0x509a30
+	neg::LodFarClip(g_layer_world, 40000.0f);					// 0x509a30
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(40000.0f);					// 0x509a3c
+	neg::LodFarClip(g_layer_world, 40000.0f);					// 0x509a3c
 	g_layer_world->set_fog_color(c);
 	SetLayerFog(g_layer_clear, false);						// 0x476910(layer, 0x800)
 	SetLayerFog(g_layer_world, false);						// (0x509a3c)
@@ -93,9 +94,9 @@ static void InitLevel3Night(CJimmyGame *game, const char *omt)
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.14f, 0.16f, 0.75f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
-	g_layer_world->set_far_clip(40000.0f);					// 0x509a30
+	neg::LodFarClip(g_layer_world, 40000.0f);					// 0x509a30
 	g_layer_world->set_fog_color(c);
-	g_layer_world->set_far_clip(40000.0f);					// 0x509a3c
+	neg::LodFarClip(g_layer_world, 40000.0f);					// 0x509a3c
 	g_layer_world->set_fog_color(c);
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
 	CaptureMouse(true);

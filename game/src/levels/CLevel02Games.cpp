@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel02Games.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "LevelHelpers.h"
 #pragma GCC diagnostic pop
 
@@ -62,7 +63,7 @@ void CLevel02Game::InitGame(void)											// 0x4513e0
 	CreateTerrainTinted(r, g, b, a);						// element +0x168
 	ViewportToOrigin();
 	g_layer_clear->set_clear_color(RGBA(0.03f, 0.34f, 0.58f, 0.0f));	// 0x509a38 +0x10c (0x3cfdf3b6, 0x3eae147b, 0x3f147ae1)
-	g_layer_world->set_far_clip(50000.0f);					// 0x509a3c +0xc0
+	neg::LodFarClip(g_layer_world, 50000.0f);					// 0x509a3c +0xc0
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
 	CaptureMouse(true);
 }

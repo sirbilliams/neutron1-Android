@@ -3,6 +3,7 @@
     0x476490 InitViewPort          0x476950 SetDisplayMode                                   */
 
 #include "Game.h"
+#include "port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "OMediaDataBase.h"
 #include "OMedia3DShape.h"
 #include "OMedia3DMaterial.h"
@@ -107,7 +108,7 @@ void CGfx::InitLayers(void)
 		if (!g_windowed)		// second (transparency) pass sorted back to front when fullscreen
 			g_layer_world->set_flags_pass2(g_layer_world->get_flags_pass2() | omlayerf_SortElementBack2Front);
 		g_layer_world->set_clear_color(black);
-		g_layer_world->set_far_clip(g_world_far_clip);
+		neg::LodFarClip(g_layer_world, g_world_far_clip);
 	}
 }
 

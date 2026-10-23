@@ -55,6 +55,9 @@ public class NegatronActivity extends SDLActivity {
             boolean wide = getSharedPreferences(CompanionPanel.PREFS, MODE_PRIVATE)
                     .getBoolean(SetupActivity.PREF_WIDESCREEN, true);
             Os.setenv("NEG_WIDESCREEN", wide ? "1" : "0", true);
+            // port: the draw distance (game/src/port/Lod.h)
+            Os.setenv("NEG_LOD", getSharedPreferences(CompanionPanel.PREFS, MODE_PRIVATE)
+                    .getString(SetupActivity.PREF_LOD, "2"), true);
             // port: the in-game UI (game/src/port/BillsUi.h), the launcher's Settings / the port menu
             boolean bills = getSharedPreferences(CompanionPanel.PREFS, MODE_PRIVATE)
                     .getBoolean(SetupActivity.PREF_BILLS_UI, true);

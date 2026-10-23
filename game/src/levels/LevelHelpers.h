@@ -2,6 +2,7 @@
     repeats them inline in every InitGame (0x44f0e0..0x456050).                              */
 #pragma once
 #include "../CJimmyGame.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "../Mouse.h"
 #include "../C3DSky.h"
 #include "../CGameObject.h"
@@ -68,8 +69,8 @@ static inline void LocalSky(const char *file)
 // 0x509a3c): the far plane, the fog range and colour, and the fog on (flags |= 0x800).
 static inline void WorldFog(OMediaLayer *world, const OMediaFARGBColor &c, float far_clip, float start, float end)
 {
-	world->set_far_clip(far_clip);							// 2002 +0xc0
-	world->set_fog_range(start, end);						// 2002 +0xd8 / +0xdc
+	neg::LodFarClip(world, far_clip);							// 2002 +0xc0
+	neg::LodFogRange(world, start, end);						// 2002 +0xd8 / +0xdc
 	world->set_fog_color(c);								// 2002 +0xc8
 	SetLayerFog(world, true);
 }

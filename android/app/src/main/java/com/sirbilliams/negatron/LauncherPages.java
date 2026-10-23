@@ -299,7 +299,7 @@ final class LauncherPages {
 
     static LauncherModel.Page settings(boolean wide, boolean panel, boolean secondScreen,
             boolean boxArt, boolean background) {
-        return settings(wide, true, "a", "a", panel, secondScreen, boxArt, background);
+        return settings(wide, true, "a", "a", panel, secondScreen, boxArt, background, "2");
     }
 
     /** port: Bill's UI's gadget hologram (NEG_UI_HOLO a / b / c / off, game/src/port/BillsUi.h). */
@@ -336,6 +336,12 @@ final class LauncherPages {
     }
 
     /** The next (dir 1) or previous (dir -1) energy meter after `id`. */
+    /** port: the draw distance setting, "1", "2" or "3" (NEG_LOD). */
+    static String lodStep(String id, int dir) {
+        int v = "1".equals(id) ? 1 : "3".equals(id) ? 3 : 2;
+        return String.valueOf(((v - 1 + dir) % 3 + 3) % 3 + 1);
+    }
+
     static String energyStep(String id, int dir) {
         int n = ENERGY_IDS.length, i = 0;
         for (int k = 0; k < n; k++) if (ENERGY_IDS[k].equals(id)) i = k;
@@ -343,7 +349,7 @@ final class LauncherPages {
     }
 
     static LauncherModel.Page settings(boolean wide, boolean billsUi, String energy, String holo, boolean panel,
-            boolean secondScreen, boolean boxArt, boolean background) {
+            boolean secondScreen, boolean boxArt, boolean background, String lod) {
         LauncherModel.Page p = new LauncherModel.Page("settings", "Settings");
         p.pic = "settings";
         LauncherModel.Item i = p.add("wide", "Widescreen 16:9", "Fill a 16:9 screen; the HUD moves to the edges. Off: the original 4:3.");
@@ -361,6 +367,9 @@ final class LauncherPages {
                     + "(the game's own). Also in game: hold Back.");
             i.value = holoName(holo);
         }
+        i = p.add("lod", "Draw distance", "How far the level is drawn before it fades out (trees and flat "
+                + "pictures pop in less). 1X is the original game, 2X (default) and 3X reach farther.");
+        i.value = lod + "X";
         i = p.add("panel", "Dual screen", (secondScreen ? "" : "No second screen found. ")
                 + "The bottom screen shows the level map, the tasks and the gadgets while you play "
                 + "(on by default when there is a second screen). Also in game: hold Back.");

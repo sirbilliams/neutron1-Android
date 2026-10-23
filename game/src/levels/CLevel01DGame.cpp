@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel01DGame.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "LevelHelpers.h"
 #pragma GCC diagnostic pop
 
@@ -48,7 +49,7 @@ void CLevel01DGame::InitGame(void)											// 0x44fb00
 	InitTerrainDatabase("level1d.omt");						// element +0xe4
 	CreateTerrain();										// element +0xf4 (lit; Negatron's level1d was unlit)
 	ViewportToOrigin();
-	g_layer_world->set_far_clip(120000.0f);					// 0x509a30 +0xc0, then the same through 0x509a3c
+	neg::LodFarClip(g_layer_world, 120000.0f);					// 0x509a30 +0xc0, then the same through 0x509a3c
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
 	CaptureMouse(true);										// 0x46a400
 	// (debug log)

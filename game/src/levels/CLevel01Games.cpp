@@ -2,6 +2,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel01Games.h"
+#include "../port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "LevelHelpers.h"
 #pragma GCC diagnostic pop
 
@@ -66,9 +67,9 @@ void CLevel01Game::InitGame(void)											// 0x450580
 	ViewportToOrigin();
 	const OMediaFARGBColor fog = RGBA(0.24f, 0.56f, 0.75f, 0.0f);
 	g_layer_clear->set_fog_color(fog);						// 0x509a38 +0xc8
-	g_layer_world->set_far_clip(28000.0f);					// 0x509a3c +0xc0
+	neg::LodFarClip(g_layer_world, 28000.0f);					// 0x509a3c +0xc0
 	g_layer_world->set_fog_color(fog);						// +0xc8
-	g_layer_world->set_fog_range(13000.0f, 17000.0f);		// +0xd8 / +0xdc
+	neg::LodFogRange(g_layer_world, 13000.0f, 17000.0f);		// +0xd8 / +0xdc
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
 	CaptureMouse(true);										// 0x46a400
 }
@@ -131,7 +132,7 @@ void CLevel01BGame::InitGame(void)											// 0x44f4b0
 	ViewportToOrigin();
 	// Far plane 10000 (through both world-layer globals), fog off (through 0x509a3c only: the
 	// same layer).
-	g_layer_world->set_far_clip(10000.0f);					// 2002 +0xc0
+	neg::LodFarClip(g_layer_world, 10000.0f);					// 2002 +0xc0
 	SetLayerFog(g_layer_world, false);						// 0x476910(layer, 0x800)
 	CaptureMouse(true);
 }
@@ -161,7 +162,7 @@ void CLevel01CGame::InitGame(void)											// 0x44f7e0
 	InitTerrainDatabase("level1c.omt");
 	CreateTerrainUnLit();									// element +0xf8
 	ViewportToOrigin();
-	g_layer_world->set_far_clip(10000.0f);					// as level 1b: far plane only, fog off
+	neg::LodFarClip(g_layer_world, 10000.0f);					// as level 1b: far plane only, fog off
 	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);
 }
@@ -192,7 +193,7 @@ void CLevel01EGame::InitGame(void)											// 0x44fe30
 	InitTerrainDatabase("level1e.omt");
 	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
-	g_layer_world->set_far_clip(120000.0f);					// 0x509a30, then the same through 0x509a3c
+	neg::LodFarClip(g_layer_world, 120000.0f);					// 0x509a30, then the same through 0x509a3c
 	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);
 }

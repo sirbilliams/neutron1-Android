@@ -7,6 +7,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "TestHooks.h"
+#include "port/Lod.h"		// port: draw distance: far plane / fog range scaled (NEG_LOD), 1 = the exe
 #include "port/StartMode.h"
 #include "port/LauncherArt.h"
 #include "port/AssetView.h"
@@ -1304,8 +1305,8 @@ bool CEditor::ToggleOption(int index)
 		else if (fc < 10000.0f) v = 10000.0f;
 		else if (fc < 35000.0f) v = 35000.0f;
 		else v = 1000.0f;
-		g_layer_world->set_far_clip(v);
-		g_layer_world->set_far_clip(v);
+		neg::LodFarClip(g_layer_world, v);
+		neg::LodFarClip(g_layer_world, v);
 		return true;
 	}
 	if (strcasecmp("Fill Mode", opt) == 0)
