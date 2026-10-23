@@ -14,17 +14,24 @@
     NEG_TEST_GOTO=<s>:<tag>[#n][@dx/dz],...  At <s> seconds of game time put Jimmy where the
                                (n-th) object tagged <tag> is (moved by dx, dz; 60 higher), e.g.
                                to try an exit or a phone booth without steering there.
+    NEG_TEST_POSLOG_TAGS=<tag>,... With POSLOG: also log those objects ("OPOS tag x y z state"); a
+                               hidden object shows "hidden".
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
+    NEG_DUMP_OBJECTS=1         When the level is loaded, log every object: class, tag, position and
+                               its registered properties (name=value), for tracing trigger chains.
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
 #include "TestHooks.h"
 #include "C3DJimmy.h"
+#include "level1/C3DJeep.h"
+#include "C3DAI.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
 #include "objects/C3DStartPoint.h"
 #include "Game.h"
 #include "SaveGame.h"
 #include <stdio.h>
+#include <typeinfo>
 #include <SDL.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +42,29 @@ const char *neg::TestPlayLevel(void)
 	const char *want = getenv("NEG_TEST_PLAY");
 	if (!want || !*want || strlen(want) >= 64) return NULL;	// (m_level_name holds 80)
 	return want;
+}
+
+static void DumpObjects(void)
+{
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+	{
+		CGameObject *o = *i;
+		if (!o) continue;
+		float p[4];
+		o->v195(p);
+		char line[1500];
+		int n = snprintf(line, sizeof line, "OBJ %s tag=%s pos=%.0f,%.0f,%.0f", typeid(*o).name(), o->m_tag, p[0], p[1], p[2]);
+		for (std::list<CProperty *>::iterator q = o->m_properties.begin(); q != o->m_properties.end() && n < 1300; ++q)
+		{
+			CProperty *pr = *q;
+			if (!pr || !pr->data) continue;
+			if (pr->type == PROP_ALPHA) n += snprintf(line + n, sizeof line - n, " %s=%s", pr->name, (char *)pr->data);
+			else if (pr->type == PROP_FLOAT) n += snprintf(line + n, sizeof line - n, " %s=%g", pr->name, *(float *)pr->data);
+			else if (pr->type == PROP_BOOL) n += snprintf(line + n, sizeof line - n, " %s=%d", pr->name, *(unsigned char *)pr->data);
+			else if (pr->type == PROP_LONG) n += snprintf(line + n, sizeof line - n, " %s=%d", pr->name, *(int *)pr->data);
+		}
+		SDL_Log("%s", line);
+	}
 }
 
 void neg::TestPlayHook(const char *level)
@@ -67,6 +97,7 @@ void neg::TestPlayHook(const char *level)
 				while (p[1] >= '0' && p[1] <= '9') p++;
 			}
 	}
+	if (getenv("NEG_DUMP_OBJECTS")) DumpObjects();
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
@@ -119,6 +150,8 @@ static void TestGoto(CGameObject *o, float dt)
 				float d[4];
 				dest->v195(d);
 				o->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// riding the scooter: it goes too
+					if (jm->f_a30 && jm->f_a30->f_a84 == jm) jm->f_a30->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				SDL_Log("NEG_TEST_GOTO: Jimmy to %s (%.0f %.0f %.0f)", tag, d[0] + dx, d[1] + 60.0f, d[2] + dz);
 			}
 		}
@@ -140,6 +173,24 @@ void neg::TestPosLog(CGameObject *o, float dt)
 	o->v201(r);
 	o->v174(v);
 	C3DAnimated *a = dynamic_cast<C3DAnimated *>(o);
+	if (const char *tags = getenv("NEG_TEST_POSLOG_TAGS"))
+		for (const char *q = tags; *q; )
+		{
+			const char *e = strchr(q, ',');
+			if (!e) e = q + strlen(q);
+			char tag[100];
+			size_t n = (size_t)(e - q) < sizeof tag - 1 ? (size_t)(e - q) : sizeof tag - 1;
+			memcpy(tag, q, n); tag[n] = 0;
+			if (CGameObject *t = TestFindTag(tag))
+			{
+				float tp[4];
+				t->v195(tp);
+				C3DAI *ai = dynamic_cast<C3DAI *>(t);
+				SDL_Log("OPOS %s %.0f %.0f %.0f state %d scene %d", tag, tp[0], tp[1], tp[2], ai ? ai->m_state : -1, GetTaskState("SCENE"));
+			}
+			else SDL_Log("OPOS %s none", tag);
+			q = *e ? e + 1 : e;
+		}
 	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
 		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
 }
