@@ -210,6 +210,8 @@ static void TestGoto(CGameObject *o, float dt)
 void neg::TestPosLog(CGameObject *o, float dt)
 {
 	if (o) TestGoto(o, dt);
+	static const char *answer = getenv("NEG_TEST_CONFIRM");		// "y" or "n": answers the yes/no boxes
+	if (answer && *answer) g_keys[(*answer == 'y' || *answer == 'Y') ? 'Y' : 'N'] = ConfirmOpen() ? 1 : 0;
 	static float every = -1, t = 0;
 	if (every < 0) { const char *e = getenv("NEG_TEST_POSLOG"); every = e && *e ? (float)atof(e) : 0; }
 	if (every <= 0 || !o) return;
