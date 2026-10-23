@@ -40,7 +40,7 @@ class CInput
 {
 	public:
 	CInput();												// 0x478200
-	virtual ~CInput();										// N2:0x4b3370 (slot 0, deleting destructor)
+	virtual ~CInput();										// 0x478320 (slot 0, deleting destructor)
 	virtual void CreateInputEngine(void);					// 0x478350 (slot 1)
 	virtual void Release(void);								// 0x478370 (slot 2)
 };
@@ -67,13 +67,12 @@ OMediaCanvas *LoadCanvasID(OMediaDataBase *db, int id);		// 0x477890
 extern float g_text_rgb[3], g_text_alpha, g_text_width;		// 0x4f4ed4 / 0x4f4ed4 / 0x509800
 extern int   g_text_center;									// 0x509804
 void ClearText(void);										// 0x468600
-void DrawText(short x, short y, int font, const char *fmt, ...);	// N2:0x4a0f60  font: 'SMAL' 'MED' 'LARG' 'BIG' 'TIME'
+void DrawText(short x, short y, int font, const char *fmt, ...);	// 0x468660  font: 'SMAL' 'MED' 'LARG' 'BIG' 'TIME'
 OMediaCanvasElement *PlaceGlyph(short x, short y, OMediaCanvas *c);	// 0x4689f0
 
 void DeleteAllObjects(void);								// 0x4736c0
-void OpenDebugLog(void);									// N2:0x4b3ac0
 void SetWindowTitle(void);									// 0x45e770
-bool CheckCD(void);											// N2:0x496200
+bool CheckCD(void);											// 0x45e860
 void LoadNewLevel(unsigned int which);						// omt_main / AWEMSG_LOAD
 void SDLKeyToVK(int sdl_scancode, bool down);				// SDL replacement for WM_KEYDOWN/UP
 

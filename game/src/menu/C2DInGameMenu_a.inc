@@ -48,15 +48,6 @@
 	void v316(bool show)						{ v301(show); }
 	int  GetCurrentGadget()						{ return f_4d8; }
 	unsigned char IsCurrentGadget(int g)		{ return f_4d8 == g; }
-	void LoadOptions(const char *)				{}	// port: Negatron's dat\options.opt; Boy Genius has none
-	void v345(int)								{}	// port: Negatron's PDA zoom; Boy Genius has none
-	// port: Negatron members its callers still touch (help text, PDA state, radar picture); not
-	// used by Boy Genius's code. TODO(BG): remove with those callers.
-	int					f_594;
-	float				f_598;
-	unsigned char		f_59c;
-	OMediaCanvasElement	*f_5b0;
-	short				f_4ce;
 
 	// ---- own members (0x4b4..0x51c)
 	// FIELD 0x4b4 8

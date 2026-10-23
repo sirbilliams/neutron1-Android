@@ -58,7 +58,8 @@ void Save(int id, const std::string &name)
 	s_done.insert(name);
 	const std::string file = s_dir + "/" + name;
 	if (Exists(file)) return;
-	OMediaCanvas *c = neg::LoadCanvasID(g_screens_db, id);
+	if (!neg::g_menu || !neg::g_menu->f_4b4) return;
+	OMediaCanvas *c = neg::LoadCanvasID(neg::g_menu->f_4b4, id);
 	if (!c || c->get_width() < 64 || c->get_height() < 64) return;
 	try
 	{
@@ -103,7 +104,7 @@ void neg::LauncherArtTick(void)
 			mkdir(s_dir.c_str(), 0755);
 		}
 	}
-	if (s_dir.empty() || !g_screens_db || !g_menu) return;
+	if (s_dir.empty() || !g_menu || !g_menu->f_4b4) return;
 	if (!s_fixed_done)
 	{
 		s_fixed_done = true;

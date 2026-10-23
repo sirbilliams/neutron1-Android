@@ -85,7 +85,7 @@ class CGameType : public OMediaElement, public CLocalGameObject
 	virtual void ev77(int checkpoint, OMedia3DPolygon *poly, OMedia3DShape *shape)	// ESLOT 77 0x4735e0 +0x134 (empty)
 		{ (void)checkpoint; (void)poly; (void)shape; }
 	// ESLOT 78 0x475cc0 +0x138 (empty here): C3DObject::Process (0x462520 area) reports the material
-	// (and its texture) of the polygon an object stands on; CJimmyGame N2:0x484740 reacts to it.
+	// (and its texture) of the polygon an object stands on; CJimmyGame (0x44e030) reacts to it.
 	virtual void TouchSurface(CGameObject *o, OMedia3DMaterial *mat, OMediaCanvas *tex, float dt)
 		{ (void)o; (void)mat; (void)tex; (void)dt; }
 	// PhysicsAddTerrain asks for each terrain polygon: true keeps it out of the collision grid

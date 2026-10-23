@@ -817,7 +817,7 @@ void C3DJimmy::ShrinkRay(float dt)							// 0x426e40
 		{
 			if (C3DAnimated *h = dynamic_cast<C3DAnimated *>(o)) h->ev58((char *)"RUNSHRUNK", 1);	// (and its +0x760 name)
 		}
-		PlayGameSound3DNoDoppler(this, -1, std::string("zap"), false);	// 0x458a40
+		PlayGameSound3D(this, -1, std::string("zap"), false);	// 0x458a40
 		if (f_a1c && f_a1c->v133())
 		{
 			f_a1c->ev87(o, 5.0f);							// element +0x15c: Goddard barks at it

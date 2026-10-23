@@ -10,9 +10,6 @@
 #include "../Globals.h"
 #include "../SaveGame.h"
 #include "../TextureAnims.h"
-// TODO(BG): #include "../C3DASEObj.h" (Negatron-only class, deleted)
-// TODO(BG): #include "../C3DGrannyObj.h" (Negatron-only class, deleted)
-#include "../../granny/granny_compat.h"
 #include "../gen/globals.h"
 #include "OMediaViewPort.h"
 #include "OMediaLayer.h"
@@ -126,9 +123,9 @@ void Text(short x, short y, const char *s)
 
 // --------------------------------------------------------------------------- the model viewer
 // NEG_ASSET_VIEW=models: the game's own loaders show one model at a time on an empty stage (the
-// small Level3B.gam level, every one of its objects hidden, no sky, no fog): .grn models as a
-// C3DGrannyObj makes them (InitModel: the bind pose), .ase as a C3DASEObj does (its first frame;
-// the texture named by the file's *BITMAP, from png\), and the 3D shapes of the .omt databases.
+// small Level3B.gam level, every one of its objects hidden, no sky, no fog): the 3D shapes of the
+// .omt databases (and, once the game's ASE loader is reconstructed, the .ase models: the texture
+// named by the file's *BITMAP, from png\).
 
 struct Model { std::string file; char kind; };	// kind: 'g' .grn, 'a' .ase, 'o' .omt
 bool				s_models_mode = false;
@@ -272,7 +269,7 @@ void Load(int i)
 	{
 		if (m.kind == 'g' || m.kind == 'a')
 		{
-			// TODO(BG): Negatron's .grn (C3DGrannyObj) / .ase (C3DASEObj) viewers; those classes are gone
+			// TODO(BG): the .ase viewer (needs the game's ASE loader, C3DAnimated::CreateAnim); Boy Genius has no .grn
 			strcpy(s_info, "NOT SUPPORTED");
 		}
 		else
@@ -402,11 +399,6 @@ bool ModelsFrame(float dt)
 	float d[3];
 	CameraDir(d, 0, 0, 1);
 	g_viewport->place(s_center[0] - d[0] * s_dist, s_center[1] - d[1] * s_dist, s_center[2] - d[2] * s_dist);
-	if (s_obj && s_models[s_mi].kind == 'g')			// a granny model: its pose (the editor's frame)
-	{
-		if (g_granny) GrannyAdvanceTime(g_granny, (double)dt);
-		s_obj->v242(dt);
-	}
 	UpdateTextureAnims(dt);
 
 	// the overlay: the list around the selection, the model, the controls

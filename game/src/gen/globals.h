@@ -551,7 +551,8 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_jimmy (*(CGameObject* *)&neg::g_ptrs[0x30f6])
 #define g_4f83dc (*(char *)&neg::g_data[0xc3dc])
 #define g_4f83e0 (*(char *)&neg::g_data[0xc3e0])
-#define g_4f83e4 (*(char *)&neg::g_data[0xc3e4])
+#define g_4f83e4 (*(bool *)&neg::g_data[0xc3e4])
+#define g_cutscene_skipped (*(bool *)&neg::g_data[0xc3e4])
 #define g_4f83f0 (*(unsigned char *)&neg::g_data[0xc3f0])
 #define g_4f83f4 (neg::g_ptrs[0x30fd])		// pointer
 #define g_4f83f8 (*(unsigned int *)&neg::g_data[0xc3f8])
@@ -920,4 +921,3 @@ bool LoadExeData(char *why, int why_size);	// ExeData.cpp: fill g_data/g_ptrs fr
 #define g_69760c (*(int *)&neg::g_data[0x1ab60c])
 #define g_697610 (neg::g_ptrs[0x6ad84])		// pointer
 #define g_697614 (neg::g_ptrs[0x6ad85])		// pointer
-#include "n2globals.h"	// Negatron globals not located yet (tools/decomp/n2globals.py)

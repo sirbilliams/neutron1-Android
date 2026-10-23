@@ -51,17 +51,15 @@ void InitSoundEngine(void);																	// 0x47cf60
 int  PlaySoundOnChannel(int channel, OMediaSound *sound, bool loop);						// 0x47d060
 int  PlaySound(int channel, const std::string &name, bool loop);							// 0x47d420 (0x47d1f0)
 int  PlaySoundIndex(int channel, int id, bool loop);										// 0x47d390
-void LoadSound(const std::string &name);													// N2:0x4b82f0
 int  PlaySound3D(CGameObject *o, int channel, const std::string &name, bool loop);			// 0x47d510
 int  PlaySound3DIndex(CGameObject *o, int channel, int id, bool loop);						// 0x47d640
-int  PlaySound3DNoDoppler(CGameObject *o, int channel, const std::string &name, bool loop);	// N2:0x4b8720
 int  PlayMusic(OMediaDataBase *db, int channel, int id, bool loop);						// 0x47d710
 
 // Channels
 void StopChannel(int channel, bool release);												// 0x47d7a0
 void StopAllChannels(void);																	// 0x47d850
 bool IsChannelPlaying(int channel);															// 0x47d890
-void UpdateSounds(void);																	// N2:0x4b8a30 (once per frame)
+void UpdateSounds(void);																	// 0x47d8f0 (once per frame)
 void UpdateSound3D(int channel);															// 0x47d9d0
 void StopObjectSounds(CGameObject *o);														// 0x47dc20
 void SetChannelVolume(short channel, int volume);											// 0x47dc80 (volume 0..10)
@@ -70,8 +68,7 @@ void SetChannelVolume(short channel, int volume);											// 0x47dc80 (volume 
 int  PlayGameSoundIndex(int channel, int id, bool loop);									// 0x458980
 int  PlayGameSound3DIndex(CGameObject *o, int channel, int id, bool loop);				// 0x4589c0
 void StopGameSound(int channel, bool release);												// 0x458a00 (only needs g_sfx_db_loaded)
-int  PlayGameSound3DNoDoppler(CGameObject *o, int channel, const std::string &name, bool loop);	// 0x458a40
-int  PlayGameSound3D(CGameObject *o, int channel, const std::string &name, bool loop);	// N2:0x48f200
+int  PlayGameSound3D(CGameObject *o, int channel, const std::string &name, bool loop);	// 0x458a40
 int  PlayGameSound(int channel, const std::string &name, bool loop);						// 0x458b40
 
 }

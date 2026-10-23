@@ -120,7 +120,6 @@ void neg::StartModeLevelLoaded(void)
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 		if (C3DStartPoint *sp = dynamic_cast<C3DStartPoint *>(*i)) sp->m_trigger_armed = 0;
 	g_gametype->SetCamera(jim);
-	SetGameMode(5);
 }
 
 void neg::StartModeFrame(void)

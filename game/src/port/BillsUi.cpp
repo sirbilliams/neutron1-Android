@@ -4,6 +4,7 @@
 #include "Widescreen.h"
 #include "../Game.h"
 #include "../Globals.h"
+#include "PortState.h"
 #include "../CEditor.h"
 #include "../C2DInGameMenu.h"
 #include "../CanvasWrapper.h"
@@ -228,18 +229,13 @@ static Deco s_sonar_plate;
 // --------------------------------------------------------------------------- 1. the sonar readout
 
 // C3DRadar::UpdateBlips: the range readout ("2X" .. "5X"), centred under the radar disc on a small
-// plate. The disc is the menu's sprite f_5b0 (at (490, 10), moved to the right edge in widescreen).
+// plate. The disc was Negatron's radar sprite (at (490, 10), moved to the right edge in widescreen).
 void BillsSonarReadout(int range)
 {
 	char text[16];
 	snprintf(text, sizeof text, "%dX", range);
 	const float sx = g_screen_w * (1.0f / 640.0f), sy = g_screen_h * (1.0f / 480.0f);
 	float cx = 550.0f, bottom = 135.0f;
-	if (g_menu && g_menu->f_5b0 && g_menu->f_5b0->get_width() > 0)
-	{
-		cx = 490.0f + g_menu->f_5b0->get_width() / sx * 0.5f;
-		bottom = 10.0f + g_menu->f_5b0->get_height() / sy;
-	}
 	cx += WideMargin();
 	const int th = FontHeight('MED'), tw = TextWidth('MED', text);
 	const float pw = (float)(tw > 30 ? tw : 30) + 16.0f, ph = (float)th + 8.0f;
@@ -1048,7 +1044,7 @@ static void MirrorFrame(bool on)
 		const int top = (int)(g_screen_h * (4.0f / 480.0f));
 		if (b.top != top) { b.bottom += top - b.top; b.top = top; s_mirror->setbounds(&b); }
 	}
-	if (!on || !s_mirror || g_game_mode != 5)
+	if (!on || !s_mirror || PortGameMode() != 5)
 	{
 		DecoHide(s_mirror_plate);
 		return;
@@ -1333,7 +1329,7 @@ static void HoloFrame(float dt, bool on)
 {
 	const int design = on ? HoloDesign() : 0;
 	OMediaCanvasElementWrapper *icon = (g_help_index >= 0 && g_help_index < 14) ? g_help_icons[g_help_index] : NULL;
-	const bool playing = g_game_mode == 5 && g_menu && g_menu->f_594 == 0;
+	const bool playing = PortGameMode() == 5 && g_menu;
 	if (design == 0 || !playing)
 	{
 		HoloHideAll();
@@ -1488,13 +1484,13 @@ void BillsUiFrame(float dt)
 	if (!on || s_frame - s_hb_frame > 2) DecoHide(s_hb_halo);
 	if (!on) s_hb = -1.0f;
 	if (!on || s_frame - s_energy_frame > 2) DecoHide(s_energy);
-	if (!on && s_orig_hidden && (g_game_mode == 5 || g_game_mode == 6)) ShowOriginalBar(true);
-	ScopeFrame(dt, on && g_game_mode == 4 && g_menu && g_menu->f_4ce == 3);
+	if (!on && s_orig_hidden && PortGameMode() == 5) ShowOriginalBar(true);
+	ScopeFrame(dt, on && PortGameMode() == 4 && g_menu && g_menu->v298() == 3);
 	MirrorFrame(on);
 	HoloFrame(dt, on);
 	if (g_help_index >= 0 && g_help_index < 14) HelpPieceFrame(s_help[0], &g_elt_544908[g_help_index], WIDE_LEFT, on);
 	HelpPieceFrame(s_help[1], g_help_menu_elt, WIDE_RIGHT, on);
-	if (!on || (g_game_mode != 5 && g_game_mode != 6))
+	if (!on || PortGameMode() != 5)
 	{
 		DecoHide(s_score_halo);
 		if (!on) s_score_shown = -1.0;
