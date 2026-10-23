@@ -246,13 +246,17 @@ void neg::TestPosLog(CGameObject *o, float dt)
 		}
 	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
 		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
-	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where that object is
-		if (CGameObject *wo = TestFindTag((char *)w))
-		{
-			float q[4];
-			wo->v195(q);
-			SDL_Log("WATCH %s %.1f %.1f %.1f", w, q[0], q[1], q[2]);
-		}
+	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where those objects are (all with that tag)
+	{
+		int k = 0;
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (*i && strcasecmp((*i)->m_tag, w) == 0)
+			{
+				float q[4];
+				(*i)->v195(q);
+				SDL_Log("WATCH %s#%d %.1f %.1f %.1f", w, ++k, q[0], q[1], q[2]);
+			}
+	}
 	if (g_camera && g_camera != o)						// riding something: where the camera's object is
 	{
 		g_camera->v195(p);
