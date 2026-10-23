@@ -41,7 +41,7 @@ class C3DAnimated : public C3DObject
 {
 	public:
 	C3DAnimated();															// 0x40d110
-	virtual ~C3DAnimated();													// N2:0x41a9f0
+	virtual ~C3DAnimated();													// 0x40d300
 
 	// ---- element-family game slots (vtable offset = slot * 4)
 	virtual void CreateAnim(char *name, char *file);						// ESLOT 54 0x40d4a0 "Anim3D_CreateAnim"

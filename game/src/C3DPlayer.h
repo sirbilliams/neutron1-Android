@@ -21,14 +21,10 @@
     Climbing: AnimEnded / PlayAnim("FENCE" / "LADDER") hold the player (g_4f83e0) for f_868
     seconds while the camera rises for f_888 seconds; Process then puts him at the top (f_838).
 
-    The BG slots 72..92 have names here instead of ev<n>: C3DAnimated still uses Negatron's
-    slot numbers for its ev<n> names (ev72..ev93 are its own slots), so ev<n> names would clash.
-    Members are f_<offset in the original object> (CGameObject-family code sees them at
-    offset - 0xc0).
-
-    Also here (exported, used by other classes): Negatron's key-list tests and chase-camera
-    helpers that the not yet reconstructed users still call (C3DFlyingObject, C3DRocketShip,
-    C3DJeep, C3DGoddard, C3DMultiCutSceneCamera).                                            */
+    The BG slots 72..92 have names here instead of ev<n> (C3DAnimated's ev<n> names keep
+    Negatron's numbering). Members are f_<offset in the original object> (CGameObject-family code
+    sees them at offset - 0xc0).
+    Left: the Negatron-only "ev103"/"ev104" aliases for the menu (C2DInGameMenu_b / _c).         */
 #pragma once
 #include "C3DAnimated.h"
 #include "OMedia3DPoint.h"

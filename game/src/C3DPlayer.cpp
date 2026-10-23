@@ -193,7 +193,7 @@ C3DPlayer::C3DPlayer()										// 0x437280
 	f_6e7 = 0;
 	f_7fc = 1;
 	f_710 = 0;
-	// (element short 0x580 = 0: CGameObject +0x4c0 of Neutron.exe; TODO(BG) - no member in our CGameObject)
+	f_594 = 0;												// element short +0x580: C3DAnimated's detail level (HI)
 	f_7c4 = 0;
 	f_7f4 = 0;
 	f_800 = 0;
