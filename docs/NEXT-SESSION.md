@@ -41,8 +41,11 @@ the whole briefing: read it, then `docs/HANDOFF.md` (status, rules, setup detail
 1. Attach and clone: `add_repo` sirbilliams/neutron1-android (push), sirbilliams/negatron-gamefiles
    (read), sirbilliams/neutron2-android (read); clone each (depth 1 is fine). In neutron1-android run
    `git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' && git fetch origin`
-   (otherwise agents' backup branches aren't fetched).
-2. Packages: `apt-get install -y libsdl2-dev zlib1g-dev xvfb x11-utils imagemagick cmake gdb` and
+   (otherwise agents' backup branches aren't fetched). The default branch is `backup/seed`: work from
+   `origin/main` (`git checkout -b backup/integ origin/main`; the stop hook wants the local merge
+   branch to have a same-named remote twin). Agent worktrees need
+   `ln -s <main checkout>/android/app/jni/{SDL,gl4es,unshield}` (excluded in .git/info/exclude).
+2. Packages: `apt-get update && apt-get install -y libsdl2-dev zlib1g-dev xvfb x11-utils imagemagick cmake gdb` and
    `pip install --break-system-packages pefile capstone unicorn r2pipe pycdlib`.
 3. Decomp inputs: `mkdir -p /home/claude/decomp1 && tar xzf
    negatron-gamefiles/decomp/bg-decomp-inputs.tar.gz -C /home/claude/decomp1` (Negatron's set into
@@ -102,13 +105,14 @@ the whole briefing: read it, then `docs/HANDOFF.md` (status, rules, setup detail
   Powerplant, Area 51, Rocket Maze, Yokian Ship.
 
 ## 8. Where to start
-1. Ask Bill for his Thor notes on the latest APK (photos + Share log).
-2. Game plan step 1 (HANDOFF "Game plan"): C3DGoddard from Neutron.exe; the lab's black ball and
-   the hidden scooter; check `CGameObject::v197` sets z; gadgets (bubble gun C3DBubble, baseball
-   C3DBaseball, grappling hook swing/fire, shrink ray beam); merry-go-round, SUV slot 94.
-   Suggested lanes (Sonnet): "Goddard", "gadgets", and one Opus/Sonnet lane for core clean-up
-   (C3DObject, level game types list in HANDOFF, gen/CLocalGameObject_*).
-3. Then the story levels in order (step 3 of the plan), one lane per level group.
+State (end of session 2, Oct 22): every class exists, all 35 levels load and exit clean; first stretch,
+School, Downtown, Retroland and the ending play to their exits. HANDOFF "Status ... session 2" has the
+details and open items; its "Game plan ... session 2" is the order of work.
+1. Ask Bill for his Thor notes on the latest APK (main 0e3554d; photos + Share log).
+2. Late story levels play-through (level1e, level5*, level6*, Level7; agent y's survey in HANDOFF).
+3. Core (one Opus lane): CJimmyGame, C3DAnimated, C3DPlayer (agent z's findings in HANDOFF), then
+   InterfaceElement, CEditor, Input. Track the N2:/g_N2_/TODO(BG)/n2_ev/N2SLOT counts.
+4. Then VR01-08, a full new-game run to the credits, step 4 features, step 5 release.
 4. Merge workflow: agents push `backup/agent-<x>`; you merge into local `integ`, re-run cmake if files
    were added, `make -j2`, smoke test (new game, Level1, level1b), push `integ:main` and
    `integ:backup/integ`, watch CI, download the APK from release `latest` with the REST API, send it.

@@ -81,7 +81,74 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   (data macros, which don't compile until resolved); `retarget.tsv` lists every unmapped or
   not-identical match (`check func~0.80` = the BG function is only 80% similar: port the differences).
 
-## Status (Oct 22, end of session 1) - READ THIS FIRST
+## Status (Oct 22, end of session 2) - READ THIS FIRST
+
+- **main = every class exists; all 35 .gam files load and reach CLEAN EXIT on desktop** (the only TODO
+  left in any log is 0x477cb0, the frame-rate overlay). Last APK sent to Bill: main 0e3554d (ASan-clean
+  on 13 levels); Bill's Thor report on the session-1 APK: "ran great, no complaints".
+- **Done this session (lanes g..x, all merged):** C3DGoddard; gadgets (C3DBubble, C3DBaseball + pickups,
+  grappling hook swing/fire, shrink ray verified); PDA gadget select (C2DInGameMenu bridges);
+  merry-go-round, SUV (slot 94 = C3DJimmy::DeactivateGadget 0x427ff0); v197 sets z (no change);
+  C3DObject, C3DAIOmtObj, C3DStartPoint, C3DSwingDoor, CLoadLevel; C3DRocketShip, C3DJeep; C3DSprite,
+  C3DTriggerType (CallNextTrigger = slot 53, name only); C3DFlyingObject, C3DVehicle, C3DCar, C3DMine,
+  C3DRock; C3DJimmy (only C3DSUB 0x422e60 / C3DTANK 0x423030 touch TODOs left: classes not in BG's
+  levels); all CLevel*Game types (Negatron-only types removed; gen/CLocalGameObject_* regenerated);
+  every missing class of School, Downtown, Retroland, Yokian/Area 51 levels; ending bonus screen.
+- **Played to exits (mostly by teleporting between triggers, not real input):** level1d -> level1b ->
+  Level1 -> level1c; School (Level2 kitty, book -> rocket -> level1e; races level2a/Level2b to the
+  finish); Downtown (level4 Cindy/Sheen/kitty/subway/tunnel, level4a Hugh, level4b/4c power plant,
+  level4d ending -> bonus -> credits level1f -> NewGame.tsk); Retroland (Level3 chain + 4 exits, Camel,
+  Sumo/Octapuke/Pirate ticket rides). Level3B/Level3E: their .omt is not on the retail CD (no terrain, no
+  exit leads there): not a bug.
+- **Open:**
+  - Late story levels (agent y surveyed, committed nothing): Level1F plays through (ships -> zoomout ->
+    teleportjim -> restartgame -> NewGame.tsk); level1e rockspace2 chain loads level2 @rockstart
+    (yoke2/4/5 entries -> gotoschool/gomidway/goretro untried); level5 at SCENE 162: invispart ->
+    SCENE 168, the invisibility pickup fires invisibility1 -> gogoddard (170 untested). Not run:
+    level5a, Level5b, level6, level6a, Level7 beyond a clean start; turret missiles unchecked. Exit chain
+    (NEG_TEST_EXITS): Level7 goinghome2 (SCENE 200) -> level5 @escape; level5 (>=500) -> level5a @cave
+    -> Level5b @cave; Level5b teleport (>=530) -> level6 @phonebooth -> level6a; candy -> level4d.
+    Trigger-only pickups fire on pickup: NEG_TEST_GOTO the pickup tag, not the AITrigger. Left: C3DAI
+    N2/TODO(BG) (C3DAI.cpp 189-205, 990; C3DAI.h 152, 168), C3DFireStrato N2:0x41bdc0.
+  - The Opus core lane (agent z) committed nothing;
+    its findings: CJimmyGame in Neutron.exe defines only element slots 45, 46, 57, 61, 62, 76, 85-91 and
+    CLocalGameObject-family slots 10, 241, 259 (0x44d2b0..0x44ef20), all already in the port; the
+    Negatron-only members (v242, v277/v278, WriteState/ReadState, OnActivate/OnDeactivate, slots
+    94-108: UpdateTimers, music, StopwatchEnd ...) have no BG counterpart. SetFog (N2 0x484520) has no
+    direct callers (levels set fog inline via WorldFog), only ReadState (Negatron code). Fix next:
+    InitGame (0x44d3d0) must not set m_stopwatch_channel / m_reactor_touched; Process (0x44df80) reads
+    the sky at +0x524/+0x528. C3DAnimated unmapped 0x41a9f0..0x41e960 (+ g_545f30, g_545ef8),
+    C3DPlayer 0x460380..0x465ad0 (+ g_54a448, g_545d9c). `tools/decomp/vt.py <Class> <Base>` lists a
+    class's vtable overrides.
+  - Biggest remaining `N2:` files: CJimmyGame, InterfaceElement (35), C3DAnimated, CEditor (23),
+    Input (17), C3DMovingTarget (15), C3DPlayer (15). Counts on main: N2: 426 (899 at session start),
+    g_N2_ 75, TODO(BG) 36, n2_ev 54, N2SLOT 10; 137/206 .cpp "Reconstructed from Neutron.exe".
+  - Not verified in play: Level3C 9-button chain n01..n09 -> sunticket (C3DButton 0x411bb0, needs a
+    real walk); laser trigger touch (0x42c410); scooter steered by hand in the races; Level2 SCENE 162 ->
+    168 continues in level5 (INVISPART 0x40caa0), followed no further; VR01-08 not played.
+  - C3DSpriteType ctor sets canvas flags 1, exe 3 (v260 sets 3 on load). C3DVehicle::ev110 (0x465e00)
+    TODO, never runs. Ferris chair offsets (432) not checked in motion.
+  - Signing secrets still missing (APK uses a one-off key).
+- **Session-2 process notes:** clone with `git clone` gives `backup/seed` (the repo's default branch):
+  check out `origin/main`. `apt-get update` before the package install. The local merge branch is named
+  `backup/integ` (the stop hook wants a local branch whose remote twin exists). Agent worktrees need the
+  dependency links: `ln -s <main checkout>/android/app/jni/{SDL,gl4es,unshield}` into the worktree
+  (excluded in .git/info/exclude). GitHub says the repo moved to `sirbilliams/neutron1-Android`
+  (redirect works). Sonnet lanes did all class/level work well; Opus only for the core lane.
+  Useful test hooks added: NEG_TEST_GOTO=<s>:<TAG>[#n]@dx/dz (by tag), NEG_TEST_EXITS=1|2|3|3a,
+  NEG_DUMP_OBJECTS, NEG_TEST_POSLOG_TAGS, NEG_TEST_WATCH, NEG_TEST_GADGETS, NEG_TEST_LIVES.
+
+## Game plan for the next sessions (updated end of session 2)
+
+1. Ask Bill for his Thor notes on APK 0e3554d. Then play the late story levels (agent y's survey above).
+2. Finish step 2 (core, one Opus lane): CJimmyGame, C3DAnimated, C3DPlayer (findings above), InterfaceElement, CEditor, Input, C3DMovingTarget, remaining `g_N2_`/`n2_ev`/
+   `N2SLOT`; track the counts each session.
+3. Step 3 leftovers: VR01-08 play-through; real-input walk of each story level (ideally Bill on the
+   Thor); a full new-game run to the credits.
+4. Step 4 (port features: dual-screen panel, Bill's UI gadget table, widescreen, HD pack, Asset Viewer
+   .ase, launcher art), step 5 (signing secrets, Bill's play-through, README/CHANGELOG, tag v1.0).
+
+## Status (Oct 22, end of session 1)
 
 - **Playable on desktop, first build on the Thor boots** (main = this commit; CI builds the APK):
   new game -> THQ splash -> level1d (Yokian fleet intro, King Goobot) -> "MEANWHILE" -> level1b (lab:
@@ -126,7 +193,7 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   /home/claude/gamefiles/bg-<x>; 2 CPUs / 7 GB: `make -j2`, at most 3 agents building. Decomp
   inputs backed up in the private negatron-gamefiles repo (decomp/bg-decomp-inputs.tar.gz).
 
-## Game plan for the next sessions (brainstormed with Bill, Oct 22)
+## Game plan as brainstormed with Bill (Oct 22, session 1)
 
 1. **Finish the first stretch** (intro -> lab -> Neighborhood -> Jimmy's house): Bill's Thor notes
    first (Share log, photos); C3DGoddard from Neutron.exe; the lab's black ball / scooter; verify
