@@ -188,20 +188,7 @@ using neg::CloseAllDatabases;							// 0x46b000 (DatabaseCache.cpp)
 using neg::DatabaseName;								// 0x46b0f0
 // (the savegame functions ReadTaskFile 0x460210, LoadTask, RestoreTask: SaveGame.h)
 
-// 0x46a400 / 0x46a460: the editor flies the camera with the mouse.
-static void CaptureMouse(bool capture)			// 0x46a400
-{
-	if (capture)
-	{
-		// (the original also hides the Windows cursor and remembers its position; the SDL layer
-		// has no visible cursor on the Thor)
-		neg::CenterMouse();
-		g_mouse_captured = 1;
-		return;
-	}
-	// (restore the cursor position, OMediaMouseCursor::force_show)
-	g_mouse_captured = 0;
-}
+using neg::CaptureMouse;							// 0x46a400 (Input.cpp): the editor flies the camera with the mouse
 using neg::GetMouseDelta;							// 0x46a460 (Mouse.h)
 
 // --------------------------------------------------------------------------- neg::EditorIsEditing

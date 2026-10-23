@@ -29,21 +29,9 @@ static inline void SkyLoad(C3DObject *sky, std::string file, bool alt)
 	static_cast<C3DSky *>(sky)->LoadSky(file, alt);
 }
 
-// 0x46a400 (as in CEditor.cpp): every InitGame ends with CaptureMouse(true). (Boy Genius has
-// no "mouse disabled" flag check here, unlike Negatron.) g_mouse_captured = 0x50993c.
-static inline void CaptureMouse(bool capture)
-{
-	if (capture)
-	{
-		// (the original also hides the Windows cursor and remembers its position; the SDL layer
-		// has no visible cursor on the Thor)
-		neg::CenterMouse();
-		g_mouse_captured = 1;
-		return;
-	}
-	// (restore the cursor position, OMediaMouseCursor::force_show)
-	g_mouse_captured = 0;
-}
+// 0x46a400 (Input.cpp): every InitGame ends with CaptureMouse(true). (Boy Genius has no "mouse
+// disabled" flag check here, unlike Negatron.)
+using neg::CaptureMouse;
 
 // The viewport back at the origin, unrotated (2002 +0x44..+0x4c, +0x50..+0x54; inline).
 static inline void ViewportToOrigin(void)
