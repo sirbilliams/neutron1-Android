@@ -23,6 +23,7 @@
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
     NEG_DUMP_OBJECTS=1         When the level is loaded, log every object: class, tag, position and
                                its registered properties (name=value), for tracing trigger chains.
+    NEG_TEST_LIVES=<n>         When the level is loaded, set the lives (red neutrons found) to n.
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
 #include "TestHooks.h"
@@ -93,6 +94,7 @@ void neg::TestPlayHook(const char *level)
 			p = *e ? e + 1 : e;
 		}
 	}
+	if (const char *lv = getenv("NEG_TEST_LIVES")) g_lives = (short)atoi(lv);		// the lives (red neutrons) found
 	if (const char *gad = getenv("NEG_TEST_GADGETS"))
 	{
 		for (const char *p = gad; *p; p++)

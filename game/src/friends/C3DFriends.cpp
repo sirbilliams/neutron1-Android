@@ -1,6 +1,5 @@
 /*  C3DFriends - see C3DFriends.h. Reconstructed from Neutron.exe 0x41b490..0x41e580 and the
-    shared copies 0x415090, 0x418290, N2:0x417110, N2:0x4369f0, 0x419aa0, N2:0x436900, 0x4418e0, N2:0x44fa60,
-    N2:0x436920 / N2:0x427a40 / N2:0x45b120. */
+    shared copies 0x415090, 0x418290, 0x419aa0, 0x4418e0. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DFriends.h"
@@ -169,27 +168,10 @@ void C3DFriends::FriendInitObjectAIAnim(void)				// 0x418290
 	// (then a call to the empty 0x472970)
 }
 
-void C3DFriends::FriendPropsLoadedShow(void)				// N2:0x417110
-{
-	C3DAI::v260();											// 0x409480
-	ev70(1);												// element +0x118
-}
-
-void C3DFriends::FriendNoAnimIdle(void)					// N2:0x4369f0
-{
-	ev58((char *)"IDLE", 1);								// element +0xe8
-}
-
 void C3DFriends::FriendTaskStateRewrite(void)				// 0x419aa0
 {
 	// (debug log, empty)
 	SetTaskState(m_task_name, GetTaskState(m_task_name));	// 0x45f990 / 0x45fea0 (as shipped: writes back what it read)
-}
-
-void C3DFriends::FriendLevelScene(int level)				// N2:0x436900
-{
-	GetTaskState("SCENE");									// 0x45fea0 (the result is not used)
-	C3DAnimated::v267(level);								// 0x40e340
 }
 
 void C3DFriends::FriendLevelSceneShow(int level)			// 0x4418e0
@@ -197,29 +179,4 @@ void C3DFriends::FriendLevelSceneShow(int level)			// 0x4418e0
 	C3DAnimated::v267(level);								// 0x40e340
 	GetTaskState("SCENE");									// (the result is not used)
 	ev70(1);												// element +0x118
-}
-
-void C3DFriends::FriendTouchScene(void)					// N2:0x44fa60
-{
-	// (debug log, empty)
-	GetTaskState("SCENE");									// 0x45fea0 (the result is not used)
-}
-
-// v270: when a cut scene starts (new mode 3) while we STOP, play <anim> instead and remember
-// STOP in C3DPlayerObject's f_938 (f_934 = 1); when it ends (old mode 3), go back to it.
-// C3DAnimated::v270 is not called.
-void C3DFriends::FriendChangeState(int old_mode, int new_mode, const char *anim)	// N2:0x436920
-{
-	// (debug log "C3DFowl::ChangeState %d  %d", or Cindy's / Numey's)
-	if (new_mode == 3 && f_934 == -1 && strcasecmp("STOP", GetAnim()) == 0)	// element +0xf4
-	{
-		strcpy(f_938, "STOP");
-		f_934 = 1;
-		ev58((char *)anim, 1);								// element +0xe8
-	}
-	if (old_mode == 3 && f_934 != -1)
-	{
-		ev58(f_938, 1);
-		f_934 = -1;
-	}
 }

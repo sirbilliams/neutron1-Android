@@ -26,6 +26,7 @@
 #include "../Sound.h"
 #include "../InterfaceElement.h"
 #include "../Todo.h"
+#include "../JimmySlots.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaViewPort.h"
 #pragma GCC diagnostic pop
@@ -92,11 +93,10 @@ static void PlayerGoTo(CGameObject *player, const char *game, const char *start)
 	p->PlayerLoadLevel(g, s, rg, rs);
 }
 
-// C3DJimmy element slot 94 (0x427ff0, +0x178): Jimmy back from the menu. TODO(BG): agent E's.
+// C3DJimmy element slot 94 (0x427ff0, +0x178): put the item in hand away (C3DJimmy::DeactivateGadget).
 static void JimmyAfterMenu(CGameObject *jim)
 {
-	(void)jim;
-	NEG_TODO(0x427ff0, "C3DJimmy slot 94 (after the bonus count)");
+	JimmyElementSlot94(jim);
 }
 
 // 0x46a2d0: the application's quit flag (+0x18).
