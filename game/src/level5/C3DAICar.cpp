@@ -34,7 +34,7 @@ C3DAICar::~C3DAICar()										// 0x40aa00
 
 void C3DAICar::Process(float dt)							// 0x40aa50
 {
-	C3DAI::Process(dt);										// N2:0x411240
+	C3DAI::Process(dt);										// 0x408000
 	if (m_held)
 		v196(m_hold_pos.x, m_hold_pos.y, m_hold_pos.z, m_hold_pos.w);	// +0x310 position
 	m_stop_time = m_stop_time - dt;

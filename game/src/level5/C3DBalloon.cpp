@@ -19,7 +19,7 @@ C3DBalloon::C3DBalloon()									// 0x40f710
 {
 	SetName((char *)"C3DBALLOON");
 	C3DSprite::InitObject();								// 0x464130 (it has no InitObject of its own)
-	SetObjectID('3BAL');									// 0x462d80
+	SetObjectID('3BAL');									// 0x462d80 (C3DPolygon's)
 	strcpy(m_sprite_db, "sprites.omt");
 	m_sprite_index = 50;
 	m_sprite_size = 200;

@@ -9,6 +9,7 @@
 #include "CGameObject.h"
 #include "C3DObject.h"
 #include "lab/C3DSphere.h"
+#include "level1/C3DCube.h"
 #include "CGameType.h"
 #include "Game.h"
 #include "Todo.h"
@@ -883,11 +884,10 @@ OMedia3DShape *neg::PhysicsHitShape(void)		{ return s_hit_shape; }
 
 // --------------------------------------------------------------------------- debug markers
 
-// The '3CUB' class is not reconstructed yet (CreateObject returns NULL for it for now).
 static void SetupCube(CGameObject *o, OMedia3DVector colour, float size)
 {
-	(void)o; (void)colour; (void)size;
-	NEG_TODO(0x47cac0, "debug cube: C3DCube element slot 57 (colour, size)");
+	C3DCube *c = dynamic_cast<C3DCube *>(o);				// (the original: o - 0xc0)
+	if (c) c->InitCube(colour, size);						// element +0xdc
 }
 
 static void SetupSphere(CGameObject *o, OMedia3DVector colour, float size)
