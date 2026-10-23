@@ -3,6 +3,7 @@
 #include "AssetView.h"
 #include "Companion.h"
 #include "../C3DJimmy.h"
+#include "../C3DAnimated.h"
 #include "../CJimmyGame.h"
 #include "../CGameType.h"
 #include "../objects/C3DStartPoint.h"
@@ -236,6 +237,21 @@ void Frame(OMedia3DShape *sh, float scale)
 	s_dist = s_radius * 2.6f;
 }
 
+// An .ase model on the stage: a C3DAnimated as the game's animated objects (C3DAbductee: InitAnim,
+// CreateAnim, CreateTexture, ApplyTexture).
+struct ViewObj : public C3DAnimated
+{
+	char ase[128], tex[128];
+	ViewObj() { SetName((char *)"C3DVIEWOBJ"); C3DObject::InitPhysics(); ase[0] = tex[0] = 0; }
+	virtual void InitObject(void)
+	{
+		InitAnim();
+		CreateAnim((char *)"HIVIEW", ase);
+		if (tex[0]) { CreateTexture(tex, 0); ApplyTexture(f_590, 0); }
+		ev58((char *)"VIEW", 1);
+	}
+};
+
 void Unload(void)
 {
 	if (s_obj) { delete s_obj; s_obj = NULL; }
@@ -267,10 +283,24 @@ void Load(int i)
 	float scale = 1.0f;
 	try
 	{
-		if (m.kind == 'g' || m.kind == 'a')
+		if (m.kind == 'a')
 		{
-			// TODO(BG): the .ase viewer (needs the game's ASE loader, C3DAnimated::CreateAnim); Boy Genius has no .grn
-			strcpy(s_info, "NOT SUPPORTED");
+			// the game's own ASE loader: a C3DAnimated builds its morph shape with CreateAnim (as every BG animated object)
+			ViewObj *o = new ViewObj;
+			s_obj = o;
+			char png[128];
+			if (AseTexture(m.file.c_str(), png, sizeof png)) snprintf(o->tex, sizeof o->tex, "%s", png);
+			else { o->tex[0] = 0; strcpy(s_info, "NO TEXTURE"); }
+			snprintf(o->ase, sizeof o->ase, "%s", m.file.c_str());
+			o->InitObject();
+			o->f_664 = 0;										// "SecondPass" off: its materials would wait for a pass the stage does not draw
+			o->ResetObject();
+			o->v260();
+			o->place(kStage[0], kStage[1], kStage[2]);
+			o->ShowAgain();
+			shape = o->get_shape();
+			o->hide(true);										// port: its own element does not draw on this stage; the shape is shown on ours
+			ShowShape(shape);
 		}
 		else
 		{
@@ -302,7 +332,7 @@ void Load(int i)
 	if (!s_info[0])
 	{
 		omt_VertexList *v = shape ? shape->get_vertices() : NULL;
-		if (!v || v->empty()) strcpy(s_info, m.kind == 'g' ? "NO MESH (AN ANIMATION)" : "NO MESH");
+		if (!v || v->empty()) strcpy(s_info, m.kind == 'a' ? "NO MESH (AN ANIMATION)" : "NO MESH");
 		else snprintf(s_info, sizeof s_info, "%d VERTICES", (int)v->size());
 	}
 }
@@ -325,8 +355,8 @@ void ModelsStart(void)
 	light->set_angle(omd_Deg2Angle(-50), omd_Deg2Angle(30), 0);
 	light->set_ambient(OMediaFARGBColor(1.0f, 0.55f, 0.55f, 0.55f));
 	light->set_diffuse(OMediaFARGBColor(1.0f, 0.6f, 0.6f, 0.6f));
-	// Boy Genius: no .grn models; its .ase models need the game's own ASE loader, which the port
-	// has not reconstructed yet (TODO(BG): list ase\*.ase again then). The .omt shapes first.
+	// Boy Genius: no .grn models; the .ase models (the game's ASE loader) then the .omt shapes.
+	ListDir("ase", ".ase", 'a');
 	ListDir("omt", ".omt", 'o');
 	std::sort(s_models.begin(), s_models.end(), NoCaseLess);
 	int first = 0;

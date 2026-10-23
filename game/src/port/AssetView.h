@@ -20,8 +20,8 @@
     NEG_ASSET_VIEW=models: the model viewer. The small Level3B.gam level is loaded as the stage,
     all its objects hidden, no sky or fog, a light of our own; one model at a time is shown by the
     game's own loaders: each 3D shape of an .omt database (and the .ase models, the texture
-    their *BITMAP names being png\<name>.png: TODO(BG), the game's ASE loader is not reconstructed
-    yet). It turns slowly. Boy Genius has no .grn models.
+    their *BITMAP names being png\<name>.png: the game's ASE loader,
+    C3DAnimated::CreateAnim). It turns slowly. Boy Genius has no .grn models.
         up / down       previous / next model (held: repeats)       (keys: arrows)
         L1 / R1         10 back / on                                (keys: PageUp / PageDown)
         left / right    previous / next shape of an .omt            (keys: arrows)
