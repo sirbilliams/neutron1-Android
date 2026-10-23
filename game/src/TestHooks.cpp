@@ -24,6 +24,10 @@
     NEG_DUMP_OBJECTS=1         When the level is loaded, log every object: class, tag, position and
                                its registered properties (name=value), for tracing trigger chains.
     NEG_TEST_LIVES=<n>         When the level is loaded, set the lives (red neutrons found) to n.
+    NEG_TEST_GOTO=<s>:!<tag> (a '!' moves the camera's object, VR06's Goddard, instead of Jimmy)
+    NEG_TEST_GOTO=<s>:VRENTER<g>  at <s>: as picked on the PDA's VR page, enters VR0<g+1> (g 0..7) from the level.
+    NEG_TEST_VRPAGE=1          Opens the PDA's VR page when the level loads (only good with NEG_TEST_EQUIP when no level change follows).
+    NEG_TEST_BALLHIT=<n>       A baseball hits every C3DMovingTarget n times when the level is loaded (VR07).
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
 #include "TestHooks.h"
@@ -36,6 +40,10 @@
 #include "levels/CLoadLevel.h"
 #include "objects/C3DStartPoint.h"
 #include "Game.h"
+#include "CEditor.h"
+#include "level5/C3DMovingTarget.h"
+#include "gadgets/C3DBaseball.h"
+#include "level4/C3DVRTrophy.h"
 #include "SaveGame.h"
 #include <stdio.h>
 #include <typeinfo>
@@ -156,6 +164,18 @@ void neg::TestPlayHook(const char *level)
 		if (CGameObject *t = TestFindTag(tag)) { t->v23(Jimmy()); SDL_Log("NEG_TEST_FIRE: %s", fire); }
 		else SDL_Log("NEG_TEST_FIRE: no object %s", fire);
 	}
+	if (const char *bh = getenv("NEG_TEST_BALLHIT"))	// NEG_TEST_BALLHIT=<n>: a baseball hits every C3DMovingTarget n times (respawn wait skipped)
+	{
+		CGameObject *ball = NULL;
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end() && !ball; ++i)
+			if (dynamic_cast<C3DBaseball *>(*i)) ball = *i;
+		for (int k = 0; ball && k < atoi(bh); k++)
+			for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+				if (C3DMovingTarget *t = dynamic_cast<C3DMovingTarget *>(*i)) { t->m_respawn_left = 0; t->AddTouching(ball); SDL_Log("BALLHIT %s act=%s", t->m_tag, t->m_activate); }
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (C3DVRTrophy *t = dynamic_cast<C3DVRTrophy *>(*i)) SDL_Log("NEG_TEST_BALLHIT: trophy visible %d count %d", (int)t->getvisible(), t->f_6bc);
+		SDL_Log("NEG_TEST_BALLHIT: %s", bh);
+	}
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
@@ -167,6 +187,7 @@ void neg::TestPlayHook(const char *level)
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 		if (C3DStartPoint *s = dynamic_cast<C3DStartPoint *>(*i)) s->m_trigger_armed = 0;
 	g_gametype->SetCamera(jim);
+	if (getenv("NEG_TEST_VRPAGE")) MenuSetItem(0, 9, 2);	// the PDA's VR page open: NEG_TEST_EQUIP=<g> then enters that gadget's VR level
 	if (const char *eq = getenv("NEG_TEST_EQUIP"))	// NEG_TEST_EQUIP=<g>: Jimmy holds gadget g (as picked on the PDA)
 		if (*eq) { jim->DeactivateGadget(); jim->ActivateGadget((short)atoi(eq)); }
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
@@ -202,16 +223,25 @@ static void TestGoto(CGameObject *o, float dt)
 			size_t n = (size_t)(e - c - 1) < sizeof tag - 1 ? (size_t)(e - c - 1) : sizeof tag - 1;
 			memcpy(tag, c + 1, n); tag[n] = 0;
 			if (char *at_sign = strchr(tag, '@')) { *at_sign = 0; sscanf(at_sign + 1, "%f/%f", &dx, &dz); }
+			CGameObject *mover = o;
+			if (tag[0] == '!') { memmove(tag, tag + 1, strlen(tag)); if (neg::g_camera) mover = neg::g_camera; }	// "!tag": moves the camera's object (VR06: Goddard) instead of Jimmy
+			if (!strncmp(tag, "VRENTER", 7))		// VRENTER<g>: picked on the PDA's VR page: gadget g's VR level
+			{
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o)) { neg::MenuSetItem(0, 9, 2); jm->ActivateGadget((short)atoi(tag + 7)); }
+				SDL_Log("NEG_TEST_GOTO: %s (VR page %d, load pending %d, level %s)", tag, (int)neg::MenuGetItem(0, 9), (int)neg::g_editor->m_load_pending, neg::g_editor->m_level_name);
+				p = *e ? e + 1 : e;
+				continue;
+			}
 			CGameObject *dest = TestFindTag(tag);
 			if (!dest) SDL_Log("NEG_TEST_GOTO: no object %s", tag);
 			else
 			{
 				float d[4];
 				dest->v195(d);
-				o->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
-				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// riding the scooter: it goes too
+				mover->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(mover))			// riding the scooter: it goes too
 					if (jm->f_a30 && jm->f_a30->f_a84 == jm) jm->f_a30->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
-				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// flying the rocket ship (level5a/5b/6): it goes too
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(mover))			// flying the rocket ship (level5a/5b/6): it goes too
 					if (jm->f_ab0) jm->f_ab0->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				SDL_Log("NEG_TEST_GOTO: Jimmy to %s (%.0f %.0f %.0f)", tag, d[0] + dx, d[1] + 60.0f, d[2] + dz);
 			}
