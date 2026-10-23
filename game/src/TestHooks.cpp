@@ -14,6 +14,8 @@
     NEG_TEST_GOTO=<s>:<tag>[#n][@dx/dz],...  At <s> seconds of game time put Jimmy where the
                                (n-th) object tagged <tag> is (moved by dx, dz; 60 higher), e.g.
                                to try an exit or a phone booth without steering there.
+    NEG_TEST_EXITS=1           Log every CLoadLevel (exit) of the level: target, start point, task gate
+                               (=2: and every object: tag, class ID, position; =3: the story objects' non-default properties).
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
@@ -21,6 +23,7 @@
 #include "C3DJimmy.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
+#include "levels/CLoadLevel.h"
 #include "objects/C3DStartPoint.h"
 #include "Game.h"
 #include "SaveGame.h"
@@ -67,6 +70,47 @@ void neg::TestPlayHook(const char *level)
 				while (p[1] >= '0' && p[1] <= '9') p++;
 			}
 	}
+	if (const char *ex = getenv("NEG_TEST_EXITS"))
+		if (*ex == '3')										// the story objects' properties that are not at their defaults
+			for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			{
+				const unsigned int id = (unsigned int)(*i)->m_object_id;
+				static const char *want[] = { "3AIT", "3MCA", "3CAM", "3DOR", "3BUT", "3RCK", "3KIT", "TRIG", "LOAD", "3ULT", "3FOW", "3HUG", "3SWI", "3SPA", "3PHO", NULL };
+				char ids[5] = { (char)(id >> 24), (char)(id >> 16), (char)(id >> 8), (char)id, 0 };
+				int w = 0;
+				for (int k = 0; want[k]; k++) if (strcmp(want[k], ids) == 0) w = 1;
+				if (getenv("NEG_TEST_EXITS")[1] == 'a' && strcmp(ids, "3PAT") && strcmp(ids, "3TER") && strcmp(ids, "3LIO")) w = 1;
+				if (!w) continue;
+				char line[1500];
+				int n = snprintf(line, sizeof line, "PROPS %s %s:", (*i)->m_tag, ids);
+				for (std::list<CProperty *>::iterator p = (*i)->m_properties.begin(); p != (*i)->m_properties.end(); ++p)
+				{
+					CProperty *q = *p;
+					if (!strncmp(q->name, "Position", 8) || !strncmp(q->name, "Rotation", 8) || !strcmp(q->name, "ObjectTag") || !strcmp(q->name, "ObjectID")) continue;
+					if (n > 1300) break;
+					if (q->type == PROP_ALPHA && strcmp((char *)q->data, "none") && *(char *)q->data)
+						n += snprintf(line + n, sizeof line - n, " %s=%s", q->name, (char *)q->data);
+					else if (q->type == PROP_FLOAT && !strcmp(q->name, "Radius") && *(float *)q->data != 0)
+						n += snprintf(line + n, sizeof line - n, " %s=%.0f", q->name, *(float *)q->data);
+					else if (q->type == PROP_LONG && *(int *)q->data != 0 && *(int *)q->data != -1)
+						n += snprintf(line + n, sizeof line - n, " %s=%d", q->name, *(int *)q->data);
+				}
+				SDL_Log("%s", line);
+			}
+	if (const char *ex = getenv("NEG_TEST_EXITS"))
+		if (*ex == '2')										// every object: tag, object id, position
+			for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			{
+				float p[4];
+				(*i)->v195(p);
+				const unsigned int id = (unsigned int)(*i)->m_object_id;
+				SDL_Log("OBJ %s %c%c%c%c (%.0f %.0f %.0f)", (*i)->m_tag, id >> 24, id >> 16, id >> 8, id, p[0], p[1], p[2]);
+			}
+	if (getenv("NEG_TEST_EXITS"))
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (CLoadLevel *e = dynamic_cast<CLoadLevel *>(*i))
+				SDL_Log("EXIT %s -> %s @%s needs %s >= %d exact %d", e->m_tag, e->m_level_name, e->m_start_point,
+						e->m_required_task, e->m_required_level, e->m_exact_level);
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{

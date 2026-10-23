@@ -2,14 +2,15 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DYokianShip.h"
+#include "C3DAbductee.h"
 #include "C3DYokCargo.h"
+#include "../level4/C3DTractorBeam.h"
 #include "../CGameType.h"
 #include "../DatabaseCache.h"
 #include "../Game.h"
 #include "../Globals.h"
 #include "../Physics.h"
 #include "../SaveGame.h"
-#include "../Todo.h"
 #pragma GCC diagnostic pop
 #include <string.h>
 
@@ -48,9 +49,12 @@ C3DYokianShip::C3DYokianShip()								// 0x44b7d0
 	m_abductee = NULL;
 	if (LevelID() != 'LV1D' && LevelID() != 'LV1F')
 	{
-		// new C3DTractorBeam (0x6d0 bytes, 0x4462c0): shown, its v108(0); new C3DAbductee
-		// (0x6c4 bytes, 0x4076e0). TODO: neither is reconstructed yet.
-		NEG_TODO(0x4462c0, "C3DYokianShip: C3DTractorBeam / C3DAbductee");
+		CGameObject *beam = new C3DTractorBeam;				// 0x4462c0 (0x6d0 bytes)
+		m_beam = beam;
+		OMediaElement *be = dynamic_cast<OMediaElement *>(beam);
+		if (be) be->force_show();							// its constructor hid it
+		beam->v107(0);										// +0x1b0
+		m_abductee = new C3DAbductee;						// 0x4076e0 (0x6c4 bytes)
 	}
 	ev51();													// 0x4626f0
 	m_beam_on = 0;

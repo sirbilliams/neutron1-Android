@@ -1,6 +1,8 @@
-/*  C3DUltraLord - see C3DUltraLord.h. Reconstructed from Neutron.exe 0x448310..N2:0x47a6d0,
-    0x415090 / 0x419aa0 / N2:0x44fa60 (shared). */
+/*  C3DUltraLord - see C3DUltraLord.h. Reconstructed from Neutron.exe 0x448310..0x448760,
+    0x415090 / 0x419aa0 (shared). */
 #include "C3DUltraLord.h"
+#include "../C2DInGameMenu.h"
+#include "../CGameType.h"
 #include "../Game.h"
 #include "../SaveGame.h"
 
@@ -38,10 +40,20 @@ CGameObject *New_C3DUltraLord(void) { return new C3DUltraLord; }		// '3ULT' (0x1
 void C3DUltraLord::InitObject(void)		{ FriendInitObjectAnim(); }		// 0x415090
 void C3DUltraLord::v266(void)			{ FriendTaskStateRewrite(); }	// 0x419aa0
 
-void C3DUltraLord::v267(int level)							// N2:0x47a660
+void C3DUltraLord::v267(int level)							// 0x448670
 {
 	C3DAnimated::v267(level);								// 0x40e340
-	GetTaskState("SCENE");									// 0x45fea0 (the result is not used)
+	const int scene = GetTaskState("SCENE");				// 0x45fea0
+	if (g_gametype->m_object_id == 'LEV3')					// (+0x490 of the game type)
+	{
+		if (scene > 319 && scene < 410) { ev70(1); return; }
+	}
+	else
+	{
+		if (g_gametype->m_object_id != 'LV4A') { ev70(1); return; }
+		if (scene >= 500) { ev70(1); return; }
+	}
+	ev70(0);
 }
 
 void C3DUltraLord::ev69(void)								// 0x448500
@@ -63,7 +75,17 @@ void C3DUltraLord::ev69(void)								// 0x448500
 	v64(0.5f);												// CGameObject +0x100
 }
 
-void C3DUltraLord::ev145(void)								// N2:0x44fa60
+void C3DUltraLord::ev96(void)								// 0x448620
 {
-	FriendTouchScene();										// GetTaskState("SCENE") (unused)
+	C3DFriends::ev96();										// 0x41b810
+	if (GetTaskState("SCENE") == 390)
+	{
+		MenuSetItem(0, 1, 1);								// 0x4038c0
+		MenuToggleItem(0, 1, 1);							// 0x403870
+	}
+}
+
+void C3DUltraLord::ev90(void)								// 0x448660
+{
+	m_state = 3;											// (after the empty 0x472970 call)
 }

@@ -1,34 +1,24 @@
-/*  C3DPendulum ('3PEN') - a swinging morph object. In the level1 run (L1_A, L1_B, L1_C) it is the
-    swing hood ("swinghood.ase" / ".png", radius-flag v34(1)): it hangs still until Jimmy (the
-    camera object) touches it, then swings about x, 2 * strength * sin(5 * t), the strength set to
-    7 and fading by 3 per s. Elsewhere it is the pendulum ("pendulum.ase" / ".png", radius 100):
-    it swings for ever about z, "SwingHeight" (60, degrees) * sin(t), the phase starting at a
-    random 0..2.5; while the stopwatch slows the enemies (time scale not 1) at a quarter speed.
-    Collides with the camera object and '3JIM' only.
-    Reconstructed from Neutron.exe: constructor 0x416eb0 (factory '3PEN', 0x940 bytes),
-    destructor 0x435110 (only resets the vtables, then ~C3DAnimated; deleting thunks 0x4352d0 /
-    0x4352c0 / 0x4350e0 / 0x4352e0). Vtables: element N2:0x4efa58 (C3DAnimated's 94 slots), game
-    object (+0xc0) N2:0x4ef58c (0, 7, 16, 17, 231, 240 overridden), streamer N2:0x4ef57c.
-    Own members 0x924..0x934, vtordisp 0x938, streamer 0x93c.                                  */
+/*  C3DPendulum ('3PEN') - a swinging chain: a morph object ("chain.ase" / "chain.png", radius
+    100) that swings for ever about z, "SwingHeight" (60, degrees) * sin(t), the phase starting at
+    a random 0..2.5. Collides like any C3DAnimated; only the constructor, InitObject and Process
+    are its own. (Negatron's pendulum / swing hood split and its stopwatch slowdown are gone.)
+    Reconstructed from Neutron.exe: constructor 0x434f60 (factory '3PEN', 0x6d4 bytes),
+    destructor 0x435110 (only resets the vtables, then ~C3DAnimated; deleting thunks 0x4350e0 /
+    0x4352c0 / 0x4352d0 / 0x4352e0). Vtables: element 0x4ad42c, game object (+0xc0) 0x4ad43c
+    (0, 7, 241 overridden), streamer 0x4ad9fc. Own members 0x6bc / 0x6c0, vtordisp 0x6cc.   */
 #pragma once
 #include "../C3DAnimated.h"
 
 class C3DPendulum : public C3DAnimated
 {
 	public:
-	C3DPendulum();															// 0x416eb0
+	C3DPendulum();															// 0x434f60
 	virtual ~C3DPendulum();													// 0x435110
 
 	virtual void InitObject(void);											// SLOT 7   0x435160 property, animation, texture
-	virtual void AddTouching(CGameObject *other);							// SLOT 16  N2:0x45cfa0 the camera: swing (strength 7)
-	virtual void RemoveTouching(CGameObject *other);						// SLOT 17  0x44a100 (just CGameObject's)
-	virtual unsigned char v231(CGameObject *other);							// SLOT 231 N2:0x45ce70 collides with the camera, '3JIM' only
-	virtual void Process(float dt);											// SLOT 240 N2:0x45cfd0 swinging
+	virtual void Process(float dt);											// SLOT 241 0x435210 swinging
 
 	// ---- data members (object offsets)
-	float				f_924;			// 0x924  phase (s)
-	float				f_928;			// 0x928  "SwingHeight" (60)
-	float				f_92c;			// 0x92c  (unused)
-	float				f_930;			// 0x930  swing hood: strength (7 when touched, -3 / s)
-	float				f_934;			// 0x934  (unused)
+	float				f_924;			// 0x6bc  phase (s)
+	float				f_928;			// 0x6c0  "SwingHeight" (60)
 };
