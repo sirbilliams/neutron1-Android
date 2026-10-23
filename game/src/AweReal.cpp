@@ -1,6 +1,6 @@
 /*  CAweReal, omt_main and start-up helpers.  Reconstructed from Neutron.exe.
     0x46a4a0 omt_main   0x469f90 CAweReal::listen_to_message   (CInput: Input.cpp)
-    0x45e770 SetWindowTitle   N2:0x496200 CheckCD   N2:0x4b3ac0 OpenDebugLog */
+    0x45e770 SetWindowTitle   0x45e860 CheckCD   0x46a310 LoadNewLevel */
 
 #include "DatabaseCache.h"
 #include "Game.h"
@@ -23,22 +23,14 @@
 
 using namespace neg;
 
-// Granny (RAD): game/granny/granny_compat.cpp reimplements the granny.dll calls, reading the .grn files
-// (docs/granny-replacement.md, docs/granny-api.md).
-#include "granny_compat.h"
-
 // --------------------------------------------------------------------------- CAweReal
 
 CAweReal::CAweReal() : OMediaApplication(omchint_BestInit, true)		// OMediaApplication(2, 1)
 {
 	SDL_Log("CAweReal()");
 	memset(g_keys, 0, sizeof(g_keys));			// 0x509838, 0x40 dwords
+	g_509938 = 100;							// 0x509938 (a ushort nothing reads)
 	g_app = this;								// 0x509944
-	if (GrannyOpenVersion("1.2b", "win32", "10-4-2000", "(C) Copyright 1999-2000 RAD Game Tools, Inc.  All Rights Reserved.",
-	                      &g_granny) != GrannyOK)
-		SDL_Log("GRANNY FAILED TO INITIALIZE");
-	GrannyAllowTextureFormat(g_granny, 4);		// 24-bit RGB
-	g_granny_scale = 100;						// N2:0x56aea4
 }
 
 CAweReal::~CAweReal() {}
@@ -137,17 +129,12 @@ void CAweReal::listen_to_message(omt_Message msg, void *param)
 
 // --------------------------------------------------------------------------- helpers
 
-void neg::OpenDebugLog(void)			// N2:0x4b3ac0: "dat\debug.log", "%s UP @ %s on %s"
-{
-	SDL_Log("Negatron UP");
-}
-
 void neg::SetWindowTitle(void)			// 0x45e770
 {
-	if (g_window) g_window->set_title("Jimmy Neutron 2");
+	if (g_window) g_window->set_title("Jimmy Neutron");
 }
 
-bool neg::CheckCD(void)					// N2:0x496200: "Please insert the Jimmy Neutron 2 CDROM"
+bool neg::CheckCD(void)					// 0x45e860: "PLEASE INSERT THE JIMMY NEUTRON CDROM" / "CD REQUIRED"
 {
 	return true;						// no CD on this port
 }
@@ -171,7 +158,7 @@ void neg::DeleteAllObjects(void)
 	SDL_Log("-DeleteAllObjects()");
 }
 
-// Inline in omt_main (N2:0x4a3ea8) and in CAweReal::listen_to_message for AWEMSG_LOAD (0x469f90).
+// 0x46a310 (called by omt_main and by CAweReal::listen_to_message for AWEMSG_LOAD, 0x469f90).
 void neg::LoadNewLevel(unsigned int which)
 {
 	SDL_Log("+LoadNewLevel(%c%c%c%c)", (which >> 24) & 0xff, (which >> 16) & 0xff, (which >> 8) & 0xff, which & 0xff);
@@ -237,7 +224,6 @@ class CTextTest : public OMediaPeriodical
 
 void omt_main(void)
 {
-	OpenDebugLog();
 	// Not in the original (Windows loaded the exe's data for it): the data section's initial
 	// values come from the player's own Neutron.exe. See ExeData.cpp.
 	{
@@ -248,9 +234,8 @@ void omt_main(void)
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Jimmy Neutron vs. Jimmy Negatron", why, NULL);
 			return;
 		}
-		neg::N2GlobalsInit();
 	}
-	// (Windows: refuses to start twice - FindWindow("OMT SingleWindow") titled "Jimmy Neutron 2")
+	// (Windows: refuses to start twice - FindWindow("OMT SingleWindow"), "A game is already in progress")
 	try
 	{
 		CAweReal *app = new CAweReal;
@@ -281,7 +266,6 @@ void omt_main(void)
 		if (g_gametype)
 		{
 			SDL_Log("omtmain 2: entering main loop");
-			ErrorLog("VER: RC.03   %s  %s", "Aug 27 2002", "18:31:08");
 			app->start();						// OMediaApplication::start (vtable +0x10)
 		}
 		SDL_Log("omtmain 3");
@@ -290,7 +274,7 @@ void omt_main(void)
 
 		SDL_Log("EXITING GAME");
 		neg::CloseAllDatabases();				// 0x46b000
-		neg::CloseAllPermanentDatabases();		// N2:0x4a4960
+		neg::CloseAllPermanentDatabases();		// port (Neutron.exe leaves them to the process end)
 		delete text_test;
 		if (g_editor)
 		{

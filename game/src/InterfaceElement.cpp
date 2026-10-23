@@ -4,6 +4,9 @@
 
 namespace neg {
 InterfaceElt	g_elt_544908[14];		// port: see InterfaceElement.h
+OMediaCanvasElementWrapper	*g_help_icons[14];
+int				g_help_index = 0;
+InterfaceElt	*g_help_menu_elt = 0;
 
 int		g_score = 0;					// 0x4f83c0
 int		g_score_popup = 0;				// 0x4f83c4

@@ -9,7 +9,7 @@
     Process: the wheels on the floor (front f_9e8, rear f_9ea) turn it (f_a28, by speed),
     friction, braking on slopes, and drive the velocity along the heading (or the way it slides).
     ev132 (from v248) puts the wheels under it: suspension (f_a18 down, f_a1c up), spin
-    (rolling: wheel f_58c, degrees), steering. A hit wall head-on above speed 20 (with f_a43)
+    (rolling: wheel f_578, degrees), steering. A hit wall head-on above speed 20 (with f_a43)
     crashes it (ev131): no control for 4 s (ev111), then upright again.
     Reconstructed from Neutron.exe: constructor 0x464b90 (factory '3VEH', 0x670 bytes),
     destructor 0x464e20 (deleting thunks 0x467fe0 / 0x467fd0 / 0x464df0 / 0x467ff0).

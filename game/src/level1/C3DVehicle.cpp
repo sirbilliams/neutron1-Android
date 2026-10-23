@@ -328,13 +328,13 @@ void C3DVehicle::ev132(void)								// 0x467080
 			if (speed < 0 || !f_a41)
 			{
 				C3DWheel *ww = static_cast<C3DWheel *>(w);
-				const double s = dot > 0 ? (double)a + ww->f_58c : (double)ww->f_58c - a;
-				ww->f_58c = Fold(s);
+				const double s = dot > 0 ? (double)a + ww->f_578 : (double)ww->f_578 - a;
+				ww->f_578 = Fold(s);
 			}
 		}
 		float r[4];
 		v201(r);
-		const float spin = static_cast<C3DWheel *>(w)->f_58c;
+		const float spin = static_cast<C3DWheel *>(w)->f_578;
 		if (i == 0 || i == 2 || i == 4)						// left
 		{
 			const float rz = Fold((double)r[0] - spin);

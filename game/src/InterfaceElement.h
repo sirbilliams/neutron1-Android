@@ -21,6 +21,11 @@ struct InterfaceElt
 
 namespace neg {
 extern InterfaceElt		g_elt_544908[14];		// port: see InterfaceElt
+// port: the help pictures / current gadget the port UI (BillsUi.cpp) shows. Negatron's menu set
+// them; nothing in Boy Genius does, so they stay empty (no pictures, index 0).
+extern OMediaCanvasElementWrapper	*g_help_icons[14];
+extern int				g_help_index;
+extern InterfaceElt		*g_help_menu_elt;
 
 // Score (shown with "%6.0d").
 extern int		g_score;				// 0x4f83c0

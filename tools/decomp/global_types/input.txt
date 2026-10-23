@@ -23,4 +23,3 @@
 0x509ae8 ptr omt_HIDElementList* g_joy_elements     # its element list (lock())
 0x509aed val unsigned char g_joy_debug              # on-screen element display (never set)
 0x509aee val short g_joy_debug_mode                 # 2 hides the buttons, 3 everything else
-# unresolved (Neutron2 address): N2:0x56b088 val int g_joy_frames                       # polls so far (buttons cleared for the first 30)

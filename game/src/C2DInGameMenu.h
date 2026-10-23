@@ -58,13 +58,4 @@ void OpenConfirm(int box);									// 0x406f90 a yes/no box (once), with the cur
 bool ConfirmOpen(void);										// 0x407060
 float MenuPulse(void);										// 0x4073a0 sin of the pulse clock (v313)
 void ShowLoadingPicture(bool show);							// 0x4073b0 the bottom-right picture 0xf4
-
-// ---- port: the Negatron (Neutron2.exe) menu API that callers not yet ported still use. None of
-// these exist in Neutron.exe; they do nothing or the nearest Boy Genius equivalent. TODO(BG):
-// remove once CJimmyGame, the cut scene cameras, C3DPlayer and the pickups are ported.
-void SetGameMode(int mode);			// N2:0x485360: 0 Starting 1 Loading 2 Saving 3 CutScene 4 Menu 5 Playing 6 Paused 9 None
-void SetLevelItems(int which);		// N2:0x40a860 (nothing)
-void CutsceneLetterbox(bool on);	// N2:0x40c0f0 (the game modes only; Boy Genius has no letterbox)
-void MenuInterfaceEffect(const char *name, float t);	// N2:0x405420 (nothing)
-void GivePendingInvention(void);	// N2:0x409b20 (nothing)
 }

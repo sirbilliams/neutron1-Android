@@ -494,23 +494,10 @@ void CEditor::UpdateGame(float dt)
 				char name[0x53];
 				strcpy(name, "level1d.gam");
 				// port: the launcher's start mode (NEG_START: Continue / Load / Main Menu), the test
-				// and Asset Viewer levels choose another start; "autosave" restores a task file.
-				const char *task = neg::StartModeChoose(name);
+				// and Asset Viewer levels choose another start.
+				neg::StartModeChoose(name);
 				if (const char *tp = TestPlayLevel()) strcpy(name, tp);
 				if (const char *a = neg::AssetViewLevel()) strcpy(name, a);
-				if (strcasecmp(name, "autosave") == 0)
-				{
-					if (!ReadTaskFile(task))
-					{
-						strcpy(name, "level1d.gam");
-						ErrorLog("ERROR: loading %s", task);
-					}
-					else
-					{
-						LoadTask(task, false);
-						strcpy(name, m_level_name);
-					}
-				}
 				RequestLevel(name);								// vtable +0x114
 				Trace("SPL 5");
 			}

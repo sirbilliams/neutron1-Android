@@ -21,7 +21,6 @@
 std::list<CGameObject *> g_objects;					// 0x50999c
 
 namespace neg {
-static bool s_end_requested = false;				// 0x50993d
 }
 using namespace neg;
 
@@ -143,20 +142,6 @@ void CGameObject::DeleteAllProperties(void)					// 0x474480
 		CProperty *p = m_properties.front();
 		m_properties.remove(p);
 		free(p);
-	}
-}
-
-void CGameObject::CopyPropertiesTo(CGameObject *dst)		// N2:0x4ae9a0
-{
-	if (!dst) return;
-	for (std::list<CProperty *>::iterator i = m_properties.begin(); i != m_properties.end(); i++)
-	{
-		CProperty *src = *i;
-		CProperty *d = dst->FindProperty(src->name);
-		if (!d) { ErrorLog("ERROR: CopyOfProperty is NULL for %s", m_tag); return; }
-		if (src->type == PROP_ALPHA) strcpy((char *)d->data, (char *)src->data);
-		else if (src->type == PROP_FLOAT) memcpy(d->data, src->data, 4);
-		else if (src->type != PROP_LONG) ErrorLog("ERROR: invalid type writing variable %s", src->name);
 	}
 }
 
@@ -397,16 +382,6 @@ void CGameObject::AddRotation(float x, float y, float z)	// 0x472480: keep each 
 		else if (r[i] > 360.0f) r[i] -= 360.0f;
 	}
 	f_224 = r[0]; f_228 = r[1]; f_22c = r[2];
-}
-
-void CGameObject::RequestEnd(void)							// N2:0x4ad4c0
-{
-	f_006 = 1;
-	if (!s_end_requested)
-	{
-		PostGameMessage(2);								// PostMessage(NULL, WM_USER, 2, 0)
-		s_end_requested = true;
-	}
 }
 
 void CGameObject::v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly)	// 0x472690: hit a ceiling

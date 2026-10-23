@@ -42,7 +42,7 @@ std::string omf_SDLResolvePath(const std::string &in);		// engine/sdl: DOS path 
 
 namespace neg {
 std::list<Task *>		g_tasks;			// 0x4fc5f8
-std::list<TexScroll *>	g_tex_scrolls;		// N2:0x54e680
+std::list<TexScroll *>	g_tex_scrolls;		// head 0x4fc5e4
 }
 
 // The original's empty debug log.
@@ -85,8 +85,7 @@ static void TaskPath(char *path, const char *name)
 }
 
 // Jimmy's strings and position that a save keeps (element +0x724, +0x774, +0x88c, +0x8f0,
-// +0x9a8). TODO(BG): C3DPlayer still has Negatron's layout; these are its members for the
-// same things (start point, return start point, next start point, return game, position).
+// +0x9a8: start point, return start point, next game, next start point, position).
 static C3DPlayer *Player(CGameObject *o)		{ return o ? dynamic_cast<C3DPlayer *>(o) : NULL; }
 
 // --------------------------------------------------------------------------- task list
@@ -430,17 +429,6 @@ void neg::ReadSaveSlots(void)
 	}
 }
 
-// --------------------------------------------------------------------------- port: Negatron API
-
-void neg::LoadTask(const char *name, bool new_level)
-{
-	if (!new_level) RequestTask(name);
-	else g_editor->RequestLevel((char *)name);
-}
-
-bool neg::RestoreTask(const char *name)		{ (void)name; return false; }
-void neg::SaveTask(const char *name)			{ (void)name; }
-
 // --------------------------------------------------------------------------- texture scrolling
 
 void neg::ClearTexScrolls(void)									// 0x45f4c0
@@ -452,35 +440,17 @@ void neg::ClearTexScrolls(void)									// 0x45f4c0
 	}
 }
 
-void neg::UpdateTexScrolls(float dt)							// N2:0x4970e0
+void neg::UpdateTexScrolls(float dt)							// 0x45f510
 {
-	if (!g_gametype) return;								// port: the Asset Viewer's model stage has none
-	if (g_gametype->IsPaused()) return;						// vtable +0x114
-	if (!g_tex_scroll_on) return;
-	g_tex_scroll_time = g_tex_scroll_time + dt;
 	for (std::list<TexScroll *>::iterator it = g_tex_scrolls.begin(); it != g_tex_scrolls.end(); ++it)
 	{
 		TexScroll *s = *it;
 		if (!s || !s->polygon) continue;					// port: (the original has no checks)
-		// (a copy of the vertex list is made and thrown away, as shipped)
-		omt_3DPolygonVertexList copy = s->polygon->get_vertices();
-		(void)copy;
-		unsigned int du, dv;
-		memcpy(&du, &s->du, 4);
-		memcpy(&dv, &s->dv, 4);
+		// (the original copies the vertex list and throws the copy away)
 		for (short i = 0; i < (int)s->polygon->get_vertices().size(); i++)
 		{
 			OMedia3DPolygonVertex &v = s->polygon->get_vertices()[i];
-			if (du == TEXSCROLL_WAVE_BITS && dv == TEXSCROLL_WAVE_BITS)
-			{
-				// x87 (53-bit): v first (kept on the stack), then u, then v is stored
-				const double t = g_tex_scroll_time;
-				const double nv = ((cos(t * 3.0) + 1.0) * 0.5 - 0.5) * (double)dt * (double)0.12f + (double)v.v;	// 0x48e5a0, N2:0x516aec
-				v.u = (float)(((cos(t * (double)3.2f) + 1.0) * 0.5 - 0.5) * (double)dt * (double)0.15f + (double)v.u);	// N2:0x516ae8, N2:0x4d7f7c
-				v.v = (float)nv;
-			}
-			else
-				v.v = dt * s->dv + v.v;						// (du is not used)
+			v.v = dt * s->dv + v.v;							// (du is not used)
 		}
 	}
 }

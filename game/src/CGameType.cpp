@@ -435,7 +435,7 @@ bool CGameType::IsPaused(void)
 	return !neg::GameIsRunning();
 }
 
-void CGameType::ev70(void)													// N2:0x4b0a50 (InitGame clears it; C3DCar/C3DVehicle test it)
+void CGameType::ev70(void)													// 0x475a30 (InitGame clears it; C3DCar/C3DVehicle test it)
 {
 	g_5099a9 = 1;
 }

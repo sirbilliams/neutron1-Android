@@ -180,7 +180,6 @@ def main():
         cpp.append(f'//   0x{a:06x} = 0x{v:08x}')
     cpp.append('}')
     os.makedirs(f'{src}/gen', exist_ok=True)
-    hdr.append('#include "n2globals.h"\t// Negatron globals not located yet (tools/decomp/n2globals.py)')
     open(f'{src}/gen/globals.h', 'w').write('\n'.join(hdr) + '\n')
     open(f'{src}/gen/globals.cpp', 'w').write('\n'.join(cpp) + '\n')
     print(f'{len(seen)} addresses: {len(ptr)} pointers, {len(arrays)} arrays, {len(named)} named by hand; '

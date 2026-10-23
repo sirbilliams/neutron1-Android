@@ -1,4 +1,4 @@
-/*  C3DWheel - see C3DWheel.h. Reconstructed from Neutron.exe N2:0x4a0920..0x468350. */
+/*  C3DWheel - see C3DWheel.h. Reconstructed from Neutron.exe 0x468020..0x468350. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DWheel.h"
@@ -9,13 +9,12 @@
 
 using namespace neg;
 
-C3DWheel::C3DWheel()										// N2:0x4a0920
+C3DWheel::C3DWheel()										// 0x468020
 {
 	SetName((char *)"C3DWHEEL");							// 0x4702d0
 	Log("C3DWheel()");
 	C3DWheel::InitObject();									// (inlined in the original)
-	// (then a call to the empty 0x472970)
-	f_58c = 0;
+	f_578 = 0;
 	v32(0);
 	v50(0);
 	v42(0);

@@ -92,8 +92,8 @@ the whole briefing: read it, then `docs/HANDOFF.md` (status, rules, setup detail
 ## 7. How the code got here (so you can read it)
 - `game/src` started as the Negatron reconstruction with addresses rewritten to Neutron.exe
   (`addrmap.py` matched 2113 functions / ~3000 data addresses; `retarget.py` rewrote them).
-  Leftovers still marked: `N2:0x...`, `g_N2_...` (gen/n2globals.h stand-ins), `n2_ev...`,
-  `TODO(BG)`, `N2SLOT`. `/home/claude/decomp1/retarget.tsv` lists every address that wasn't an
+  Leftovers still marked: `TODO(BG)` (the port UI's gadget numbering, Companion's boss, the Asset Viewer's .ase models);
+  `N2:`, `g_N2_`, `N2SLOT` and gen/n2globals.h are gone. `/home/claude/decomp1/retarget.tsv` lists every address that wasn't an
   exact match (`check func~0.80` = port the differences).
 - Already ported to Neutron.exe: see HANDOFF "Status". In short: core (CGameObject slots,
   C3DAnimated, CGameType, CJimmyGame, CEditor, CViewPort, CLoadLevel, fades), menus + saves

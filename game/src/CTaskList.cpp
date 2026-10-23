@@ -59,7 +59,7 @@ void CTaskList::Process(float dt)						// 0x460ea0
 		if (!f_4b5)
 		{
 			f_4b5 = 1;
-			v275();
+			ApplyTasks();
 		}
 	}
 	else
@@ -82,7 +82,7 @@ void CTaskList::v260()									// 0x4601a0
 	f_4b5 = 0;
 }
 
-void CTaskList::v275()									// 0x4601c0
+void CTaskList::ApplyTasks()									// 0x4601c0
 {
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 	{

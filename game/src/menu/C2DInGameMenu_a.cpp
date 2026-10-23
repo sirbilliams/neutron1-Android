@@ -145,7 +145,6 @@ C2DInGameMenu::C2DInGameMenu()
 	f_510 = -1;
 	f_4b8 = InitFileStream("omt\\screens.omt");				// 0x476170 (through a std::string)
 	f_4b4 = InitDatabase(f_4b8);							// 0x476000
-	g_screens_db = f_4b4;									// port: Negatron's global, for callers not ported yet
 	s_db_open = true;
 	v299(0);
 	v293();													// the menu pages
@@ -333,7 +332,6 @@ C2DInGameMenu::C2DInGameMenu()
 	f_508 = 0;
 	f_514 = 0;
 	f_518 = 0;
-	f_594 = 0; f_598 = 0; f_59c = 0; f_5b0 = NULL; f_4ce = 0;	// port: the Negatron members
 }
 
 // --------------------------------------------------------------------------- 0x4029c0
@@ -395,8 +393,8 @@ static void DetachAll(OMediaCanvasElement *const *own, int n)
 void C2DInGameMenu::UnInitObject()										// 0x402b40
 {
 	CLocalGameObject::UnInitObject();
-	OMediaCanvasElement *const own[] = { f_4e4, f_5b0 };
-	DetachAll(own, 2);										// port: see DetachAll
+	OMediaCanvasElement *const own[] = { f_4e4 };
+	DetachAll(own, 1);										// port: see DetachAll
 	if (f_4b4) UnInitDatabase(f_4b4);						// 0x476080
 	if (f_4b8) UnInitFileStream(f_4b8);						// 0x476290
 	s_db_open = false;										// port (FreeElt)

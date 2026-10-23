@@ -2,19 +2,19 @@
     does nothing; its element is not moved by the object, v247 / v248 empty) whose shape is a
     chunk of the vehicle database (ev56). Its physics are set up once, with no gravity and no
     rotating to a destination (f_005, f_00a cleared).
-    Reconstructed from Neutron.exe: constructor N2:0x4a0920 (factory '3WHE', 0x598 bytes; it repeats
+    Reconstructed from Neutron.exe: constructor 0x468020 (factory '3WHE', 0x584 bytes; it repeats
     InitObject inline), destructor 0x468180 (only resets the vtables, then ~C3DObject; deleting
     thunks 0x468340 / 0x468330 / 0x468150 / 0x468350). Vtables: element 0x4d5d5c (57 slots:
     C3DObject's 56 + 56), OMediaAnim 0x4d5d0c, listener 0x4d5d48, game object (+0xc0) 0x4d58bc
-    (0, 7, 11, 16, 231, 240, 247, 248 overridden), streamer 0x4d58ac. Own member 0x58c, vtordisp
-    0x590, streamer 0x594.                                                                    */
+    (0, 7, 11, 16, 231, 240, 247, 248 overridden), streamer 0x4d58ac. Own member 0x578, vtordisp
+    0x57c, streamer 0x580.                                                                    */
 #pragma once
 #include "../C3DObject.h"
 
 class C3DWheel : public C3DObject
 {
 	public:
-	C3DWheel();																// N2:0x4a0920
+	C3DWheel();																// 0x468020
 	virtual ~C3DWheel();													// 0x468180
 
 	// ---- element-family slots
@@ -29,5 +29,5 @@ class C3DWheel : public C3DObject
 	virtual void v247(void) {}												// SLOT 247 0x472970 (empty)
 	virtual void v248(void) {}												// SLOT 248 0x472970 (empty)
 
-	float				f_58c;			// 0x58c  0; spin, degrees (C3DVehicle ev132)
+	float				f_578;			// 0x578  0; spin, degrees (C3DVehicle ev132)
 };

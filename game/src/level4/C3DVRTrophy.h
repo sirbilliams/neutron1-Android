@@ -23,5 +23,5 @@ class C3DVRTrophy : public C3DAnimated
 	virtual void Process(float dt);											// SLOT 241 0x448ec0 spin
 
 	// ---- data members (object offsets)
-	int					f_6bc;			// 0x6bc  (0, never used again)
+	int					f_6bc;			// 0x6bc  (0) the baseball hits C3DMovingTarget has counted
 };

@@ -14,6 +14,7 @@ class OMediaWorld;
 class OMediaLayer;
 class OMediaViewPort;
 class CAweReal;
+class C2DInGameMenu;
 class CGfx;
 class CInput;
 class CEditor;
@@ -23,8 +24,6 @@ namespace neg {
 
 // --- application / engine objects
 extern CAweReal				*g_app;				// 0x509944
-extern unsigned int			 g_granny;			// N2:0x56aea0  Granny "version" handle
-extern unsigned short		 g_granny_scale;	// N2:0x56aea4  = 100
 extern OMediaWindow			*g_window;			// 0x509a48  OMediaFullscreenWindow
 extern OMediaVideoEngine	*g_video;			// 0x509a44
 extern OMediaSoundEngine	*g_sound;			// 0x69600c
@@ -57,7 +56,8 @@ extern bool					 g_cheat_keys;		// 0x50984a  (F4 quits when set)
 // --- misc
 extern unsigned int			*g_random_seed;		// 0x509a40
 
-void N2GlobalsInit(void);					// port: Negatron start values of the not yet located globals (Globals.cpp)
+// port: the menu is C3DJimmy's member (f_a18) in Boy Genius; this points at it while Jimmy exists
+extern C2DInGameMenu		*g_menu;
 
 }	// namespace neg
 

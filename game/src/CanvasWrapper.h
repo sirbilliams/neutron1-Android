@@ -1,15 +1,16 @@
 /*  OMediaCanvasElementWrapper - an OMediaCanvasElement with a serial number (0xd8 bytes in the
     original). Every 2D sprite of the menus and HUD is one.
-    Reconstructed from Neutron.exe: constructor N2:0x496a40, destructor N2:0x496b50.             */
+    port: Negatron's class (Neutron.exe has none: its sprites are plain OMediaCanvasElements);
+    the port's own UI (port/BillsUi.cpp) uses it.                          */
 #pragma once
 #include "OMediaCanvasElement.h"
 
 class OMediaCanvasElementWrapper : public OMediaCanvasElement
 {
 	public:
-	OMediaCanvasElementWrapper();				// N2:0x496a40
-	virtual ~OMediaCanvasElementWrapper();		// N2:0x496b50
+	OMediaCanvasElementWrapper();				// port
+	virtual ~OMediaCanvasElementWrapper();		// port
 
 	int		m_c8;			// 0xc8  = -1
-	int		m_serial;		// 0xcc  from the counter at N2:0x54a4d4
+	int		m_serial;		// 0xcc  from a counter
 };

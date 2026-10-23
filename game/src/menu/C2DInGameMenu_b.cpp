@@ -83,7 +83,6 @@ static void GameMenuHold(bool on)
 
 // The player's element slot 90 (+0x168, C3DPlayer "PlayerLoadLevel"): go to `game` at start
 // point `start`, coming back to its current game file / start point (+0x955 / +0x724).
-// TODO(BG): Boy Genius's slot has no picture argument; C3DPlayer still has Negatron's.
 static void PlayerGoTo(CGameObject *player, const char *game, const char *start)
 {
 	C3DPlayer *p = player ? dynamic_cast<C3DPlayer *>(player) : NULL;
@@ -724,19 +723,3 @@ void C2DInGameMenu::v315()												// 0x407490
 {
 	for (int i = 0; i < 44; i++) v307(i, 0, false);
 }
-
-// --------------------------------------------------------------------------- port: Negatron API
-
-void neg::SetGameMode(int mode)
-{
-	if (mode == g_game_mode) return;
-	g_prev_game_mode = g_game_mode;
-	g_game_mode = mode;
-	for (std::list<CGameObject *>::iterator it = g_objects.begin(); it != g_objects.end(); ++it)
-		if (*it) static_cast<CLocalGameObject *>(*it)->v270(g_prev_game_mode, mode);
-}
-
-void neg::SetLevelItems(int which)					{ (void)which; }
-void neg::CutsceneLetterbox(bool on)				{ if (on) SetGameMode(3); else SetGameMode(5); }
-void neg::MenuInterfaceEffect(const char *n, float t)	{ (void)n; (void)t; }
-void neg::GivePendingInvention(void)				{}

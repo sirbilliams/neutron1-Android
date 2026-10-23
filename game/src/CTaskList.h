@@ -10,7 +10,7 @@
     reacts to it).
 
     Per frame (Process) the first frame after a level load pushes the task states to every
-    object (v275), and a requested task file (RequestTask 0x460e70) is loaded (TaskGameLoad).  */
+    object (ApplyTasks), and a requested task file (RequestTask 0x460e70) is loaded (TaskGameLoad).  */
 #pragma once
 #include "CLocalGameObject.h"
 
@@ -25,8 +25,7 @@ class CTaskList : public CLocalGameObject
 	virtual void v260();													// SLOT 259 0x4601a0 (level reset: apply the tasks again)
 	// New in CTaskList (vtable +0x44c): every object gets the state of its task (slot 265's
 	// field directly, 0 when its task is unknown), then its slot 264.
-	virtual void v275();													// SLOT 275 0x4601c0
-	void v286() { v275(); }													// port: the Negatron name
+	virtual void ApplyTasks();												// SLOT 275 0x4601c0
 
 	// FIELD 0x4b4 2
 	unsigned char		f_4b4;				// 0x4b4  0 (never read)
