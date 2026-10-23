@@ -544,7 +544,7 @@ bool neg::AssetViewFrame(float dt)
 	UpdateTextureAnims(dt);
 	if (CJimmyGame *g = dynamic_cast<CJimmyGame *>(g_gametype))
 	{
-		if (g->m_no_texture_scroll == 0) UpdateTexScrolls(dt);
+		UpdateTexScrolls(dt);									// (as CJimmyGame::Process 0x44df80)
 		if (g->m_sky && g->m_sky_rotates) g->m_sky->AddRotation(0.0f, dt, 0.0f);
 	}
 

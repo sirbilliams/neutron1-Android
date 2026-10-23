@@ -31,125 +31,7 @@ using namespace neg;
 static const float kDegToAngle = 45.511112213134766f;		// 0x48e5e8: 16384 / 360
 static const float kAngleToDeg = 0.02197265625f;			// 0x48e5b4: 360 / 16384
 
-// --------------------------------------------------------------------------- input
-
-// The key lists end with 0; 0x1f5 is the left mouse button, 0x1f4 the right one, anything else a
-// key of g_keys. A key that counts also clears the mouse movement (N2:0x4a39e0).
-static bool KeyListDown(const int *list)
-{
-	for (; *list; list++)
-	{
-		const int k = *list;
-		if (k == 0x1f5) { if (g_mouse_down) return true; }
-		else if (k == 0x1f4) { if (g_mouse_rdown) return true; }
-		else if ((unsigned)k < 256 && g_keys[k])			// port: index checked (the original reads g_keys[k] for any k)
-		{
-			g_N2_56aebe = 0;									// N2:0x4a39e0
-			g_N2_56aec0 = 0;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool neg::PlayerKeyAction(void)			{ return g_joy_button0 || KeyListDown(g_key_action); }			// N2:0x465750
-bool neg::PlayerKeyTurnAround(void)		{ return g_joy_button8 || KeyListDown(g_key_turnaround); }		// N2:0x4657c0
-bool neg::PlayerKeySpeed(void)			{ return g_joy_button1 || KeyListDown(g_key_speed); }			// N2:0x465830
-bool neg::PlayerKeyJump(void)			{ return g_joy_button1 || KeyListDown(g_key_jump); }			// N2:0x4658a0
-bool neg::PlayerKeyGo(void)				{ return g_joy_y > 0.5f || KeyListDown(g_key_go); }				// N2:0x465910
-bool neg::PlayerKeyBack(void)			{ return g_joy_y < -0.5f || KeyListDown(g_key_back); }			// N2:0x465980
-bool neg::PlayerKeyLeft(void)			{ return g_joy_x < -0.5f || KeyListDown(g_key_turn_left); }		// N2:0x4659f0
-bool neg::PlayerKeyRight(void)			{ return g_joy_x > 0.5f || KeyListDown(g_key_turn_right); }		// N2:0x465a60
-bool neg::PlayerKeyCutsceneBypass(void)	{ return g_joy_button0 || KeyListDown(g_key_cutscene_bypass); }	// N2:0x465ad0
-
 using neg::GetMouseDelta;									// 0x46a460 (Mouse.h)
-
-// --------------------------------------------------------------------------- Negatron's chase-camera helpers
-
-float neg::CamWallPull(C3DAnimated *self, OMedia3DVector *cam)	// N2:0x465010
-{
-	float p[4];
-	self->v195(p);											// our position (w as v195 gives it)
-	OMedia3DVector a(p[0], p[1], p[2]);
-	a.w = p[3];
-	if (!PhysicsLineBlocked(a, *cam, false)) return 1.0f;
-	*cam = g_phys_ray.end;									// the hit point
-	const float dx = (p[0] - cam->x) * 0.75f;
-	const float dy = (p[1] - cam->y) * 0.75f;
-	const float dz = (p[2] - cam->z) * 0.75f;
-	cam->x = p[0] - dx;
-	cam->y = p[1] - dy;
-	cam->z = p[2] - dz;
-	return 1.5f;
-}
-
-float neg::CamReach(OMedia3DVector target, OMedia3DVector *out, float max)	// N2:0x464ef0
-{
-	if (max <= 0.0f) return 1.0f;
-	OMedia3DVector d(g_viewport->getx() - target.x, g_viewport->gety() - target.y, g_viewport->getz() - target.z);
-	d.w = 0;
-	const double dist = sqrt((double)d.y * d.y + (double)d.z * d.z + (double)d.x * d.x);
-	if (dist <= max) return 1.0f;
-	const float inv = 1.0f / d.quick_magnitude();
-	*out = target;
-	d.x *= inv;
-	d.y *= inv;
-	const double dz = (double)inv * d.z;
-	const double m = (double)max - 3.0f;
-	out->x = (float)(m * d.x + out->x);
-	out->y = (float)(m * d.y + out->y);
-	out->z = (float)(m * dz + out->z);
-	return 2.0f;
-}
-
-void neg::CamPlace(OMedia3DVector pos, OMedia3DVector target)	// N2:0x465110
-{
-	g_viewport->place(pos.x, pos.y, pos.z);
-	OMedia3DVector d(target.x - pos.x, target.y - pos.y, target.z - pos.z);
-	d.w = 0;
-	omt_Angle ax, ay;
-	d.angles(ax, ay);
-	g_viewport->set_angle(ax, ay, 0);
-}
-
-void neg::CamMove(C3DAnimated *self, float a, float b, float mode, OMedia3DVector cur, OMedia3DVector want,
-				  OMedia3DVector target, OMedia3DVector axis)	// N2:0x4651c0
-{
-	if (mode != 1.0f)
-	{
-		CamPlace(want, target);
-		return;
-	}
-	const double dx = (double)want.x - cur.x;
-	const float dy = want.y - cur.y, dz = want.z - cur.z;
-	if (!self->f_8a7)
-	{
-		g_viewport->setx((float)((double)axis.x * dx * a * b + g_viewport->getx()));
-		g_viewport->sety((float)((double)axis.y * dy * a * b + g_viewport->gety()));
-		g_viewport->setz((float)((double)axis.z * dz * a * b + g_viewport->getz()));
-	}
-	OMedia3DVector d(target.x - cur.x, target.y - cur.y, target.z - cur.z);
-	d.w = 0;
-	omt_Angle ax, ay;
-	d.angles(ax, ay);
-	const short vx = g_viewport->get_anglex(), vy = g_viewport->get_angley();
-	short turn = (short)((ay - vy) & 0x3fff);				// the short way round
-	if (turn > 0x2000) turn -= 0x4000;
-	// (N2 also kept the old viewport position / angles in globals nothing reads: dropped.)
-	if (!self->f_8a7)
-	{
-		g_viewport->set_anglex((omt_WAngle)(vx + (short)(ax - vx)));
-		g_viewport->set_angley((omt_WAngle)(vy + turn));
-	}
-}
-
-// --------------------------------------------------------------------------- Negatron C3DJimmy hook
-
-__attribute__((weak)) void neg::JimmyActivateMenuItem(CGameObject *jimmy, CGameObject *o, CGameObject *who, int item, float value)
-{
-	(void)jimmy; (void)o; (void)who; (void)item; (void)value;
-	NEG_TODO(/*N2*/0x449df0, "C3DJimmy::ActivateMenuItem (Negatron element slot 138)");
-}
 
 // --------------------------------------------------------------------------- helpers
 
@@ -311,7 +193,7 @@ C3DPlayer::C3DPlayer()										// 0x437280
 	f_6e7 = 0;
 	f_7fc = 1;
 	f_710 = 0;
-	// (element short 0x580 = 0: CGameObject +0x4c0 of Neutron.exe; TODO(BG) - no member in our CGameObject)
+	f_594 = 0;												// element short +0x580: C3DAnimated's detail level (HI)
 	f_7c4 = 0;
 	f_7f4 = 0;
 	f_800 = 0;
@@ -1327,10 +1209,23 @@ void C3DPlayer::ControlSit(float dt)						// 0x43a120
 	CamAim(cur, look, false);
 }
 
+// 0x43b820: a wall between Jimmy and the camera pulls the camera to 3/4 of the way to the hit point.
 float C3DPlayer::CamPull(OMedia3DVector look, OMedia3DVector *cam)	// 0x43b820
 {
 	(void)look;
-	return CamWallPull(this, cam);
+	float p[4];
+	v195(p);												// our position (vtable +0x310)
+	OMedia3DVector a(p[0], p[1], p[2]);
+	a.w = p[3];
+	if (!PhysicsLineBlocked(a, *cam, false)) return 1.0f;	// 0x47c210
+	*cam = g_phys_ray.end;									// 0x5cfc60: the hit point
+	const float dx = (p[0] - cam->x) * 0.75f;				// 0x49d5ac
+	const float dy = (p[1] - cam->y) * 0.75f;
+	const float dz = (p[2] - cam->z) * 0.75f;
+	cam->x = p[0] - dx;
+	cam->y = p[1] - dy;
+	cam->z = p[2] - dz;
+	return 1.5f;											// 0x4a3138
 }
 
 void C3DPlayer::ResetCamera(void)							// 0x437740

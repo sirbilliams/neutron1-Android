@@ -15,7 +15,6 @@ C3DCursor::C3DCursor()										// 0x41eeb0
 	v107(0);
 	v36(0);
 	v52(0);
-	f_88c = 1;												// "FaceViewport"
 	C3DObject::InitPhysics();								// 0x4623d0
 	// (then a call to the empty 0x472970)
 }

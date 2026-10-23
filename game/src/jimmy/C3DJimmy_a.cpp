@@ -5,6 +5,7 @@
 #include "../yokian/C3DYokian.h"
 #include "../pickups/C3DPickupItem.h"
 #include "../TestHooks.h"
+#include "../levels/CLevel04Games.h"
 
 using namespace neg;
 using namespace jimmybg;
@@ -151,7 +152,7 @@ void C3DJimmy::AddTouching(CGameObject *other)				// 0x422d30
 		if (strcasecmp(other->m_tag, "REACTOR") == 0)
 		{
 			f_1e51 = 1;
-			if (g_gametype->m_object_id == 'LV4B') static_cast<CJimmyGame *>(g_gametype)->m_reactor_touched = 1;	// 0x423244
+			if (g_gametype->m_object_id == 'LV4B') static_cast<CLevel04BGame *>(g_gametype)->m_sweeping = 1;	// 0x42325c (+0x5bc)
 		}
 		return;
 	}
