@@ -237,7 +237,7 @@ public class SetupActivity extends Activity {
         LauncherPages.Slot auto = LauncherPages.newest(LauncherPages.slots(saveDir()));
         String gam = auto != null ? auto.gam.toLowerCase(Locale.ROOT) : "";
         if (gam.endsWith(".gam")) gam = gam.substring(0, gam.length() - 4);
-        if (auto == null || gam.length() == 0 || !putPicture("continue", new File(dir, "level-" + gam + ".png")))
+        if (auto == null || gam.length() == 0 || !putPicture("continue", new File(dir, "level-" + gam + ".bmp")))
             putPicture("continue", new File(dir, "loading.png"));
         mMenu.art = mMenu.pics.get("saves");                        // the PDA: the bottom screen's fallback
     }

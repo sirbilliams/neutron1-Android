@@ -8,4 +8,8 @@ namespace neg
 	// NEG_LAUNCHER_ART names (once each), and, as levels load, each exit's loading picture as
 	// level-<gam>.png. Cheap when there is nothing to do. Called every frame (CompanionTick).
 	void LauncherArtTick(void);
+
+	// A level has been loaded (CEditor::LoadGame): once Jimmy plays in it, a picture of what he sees is
+	// saved as level-<gam>.bmp (no level pictures exist in Boy Genius: it has one loading screen).
+	void LauncherArtLevelLoaded(const char *gam);
 }

@@ -8,6 +8,7 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "TestHooks.h"
 #include "port/StartMode.h"
+#include "port/LauncherArt.h"
 #include "port/AssetView.h"
 #include "DatabaseCache.h"
 #include "Mouse.h"
@@ -698,6 +699,7 @@ void CEditor::LoadGame(char *name)
 	TestPlayHook(name);										// port: test-only (NEG_TEST_PLAY)
 	neg::AssetViewLevelLoaded(name);						// port: Asset Viewer (NEG_ASSET_VIEW)
 	neg::StartModeLevelLoaded();							// port: NEG_START
+	neg::LauncherArtLevelLoaded(name);						// port: the launcher's picture of this level
 }
 
 // --------------------------------------------------------------------------- 0x46dd50

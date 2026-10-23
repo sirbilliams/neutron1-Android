@@ -47,6 +47,32 @@ static void omf_save_shot(SDL_Window *win, const char *path)
 	SDL_Log("OMT: saved %s (%dx%d) at frame %d", path, w, h, omg_frame);
 }
 
+// port: the launcher's per-level picture (game/src/port/LauncherArt.cpp). Asks for the next frame to be
+// saved as a BMP no wider than 640 (every n-th pixel), then forgotten. Not in the original.
+static string omg_art_shot;
+void omf_SDLRequestArtShot(const char *path) { omg_art_shot = path ? path : ""; }
+
+static void omf_save_art_shot(SDL_Window *win, const char *path)
+{
+	int w, h;
+	SDL_GL_GetDrawableSize(win, &w, &h);
+	const int n = (w + 639) / 640;
+	const int ow = w / n, oh = h / n;
+	SDL_Surface *s = SDL_CreateRGBSurfaceWithFormat(0, ow, oh, 24, SDL_PIXELFORMAT_RGB24);
+	unsigned char *tmp = (unsigned char*)malloc(w * h * 4);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, tmp);
+	for (int y = 0; y < oh; y++)
+	{
+		unsigned char *d = (unsigned char*)s->pixels + y * s->pitch, *src = tmp + (h - 1 - y * n) * w * 4;
+		for (int x = 0; x < ow; x++) { d[x * 3] = src[x * n * 4]; d[x * 3 + 1] = src[x * n * 4 + 1]; d[x * 3 + 2] = src[x * n * 4 + 2]; }
+	}
+	free(tmp);
+	SDL_SaveBMP(s, path);
+	SDL_FreeSurface(s);
+	SDL_Log("LAUNCHER ART: saved %s (%dx%d)", path, ow, oh);
+}
+
 #ifndef __ANDROID__
 // port: test-only (desktop). OMT_AUTOKEYS="<frame>:+<key>,<frame>:-<key>,..." presses (+) or
 // releases (-) a key at that frame by pushing an SDL key event; <key> is an SDL scancode name
@@ -101,6 +127,7 @@ static void omf_test_hooks(SDL_Window *win)
 void omf_SDLFrameHook(SDL_Window *win)
 {
 	omg_frame++;
+	if (!omg_art_shot.empty()) { omf_save_art_shot(win, omg_art_shot.c_str()); omg_art_shot.clear(); }
 #ifndef __ANDROID__
 	omf_test_hooks(win);
 #endif

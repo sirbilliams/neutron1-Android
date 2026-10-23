@@ -10,13 +10,18 @@
       newgame.png   149 "LoadingNeighborhood" (Retroville, where the story starts)
       loading.png   252 "loadscreen"
       inventory.png 53 "menucollectedItems2" credits.png 246 "Credits"
-    Negatron also wrote level-<gam>.png (each exit's "LoadScreen" picture); Boy Genius's CLoadLevel
+    Negatron wrote level-<gam>.png (each exit's "LoadScreen" picture); Boy Genius's CLoadLevel
     has no LoadScreen field (its .gam files have none) and it has no dat\menu.dat: it shows the one
-    loading picture, canvas 0xf4 (C2DInGameMenu::ShowLoadingPicture 0x4073b0), so there is nothing
+    loading picture, canvas 0xf4 (C2DInGameMenu::ShowLoadingPicture 0x4073b0), so instead the game takes a
+    picture of each level as the player first plays it (LauncherArtLevelLoaded: level-<gam>.bmp, at most
+    640 wide, from the player's own run; none is shipped), and there is nothing
     to scan (ScanExits) and the main menu background is the PDA page's canvas (MainMenuBackground). */
 
 #include "LauncherArt.h"
 #include "../C2DInGameMenu.h"
+#include "../C3DJimmy.h"
+#include "../CGameType.h"
+#include "../CViewPort.h"
 #include "../Game.h"
 #include "../Globals.h"
 #include "../gen/globals.h"
@@ -36,10 +41,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+extern void omf_SDLRequestArtShot(const char *path);		// engine/sdl/OMediaSDLMain.cpp
+
 namespace
 {
 
 std::string s_dir;
+std::string s_level_file;					// level-<gam>.bmp of the level being played, "" when done
+int s_level_wait = 0;
 bool s_env_read = false, s_fixed_done = false;
 int s_scan_wait = 0;
 std::set<std::string> s_done;			// files written or found this run
@@ -91,6 +100,21 @@ void ScanExits()
 
 } // namespace
 
+void neg::LauncherArtLevelLoaded(const char *gam)
+{
+	s_level_file.clear();
+	if (!gam || !*gam) return;
+	std::string n(gam);
+	const size_t slash = n.find_last_of("/\\");
+	if (slash != std::string::npos) n = n.substr(slash + 1);
+	const size_t dot = n.rfind('.');
+	if (dot != std::string::npos) n.resize(dot);
+	for (size_t i = 0; i < n.size(); i++) n[i] = (char)tolower((unsigned char)n[i]);
+	if (n.empty()) return;
+	s_level_file = "level-" + n + ".bmp";
+	s_level_wait = 150;						// let the level settle (and any start cut scene end)
+}
+
 void neg::LauncherArtTick(void)
 {
 	if (!s_env_read)
@@ -104,6 +128,18 @@ void neg::LauncherArtTick(void)
 		}
 	}
 	if (s_dir.empty() || !g_menu || !g_menu->f_4b4) return;
+	// A picture of the level as Jimmy plays it (the launcher's Continue shows the newest save's level).
+	if (!s_level_file.empty() && --s_level_wait <= 0)
+	{
+		const std::string file = s_dir + "/" + s_level_file;
+		if (Exists(file)) s_level_file.clear();
+		else if (g_hud_on && g_camera && g_camera->NameContains((char *)"C3DJIMMY"))
+		{
+			omf_SDLRequestArtShot(file.c_str());
+			s_level_file.clear();
+		}
+		else s_level_wait = 60;
+	}
 	if (!s_fixed_done)
 	{
 		s_fixed_done = true;
