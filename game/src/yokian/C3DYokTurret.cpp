@@ -152,7 +152,6 @@ void C3DYokTurret::v258(void)								// 0x44ccf0
 
 void C3DYokTurret::ev95(float a, float b, float c)			// 0x44cd50
 {
-	(void)a; (void)b; (void)c;
 	C3DMissile *m = m_missile[m_next];
 	if (!m) return;
 	float p[4];
@@ -167,7 +166,7 @@ void C3DYokTurret::ev95(float a, float b, float c)			// 0x44cd50
 	m->v175(d.x * 1000.0f, d.y * 1000.0f, d.z * 1000.0f, d.w);	// +0x2c0: velocity (0x48e5ac)
 	m->v42(0);												// +0xa8
 	m->v40(0);												// +0xa0
-	OMedia3DVector p1 = v224(p0.x, p0.y, p0.z);				// +0x384
+	OMedia3DVector p1 = v224(a, b, c);						// +0x384: the stack arguments (0x44cedc), where the missile starts (Process: 0, 0, 320)
 	m->v196(p1.x, p1.y, p1.z, p1.w);						// +0x314
 	v201(p);												// +0x328: the turret's rotation
 	m->v202(p[0], p[1], p[2], p[3]);						// +0x32c

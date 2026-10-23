@@ -30,6 +30,7 @@
 #include "C3DJimmy.h"
 #include "level1/C3DJeep.h"
 #include "C3DAI.h"
+#include "C3DRocketShip.h"
 #include "C2DInGameMenu.h"
 #include "CGameType.h"
 #include "levels/CLoadLevel.h"
@@ -72,6 +73,8 @@ static void DumpObjects(void)
 		SDL_Log("%s", line);
 	}
 }
+
+static CGameObject *TestFindTag(char *tag);
 
 void neg::TestPlayHook(const char *level)
 {
@@ -146,6 +149,13 @@ void neg::TestPlayHook(const char *level)
 				SDL_Log("EXIT %s -> %s @%s needs %s >= %d exact %d", e->m_tag, e->m_level_name, e->m_start_point,
 						e->m_required_task, e->m_required_level, e->m_exact_level);
 	if (getenv("NEG_DUMP_OBJECTS")) DumpObjects();
+	if (const char *fire = getenv("NEG_TEST_FIRE"))		// NEG_TEST_FIRE=<tag>: calls that trigger as a StartPoint does at the level's start
+	{
+		char tag[100];
+		strncpy(tag, fire, sizeof tag - 1); tag[sizeof tag - 1] = 0;
+		if (CGameObject *t = TestFindTag(tag)) { t->v23(Jimmy()); SDL_Log("NEG_TEST_FIRE: %s", fire); }
+		else SDL_Log("NEG_TEST_FIRE: no object %s", fire);
+	}
 	const char *seq = getenv("NEG_TEST_SEQUENCE");
 	if (seq && *seq && *seq != '0')
 	{
@@ -202,6 +212,8 @@ static void TestGoto(CGameObject *o, float dt)
 				o->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// riding the scooter: it goes too
 					if (jm->f_a30 && jm->f_a30->f_a84 == jm) jm->f_a30->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(o))			// flying the rocket ship (level5a/5b/6): it goes too
+					if (jm->f_ab0) jm->f_ab0->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				SDL_Log("NEG_TEST_GOTO: Jimmy to %s (%.0f %.0f %.0f)", tag, d[0] + dx, d[1] + 60.0f, d[2] + dz);
 			}
 		}
@@ -212,6 +224,8 @@ static void TestGoto(CGameObject *o, float dt)
 void neg::TestPosLog(CGameObject *o, float dt)
 {
 	if (o) TestGoto(o, dt);
+	static const char *answer = getenv("NEG_TEST_ANSWER");		// "y" or "n": answers the yes/no boxes
+	if (answer && *answer) g_keys[(*answer == 'y' || *answer == 'Y') ? 'Y' : 'N'] = ConfirmOpen() ? 1 : 0;
 	static float every = -1, t = 0;
 	if (every < 0) { const char *e = getenv("NEG_TEST_POSLOG"); every = e && *e ? (float)atof(e) : 0; }
 	if (every <= 0 || !o) return;
@@ -243,13 +257,17 @@ void neg::TestPosLog(CGameObject *o, float dt)
 		}
 	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
 		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
-	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where that object is
-		if (CGameObject *wo = TestFindTag((char *)w))
-		{
-			float q[4];
-			wo->v195(q);
-			SDL_Log("WATCH %s %.1f %.1f %.1f", w, q[0], q[1], q[2]);
-		}
+	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where those objects are (all with that tag)
+	{
+		int k = 0;
+		for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+			if (*i && strcasecmp((*i)->m_tag, w) == 0)
+			{
+				float q[4];
+				(*i)->v195(q);
+				SDL_Log("WATCH %s#%d %.1f %.1f %.1f", w, ++k, q[0], q[1], q[2]);
+			}
+	}
 	if (g_camera && g_camera != o)						// riding something: where the camera's object is
 	{
 		g_camera->v195(p);
