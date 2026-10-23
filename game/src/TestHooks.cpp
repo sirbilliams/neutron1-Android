@@ -18,6 +18,8 @@
                                (=2: and every object: tag, class ID, position; =3: the story objects' non-default properties).
     NEG_TEST_POSLOG_TAGS=<tag>,... With POSLOG: also log those objects ("OPOS tag x y z state"); a
                                hidden object shows "hidden".
+    NEG_TEST_WATCH=<tag>       With NEG_TEST_POSLOG: also log where the object tagged <tag> is ("WATCH ..."); the camera's
+                               object is logged as "CAM ..." when it is not Jimmy.
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
     NEG_DUMP_OBJECTS=1         When the level is loaded, log every object: class, tag, position and
                                its registered properties (name=value), for tracing trigger chains.
@@ -237,4 +239,16 @@ void neg::TestPosLog(CGameObject *o, float dt)
 		}
 	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
 		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
+	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where that object is
+		if (CGameObject *wo = TestFindTag((char *)w))
+		{
+			float q[4];
+			wo->v195(q);
+			SDL_Log("WATCH %s %.1f %.1f %.1f", w, q[0], q[1], q[2]);
+		}
+	if (g_camera && g_camera != o)						// riding something: where the camera's object is
+	{
+		g_camera->v195(p);
+		SDL_Log("CAM %s %.1f %.1f %.1f", g_camera->m_tag, p[0], p[1], p[2]);
+	}
 }
