@@ -14,12 +14,12 @@ C3DCamera::C3DCamera()										// 0x4610e0
 	v46(0);
 	v52(0);
 	InitCube(OMedia3DVector(1.0f, 1.0f, 1.0f, 1.0f), 75.0f);	// element +0xe4
-	HideAgain();											// N2:0x49b120
+	hide(true);												// element +0x58
 	v107(0);
 	g_4fc69c = (C3DObject *)this;
 }
 
-C3DCamera::~C3DCamera()										// N2:0x499510
+C3DCamera::~C3DCamera()										// 0x461240
 {
 	g_4fc69c = NULL;
 }

@@ -15,7 +15,7 @@ void PostGameMessage(int msg)
 	NEG_TODO(0x400, "PostGameMessage"); (void)msg;
 }
 
-void ErrorLog(const char *fmt, ...)		// N2:0x4b3b10: appends a line to dat\debug.log
+void ErrorLog(const char *fmt, ...)		// port: Boy Genius's debug-log calls (the empty 0x472970) are printed
 {
 	char buf[512]; va_list ap; va_start(ap, fmt); vsnprintf(buf, sizeof buf, fmt, ap); va_end(ap);
 	SDL_Log("%s", buf);

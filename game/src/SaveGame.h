@@ -53,27 +53,18 @@ void LoadSlot(void);										// 0x42b180
 // (C3DJimmy 0x428870 case 3, port: a function) the headers of the ten slots into g_save_slots.
 void ReadSaveSlots(void);
 
-// port: the Negatron API that callers not yet ported still use (TODO(BG): remove with them).
-// LoadTask(name, false) = RequestTask(name); LoadTask(file, true) = load the level file afresh.
-// RestoreTask and SaveTask do nothing (Boy Genius has no autosave).
-void LoadTask(const char *name, bool new_level);
-bool RestoreTask(const char *name);
-void SaveTask(const char *name);
-
 // --------------------------------------------------------------------------- texture scrolling
 
-// A polygon whose texture coordinates move: v by dv per second, or - both speeds -99999 - a
-// gentle wave of u and v (water). 12 bytes in the original.
+// A polygon whose texture coordinates move: v by dv per second. 12 bytes in the original.
 struct TexScroll
 {
 	OMedia3DPolygon	*polygon;
 	float			du, dv;		// du is never used for a plain scroll
 };
-enum { TEXSCROLL_WAVE_BITS = 0xc7c34f80 };					// -99999.0f, compared as bits
-extern std::list<TexScroll *> g_tex_scrolls;				// N2:0x54e680 (head 0x4fc5e4, count 0x4fc5e8)
+extern std::list<TexScroll *> g_tex_scrolls;				// (head 0x4fc5e4, count 0x4fc5e8)
 
 void ClearTexScrolls(void);									// 0x45f4c0 (CJimmyGame, level end)
-void UpdateTexScrolls(float dt);							// N2:0x4970e0 (CJimmyGame::Process)
+void UpdateTexScrolls(float dt);							// 0x45f510 (CJimmyGame::Process)
 void AddTexScroll(OMedia3DPolygon *polygon, float du, float dv);	// 0x45f610 (CJimmyGame slot 368)
 
 }

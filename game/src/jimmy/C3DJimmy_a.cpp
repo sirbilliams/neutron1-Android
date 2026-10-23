@@ -513,7 +513,7 @@ void C3DJimmy::v261(void)									// 0x42afc0
 	PlayAnim((char *)"STOP");								// element +0x150
 }
 
-void C3DJimmy::v271(void)									// 0x42ae00
+void C3DJimmy::v275(void)									// 0x42ae00
 {
 	DeactivateGadget();										// element +0x178
 	f_1e25 = 1;

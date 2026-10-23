@@ -2,26 +2,13 @@
 # address kind type [name]      kinds: ptr (pointer slot), ptrarray, val (value in g_data), array
 
 0x4f83d8 ptr CGameObject* g_player                 # the player's CGameObject subobject (C3DJimmy element at -0xc0); set by the C3DJimmy constructor 0x422160
-# unresolved (Neutron2 address): N2:0x54a46c ptr OMediaElement* g_player_hud           # the player's HUD object (its CGameObject at +0xc8), set by CJimmyGame::v260
 0x696004 ptr OMediaDataBase* g_level_music                  # music database of the level (LoadMusic 0x46a910), NULL when none
 
 # power-up timers (seconds), counted down by CJimmyGame::UpdateTimers; saved by Write/ReadState.
 # [3] N2:0x54a430 hides the player HUD at 0, [4] N2:0x54a434 terrain tint (x-ray), [6] N2:0x54a43c stopwatch
 # (enemies at g_enemy_time_scale 0.25). [1] N2:0x54a428 is saved but never counted down.
-# unresolved (Neutron2 address): N2:0x54a424 array float g_power_timers
-# unresolved (Neutron2 address): N2:0x540594 val float g_enemy_time_scale              # 1.0, 0.25 while the stopwatch runs
-
-# unresolved (Neutron2 address): N2:0x54a464 val int g_promotion_rank                  # last rank (GetRank) CheckPromotion promoted to
-# unresolved (Neutron2 address): N2:0x532500 val int g_score_box_y                     # y of the score box sprite (set with each promotion)
-# unresolved (Neutron2 address): N2:0x545f0d val char g_score_box2_on                  # top rank reached: the menu shows score box 2
 
 
-# unresolved (Neutron2 address): N2:0x54a470 val float g_frame_rate_now                # SmoothFrameRate: 1 / dt
-# unresolved (Neutron2 address): N2:0x54a474 val float g_frame_rate                    # SmoothFrameRate: running average (2% per frame)
-# unresolved (Neutron2 address): N2:0x54a478 val float g_frame_rate_acc
+
 
 0x4eefd8 val int g_voice_channel                   # channel of the current help / pickup voice, -1 when done
-# unresolved (Neutron2 address): N2:0x53c550 val unsigned int g_queued_sfx_after                # channel g_queued_sfx waits for (N2:0x48f310)
-# unresolved (Neutron2 address): N2:0x54a4ba val char g_queued_sfx_pending
-# unresolved (Neutron2 address): N2:0x53b5bc val int g_mode_before_pause               # game mode when PauseGame(true) switched to 6
-# unresolved (Neutron2 address): N2:0x53b5c0 val unsigned char g_has_focus                      # OnActivate / OnDeactivate

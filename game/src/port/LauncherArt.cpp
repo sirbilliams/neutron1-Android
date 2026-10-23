@@ -10,11 +10,10 @@
       newgame.png   149 "LoadingNeighborhood" (Retroville, where the story starts)
       loading.png   252 "loadscreen"
       inventory.png 53 "menucollectedItems2" credits.png 246 "Credits"
-    and level-<gam, lower case>.png: the loading picture (CLoadLevel "LoadScreen") of every exit
-    of the levels played, so Continue can show the autosave's level.
-    TODO(BG): BG's CLoadLevel has no LoadScreen field (its .gam files have none) and BG has no
-    dat\menu.dat: find how Neutron.exe picks a level's loading picture (the "Loading<Area>"
-    canvases 146..155) and its main menu background, then fill ScanExits / MainMenuBackground. */
+    Negatron also wrote level-<gam>.png (each exit's "LoadScreen" picture); Boy Genius's CLoadLevel
+    has no LoadScreen field (its .gam files have none) and it has no dat\menu.dat: it shows the one
+    loading picture, canvas 0xf4 (C2DInGameMenu::ShowLoadingPicture 0x4073b0), so there is nothing
+    to scan (ScanExits) and the main menu background is the PDA page's canvas (MainMenuBackground). */
 
 #include "LauncherArt.h"
 #include "../C2DInGameMenu.h"
@@ -58,7 +57,8 @@ void Save(int id, const std::string &name)
 	s_done.insert(name);
 	const std::string file = s_dir + "/" + name;
 	if (Exists(file)) return;
-	OMediaCanvas *c = neg::LoadCanvasID(g_screens_db, id);
+	if (!neg::g_menu || !neg::g_menu->f_4b4) return;
+	OMediaCanvas *c = neg::LoadCanvasID(neg::g_menu->f_4b4, id);
 	if (!c || c->get_width() < 64 || c->get_height() < 64) return;
 	try
 	{
@@ -103,7 +103,7 @@ void neg::LauncherArtTick(void)
 			mkdir(s_dir.c_str(), 0755);
 		}
 	}
-	if (s_dir.empty() || !g_screens_db || !g_menu) return;
+	if (s_dir.empty() || !g_menu || !g_menu->f_4b4) return;
 	if (!s_fixed_done)
 	{
 		s_fixed_done = true;

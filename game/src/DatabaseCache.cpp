@@ -44,7 +44,7 @@ OMediaDataBase *Find(std::list<neg::DatabaseEntry *> &list, const char *name)
 	return NULL;
 }
 
-// Close entry e's database and stream and free it (0x46aef0 / 0x46b000 / N2:0x4a4960 inline this).
+// Close entry e's database and stream and free it (0x46aef0 / 0x46b000 inline this).
 void Close(std::list<neg::DatabaseEntry *> &list, neg::DatabaseEntry *e)
 {
 	e->open = 0;
@@ -133,7 +133,7 @@ void neg::CloseAllDatabases(void)
 	CloseAll(s_level_dbs);
 }
 
-// N2:0x4a4960: close every permanent database (at exit).
+// port: close every permanent database at exit (Neutron.exe never does; the process end frees them).
 void neg::CloseAllPermanentDatabases(void)
 {
 	CloseAll(s_permanent_dbs);

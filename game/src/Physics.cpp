@@ -1,6 +1,6 @@
-/*  CPhysics - see Physics.h. Reconstructed from Neutron.exe 0x478fa0..N2:0x4b7d60 and the geometry
-    helpers it uses (0x469500..0x469b70, 0x477dd0). Static initialisers at N2:0x4b3c10..N2:0x4b4040
-    construct the lists and set g_gravity, the w components of g_phys_ray and the marker colours.
+/*  CPhysics - see Physics.h. Reconstructed from Neutron.exe 0x478fa0..0x47ced0 and the geometry
+    helpers it uses (0x469500..0x469b70, 0x477dd0). Static initialisers (0x478d20, 0x478d50)
+    set the w components of g_phys_ray and g_gravity.
 
     Comparisons follow the x87 code: `!(a > b)` where the original branched on "not above", so
     unordered (NaN) operands take the same branch; FEq() is the "C3 set" test (true for NaN too). */
@@ -77,9 +77,9 @@ int				 s_debug_line = 0;			// 0x695d84  PhysicsDebugText line
 // Debug switches: nothing in the shipped exe sets them.
 bool			 s_debug_contacts = false;	// 0x695d44  markers + text for every contact
 bool			 s_debug_box_corners = false;	// 0x695d45  markers on the corners of boxes
-bool			 s_show_touch_stats = false;	// N2:0x6f72df  "TOUCH=..." line
+bool			 s_show_touch_stats = false;	// 0x695d47  "TOUCH=..." line
 
-// N2:0x4b3e60 / N2:0x4b3e80: w components of the ray, default gravity
+// 0x478d20 / 0x478d50: w components of the ray, default gravity
 struct InitPhysicsGlobals
 {
 	InitPhysicsGlobals()
@@ -116,7 +116,7 @@ inline OMedia3DVector Sub(const OMedia3DVector &a, const OMedia3DVector &b)	// a
 
 inline const OMedia3DPoint &Vertex(OMedia3DShape *shape, OMedia3DPolygon *poly, short i)
 {
-	return (*shape->get_vertices())[poly->get_point(i)];		// N2:0x4b7d60 / N2:0x4b7ce0 / N2:0x4b7d20
+	return (*shape->get_vertices())[poly->get_point(i)];		// 0x477f10
 }
 
 inline OMedia3DVector ToVector(const OMedia3DPoint &p)	{ return OMedia3DVector(p.x, p.y, p.z, p.w); }
@@ -204,7 +204,7 @@ static bool RayHitsTriangle(CPhysicsRay *ray, OMedia3DVector p0, OMedia3DVector 
 	return true;
 }
 
-// N2:0x4a2e90: the first three vertices of a terrain polygon (+ offset) against the ray
+// 0x469a10: the first three vertices of a terrain polygon (+ offset) against the ray
 static bool RayHitsPolygon(CPhysicsRay *ray, OMedia3DShape *shape, OMedia3DPolygon *poly,
 						   OMedia3DVector offset, float *t, bool two_sided)
 {
@@ -290,7 +290,7 @@ static bool TakeCheckpointPolygon(OMedia3DPolygon *poly, OMedia3DShape *shape)
 		if (name == kNames[i])
 		{
 			poly->set_flags(om3pf_Hide);					// flags = 4 (not or-ed)
-			g_gametype->ev77(i, poly, shape);				// vtable +0x134
+			g_gametype->ev77(i, poly, shape);				// vtable +0x12c
 			return true;
 		}
 	return false;
@@ -336,7 +336,7 @@ void neg::PhysicsAddTerrain(OMedia3DShape *shape)			// 0x479140 "Add3DTerrain()"
 	{
 		OMedia3DPolygon *poly = &polys[k];
 		if (TakeCheckpointPolygon(poly, shape)) continue;
-		if (g_gametype->ev79(shape, poly, PolygonCenter(shape, poly)))		// vtable +0x13c
+		if (g_gametype->ev79(shape, poly, PolygonCenter(shape, poly)))		// vtable +0x134
 		{
 			g_terrain_poly_claimed = true;
 			continue;
@@ -510,7 +510,7 @@ void neg::PhysicsApplyFriction(CGameObject *o, float dt)	// 0x47a330
 	o->v173(-(s.x * k * dt), -(s.y * k * dt), -(s.z * k * dt));
 }
 
-void neg::PhysicsCollideObjects(float dt)					// N2:0x4b54d0
+void neg::PhysicsCollideObjects(float dt)					// 0x47a430
 {
 	(void)dt;
 	int touch = 0, touching = 0, untouch = 0;
@@ -689,7 +689,7 @@ bool neg::PhysicsCollideWithBox(CGameObject *box, CGameObject *o)	// 0x47a5e0
 	return true;
 }
 
-// N2:0x4b6c10: the sphere against one terrain polygon (its first three vertices)
+// 0x47bbb0: the sphere against one terrain polygon (its first three vertices)
 static void SphereHitsPolygon(OMedia3DPolygon *poly, OMedia3DShape *shape, OMedia3DVector n, OMedia3DVector start,
 							  OMedia3DVector *end, bool *hit, float r, bool test_edges)
 {

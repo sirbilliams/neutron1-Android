@@ -219,12 +219,6 @@ void C3DAnimated::v268(int state)							// 0x40e1f0
 void C3DAnimated::v277(void) { PauseAnim(1); }					// 0x40e770
 void C3DAnimated::v278(void) { PauseAnim(0); }					// 0x40e790
 
-// port: Negatron's N2SLOT 282 (Neutron.exe has no such slot); CEditor's object markers use it.
-void C3DAnimated::v282(OMediaMatrix_4x4 &m, float *w, float *h)
-{
-	get_layer()->prepare_projection_matrix(0, m, *w, *h);	// element +0x64 its_layer, vtable +0xc
-}
-
 // --------------------------------------------------------------------------- morph animations
 
 void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0

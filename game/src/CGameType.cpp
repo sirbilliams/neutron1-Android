@@ -50,13 +50,7 @@ using namespace neg;
 // adds to that list (only its static constructor / destructor and this function use it), so the
 // loop never runs.
 static void ResetParticles(void)			{}
-// 0x46a400 (as in CEditor.cpp): capture centres the pointer (hiding the Windows cursor has no
-// equivalent on the Thor); release only clears the flag.
-static void CaptureMouse(bool capture)
-{
-	if (capture) { neg::CenterMouse(); g_mouse_captured = 1; return; }
-	g_mouse_captured = 0;
-}
+using neg::CaptureMouse;						// 0x46a400 (Input.cpp)
 // OMediaMouseCursor::hide() (OMT2.dll); the SDL build of OMT has no OMediaMouseCursor.
 static void HideMouseCursor(void)			{ SDL_ShowCursor(SDL_DISABLE); }
 // --------------------------------------------------------------------------- shape helpers (0x4b2xxx)
@@ -78,7 +72,6 @@ OMedia3DShape *neg::Load3DShape(OMediaDataBase *db, int id)
 		if (g_509a12) NEG_TODO(0x477ba0, "debug database call (db vtable +0x4c)");
 		if (shape) shape->db_unlock();
 		AddShapeTextureAnims(db, shape);					// 0x468ec0
-		AddShapeMaterialAnims(db, shape);					// N2:0x490300
 		g_509a14 = 0;
 		// Translucent materials (diffuse alpha != 1) are drawn in the second pass, alpha blended.
 		omt_PolygonList *polys = shape->get_polygons();			// (no NULL test in the original)
@@ -442,7 +435,7 @@ bool CGameType::IsPaused(void)
 	return !neg::GameIsRunning();
 }
 
-void CGameType::ev70(void)													// N2:0x4b0a50 (InitGame clears it; C3DCar/C3DVehicle test it)
+void CGameType::ev70(void)													// 0x475a30 (InitGame clears it; C3DCar/C3DVehicle test it)
 {
 	g_5099a9 = 1;
 }

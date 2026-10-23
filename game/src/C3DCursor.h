@@ -6,8 +6,8 @@
     (only resets the vtables, then ~C3DAnimated; deleting thunks 0x4159e0 / 0x415880 / 0x4159f0
     / 0x4159d0).
 
-    Original layout: as C3DAnimated (element vtable N2:0x4d7120, 94 slots; OMediaAnim vtable
-    N2:0x4d70d0 at +0x90; listener N2:0x4d710c at +0x30; CLocalGameObject vtable N2:0x4d6c54 at +0xc0),
+    Original layout: as C3DAnimated (element vtable 0x497ac0, 72 slots; OMediaAnim vtable
+    0x497a70 at +0x90; listener 0x497aac at +0x30; CLocalGameObject vtable 0x497620 at +0xc0),
     no members of its own (vtordisp 0x924, streamer 0x928).                                    */
 #pragma once
 #include "C3DAnimated.h"

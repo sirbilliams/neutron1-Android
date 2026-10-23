@@ -67,7 +67,7 @@ static void ReleaseSound(OMediaDataBase *db, OMediaSound *s)
 	db->purge_object(s, true);
 }
 
-// The camera position minus the object's (inline in 0x47d510 / 0x47d640 / N2:0x4b8720).
+// The camera position minus the object's (inline in 0x47d510 / 0x47d640).
 static float DistanceToCamera(CGameObject *o)
 {
 	float p[4];
@@ -249,13 +249,6 @@ int neg::PlaySoundIndex(int channel, int id, bool loop)					// 0x47d390
 	return PlaySoundOnChannel(channel, FetchSound(g_active_sound_db, id), loop);
 }
 
-// N2:0x4b82f0: starts the sound on a free channel and stops it at once - it is loaded into the
-// database cache as a side effect (C3DJimmy uses it).
-void neg::LoadSound(const std::string &name)
-{
-	StopChannel(PlaySound(-1, name, false), false);
-}
-
 // --------------------------------------------------------------------------- 3D sounds
 
 int neg::PlaySound3D(CGameObject *o, int channel, const std::string &name, bool loop)	// 0x47d510
@@ -269,13 +262,6 @@ int neg::PlaySound3DIndex(CGameObject *o, int channel, int id, bool loop)		// 0x
 {
 	int ch = PlaySoundIndex(channel, id, loop);			// 0x47d390
 	if (ch != -1) Start3D(ch, o, true);
-	return ch;
-}
-
-int neg::PlaySound3DNoDoppler(CGameObject *o, int channel, const std::string &name, bool loop)	// N2:0x4b8720
-{
-	int ch = PlaySound(channel, name, loop);
-	if (ch != -1) Start3D(ch, o, false);
 	return ch;
 }
 
@@ -386,7 +372,7 @@ bool neg::IsChannelPlaying(int channel)
 	return total != 0 || c->get_current_looped();
 }
 
-// N2:0x4b8a30, once per frame from CViewPort::render_viewport: frees the channels whose sound ended,
+// 0x47d8f0, once per frame from CViewPort::render_viewport: frees the channels whose sound ended,
 // moves 3D sounds and keeps the music at the music volume.
 void neg::UpdateSounds(void)
 {
@@ -456,15 +442,7 @@ void neg::StopGameSound(int channel, bool release)								// 0x458a00
 	if (g_sfx_db_loaded) StopChannel(channel, release);
 }
 
-int neg::PlayGameSound3DNoDoppler(CGameObject *o, int channel, const std::string &name, bool loop)	// 0x458a40
-{
-	if (!g_sfx_db_loaded || !g_sfx_volume) return -1;
-	int ch = PlaySound3DNoDoppler(o, channel, name, loop);
-	SetChannelVolume((short)ch, (short)g_sfx_volume);
-	return ch;
-}
-
-int neg::PlayGameSound3D(CGameObject *o, int channel, const std::string &name, bool loop)	// N2:0x48f200
+int neg::PlayGameSound3D(CGameObject *o, int channel, const std::string &name, bool loop)	// 0x458a40
 {
 	if (!g_sfx_db_loaded || !g_sfx_volume) return -1;
 	int ch = PlaySound3D(o, channel, name, loop);

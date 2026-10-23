@@ -186,8 +186,7 @@ C3DAI::C3DAI()												// 0x407a40
 	m_state_locked = 0;
 	m_wander_range = 1500.0f;
 	m_see_through_walls = 0;
-	// (C3DAnimated's dword +0x644 = 1 here (-1 in its ctor; C3DAnimated slot 68 shows/hides the collision shape from it):
-	// not in the tree's C3DAnimated yet; C3DAnimated is the core lane's: 0x407dce, slot 68 0x40e3e0)
+	f_658 = 1;												// C3DAnimated's +0x644 "HasCollision" (-1 in its ctor; slot 68 0x40e3e0 shows / hides the collision shape from it): 0x407dce
 	m_anims_disabled = 0;
 	m_flee_time = 0;
 	m_974 = 0;

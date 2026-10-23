@@ -1,5 +1,5 @@
 /*  Bitmap-font text, drawn with the alpha sprite pool.  Reconstructed from Neutron.exe.
-    0x468600 ClearText   N2:0x4a0f60 DrawText (also linked twice more, byte-identical, at N2:0x4a14f0 and 0x468660)
+    0x468600 ClearText   0x468660 DrawText
     0x4689f0 PlaceGlyph
 
     Coordinates are in the game's 640x480 screen space (y down); -1 centres on that axis.
@@ -20,7 +20,7 @@
 using namespace neg;
 
 namespace neg {
-float	g_text_rgb[3]	= { 1.0f, 1.0f, 1.0f };	// 0x4f4ed4..N2:0x53ef40
+float	g_text_rgb[3]	= { 1.0f, 1.0f, 1.0f };	// port: Boy Genius draws white (diffuse 1, 1, 1, g_text_alpha); the port's UI colours the text with these
 float	g_text_alpha	= 1.0f;					// 0x4f4ed4  (reset to 1 after every DrawText)
 int		g_text_center	= 0;					// 0x509804  1 = x is the centre of the string
 float	g_text_width	= 0.0f;					// 0x509800  width of the last string, unscaled
@@ -81,7 +81,7 @@ OMediaCanvasElement *neg::PlaceGlyph(short x, short y, OMediaCanvas *canv)
 	return s;
 }
 
-// --------------------------------------------------------------------------- N2:0x4a0f60
+// --------------------------------------------------------------------------- 0x468660
 
 void neg::DrawText(short x, short y, int font, const char *fmt, ...)
 {

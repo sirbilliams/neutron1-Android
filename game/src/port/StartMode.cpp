@@ -120,7 +120,6 @@ void neg::StartModeLevelLoaded(void)
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 		if (C3DStartPoint *sp = dynamic_cast<C3DStartPoint *>(*i)) sp->m_trigger_armed = 0;
 	g_gametype->SetCamera(jim);
-	SetGameMode(5);
 }
 
 void neg::StartModeFrame(void)
@@ -141,9 +140,8 @@ void neg::StartModeFrame(void)
 	if (!(menu && *menu) && !(confirm && *confirm) && !(save && *save)) return;
 	if (!s_loads || !g_hud_on || !g_menu) return;
 	C3DJimmy *j = Jimmy();
-	// TODO(BG): C3DJimmy's update calls MenuInput every frame (agent E); until then the test does
-	if (menu && *menu && j && s_test_frames > 30) j->MenuInput(g_frame_time);
-	if (++s_test_frames != 30) return;
+	++s_test_frames;
+	if (s_test_frames != 30) return;
 	if (save && *save)
 	{
 		g_save_slot = atoi(save) + 5;

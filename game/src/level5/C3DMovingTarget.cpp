@@ -1,20 +1,21 @@
-/*  C3DMovingTarget - see C3DMovingTarget.h. Reconstructed from Neutron.exe 0x430220..0x4308d0. */
+/*  C3DMovingTarget - see C3DMovingTarget.h. Reconstructed from Neutron.exe 0x430220..0x4306b0. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DMovingTarget.h"
 #include "../level4/C3DVRTrophy.h"
 #include "../pickups/C3DPickupItem.h"
 #include "../CGameType.h"
-#include "../Game.h"
 #include "../InterfaceElement.h"
-#include "../Globals.h"
 #include "../Sound.h"
+#include "../Game.h"
+#include "../Globals.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
 #include "OMedia3DVector.h"
 #include <math.h>
 #include <string.h>
 #include <strings.h>
+#include <string>
 
 using namespace neg;
 
@@ -42,14 +43,14 @@ C3DMovingTarget::C3DMovingTarget()							// 0x430220
 	RegisterProperty("StartPosX",      &m_start[0], PROP_FLOAT, 0);	// 0x473fa0
 	RegisterProperty("StartPosY",      &m_start[1], PROP_FLOAT, 0);
 	RegisterProperty("StartPosZ",      &m_start[2], PROP_FLOAT, 0);
-	RegisterProperty("DestPosX",       &m_dest[0], PROP_FLOAT, 0);
-	RegisterProperty("DestPosY",       &m_dest[1], PROP_FLOAT, 0);
-	RegisterProperty("DestPosZ",       &m_dest[2], PROP_FLOAT, 0);
-	RegisterProperty("Speed",          &m_speed, PROP_FLOAT, 0);
-	RegisterProperty("ActivateObject", m_activate, PROP_ALPHA, 0);
+	RegisterProperty("DestPosX",       &m_dest[0],  PROP_FLOAT, 0);
+	RegisterProperty("DestPosY",       &m_dest[1],  PROP_FLOAT, 0);
+	RegisterProperty("DestPosZ",       &m_dest[2],  PROP_FLOAT, 0);
+	RegisterProperty("Speed",          &m_speed,    PROP_FLOAT, 0);
+	RegisterProperty("ActivateObject", m_activate,  PROP_ALPHA, 0);
 	RegisterProperty("HitsRequired",   &m_hits_required, PROP_LONG, 0);
-	RegisterProperty("NumPoints",      &m_num_points, PROP_LONG, 0);
-	RegisterProperty("RespawnTime",    &m_respawn_time, PROP_FLOAT, 0);
+	RegisterProperty("NumPoints",      &m_num_points,    PROP_LONG, 0);
+	RegisterProperty("RespawnTime",    &m_respawn_time,  PROP_FLOAT, 0);
 	SetObjectID('3TAR');									// 0x462d80
 	strcpy(m_sprite_db, "sprites.omt");
 	strcpy(m_activate, "none");
@@ -64,7 +65,8 @@ C3DMovingTarget::C3DMovingTarget()							// 0x430220
 	f_5e8 = 0;
 	m_dest[0] = m_dest[1] = m_dest[2] = 0;
 	m_start[0] = m_start[1] = m_start[2] = 0;
-	m_respawn = 0;
+	m_respawn_left = 0;
+	// (then a call to the empty UnInitDatabases 0x472970)
 }
 
 C3DMovingTarget::~C3DMovingTarget() {}						// 0x430530
@@ -78,11 +80,11 @@ CGameObject *New_C3DMovingTarget(void) { return new C3DMovingTarget; }	// '3TAR'
 void C3DMovingTarget::AddTouching(CGameObject *other)		// 0x430570
 {
 	CGameObject::AddTouching(other);						// 0x470a90
-	if (!other->NameContains((char *)"C3DBASEBALL") || m_respawn > 0.0f) return;
+	if (!other->NameContains((char *)"C3DBASEBALL") || m_respawn_left > 0) return;
 	hide(true);												// element +0x58
-	m_respawn = m_respawn_time;
+	m_respawn_left = m_respawn_time;
 	AddScore(m_num_points);									// 0x42adc0
-	CGameObject *act = FindObjectByTag(m_activate);
+	CGameObject *act = FindObjectByTag(m_activate);			// 0x474070
 	if (!act)
 	{
 		PlayGameSoundIndex(-1, 0xc6, false);				// 0x458980
@@ -90,20 +92,20 @@ void C3DMovingTarget::AddTouching(CGameObject *other)		// 0x430570
 	}
 	if (act->NameContains((char *)"C3DTROPHY"))
 	{
-		C3DVRTrophy *t = static_cast<C3DVRTrophy *>(act);	// +0x5fc of the game object: its hit count
-		if (++t->f_6bc > m_hits_required)
+		C3DVRTrophy *t = static_cast<C3DVRTrophy *>(act);
+		if (m_hits_required < ++t->f_6bc)					// the hits it has counted
 		{
-			static_cast<CLocalGameObject *>(act)->v268(1);	// +0x428 NextState: show
+			t->v268(1);										// +0x428
 			t->f_6bc = 0;
 			PlayGameSoundIndex(-1, 199, false);
 		}
 	}
 	if (act->NameContains((char *)"C3DPICKUPITEM"))
 	{
-		C3DPickupItem *p = static_cast<C3DPickupItem *>(act);	// +0x698: its f_760
-		if (++p->f_760 > m_hits_required)
+		C3DPickupItem *p = static_cast<C3DPickupItem *>(act);
+		if (m_hits_required < ++p->f_760)
 		{
-			static_cast<CLocalGameObject *>(act)->v268(1);
+			p->v268(1);
 			p->f_760 = 0;
 			PlayGameSoundIndex(-1, 199, false);
 		}
@@ -113,17 +115,16 @@ void C3DMovingTarget::AddTouching(CGameObject *other)		// 0x430570
 void C3DMovingTarget::Process(float dt)						// 0x4306b0
 {
 	C3DSprite::Process(dt);									// 0x463090
-	float a[4];
-	v155(a);												// +0x270: the acceleration
-	v157(a[0], -g_gravity.y, a[2]);							// +0x278: gravity cancelled (0x5cfc04)
-	if (m_respawn > 0.0f)
+	float acc[4];
+	v155(acc);												// slot 156 (read twice by the original)
+	v157(acc[0], -g_gravity.y, acc[2]);						// +0x278: gravity cancelled (0x5cfc04)
+	if (m_respawn_left > 0)
 	{
-		const float left = m_respawn - dt;
-		m_respawn = left;
-		if (left <= 0.0f)
+		m_respawn_left -= dt;
+		if (m_respawn_left <= 0)
 		{
-			m_respawn = 0;
-			force_show();									// (only when hidden)
+			m_respawn_left = 0;
+			if (!getvisible()) force_show();				// the hit target shows again (hide count 1, hide(false))
 		}
 	}
 	float p[4];

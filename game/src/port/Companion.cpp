@@ -10,11 +10,11 @@
 #include "../CGameType.h"
 #include "../Game.h"
 #include "../Globals.h"
+#include "../CEditor.h"
 #include "../SaveGame.h"
 #include "../InterfaceElement.h"
 #include "../gen/globals.h"
 #include "../friends/C3DFriends.h"
-// TODO(BG): #include "../lab/C3DHerman.h" (Negatron-only class, deleted)
 #include "../lab/C3DSwingDoor.h"
 #include "../levels/CLoadLevel.h"
 #include "../pickups/C3DPickupItem.h"
@@ -25,6 +25,7 @@
 #include "../objects/C3DNeutron.h"
 #include "../objects/C3DCheckPoint.h"
 #include "VoxPicker.h"
+#include "PortState.h"
 #include "StartMode.h"
 #include "OMediaElement.h"
 #include "OMedia3DShape.h"
@@ -484,7 +485,7 @@ void MapTick()
 		for (size_t i = 0; i < s_geo_retired.size(); i++) delete s_geo_retired[i];
 		s_geo_retired.clear();
 	}
-	if (g_game_mode == 1) return;					// loading
+	if (PortGameMode() == 1) return;				// loading
 
 	std::vector<OMedia3DShape *> shapes;
 	std::vector<bool> shown;
@@ -595,9 +596,10 @@ bool IconFromCanvas(int key, OMediaCanvas *c)
 // Canvas `id` of screens.omt (the menu pages' pictures).
 bool NeedIcon(int id)
 {
-	if (id < 0 || !g_screens_db) return false;
+	OMediaDataBase *screens = g_menu ? g_menu->f_4b4 : NULL;
+	if (id < 0 || !screens) return false;
 	if (s_icons_tried.count(id)) return s_icons_real.count(id) != 0;
-	OMediaCanvas *c = LoadCanvasID(g_screens_db, id);
+	OMediaCanvas *c = LoadCanvasID(screens, id);
 	if (!c) { s_icons_tried.insert(id); return false; }
 	return IconFromCanvas(id, c);
 }
@@ -769,23 +771,24 @@ void Build(std::string &o)
 		FourCC(id, static_cast<CGameObject *>(g_gametype)->m_object_id);
 		Key(o, "id"); Str(o, id);
 	}
-	Key(o, "mode"); Int(o, g_game_mode);
-	Key(o, "cut"); Int(o, g_game_mode == 3 ? 1 : 0);
+	Key(o, "mode"); Int(o, PortGameMode());
+	Key(o, "cut"); Int(o, PortGameMode() == 3 ? 1 : 0);
 	Key(o, "energy"); Num(o, g_health);
 	Key(o, "energy_max"); Int(o, 100);
 	// the HUD's neutron energy picture: screens.omt canvas 0x17, placed at (32, 0) beside the
-	// energy bar by the C2DInGameMenu constructor (N2:0x401380)
+	// energy bar by the C2DInGameMenu constructor (0x401430)
 	Key(o, "energy_icon"); Int(o, NeedIcon(0x17) ? 0x17 : -1);
 	Key(o, "score"); Int(o, g_score);
 
 	// the current gadget (C3DJimmy::ActivateMenuItem, 0 = none) with its HUD picture: the
-	// gadget sprites g_menu_item_sprites[gadget] the C2DInGameMenu constructor sets up (screens.omt
-	// 80 x 70 canvases), and its charge: the gadget bar's height while it shows (0x4037f0 sizes it
+	// gadget sprites g_gadget_icons[gadget] the C2DInGameMenu constructor sets up (screens.omt
+	// canvases), and its charge: the gadget bar's height while it shows (0x4037f0 sizes it
 	// to count * 1.04 / 480 of the screen; red when empty)
-	Key(o, "gadget"); Int(o, g_cur_gadget);
-	if (g_menu && g_cur_gadget > 0 && g_cur_gadget < 14 && g_menu_item_sprites[g_cur_gadget])
-		{ Key(o, "gadget_icon"); Int(o, ObjectIcon(kIconGadget + g_cur_gadget, NULL, g_menu_item_sprites[g_cur_gadget]->get_canvas())); }
-	if (g_menu && g_gadget_bar && g_gadget_bar_on && g_screen_h > 0)
+	const int gadget = g_menu ? g_menu->GetCurrentGadget() : 0;
+	Key(o, "gadget"); Int(o, gadget);
+	if (g_menu && gadget > 0 && gadget < 8 && g_gadget_icons[gadget] && g_gadget_icons[gadget]->get_canvas())
+		{ Key(o, "gadget_icon"); Int(o, ObjectIcon(kIconGadget + gadget, NULL, g_gadget_icons[gadget]->get_canvas())); }
+	if (g_menu && g_gadget_bar && g_gadget_bar->getvisible() && g_screen_h > 0)
 	{
 		const float unit = (float)(short)g_screen_h * 0.00208333344f * 1.04f;
 		Key(o, "gadget_charge"); Num(o, unit > 0 ? g_gadget_bar->get_height() / unit : 0);
@@ -1122,7 +1125,7 @@ void neg::CompanionTick(float dt)
 	}
 	if (!SDL_AtomicGet(&s_enabled) || !s_mutex) return;
 	if (dt > 0 && dt < 1.0f) s_clock += dt;
-	if (dt > 0 && dt < 1.0f && g_game_mode == 5) s_level_time += dt;
+	if (dt > 0 && dt < 1.0f && PortGameMode() == 5) s_level_time += dt;
 	s_since_build += dt;
 	if (s_since_build < 0.1f) return;			// at most 10 a second
 	s_since_build = 0;

@@ -25,7 +25,7 @@ C3DPointCursor::~C3DPointCursor()							// 0x43bdc0
 void C3DPointCursor::InitObject(void)						// 0x43be10
 {
 	Log("C3DGraplingHook::InitObject()");					// (sic: copied from C3DGraplingHook)
-	C3DAnimated::InitObject();								// N2:0x41b0a0
+	C3DAnimated::InitObject();								// 0x40d3c0
 	InitAnim();												// element +0x110
 	CreateAnim((char *)"HIARROW", (char *)"pointarrow.ase");	// +0xe0
 	CreateTexture((char *)"3darrow.png", 0);				// +0xfc

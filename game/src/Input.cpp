@@ -1,31 +1,32 @@
-/*  The input module of Neutron.exe (0x478200..N2:0x4b3a03): CInput, FindDevice and the per-frame
+/*  The input module of Neutron.exe (0x478140..0x4788f8): CInput, FindDevice and the per-frame
     joystick poll. Reconstructed from the machine code.
 
     The keyboard and the mouse do not go through here: they arrive as window messages
     (CAweReal::listen_to_message fills g_keys[]). This module only reads one OMT HID device - the
     first joystick FindDevice finds - into the g_joy_* globals, which the player, vehicle and menu
     code test next to their key bindings:
-      X  N2:0x4659f0 turn left (< -0.5), N2:0x465a60 turn right (> 0.5), C3DVehicle slot 112 0x466b30
-      Y  N2:0x465910 go (> 0.5), N2:0x465980 back (< -0.5), C3DCar slot 126, C3DVehicle slot 112
-      button 0  N2:0x465750 action, N2:0x465ad0 cut-scene bypass, C3DPlayerObject 0x42a7a0, C3DJeep 125/126,
-                C3DVehicle 112/125/126/127        button 1  N2:0x465830 speed, N2:0x4658a0 jump,
-                C3DPlayerObject 0x4378d0, C3DCar 126, C3DGoddard 243, C3DVehicle 126/127
-      button 2  C3DVehicle 112/127                button 3  N2:0x465b40 inventory, N2:0x407510 pickup
-      button 4  N2:0x407240 pause menu               button 8  N2:0x4657c0 turn around
-      button 9  N2:0x406ee0 help
+      X  C2DInGameMenu 241 0x404080, C3DFlyingObject 243 0x41a6c0, C3DGoddard 243 0x41d0c0,
+         C3DJeep 0x421c10 / 0x421c40, C3DPlayer 0x438bc0 / 0x439900 / 0x43a120, C3DVehicle 0x466b30
+      Y  the same, plus C3DCar 0x413060, C3DJeep 0x421910 / 0x421c70 / 0x421cb0
+      button 0  C2DInGameMenu 0x404080, C3DCutSceneCamera 0x415f90, C3DGoddard 0x41d0c0, C3DJeep 0x421c70 /
+                0x421cb0, C3DJimmy 0x425870, C3DPlayer 0x42a7a0 / 0x438bc0, C3DMerryGo 0x42e460,
+                C3DMultiCutSceneCamera 0x430da0, C3DVehicle 0x466b30 / 0x466cb0 / 0x466ce0 / 0x466d20
+      button 1  C2DInGameMenu, C3DCar 0x413060, C3DGoddard, C3DJeep 0x421580, C3DJimmy, C3DPlayer 0x4378d0,
+                0x42a730, C3DVehicle 0x466ce0 / 0x466d20
+      button 2  C3DGoddard, C3DJimmy, C3DMerryGo, C3DVehicle 0x466b30 / 0x466d20
+      button 3  C2DInGameMenu, C3DJimmy, 0x42a730        button 4  C3DJimmy
+      button 5  C2DInGameMenu 308 0x407070               button 6, 8  C3DFlyingObject 241 0x41a140
+      button 7  C3DGoddard 241 0x41dee0                  button 9  C3DJimmy
     Nothing reads Z, rX, rY, rZ, the POV angle, g_joy_prev_buttons or g_joy_any_button.
-    (That list is every read of 0x509a88..0x509ad9 in the exe outside this module; buttons 5..7 and
-    10..19 are polled but never read.) The JOY_01..JOY_09 names in dat\keys.txt play no part: the
-    exe's TextToKeys (N2:0x4660d0) has no JOY_ names, so they log "not found" and count as KEY_NONE,
+    (That list is every read of 0x509a88..0x509ad9 in the exe outside this module; buttons 10..19 are
+    polled but never read.) The JOY_01..JOY_09 names in dat\keys.txt play no part: the
+    exe's TextToKeys has no JOY_ names, so they log "not found" and count as KEY_NONE,
     on Windows as here. Which physical button carries which number is up to the HID layer
     (engine/sdl/OMediaSDLInput.cpp; the Thor layout is in docs/controls.md).
 
-    0x478200 CInput::CInput      N2:0x4b3370 CInput::~CInput     0x478350 CreateInputEngine
+    0x478200 CInput::CInput      0x478320 CInput::~CInput        0x478350 CreateInputEngine
     0x478370 CInput::Release     0x4783c0 FindDevice          0x478530 UpdateInput (the poll)
-    Static initialisers: N2:0x4b31b0 constructs g_input_device_name (destroyed at exit by N2:0x4b31e0),
-    N2:0x4b3240 the OMedia3DVector constructors of 0x509aa0 / 0x509ab0 (they only zero w).
-    N2:0x4b30c0 / 0x478060, just before, are std::list helpers of the CGfx file (SetDisplayMode,
-    UnInitDatabase), not part of this module.
+    Static initialiser: 0x478140 constructs g_input_device_name.
 
     OMT 2002 vs 2.5: the original reads the HID objects by offset; the 2.5 members are used here.
       device  +0x08 flags, +0x14 product_name, +0x38 lock_count (is_locked), +0x3c fftype_list
@@ -50,20 +51,13 @@
 
 using namespace neg;
 
-std::string neg::g_input_device_name;		// 0x509a78 (static initialiser N2:0x4b31b0)
+std::string neg::g_input_device_name;		// 0x509a78 (static initialiser 0x478140)
 
-enum { JOY_BUTTONS = 20, JOY_CLEAR_FRAMES = 30 };
+enum { JOY_BUTTONS = 20 };
 
 // g_joy_buttons[20] at 0x509ac4: the consumers read single bytes of it (0x509ac4..0x509acd),
 // which keep their own names in gen/globals.h.
 static unsigned char *JoyButtons(void) { return &g_joy_button0; }
-
-// The first 30 polls clear the buttons (with or without a device): dword, dword, dword, dword,
-// word, byte = 19 bytes, so button 19 (0x509ad7) is not cleared (sic).
-static void ClearJoyButtons(void)
-{
-	memset(JoyButtons(), 0, 19);
-}
 
 // Inlined in FindDevice, the destructor and Release.
 static void UnlockDevice(void)
@@ -84,19 +78,14 @@ static OMediaInputEngine *NewInputEngine(void)
 CInput::CInput()															// 0x478200
 {
 	// "CInput()" (debug log)
-	g_input_engine = NewInputEngine();
+	CreateInputEngine();
 	g_input_device_name = g_empty_string;		// 0x4f81a8 ""
 }
 
-CInput::~CInput()															// N2:0x4b3370
+CInput::~CInput()															// 0x478320
 {
 	// "~CInput()" (debug log)
-	if (g_joy_device && g_joy_device->is_locked()) UnlockDevice();
-	if (g_input_engine)
-	{
-		delete g_input_engine;					// vtable +0 (deleting destructor)
-		g_input_engine = NULL;
-	}
+	Release();
 }
 
 void CInput::CreateInputEngine(void)										// 0x478350
@@ -117,7 +106,7 @@ void CInput::Release(void)													// 0x478370
 
 // --------------------------------------------------------------------------- 0x4783c0
 
-// Only caller: the C2DInGameMenu constructor (N2:0x401380), with 2 (omhidtc_Joystick). It throws the
+// Only caller: the C2DInGameMenu constructor (0x401430), with 2 (omhidtc_Joystick). It throws the
 // input engine away and makes a new one, so the devices are enumerated again each time a menu
 // object is made; a joystick plugged in later is not seen until then.
 bool neg::FindDevice(int type)
@@ -176,7 +165,7 @@ static void LogJoyChanges(void)
 
 // --------------------------------------------------------------------------- 0x478530
 
-// Every frame, from CViewPort::render_viewport (before the objects update). Reads every element
+// Every frame, from CGameType slot 241 (0x475a70) and CJimmyGame slot 241 (0x44df80). Reads every element
 // of the locked device:
 //   button (type 0)   g_joy_buttons[n] (previous value to g_joy_prev_buttons[n]), n = the
 //                     element's button number, or the count of buttons before it if it has none;
@@ -191,15 +180,7 @@ static void LogJoyChanges(void)
 bool neg::UpdateInput(void)
 {
 	short y = 30;								// debug display line
-	if (!g_joy_device)
-	{
-		if (g_joy_frames < JOY_CLEAR_FRAMES)
-		{
-			ClearJoyButtons();
-			g_joy_frames++;
-		}
-		return false;
-	}
+	if (!g_joy_device) return false;
 
 	if (g_joy_debug)
 	{
@@ -310,11 +291,6 @@ bool neg::UpdateInput(void)
 		}
 	}
 
-	if (g_joy_frames < JOY_CLEAR_FRAMES)
-	{
-		g_joy_frames++;
-		ClearJoyButtons();
-	}
 	LogJoyChanges();							// port: test hook
 	return true;
 }
@@ -345,17 +321,33 @@ void neg::SetMousePos(short x, short y)
 short neg::MouseCentreX(void) { return (short)(g_viewport->getbwidth() / 2 - (int)WideMargin()); }
 short neg::MouseCentreY(void) { return (short)(g_viewport->getbheight() / 2); }
 
-// N2:0x4b1d50
+// 0x476db0
 void neg::CenterMouse(void)
 {
 	SetMousePos(MouseCentreX(), MouseCentreY());
 }
 
+// 0x46a400: capture: hide the OMT cursor, remember the pointer, put it in the centre;
+// release: the pointer back where it was, the cursor shown. g_mouse_captured = 0x50993c.
+void neg::CaptureMouse(bool capture)
+{
+	if (capture)
+	{
+		// (OMediaMouseCursor::hide(): port: the SDL layer has no visible cursor on the Thor)
+		GetMousePos((short *)&g_50993e, (short *)&g_509940);
+		CenterMouse();
+		g_mouse_captured = 1;
+		return;
+	}
+	SetMousePos((short)g_50993e, (short)g_509940);
+	// (OMediaMouseCursor::force_show(): port: see above)
+	g_mouse_captured = 0;
+}
+
 // 0x46a460: how far the pointer is from the viewport's centre (centre - pointer, so right / down
-// are negative), then it goes back to the centre. Nothing happens while g_N2_56aed0 is set.
+// are negative), then it goes back to the centre.
 void neg::GetMouseDelta(short *dx, short *dy)
 {
-	if (g_N2_56aed0) return;
 	short x, y;
 	GetMousePos(&x, &y);
 	*dx = (short)(MouseCentreX() - x);

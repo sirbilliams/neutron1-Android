@@ -76,7 +76,6 @@ class C3DAnimated : public C3DObject
 	virtual void v268(int state);											// SLOT 266 0x40e1f0 "NextState": 1 show, 0 hide
 	virtual void v277(void);												// SLOT 272 0x40e770 PauseAnim(1)
 	virtual void v278(void);												// SLOT 273 0x40e790 PauseAnim(0)
-	virtual void v282(OMediaMatrix_4x4 &m, float *w, float *h);				// N2SLOT 282 port: Negatron's projection hook, kept for CEditor's markers (CLocalGameObject::v281)
 
 	// ---- data members (Neutron.exe offsets in the comments)
 	OMedia3DShape		*f_58c;			// 0x578  the LOW base shape (animations named "LOW...") - none so far

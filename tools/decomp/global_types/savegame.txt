@@ -7,7 +7,6 @@
 # g_score (N2:0x54a458) and g_keys (0x509838) are C++ variables too (InterfaceElement / Globals).
 
 # texture scrolling (CJimmyGame)
-# unresolved (Neutron2 address): N2:0x53e644 val bool g_tex_scroll_on                   # UpdateTexScrolls runs (1 initially)
 0x4fc5ec val float g_tex_scroll_time                # seconds of scrolling, the wave's phase
 
 # what ReadTaskFile read from a save's header (the menu's save slots copy it)
@@ -18,21 +17,11 @@
 0x4fc690 val int g_save_scene                         # the story message number (g_story_scene)
 
 # saved game state
-# unresolved (Neutron2 address): N2:0x54a44c val short g_lives                           # +1 by C3DRedNeutron and every 5 of N2:0x54a454; 0 for a new game
 0x4f8438 array int g_object_states                   # [4200], per-object progress by the object's +0x6d8 index
-# unresolved (Neutron2 address): N2:0x53b5bc val int g_resume_game_state                 # a game state kept by the menu code; 9 after a game over
 
 # task list (CTaskList; the constructor also clears the bytes N2:0x54e80c and N2:0x54e825)
-# unresolved (Neutron2 address): N2:0x54e794 array char                                  # emptied by the CTaskList constructor
-# unresolved (Neutron2 address): N2:0x54e824 val bool g_tasks_applied                    # CTaskList::Process gave the objects their task states
 
 # demo (CTaskList::UpdateDemo, NextDemoLevel)
-# unresolved (Neutron2 address): N2:0x54e828 val int g_demo_level                        # index of the next demo level (0..16, then level1d)
-# unresolved (Neutron2 address): N2:0x54e82c val int g_demo_mode                         # 0 off, 1..4 (3 and 4 press random keys)
-# unresolved (Neutron2 address): N2:0x54e830 val float g_demo_time                       # seconds left in the demo level (drawn at 320,190)
-# unresolved (Neutron2 address): N2:0x54e834 val float g_demo_cutscene_time              # mode 2: seconds until a cut scene is skipped
-# unresolved (Neutron2 address): N2:0x54e838 val float g_demo_key_time                   # modes 3/4: seconds until the next random keys
-# unresolved (Neutron2 address): N2:0x54a3d4 val bool g_cutscene_skip                    # set: the running cut scene ends
 
 # the task file request (RequestTask 0x460e70; CTaskList::Process loads it)
 0x4fc604 array char g_task_request

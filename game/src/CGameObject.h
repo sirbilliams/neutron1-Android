@@ -70,7 +70,6 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 	virtual void Collide(CGameObject *other, float dist);					// SLOT 19 0x470bf0 spheres overlap (dist between centres)
 	virtual void v21(CGameObject *other);									// SLOT 21 0x470e60
 	virtual void AddRotation(float x, float y, float z);					// SLOT 205 0x472480
-	virtual void RequestEnd(void);											// SLOT 218 N2:0x4ad4c0
 	// terrain contact at the end of a sweep (PhysicsMoveAgainstTerrain): the polygon's normal
 	virtual void v219(float nx, float ny, float nz, float nw, OMedia3DPolygon *poly);	// SLOT 220 0x472690 ceiling
 	virtual void v220(float a, float b, float c, float d, OMedia3DPolygon *poly);	// SLOT 221 0x458890 wall/floor
@@ -96,7 +95,6 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 	virtual void Log(const char *fmt, ...);									// SLOT 254 0x473910
 	virtual void RegisterProperty(const char *name, void *data, int type, int flags);	// SLOT 255 0x473fa0
 	virtual CProperty *FindProperty(const char *name);						// SLOT 256 0x473eb0
-	virtual void CopyPropertiesTo(CGameObject *dst);						// N2SLOT 257 N2:0x4ae9a0
 	virtual void DeleteAllProperties(void);									// SLOT 258 0x474480
 	virtual void v248(void);												// SLOT 248 0x473540 element angles from the rotation (v249)
 	virtual void v262(CGameObject *other, float dist);						// SLOT 261 0x4740c0 pushed by a touching object
@@ -149,7 +147,7 @@ class CGameObject : public virtual OMediaClassStreamer		// virtual, as in the or
 extern std::list<CGameObject *> g_objects;
 
 namespace neg {
-void ErrorLog(const char *fmt, ...);										// N2:0x4b3b10  dat\debug.log
+void ErrorLog(const char *fmt, ...);										// port: Boy Genius's "ERROR: ..." debug-log calls (the empty 0x472970) are printed
 CGameObject *CreateObject(int id);											// 0x459cb0
 void PhysicsRemoveObject(CGameObject *o);									// 0x478fa0
 }

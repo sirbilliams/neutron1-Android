@@ -1,4 +1,4 @@
-/*  CPhysics - movement and collision of the game objects (Neutron.exe 0x478fa0..N2:0x4b7d60, the
+/*  CPhysics - movement and collision of the game objects (Neutron.exe 0x478fa0..0x47ced0, the
     original's log strings call it "CPhysics::"; it is a set of free functions over globals).
 
     * Objects: every C3DObject puts itself in the physics list when its physics starts
@@ -59,7 +59,7 @@ extern std::list<CGameObject *> g_physics_objects;			// 0x695d38  objects Physic
 void PhysicsAddObject(CGameObject *o);						// 0x479a40  "Add3DObject(%s)"
 // void PhysicsRemoveObject(CGameObject *o);				// 0x478fa0  declared in CGameObject.h
 void PhysicsReset(void);									// 0x479000  "CPhysics::Reset()": empty everything
-void PhysicsProcess(float dt);								// N2:0x4b4c60  one frame
+void PhysicsProcess(float dt);								// 0x479bc0  one frame
 
 // --- terrain
 void PhysicsAddTerrain(OMedia3DShape *shape);				// 0x479140  "Add3DTerrain()"
@@ -68,7 +68,7 @@ void PhysicsClearTerrain(void);								// 0x479920  "ClearPolyTerrains()"
 // --- parts of a frame, also called by some objects directly
 void PhysicsMoveObject(CGameObject *o, float dt);			// 0x479d20
 void PhysicsApplyFriction(CGameObject *o, float dt);		// 0x47a330
-void PhysicsCollideObjects(float dt);						// N2:0x4b54d0  "TOUCH=%d TOUCHING=%d UNTOUCH=%d"
+void PhysicsCollideObjects(float dt);						// 0x47a430  "TOUCH=%d TOUCHING=%d UNTOUCH=%d"
 bool PhysicsCollideWithBox(CGameObject *box, CGameObject *o);	// 0x47a5e0  o against box's 12 triangles
 // Move the sphere of o from *pos by move, sliding along the steep terrain polygons; *pos gets
 // the end position. test_edges: also push away from polygon edges (walls only).

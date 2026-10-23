@@ -1,6 +1,4 @@
 # address kind type [name]      kinds: ptr (pointer slot), ptrarray, val (value in g_data), array
-# unresolved (Neutron2 address): N2:0x545e50 ptr OMediaDataBase* g_screens_db
-# unresolved (Neutron2 address): N2:0x545e78 ptr C2DInGameMenu* g_menu
 0x4f4ed8 array short g_font_glyph_ids        # [FONT_COUNT][FONT_GLYPHS] canvas IDs in alpha.omt, -1 = no glyph (InitAlpha 0x4683e0)
 # --- fades (StartFade 0x403c10; run by C2DInGameMenu v311 0x403c50)
 0x4f8190 val int g_fade_type                # 0 out -> load the level -> 1 in, 2/3 to/from a picture, 4, 5
