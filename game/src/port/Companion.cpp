@@ -784,10 +784,10 @@ void Build(std::string &o)
 	// gadget sprites g_gadget_icons[gadget] the C2DInGameMenu constructor sets up (screens.omt
 	// canvases), and its charge: the gadget bar's height while it shows (0x4037f0 sizes it
 	// to count * 1.04 / 480 of the screen; red when empty)
-	const int gadget = g_menu ? g_menu->GetCurrentGadget() : 0;
+	const int gadget = (g_menu && g_4f0588 >= 0 && g_4f0588 < 8) ? g_4f0588 + 1 : 0;	// 1..8 as C3DJimmy's gadgets (bubble, rocket ship, power, shrink ray, scooter, remote, baseball, grappler)
 	Key(o, "gadget"); Int(o, gadget);
-	if (g_menu && gadget > 0 && gadget < 8 && g_gadget_icons[gadget] && g_gadget_icons[gadget]->get_canvas())
-		{ Key(o, "gadget_icon"); Int(o, ObjectIcon(kIconGadget + gadget, NULL, g_gadget_icons[gadget]->get_canvas())); }
+	if (g_menu && gadget > 0 && g_gadget_icons[gadget - 1] && g_gadget_icons[gadget - 1]->get_canvas())
+		{ Key(o, "gadget_icon"); Int(o, ObjectIcon(kIconGadget + gadget, NULL, g_gadget_icons[gadget - 1]->get_canvas())); }
 	if (g_menu && g_gadget_bar && g_gadget_bar->getvisible() && g_screen_h > 0)
 	{
 		const float unit = (float)(short)g_screen_h * 0.00208333344f * 1.04f;
@@ -821,12 +821,11 @@ void Build(std::string &o)
 	Caption(cap);
 	if (!cap.empty()) { Key(o, "caption"); Str(o, cap.c_str()); }
 
-	// objects: counts, the boss, map points
+	// objects: counts, map points
 	int pk_got = 0, pk_all = 0, ne_got = 0, ne_all = 0, ck_got = 0, ck_all = 0;
 	int s_icon_neutron = -1;
 	std::map<int, std::pair<int, int> > kinds;		// the level's pickups by menu item: collected, all
 	std::string pts = "[";
-	CGameObject *boss = NULL;						// TODO(BG): Negatron: C3DHerman
 	CGameObject *jimmy = g_jimmy;
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
 	{
@@ -867,13 +866,6 @@ void Build(std::string &o)
 			if (!c->m_check_avail) ck_got++;
 			else Point(pts, 'c', g, ObjectIcon(kIconCheckpoint, g), NULL);
 		}
-#if 0	// TODO(BG): C3DHerman is Negatron only
-		else if (C3DHerman *h = dynamic_cast<C3DHerman *>(g))
-		{
-			boss = h;
-			if (Visible(g)) Point(pts, 'e', g, -1, NULL);
-		}
-#endif
 		else if (dynamic_cast<C3DGoddard *>(g))
 		{
 			if (Visible(g)) Point(pts, 'g', g, -1, NULL);
@@ -915,16 +907,8 @@ void Build(std::string &o)
 		o += ','; Int(o, icon); o += ']';
 	}
 	o += ']';
-#if 0	// TODO(BG): Negatron's boss C3DHerman (lane B: BG boss)
-	if (boss)
-	{
-		Key(o, "boss"); o += '{';
-		Str(o, "name"); o += ':'; Str(o, "Herman");
-		o += ','; Str(o, "hp"); o += ':'; Num(o, boss->f_1d58);
-		o += ','; Str(o, "bar"); o += ':'; Int(o, boss->f_1d60 > 0 ? 1 : 0);
-		o += '}';
-	}
-#endif
+	// port: no "boss" block: Boy Genius has no boss with a health bar (Negatron's C3DHerman); the Yokian
+	// fleet commander and the other Yokians are map points like any enemy (C3DAI above).
 	VoxCard cards[8];										// the Vox world picker (port/VoxPicker.h)
 	int sel = -1;
 	const int ncards = VoxPickerCards(cards, 8, &sel);
