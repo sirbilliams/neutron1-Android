@@ -1,6 +1,6 @@
-# Jimmy Neutron vs. Jimmy Negatron Recomp
+# Jimmy Neutron Boy Genius Recomp
 
-**Neutron vs Negatron** for Android: the 2002 PC game *Jimmy Neutron vs. Jimmy Negatron* (AWE Games /
+**Jimmy Neutron Boy Genius** for Android: the 2002 PC game *Jimmy Neutron vs. Jimmy Negatron* (AWE Games /
 THQ), rebuilt as a faithful C++ reconstruction of its original code and running natively on Android.
 Made for the **AYN Thor** (both screens, its gamepad, its lid), and it runs on other arm64 Android
 devices with a gamepad or touch screen.
