@@ -29,6 +29,7 @@
 ******************************************************************/
 
 
+#include <string.h>
 #include "OMediaCanvasConverter.h"
 #include "OMediaError.h"
 #include "OMediaEndianSupport.h"
@@ -737,7 +738,7 @@ void OMediaOMTConverter::convert(void)
 	nloop = height;
 	while(nloop--)
 	{
-		nbyter = *((short*)dest);
+		{ short nb_; memcpy(&nb_,dest,2); nbyter = nb_; } // port: unaligned-safe
 		nbyter = omd_IfLittleEndianReverseShort(nbyter);
 
 		dest += 2;
