@@ -62,7 +62,7 @@ void CLevel02Game::InitGame(void)											// 0x4513e0
 	}
 	CreateTerrainTinted(r, g, b, a);						// element +0x168
 	ViewportToOrigin();
-	g_layer_clear->set_clear_color(RGBA(0.03f, 0.34f, 0.58f, 0.0f));	// 0x509a38 +0x10c (0x3cfdf3b6, 0x3eae147b, 0x3f147ae1)
+	g_layer_clear->set_clear_color(RGBA(0.031f, 0.34f, 0.58f, 0.0f));	// 0x509a38 +0x10c (0x3cfdf3b6, 0x3eae147b, 0x3f147ae1)
 	neg::LodFarClip(g_layer_world, 50000.0f);					// 0x509a3c +0xc0
 	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
 	CaptureMouse(true);
@@ -149,7 +149,7 @@ void CLevel02BGame::InitGame(void)											// 0x450e30
 	}
 	CreateTerrainTinted(r, g, b, a);
 	ViewportToOrigin();
-	const OMediaFARGBColor c = RGBA(0.03f, 0.34f, 0.58f, 0.0f);
+	const OMediaFARGBColor c = RGBA(0.031f, 0.34f, 0.58f, 0.0f);
 	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
 	WorldFog(g_layer_world, c, 50000.0f, 20000.0f, 33000.0f);	// 0x509a30 (inline) ...
 	WorldFog(g_layer_world, c, 50000.0f, 20000.0f, 30000.0f);	// ... and 0x509a3c, the same layer: this one stays
