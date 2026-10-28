@@ -1,4 +1,5 @@
-/*  C3DGraplingHook - see C3DGraplingHook.h. */
+/*  C3DGraplingHook - see C3DGraplingHook.h. 
+    Reconstructed from Neutron.exe  */
 #include "C3DGraplingHook.h"
 #include "Game.h"
 
