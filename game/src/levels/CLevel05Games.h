@@ -3,7 +3,7 @@
         CLevel05AGame  'LV5A'  level5a.gam  level5a.omt unlit, black fog 6000..16000
         CLevel05BGame  'LV5B'  level5b.gam  as LV5A with level5b.omt
     0x5c0 bytes each (CJimmyGame's layout). See CLevel01DGame.h for what their constructors
-    share. They set the layers inline. Reconstructed from Neutron.exe 0x454960..0x455320.     */
+    share. They set the layers inline. Reconstructed from Neutron.exe 0x4547b0..0x455320.     */
 #pragma once
 #include "../CJimmyGame.h"
 

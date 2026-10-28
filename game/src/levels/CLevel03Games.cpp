@@ -1,4 +1,8 @@
-/*  The level 3 game types - see CLevel03Games.h. */
+/*  The level 3 game types - see CLevel03Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel03Games.h"
@@ -77,7 +81,10 @@ void CLevel03AGame::InitGame(void)											// 0x451890
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.1f, 0.1f, 0.1f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 0x509a38 (no clear colour here)
-	WorldFog(g_layer_world, c, 80000.0f, 30000.0f, 70000.0f);	// (0x509a3c)
+	neg::LodFarClip(g_layer_world, 80000.0f);
+	g_layer_world->set_fog_color(c);
+	neg::LodFogRange(g_layer_world, 30000.0f, 70000.0f);
+	SetLayerFog(g_layer_world, true);
 	CaptureMouse(true);
 }
 
@@ -98,7 +105,8 @@ static void InitLevel3Night(CJimmyGame *game, const char *omt)
 	g_layer_world->set_fog_color(c);
 	neg::LodFarClip(g_layer_world, 40000.0f);					// 0x509a3c
 	g_layer_world->set_fog_color(c);
-	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800), then 0x509a30
+	SetLayerFog(g_layer_world, false);						// 0x476910(0x509a3c, 0x800)
+	SetLayerFog(g_layer_world, false);	// 0x509a30
 	CaptureMouse(true);
 }
 

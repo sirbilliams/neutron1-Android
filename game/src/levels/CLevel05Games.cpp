@@ -1,4 +1,8 @@
-/*  The level 5 game types - see CLevel05Games.h. */
+/*  The level 5 game types - see CLevel05Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel05Games.h"
@@ -37,7 +41,14 @@ void CLevel05Game::InitGame(void)											// 0x4550b0
 	const OMediaFARGBColor c = RGBA(0.646f, 0.466f, 0.0f, 0.0f);
 	g_layer_clear->set_fog_color(c);						// 0x509a38 +0xc8
 	g_layer_clear->set_clear_color(c);						// +0x10c
-	WorldFog(g_layer_world, c, 12000.0f, 5000.0f, 10000.0f);	// (the same through 0x509a30 and 0x509a3c)
+	neg::LodFarClip(g_layer_world, 12000.0f);	// 0x509a30
+	g_layer_world->set_fog_color(c);
+	neg::LodFogRange(g_layer_world, 5000.0f, 10000.0f);
+	SetLayerFog(g_layer_world, true);
+	neg::LodFarClip(g_layer_world, 12000.0f);	// 0x509a3c
+	g_layer_world->set_fog_color(c);
+	neg::LodFogRange(g_layer_world, 5000.0f, 10000.0f);
+	SetLayerFog(g_layer_world, true);
 	CaptureMouse(true);
 }
 
@@ -71,7 +82,8 @@ static void InitLevel5Black(CJimmyGame *game, const char *omt)
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.0f, 0.0f, 0.0f, 0.0f);
 	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
-	WorldFog(g_layer_world, c, 16000.0f, 6000.0f, 16000.0f);	// (the same through 0x509a30 and 0x509a3c)
+	WorldFog(g_layer_world, c, 16000.0f, 6000.0f, 16000.0f);	// 0x509a30
+	WorldFog(g_layer_world, c, 16000.0f, 6000.0f, 16000.0f);	// 0x509a3c
 	CaptureMouse(true);
 }
 
