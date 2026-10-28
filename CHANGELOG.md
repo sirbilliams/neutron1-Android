@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0-rc3
+
+Fixes from the second Thor play-test.
+
+- Background music plays again in every level (the music volume started at 0: the original sets it in a start-up initialiser the port never ran).
+- The A button only uses Jimmy's gadget; it no longer also opens the gadgets page. X opens the gadgets page, Y the inventory page.
+- Widescreen: the HUD (energy, lives, gadget pictures, timers, pickup counters) sits at the real screen edges instead of a 4:3 box.
+- Bill's UI now works with Boy Genius: tube, orbit, dial and bar energy meters, the gadget hologram, and Negatron 2's score counter showing Boy Genius's own score.
+
 ## v1.0-rc2
 
 Smoother gameplay on high-refresh screens (first Thor play-test: speed and movement felt unstable).
