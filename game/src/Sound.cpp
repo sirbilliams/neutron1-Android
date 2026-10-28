@@ -323,6 +323,7 @@ int neg::PlayMusic(OMediaDataBase *db, int channel, int id, bool loop)
 	if (db)
 	{
 		g_music_db = db;
+		SDL_Log("music: #%d (volume %d)", id, g_music_volume);
 		// (no object_exists test here; a missing song ends in "sound == omc_NULL")
 		g_music_channel = PlaySoundOnChannel(channel, FetchSound(db, id), loop);
 	}
