@@ -1,4 +1,4 @@
-/*  C3DObject - see C3DObject.h. */
+/*  C3DObject - see C3DObject.h. Reconstructed from Neutron.exe. */
 #include "C3DObject.h"
 #include "Game.h"
 #include "Bridge.h"

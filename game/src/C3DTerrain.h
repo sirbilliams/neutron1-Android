@@ -19,5 +19,5 @@ class C3DTerrain : public C3DObject
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7  0x464ac0
 	virtual void InitPhysics(void);											// SLOT 11 0x464b00
-	virtual void Process(float dt);											// SLOT 240 0x4732a0 (empty)
+	virtual void Process(float dt);											// SLOT 241 0x4682e0 (thunk to C3DObject::Process)
 };

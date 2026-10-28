@@ -1,3 +1,4 @@
+/*  CanvasWrapper - port-only (no counterpart in Neutron.exe): checked, not a reconstruction. */
 #include "CanvasWrapper.h"
 
 static int s_serial = 0;							

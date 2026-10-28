@@ -1,4 +1,4 @@
-/*  C3DShadow - see C3DShadow.h. */
+/*  C3DShadow - see C3DShadow.h. Reconstructed from Neutron.exe. */
 #include "C3DShadow.h"
 #include "Game.h"
 #include "gen/globals.h"
@@ -39,7 +39,6 @@ void C3DShadow::v260(void)									// 0x43f810
 	set_size((float)f_600, (float)f_602);					// 2002 +0xac / +0xb0
 	set_blend(omblendfc_Dst_Color, omblendfc_Zero);			// +0xb4 = 2, +0xb8 = 0
 	if (g_windowed) hide(true);							// element +0x58 (slot 22)
-	set_canvas_flags((omt_CanvasElementFlags)(get_canvas_flags() | 2));	// +0xc4 |= 2 (as C3DPermanentSprite)
 }
 
 void C3DShadow::SetSize(short w, short h)					// 0x43f870

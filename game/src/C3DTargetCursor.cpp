@@ -1,4 +1,4 @@
-/*  C3DTargetCursor - see C3DTargetCursor.h. */
+/*  C3DTargetCursor - see C3DTargetCursor.h. Reconstructed from Neutron.exe. */
 #include "C3DTargetCursor.h"
 #include "Game.h"
 #include <string.h>
