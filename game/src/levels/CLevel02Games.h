@@ -3,7 +3,7 @@
                                             day blue sky, dusk sky, night sky (still); no fog set
         CLevel02AGame  'LV2A'  level2a.gam  no sky, level2a.omt tinted, dark grey fog and clear colour
         CLevel02BGame  'LV2B'  level2b.gam  as CLevel02Game, other tints
-    0x68c bytes each (CJimmyGame's layout). See CLevel01DGame.h for what their constructors
+    0x5c0 bytes each (CJimmyGame's layout). See CLevel01DGame.h for what their constructors
     share. Reconstructed from Neutron.exe 0x450950..0x451720 (and 0x4513d0).            */
 #pragma once
 #include "../CJimmyGame.h"

@@ -1,4 +1,8 @@
-/*  The level 4 game types - see CLevel04Games.h. */
+/*  The level 4 game types - see CLevel04Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel04Games.h"
@@ -161,7 +165,9 @@ void CLevel04BGame::Process(float dt)
 	if (m_sweep_time >= 3.0f)
 	{
 		m_sweeping = 0;
-		SetLayerFog(g_layer_world, false);					// 0x509a3c, then 0x509a30
+		SetLayerFog(g_layer_world, false);	// 0x509a3c
+		SetLayerFog(g_layer_world, false);	// 0x509a30
+		neg::LodFarClip(g_layer_world, 22000.0f);	// 0x509a30
 		neg::LodFarClip(g_layer_world, 22000.0f);
 	}
 }
@@ -192,7 +198,10 @@ void CLevel04BGame::InitGame(void)											// 0x4534c0
 	const OMediaFARGBColor c = RGBA(0.1f, 0.56f, 0.1f, 0.0f);
 	WorldFog(g_layer_world, c, 7200.0f, 500.0f, 7000.0f);	// (0x509a30)
 	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
-	WorldFog(g_layer_world, c, 7200.0f, 500.0f, 7000.0f);	// (0x509a3c)
+	neg::LodFogRange(g_layer_world, 500.0f, 7000.0f);	// 0x509a3c
+	neg::LodFarClip(g_layer_world, 7200.0f);
+	g_layer_world->set_fog_color(c);
+	SetLayerFog(g_layer_world, true);
 	CaptureMouse(true);
 }
 
@@ -218,6 +227,7 @@ void CLevel04CGame::InitGame(void)											// 0x453b10
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);
+	// 0x453b4d..0x453c2b and 0x453d3a..0x453d5f: disassembly confirms RGBA, alpha 1.
 	float tint[4] = { 1.0f, 1.0f, 1.0f, 1.0f };				// the terrain colour for the stage
 	m_sky = CreateSky();
 	if (m_sky)
@@ -291,9 +301,9 @@ void CLevel04DGame::InitGame(void)
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel04Game(void)		{ return new CLevel04Game; }		// 'LEV4' (0x68c bytes)
+CGameObject *New_CLevel04Game(void)		{ return new CLevel04Game; }		// 'LEV4' (0x5c0 bytes)
 CGameObject *New_CLevel04AGame(void)	{ return new CLevel04AGame; }		// 'LV4A'
-CGameObject *New_CLevel04BGame(void)	{ return new CLevel04BGame; }		// 'LV4B' (0x694 bytes)
+CGameObject *New_CLevel04BGame(void)	{ return new CLevel04BGame; }		// 'LV4B' (0x5c8 bytes)
 CGameObject *New_CLevel04CGame(void)	{ return new CLevel04CGame; }		// 'LV4C'
 CGameObject *New_CLevel04DGame(void)	{ return new CLevel04DGame; }		// 'LV4D'
 }

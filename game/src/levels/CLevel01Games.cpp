@@ -1,4 +1,8 @@
-/*  The Retroville level game types - see CLevel01Games.h. */
+/*  The Retroville level game types - see CLevel01Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel01Games.h"
@@ -35,6 +39,7 @@ void CLevel01Game::InitGame(void)											// 0x450580
 	Log("InitGame()");
 	CJimmyGame::InitGame();
 	v107(0);												// slot 108: not written to the .gam (f_00b)
+	// 0x4505bd..0x4506ba and 0x4507ca..0x4507ef: disassembly confirms RGBA, alpha 1.
 	float tint[4] = { 1.0f, 1.0f, 1.0f, 1.0f };				// the terrain colour for the time of day
 	m_sky = CreateSky();
 	if (m_sky)
@@ -101,7 +106,8 @@ void CLevel01AGame::InitGame(void)											// 0x44f0e0
 	ViewportToOrigin();
 	const OMediaFARGBColor c = RGBA(0.28f, 0.3f, 0.4f, 0.0f);
 	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
-	WorldFog(g_layer_world, c, 5000.0f, 600.0f, 4500.0f);	// (the same through 0x509a30 and 0x509a3c)
+	WorldFog(g_layer_world, c, 5000.0f, 600.0f, 4500.0f);	// 0x509a30
+	WorldFog(g_layer_world, c, 5000.0f, 600.0f, 4500.0f);	// 0x509a3c
 	CaptureMouse(true);
 }
 
@@ -132,6 +138,7 @@ void CLevel01BGame::InitGame(void)											// 0x44f4b0
 	ViewportToOrigin();
 	// Far plane 10000 (through both world-layer globals), fog off (through 0x509a3c only: the
 	// same layer).
+	neg::LodFarClip(g_layer_world, 10000.0f);	// 0x509a30
 	neg::LodFarClip(g_layer_world, 10000.0f);					// 2002 +0xc0
 	SetLayerFog(g_layer_world, false);						// 0x476910(layer, 0x800)
 	CaptureMouse(true);
@@ -162,6 +169,7 @@ void CLevel01CGame::InitGame(void)											// 0x44f7e0
 	InitTerrainDatabase("level1c.omt");
 	CreateTerrainUnLit();									// element +0xf8
 	ViewportToOrigin();
+	neg::LodFarClip(g_layer_world, 10000.0f);	// 0x509a30
 	neg::LodFarClip(g_layer_world, 10000.0f);					// as level 1b: far plane only, fog off
 	SetLayerFog(g_layer_world, false);
 	CaptureMouse(true);
@@ -193,8 +201,10 @@ void CLevel01EGame::InitGame(void)											// 0x44fe30
 	InitTerrainDatabase("level1e.omt");
 	CreateTerrain();										// element +0xf4 (lit)
 	ViewportToOrigin();
-	neg::LodFarClip(g_layer_world, 120000.0f);					// 0x509a30, then the same through 0x509a3c
+	neg::LodFarClip(g_layer_world, 120000.0f);	// 0x509a30
+	neg::LodFarClip(g_layer_world, 120000.0f);					// 0x509a3c
 	SetLayerFog(g_layer_world, false);
+	SetLayerFog(g_layer_world, false);	// 0x509a30, after 0x509a3c
 	CaptureMouse(true);
 }
 
@@ -223,9 +233,13 @@ void CLevel01FGame::InitGame(void)											// 0x450160
 	InitTerrainDatabase("level1f.omt");
 	CreateTerrain();
 	ViewportToOrigin();
+	neg::LodFarClip(g_layer_world, 15000.0f);	// 0x509a30
+	neg::LodFarClip(g_layer_world, 15000.0f);	// 0x509a3c
 	const OMediaFARGBColor c = RGBA(0.0f, 0.0f, 0.0f, 0.0f);
 	g_layer_clear->set_clear_color(c);						// 0x509a38 +0x10c
-	WorldFog(g_layer_world, c, 15000.0f, 2000.0f, 14000.0f);
+	neg::LodFogRange(g_layer_world, 2000.0f, 14000.0f);
+	g_layer_world->set_fog_color(c);
+	SetLayerFog(g_layer_world, true);
 	CaptureMouse(true);
 }
 

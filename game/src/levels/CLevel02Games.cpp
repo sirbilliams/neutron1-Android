@@ -1,4 +1,8 @@
-/*  The level 2 game types - see CLevel02Games.h. */
+/*  The level 2 game types - see CLevel02Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel02Games.h"
@@ -39,7 +43,7 @@ void CLevel02Game::InitGame(void)											// 0x4513e0
 	m_sky = CreateSky();
 	if (m_sky)
 	{
-		switch (GetSceneStage())							// element +0x16c
+		switch (GetSceneStage())							// element +0x15c
 		{
 			case 0:
 				SkyLoad(m_sky, "omt\\bluesky3.omt", false);
@@ -60,7 +64,7 @@ void CLevel02Game::InitGame(void)											// 0x4513e0
 		m_sky->v67(1.0f);									// radius
 		m_sky->v152(1.0f);
 	}
-	CreateTerrainTinted(r, g, b, a);						// element +0x168
+	CreateTerrainTinted(r, g, b, a);						// element +0x158
 	ViewportToOrigin();
 	g_layer_clear->set_clear_color(RGBA(0.031f, 0.34f, 0.58f, 0.0f));	// 0x509a38 +0x10c (0x3cfdf3b6, 0x3eae147b, 0x3f147ae1)
 	neg::LodFarClip(g_layer_world, 50000.0f);					// 0x509a3c +0xc0
@@ -159,7 +163,7 @@ void CLevel02BGame::InitGame(void)											// 0x450e30
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel02Game(void)		{ return new CLevel02Game; }		// 'LEV2' (0x68c bytes)
+CGameObject *New_CLevel02Game(void)		{ return new CLevel02Game; }		// 'LEV2' (0x5c0 bytes)
 CGameObject *New_CLevel02AGame(void)	{ return new CLevel02AGame; }		// 'LV2A'
 CGameObject *New_CLevel02BGame(void)	{ return new CLevel02BGame; }		// 'LV2B'
 }

@@ -1,4 +1,8 @@
-/*  The level 6 and 7 game types - see CLevel06Games.h. */
+/*  The level 6 and 7 game types - see CLevel06Games.h.
+    Reconstructed from Neutron.exe: every constructor, destructor, InitGame and other slot
+    checked against raw/ (including _free.c); compiler thunks and factories checked.
+ */
+// port: native C++ inheritance supplies ABI thunks; empty 0x472970 debug calls omitted.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "CLevel06Games.h"
@@ -114,7 +118,7 @@ void CLevel07Game::InitGame(void)											// 0x455c80
 // --------------------------------------------------------------------------- factory
 
 namespace neg {
-CGameObject *New_CLevel06Game(void)		{ return new CLevel06Game; }		// 'LEV6' (0x68c bytes)
+CGameObject *New_CLevel06Game(void)		{ return new CLevel06Game; }		// 'LEV6' (0x5c0 bytes)
 CGameObject *New_CLevel06AGame(void)	{ return new CLevel06AGame; }		// 'LV6A'
 CGameObject *New_CLevel07Game(void)		{ return new CLevel07Game; }		// 'LEV7'
 }

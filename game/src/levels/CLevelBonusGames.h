@@ -3,7 +3,7 @@
     One copy of the same InitGame each (the exe repeats it per class), differing in the terrain
     database only; their pickup index bases are 3100, 3200 .. 3800. 0x5c0 bytes each
     (CJimmyGame's layout). See CLevel01DGame.h for what their constructors share.
-    Reconstructed from Neutron.exe 0x455ef0..0x457890.                                      */
+    Reconstructed from Neutron.exe 0x455ef0..0x457ae0.                                      */
 #pragma once
 #include "../CJimmyGame.h"
 
