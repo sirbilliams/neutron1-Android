@@ -2,47 +2,51 @@
 
 ## How the original reads a joystick
 
-Checked against `Neutron2.exe`:
+Checked against `Neutron.exe`:
 
-- The game polls the first OMT HID joystick once per frame (`neg::UpdateInput` at 0x4b35d0 in
+- The game polls the first OMT HID joystick once per frame (`neg::UpdateInput` at 0x478530 in
   `game/src/Input.cpp`).
   - DirectInput button *n* goes to `g_joy_buttons[n]`, and the X and Y axes go to `g_joy_x` and
     `g_joy_y`. Stick up is +1.
   - The game tests fixed button numbers next to its key bindings. Every read is listed in
     `Input.cpp`.
-  - Nothing reads Z, rX, rY, rZ, the POV hat, or buttons 5..7 and 10..19.
-- `dat\keys.txt` names `JOY_01`..`JOY_09`, but the exe's `TextToKeys` (0x4660d0) has no `JOY_`
+  - Nothing reads Z, rX, rY, rZ, the POV hat, or buttons 10..19.
+- `dat\keys.txt` names `JOY_01`..`JOY_09`, but the exe's `TextToKeys` has no `JOY_`
   names. The "`TextToKeys JOY_xx not found`" lines in the log appear on Windows too. Those entries
   count as `KEY_NONE`, so they do nothing.
 - Keyboard and mouse input arrives as window messages: the keys go into `g_keys[]` (Windows key
   codes) and the mouse buttons into `omsg_Event`.
 - The menus and the yes/no boxes follow the mouse pointer. In play, the mouse turns the camera
-  (mouse look: the pointer's offset from the centre, 0x4a3990).
-- In menus, the stick moves the pointer (0x40a170), and the action button clicks.
+  (mouse look: the pointer's offset from the centre, 0x46a460).
+- In menus, the stick moves the pointer (0x427370), and the action button clicks.
 
 The SDL layer (`engine/sdl/OMediaSDLInput.cpp`) shows the gamepad to the game as a DirectInput
 joystick did. Each physical button carries the number the game expects for that action. On top
 of that, it sends key presses and moves the pointer for actions the game only takes from the
 keyboard or the mouse. Those parts are marked `port:` and do not change game logic.
 
+GadgetKeys (0x425870): Tab / Space / pad 2 opens the gadgets page; H / F1 / pad 9
+toggles the gadget timer; I / pad 3 opens page 2. Esc / M / pad 4 opens the PDA.
+MenuInput (0x427370) handles the open page; Enter / Ctrl / pad 0 clicks.
+
 ## Default layout
 
 | Thor control | The game sees | What it does in level 1 |
 |---|---|---|
-| Left stick / d-pad | X / Y axes | Move forward and back, turn left and right; moves the pointer in menus (once the menu's pointer stubs are filled, see below) |
-| A | button 0 + key Space (port) | Action / fire, skip cut scene, click a menu item, any key on "press any key" screens (the score screen) |
+| Left stick / d-pad | X / Y axes | Move forward and back, turn left and right; moves the pointer in menus |
+| A | button 0 + key Space (port) | Action / fire, skip cut scene, click a menu item; the port also sends Space (gadgets page) |
 | B | button 1 | Jump, speed |
-| X | button 2 | Brake (vehicles) |
-| Y | button 3 | Inventory / pickups page |
+| X | button 2 | Gadgets page (Tab / Space); brake in vehicles |
+| Y | button 3 | Page 2: inventory / pickups (I) |
 | Start | button 4 + key Esc (port) | Pause menu; Esc also closes text boxes, skips cut scenes and puts the item away |
-| Select | button 9 | Help text |
+| Select | button 9 | Gadget timer (H / F1) |
 | R1 | button 8 | Turn around |
 | L1 | key R (port) | Show / hide the HUD panel |
 | R2 | rZ axis + key Y (port, past half way) | Yes in confirmations |
 | L2 | Z axis + key N (port) | No in confirmations |
 | Right stick | rX / rY + mouse pointer (port) | Camera (mouse look) in play; pointer in menus |
-| L3 | button 5 + key L (port) | The mini sub's headlight on / off (Level3a, Level3e; the original only has the L key for it) |
-| R3 / Guide | buttons 6 / 7 | Unused by the game |
+| L3 | button 5 + key L (port) | Sends L; no mini sub in Boy Genius |
+| R3 / Guide | buttons 6 / 7 | Used by some vehicle controls (see Input.cpp) |
 | Android back (tap) | key Esc | Same as Esc; never closes the app (`SDL_HINT_ANDROID_TRAP_BACK_BUTTON`). Reaches the game 0.35 s after release (port: see the port menu below) |
 | Android back (hold 0.6 s, or two taps) | - | Opens the port menu (port) |
 | Touch screen | mouse | Pointer and left click, as the mouse |
@@ -57,9 +61,9 @@ keyboard or the mouse. Those parts are marked `port:` and do not change game log
 ## The launcher menu (port)
 
 The app opens on a menu in the bottom-screen panel's style (`LauncherView.java`; drawn in code, no
-artwork in the repo): **Continue** (the autosave), **New Game** (asks first: it wipes the autosave),
+artwork in the repo): **Continue** (the newest save), **New Game** (the opening sequence),
 **Load Game** (the game's save slots `save/JimmyGame1..10.tsk`: level, score, date), **Settings**
-(widescreen 16:9, in-game UI, dual screen, box art, menu background, "HD image pack" for later) and **Quit**. Select or Y on
+(widescreen 16:9, in-game UI, dual screen, box art, menu background, install / remove HD texture pack, Panel theme Retroville / Yokian / Auto) and **Quit**. Select or Y on
 the pad (or a long press on the title) shows a hidden **Test** item: jump to a level, the model
 viewer, share the log. D-pad / left stick choose, A selects, left / right flip a setting, B goes
 back; touch works too. On a dual-screen device (dual screen on) the bottom screen shows, on the
@@ -69,7 +73,7 @@ bottom screen becomes the companion panel. The box art is the player's own pictu
 "Box art: choose image..." (the Android file picker) copies it into the app's private files
 (`boxart.img`), "Box art: clear" removes it; never put the cover in the repo. "Menu background:
 choose image..." / "clear" work the same way (`background.img`): the picture fills the main
-screen behind the plates (cover-fit, dimmed); without one, brushed steel. Without one the
+screen behind the plates (cover-fit, dimmed). Without one the
 game's own PDA menu picture (below) is shown, or a drawn atom before the game has saved it.
 
 When the game ends (the PDA menu's Exit, or any normal end of the game), the app goes back to
@@ -78,8 +82,7 @@ launcher's Quit, or Back on its main menu, leaves the app. The game runs in its 
 (`android:process=":game"`), which ends after SDL has shut down: SDL and the game keep static
 state that a second start in one process would inherit.
 
-**Saves** (main menu): **Export saves** writes the save folder's files (`autosave*.tsk`,
-`JimmyGame1..10.tsk`, `StartLevel.txt`; not `slots.txt`, which the game rewrites) to a .zip where
+**Saves** (main menu): **Export saves** writes the save folder's files (`JimmyGame1..10.tsk`; not `slots.txt`, which the game rewrites) to a .zip where
 the player chooses (Android's file picker: Downloads, Drive...; suggested `negatron-saves-<date>.zip`).
 On the Load Game page, Y (or holding a slot) exports that one slot as `JimmyGame<n>.tsk`. **Import
 saves** takes such a .zip (or one .tsk), lists what it holds (level, score, NEW / REPLACES) and
@@ -96,7 +99,7 @@ The info window shows a drawing for the highlighted option, cross-faded on chang
 Bill's choice). The game's own pictures can be switched back on (`LauncherView.GAME_PICTURES`):
 full-screen pictures (screens.omt, read from the player's files at run time; game/src/port/
 LauncherArt.cpp saves them once into the app's files folder `launcher/`, `NEG_LAUNCHER_ART`, so
-they appear from the second start): Continue = the autosave level's loading picture (saved as
+they appear from the second start): Continue = the saved level's loading picture (saved as
 levels are played; else the general loading screen), New Game = the museum, Load Game = the
 load / save screen, Saves = the PDA menu, Settings = the options screen, Test = the inventory
 screen, Quit = the credits. The other pages use their option's picture. Until a picture is there,
@@ -105,6 +108,9 @@ floppy + PDA, gears + gauge, flask, rocket). Desktop preview: `tools/companion/r
 <game folder> <out dir> [folder of the game's pictures, or -] [box art stand-in] [background
 stand-in]` draws every page, and the main menu with each option highlighted (`opt_<id>`), for both
 screens.
+
+The HD texture pack is installable from Settings with a .zip, and removable there.
+See [hd-pack.md](hd-pack.md) for BG pack layout and desktop commands.
 
 ## Asset Viewer (port)
 
@@ -118,7 +124,7 @@ Main menu -> **Asset viewer** (drawn icon: a magnifier over a wireframe cube) ->
   is hidden, and a free noclip camera flies: left stick move / strafe, right stick look, L2 / R2 or
   L1 / R1 down / up, A speed (SLOW / NORMAL / FAST), Y the level's fog, X Jimmy shown / hidden,
   Start back to the start, B leave. Desktop keys: W A S D, arrows, Q / E, Tab, F, J, Home, Esc.
-- **Model viewer** (`NEG_ASSET_VIEW=models`): every .grn, .ase and .omt shape by name on an empty
+- **Model viewer** (`NEG_ASSET_VIEW=models`): every .ase model and .omt shape (the .grn format is Negatron-only) by name on an empty
   stage (Template.gam, its objects hidden), shown by the game's own loaders; up / down model, L1 /
   R1 jump 10, left / right the shapes of an .omt, sticks turn, L2 / R2 zoom, A auto-turn, B leave.
   The engine's older level viewer (libmain) is still under Test.
@@ -130,9 +136,8 @@ quick taps (within 0.35 s), to open a small menu over the game (the game pauses 
 
 - **Bottom screen panel: ON / OFF** - shows a companion panel on the Thor's second screen
   (its built-in bottom display only, never a TV: see "Casting / TV" below), styled as a
-  stainless-steel lab gadget with green LEDs: the level, game mode and time in the level, neutron
-  energy on a dial (green / yellow / red as the game's own bar), the score, the boss's health
-  while it shows, the current gadget (its HUD picture, and the HUD's gadget bar while the game
+  Retroville lab gadget or purple Yokian console: the level, game mode and time in the level, neutron
+  energy on a dial (green / yellow / red as the game's own bar), the score, the current gadget (its HUD picture, and the HUD's gadget bar while the game
   shows it), whether Goddard is about, this level's collectables (neutrons, checkpoints and each
   kind of pickup with the game's own picture, collected / all), the inventory page Jimmy opens
   (every item, lit when he has it, with how many, a dark silhouette when not), and a map of the
@@ -144,6 +149,8 @@ quick taps (within 0.35 s), to open a small menu over the game (the game pauses 
   get an arrow on the edge). On by default when a second screen is present (off otherwise); a
   choice made here or in the launcher's Settings is remembered and wins. With no second screen
   the menu says so and nothing is shown.
+- **Panel theme: Retroville / Yokian / Auto** - launcher Settings. Auto (default) uses Yokian
+  in level1d, level5, level5a, Level5b, level6, level6a and Level7; Retroville elsewhere.
 - **Panel map zoom: NEAR / FAR** - the map's scale (remembered).
 - **Energy meter: TUBE / ORBIT / DIAL** and **Gadget hologram: BAY / CONSOLE / WHEEL / OFF** (with
   Bill's UI on) - the next design, at once (remembered; also in the launcher's Settings).
@@ -194,7 +201,7 @@ Bill's UI adds, all drawn in code (only the game's own fonts and pictures are re
   fully on screen, moving to the right edge with the disc in widescreen.)
 - **Pause screen** (the PDA Main Menu, Esc / Start): its empty green grid shows a scope in the
   grid's phosphor green - a radar sweep with blips over range rings and Jimmy's atom (three orbits
-  slowly turning, an electron on each) - and the credit line "Jimmy Neutron vs Jimmy Negatron
+  slowly turning, an electron on each) - and the credit line "Jimmy Neutron: Boy Genius
   Recomp - by sirbilliams - <version>" in the game's font. The version: "v<versionName>
   build <commit>" on Android (versionName from the APK, `NEG_APP_VERSION`, set by NegatronActivity),
   "dev build <commit>" on the desktop (the game's fonts have no parentheses); the short git commit is baked in at every build by
@@ -213,64 +220,36 @@ Bill's UI adds, all drawn in code (only the game's own fonts and pictures are re
   smoothly, the original's colours (green from 70, yellow from 30, red below) eased, a white
   flash when energy is gained, a red flicker and a shake when hurt, a warning pulse below 30
   (the atoms' electrons speed up and flicker red).
-- **Rear-view mirror** (the scooter's backup camera while reversing, level1_a): framed on a
+- **Rear-view mirror** (the scooter's backup camera while reversing): framed on a
   green-hologram plate, 12 from the top (the original: 4) so the bezel shows, or just below the
   energy meter where the two would overlap (4:3). (Both modes: it is
   centred on the window in widescreen; it was centred on the window's left 640.)
 - **Gadget hologram** (the current gadget / vehicle picture, screens.omt 80x70,
-  `g_help_icons[g_cur_gadget]`, recoloured into a hologram at run time: scan lines, bright rim, slow
+  `g_gadget_icons`, selected by `g_4f0588`, recoloured into a hologram at run time: scan lines, bright rim, slow
   bob and turn, flicker on change), a setting: launcher Settings "Gadget hologram: BAY / CONSOLE /
   WHEEL / OFF" (left / right cycle; default BAY) and the port menu (at once), passed as
   `NEG_UI_HOLO=a|b|c|off`. BAY: a framed bay bottom left (projector, energy LEDs, the name).
   CONSOLE: a curved steel console along the bottom, a slot per gadget Jimmy has (the current lit),
   the hologram over a projector at its left end. WHEEL: a ring of his gadgets bottom left, turning
-  the current to the top. OFF: the game's own icon. "Has": the vehicles in the level, the water
-  gun / burp gun once collected, other gadgets once used in the level, and the current one.
+  the current to the top. OFF: the game's own icon. The slots follow Boy Genius's eight gadgets and the PDA gadget page.
 - **Score**: counts up to its new value (about half a second) and, as points come in, pops (the
   digits grow for a moment) with a green glow behind it.
 ## How the game starts: NEG_START and save\slots.txt (port; launcher interface)
 
-The original has no menu before the game (manual p. 6-7; CEditor::UpdateGame 0x4a5c70): the
-installer's `save\StartLevel.txt` says `autosave`, so every start continues `save\autosave.tsk`;
-without one (first run, or the shipped DUMMY placeholder) a new game starts in level1d.gam
-(title / logo screens, then the story) and the autosaves are deleted. Its Main Menu is the PDA
-that ESC opens; New / Load / Save / Delete are on its Load/Save page (slots
-`save\JimmyGame1..10.tsk`). Details: `game/src/port/StartMode.h`.
-
-The launcher sets `NEG_START` in the environment before the engine starts (like
-`NEG_WIDESCREEN`; unset it when not wanted, the process can outlive a run):
+Boy Genius starts with splash screens and level1d.gam. It has no autosave. The PDA's
+Load/Save page uses `save/JimmyGame1..10.tsk`; New Game there loads `NewGame.tsk`
+(Jimmy's lab). The Android app always opens the launcher; the removed "original menu"
+style is not a launcher setting. See `game/src/port/StartMode.h`.
 
 | NEG_START | What happens |
 |---|---|
-| unset / `menu` | The original start; when a saved game was continued, the original Main Menu (PDA) opens as soon as Jimmy plays. The default ("original menu"). |
-| `original` | Exactly the original start, no menu. |
-| `new` | New game (level1d.gam; the autosaves are deleted, as the original's New). |
-| `continue` | The autosave; a new game when there is none. |
-| `load:<n>` | Save slot n = 1..10 (`save\JimmyGame<n>.tsk`); the original start when the slot is empty. |
+| unset / `menu` / `original` / `new` | Original start, level1d.gam. |
+| `continue` | Newest save slot by modification time; original start if none. |
+| `load:<n>` | Save slot 1..10; original start if empty. |
 
-`NEG_TEST_PLAY` (level picker) wins over `NEG_START`.
-
-Save list for the launcher: `save/slots.txt` in the game folder, written by the game at
-start-up and whenever the autosave or a slot is written or deleted (missing = the game has not
-run yet, no saves). Lines starting with `#` are comments; one line per saved game, TAB-separated:
-`<slot> <level id> <level name> <gam file> <score> <mtime>`, e.g.
-`3	LV5F	dinosaurs	Level5f.gam	1200	1792617355`. slot = `autosave` or 1..10 (the
-`load:<n>` number); level name = the game's own Load/Save page name (may be empty); mtime = Unix
-seconds (the save date). Empty and DUMMY slots are not listed. (A launcher may also parse the
-.tsk header itself: big-endian; strings are a length byte + chars: version ("DUMMY   " =
-empty), int level 4cc, string gam file, string task file, float health, short lives, int score.)
-
-## Vox, the museum's world picker (port)
-
-In the museum (Level5d) the question-mark terminal opens the PDA main menu with the world
-pictures (VR tank, pyramid, King Carl), which the original drove with the Windows pointer. On
-that page (only when the terminal opened it): **left / right** (d-pad, left stick, arrow keys)
-move the highlight, **A** goes to the world, **B** (or Backspace) closes the menu and steps
-Jimmy back out of the terminal (walk in again to reopen it). Each picture has its world's name
-under it. Touching / moving the pointer gives the page back to the pointer (the original way)
-until left / right is pressed again; `NEG_VOX_PICKER=0` turns the picker off. On a dual-screen
-device the bottom panel shows the worlds as steel cards, the chosen one lit
-(`game/src/port/VoxPicker.*`, `CompanionView.drawPicker`).
+`NEG_TEST_PLAY` and the Asset Viewer take precedence. The launcher reads `save/slots.txt`,
+written at startup and when slots change: tab-separated slot, level id, level name, gam file,
+score, modification time and story message number. Empty/DUMMY slots are omitted.
 
 ## Suspend (port)
 
@@ -298,10 +277,10 @@ when the window is minimised.
 
 ## Pointer helpers
 
-`game/src/Mouse.h` has the shared pointer helpers: `GetMousePos` 0x4b1d10, `SetMousePos`
-0x4b1d30, `CenterMouse` 0x4b1d50 and `GetMouseDelta` 0x4a3990. The menu, C3DPlayer,
+`game/src/Mouse.h` has the shared pointer helpers: `GetMousePos` 0x476d70, `SetMousePos`
+0x476d90, `CenterMouse` 0x476db0 and `GetMouseDelta` 0x46a460. The menu, C3DPlayer,
 C3DFlyingObject and CEditor use them, so the right stick turns the camera in play and the left
-stick moves the menu pointer as in the original. Mouse capture (0x4a3930) centres the pointer;
+stick moves the menu pointer as in the original. Mouse capture (0x46a400) centres the pointer;
 hiding and restoring the Windows cursor has no equivalent on the Thor.
 
 ## Test hooks (desktop)

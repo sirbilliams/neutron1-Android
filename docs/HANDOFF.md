@@ -81,6 +81,27 @@ BG work folder `decomp1/` (Neutron.exe) and the Negatron one `decomp/` (Neutron2
   (data macros, which don't compile until resolved); `retarget.tsv` lists every unmapped or
   not-identical match (`check func~0.80` = the BG function is only 80% similar: port the differences).
 
+## Status (Oct 28, session 3)
+
+- **170/207 source files verified against Neutron.exe.** The header marker means every function
+  was checked line by line. All 35 .gam files load; this is not a full real-input play-through.
+- **Oct 27/28 wave fixes:** Input and SaveGame verified; player camera reset and material handling;
+  Jimmy's gadget key groups, shrink ray, trail step and menu; HUD offsets, pickup counts, picture
+  scaling and energy pulse; animation timing, world/cursor defaults and level fog/clip setup.
+  Negatron's ShowAgain/HideAgain paths removed. CGameObject has ten hand-written functions
+  left to review after accounting for generated functions.
+- **Late-story exits load in order:** Level7 -> level5 @escape -> level5a @cave -> Level5b @cave
+  -> level6 @phonebooth -> level6a -> level4d (candy), then the ending. The older session-2
+  "untried" exit notes below are historical. Real-input story/VR runs and a full run to credits remain.
+- **Port features:** BG's eight gadgets drive the UI and companion; no boss-health block in BG.
+  Asset Viewer loads .ase models; HD packs install using BG texture names; loading art comes from
+  the player's run. Draw distance is adjustable. Companion Panel theme: Retroville / Yokian / Auto
+  (default; Yokian in level1d, 5, 5a, 5b, 6, 6a, 7).
+- **Local workflow:** assigned worktrees under `~/Projects/n1-lanes/`, private build/game copies;
+  build and headless test inside the `omtbuild` distrobox. Local helpers: `cx -b`, `fl`.
+  Commands and faithfulness rules: [agent-brief.md](agent-brief.md). Use offscreen or private Xvfb,
+  never the real desktop. No commit unless requested.
+
 ## Status (Oct 22, end of session 2) - READ THIS FIRST
 
 - **main = every class exists; all 35 .gam files load and reach CLEAN EXIT on desktop** (the only TODO
