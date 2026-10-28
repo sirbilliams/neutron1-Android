@@ -388,7 +388,9 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 		}
 		return;
 	}
-	if (g_keys[0x50] || (g_keys[0x43] && g_keys[0x10]))		// P, C + Shift
+	if (g_keys[0x50] || (g_keys[0x43] && g_keys[0x10]))		// P, C + Shift: nothing (the original returns without touching f_1e00)
+		return;
+	if (g_keys[0x09] || g_keys[0x20] || g_joy_button2)		// Tab, Space, button 2: the gadgets page
 	{
 		if (!f_1e00)
 		{
@@ -410,7 +412,7 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 		}
 		return;
 	}
-	if (g_keys[0x09] || g_keys[0x20] || g_joy_button2)		// Tab, Space, button 2
+	if (g_keys[0x48] || g_keys[0x70] || g_joy_button9)		// H, F1, button 9: the gadget timer
 	{
 		if (!f_1e00)
 		{
@@ -424,28 +426,6 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 					return;
 				}
 				f_1e34 = 20.0f;
-			}
-		}
-		return;
-	}
-	if (g_keys[0x48] || g_keys[0x70] || g_joy_button9)		// H, F1, button 9
-	{
-		if (!f_1e00)
-		{
-			f_1e00 = 1;
-			if (m && !g_509834 && !g_50993a && !g_joy_button1 && !g_joy_button0 && g_4ec494)
-			{
-				if (g_4f8181)
-				{
-					if (g_4f0588 == 5) MenuGoddardMode(m, true);
-					MenuDeactivate(this);
-					return;
-				}
-				f_1e4c = -1;
-				if (g_4f0588 == 5) MenuGoddardMode(m, false);
-				MenuActivate(this, 2);
-				f_1e24 = 0;
-				g_4f8182 = 1;
 			}
 		}
 		return;
@@ -707,9 +687,9 @@ void C3DJimmy::Trail(float dt)								// 0x425490
 			f_1ddc -= 0.3f;
 		}
 	}
-	else if (f_1ddc > 0.1f)									// 0x495334: walking the trail back
+	else if (f_1ddc > 0.05f)								// 0x495334 (float 0.05): walking the trail back
 	{
-		f_1ddc -= 0.1f;
+		f_1ddc -= 0.05f;
 		if (--f_1de0 > 0)
 		{
 			const OMedia3DPoint &q = f_b1c[f_1de0];
@@ -855,7 +835,7 @@ void C3DJimmy::Shrunk(CGameObject *o)						// 0x42ac10
 		}
 		return;
 	}
-	if (strcasecmp(o->m_tag, "DINO") == 0)					// (0x4ee208)
+	if (strcasecmp(o->m_tag, "C3DDINO") == 0)				// (0x4ee208: the tag, not the task name)
 	{
 		if (GetTaskState("DINO") < 10)
 		{
