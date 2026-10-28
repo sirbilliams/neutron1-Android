@@ -3,6 +3,7 @@
     Reconstructed from Neutron.exe (every function read against decomp1/raw/C3DJimmy.c).
     TODO(BG) 0x422e60 (touching a C3DSUB) and 0x423030 (a C3DTANK): neither class is placed
     in any of the game's .gam levels (checked by NEG_DUMP_OBJECTS over all of them), so the branches are never taken.  */
+#include "../port/Widescreen.h"
 #include "JimmyBG.h"
 #include "../C3DAI.h"
 #include "../yokian/C3DYokian.h"
@@ -272,7 +273,7 @@ void C3DJimmy::Process(float dt)							// 0x424600
 		DrawText(0x10f, 0xf, 'TIME', "%.2d", m);
 		DrawText(0x133, 0xf, 'TIME', "%.2d", s);
 		DrawText(0x157, 0xf, 'TIME', "%.2d", h);
-		if (g_4eefcc > 0) DrawText(0x217, 0x1e, 'TIME', "%3d", (int)g_4eefcc);
+		if (g_4eefcc > 0) DrawText(neg::WideX(0x217, neg::WIDE_RIGHT), 0x1e, 'TIME', "%3d", (int)g_4eefcc);
 	}
 	if (g_4eefd0 >= 0)
 	{

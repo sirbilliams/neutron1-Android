@@ -16,6 +16,7 @@
 #include "../Globals.h"
 #include "../Todo.h"
 #include "../port/BillsUi.h"
+#include "../port/Widescreen.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaCanvas.h"
 #include "OMediaDataBase.h"
@@ -25,6 +26,13 @@
 #include <string.h>
 
 using namespace neg;
+
+// port: widescreen - an edge HUD element (placed by v276 in the 640x480 space) moves out to the
+// window's left or right edge (Widescreen.h). 0 margin (4:3): nothing moves.
+static void WideEdge(OMediaCanvasElement *e, int side)
+{
+	if (e && WideMargin() > 0.0f) e->setx(e->get_x() + (float)side * WideMargin());
+}
 
 // --------------------------------------------------------------------------- statics
 
@@ -116,6 +124,8 @@ void C2DInGameMenu::HudPic::Show(void)
 	elt->setz(0);
 	elt->setx(sx * (float)x - (float)((short)g_screen_w / 2));
 	elt->sety(((float)((short)g_screen_h / 2) - elt->get_height()) - sy * (float)y);
+	if (this >= &C2DInGameMenu::s_gadget_pics[0] && this <= &C2DInGameMenu::s_gadget_pics[7] && WideMargin() > 0.0f)
+		elt->setx(elt->get_x() - WideMargin());			// port: widescreen, the gadget pictures (bottom left)
 	elt->force_show();
 	elt->set_blend((omt_BlendFunc)src_blend, (omt_BlendFunc)dst_blend);
 }
@@ -160,16 +170,19 @@ C2DInGameMenu::C2DInGameMenu()
 	g_hud_lives->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
 	g_hud_lives->set_canvas(NULL);
 	v276(g_hud_lives, 32.0f, 0.0f, 0x17, 1.0f, true);
+	WideEdge(g_hud_lives, WIDE_LEFT);						// port: widescreen, top left corner
 
 	g_health_bar = NewElt();
 	g_health_bar->set_blend(omblendfc_Src_Alpha, add);
 	g_health_bar->set_canvas(NULL);
 	v276(g_health_bar, 6.0f, 4.0f, 0x16, 1.0f, true);
+	WideEdge(g_health_bar, WIDE_LEFT);						// port: widescreen, top left corner
 
 	g_health_frame = NewElt();
 	g_health_frame->set_blend(omblendfc_Src_Alpha, add);
 	g_health_frame->set_canvas(NULL);
 	v276(g_health_frame, 3.0f, 7.0f, 0x15, 1.0f, true);
+	WideEdge(g_health_frame, WIDE_LEFT);					// port: widescreen, top left corner
 
 	g_gadget_bar_frame = NewElt();
 	g_gadget_bar_frame->set_blend(omblendfc_Src_Alpha, add);
@@ -207,6 +220,7 @@ C2DInGameMenu::C2DInGameMenu()
 	{
 		g_gadget_icons[i] = NewElt();
 		v276(g_gadget_icons[i], 0.0f, (float)(0x19a + (windowed ? 1 : 0)), kGadgetIcons[i], 1.0f, true);
+		WideEdge(g_gadget_icons[i], WIDE_LEFT);			// port: widescreen, bottom left corner
 		Hide(g_gadget_icons[i]);
 	}
 	for (int i = 0; i < 8; i++)

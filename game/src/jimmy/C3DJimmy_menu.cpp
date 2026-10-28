@@ -22,6 +22,8 @@
 #include "../Sound.h"
 #include "../Todo.h"
 #include "JimmyMenu.h"
+#include "../port/BillsUi.h"
+#include "../port/Widescreen.h"
 #pragma GCC diagnostic pop
 
 #include <SDL.h>
@@ -255,8 +257,12 @@ unsigned char C3DJimmy::MenuInput(float dt)
 		if (!GameIsRunning()) return 0;
 		if (!g_camera) return 0;
 		if (g_4f8430) return 0;
-		m->v282(g_health);
-		DrawText(0x28, 0x43, 'BIG', "%d", (int)g_health);	// _ftol
+		if (neg::BillsUi()) neg::BillsHealthBar(dt, g_health);	// port: Bill's UI (the bar and the number)
+		else
+		{
+			m->v282(g_health);
+			DrawText(neg::WideX(0x28, neg::WIDE_LEFT), 0x43, 'BIG', "%d", (int)g_health);	// _ftol; port: WideX
+		}
 		if (0 < g_4f83d0)
 		{
 			g_4f83d0 = g_4f83d0 - dt;
@@ -265,11 +271,13 @@ unsigned char C3DJimmy::MenuInput(float dt)
 		if (g_score_popup_time == 0)
 		{
 			if (g_story_time < 7.0f) return 0;				// 0x48e5b8
-			DrawText(0x20d, (short)(m->f_4ec + 0x1c2), 'MED', "%6.0d", g_score);
+			if (neg::BillsUi()) neg::BillsScore(dt, neg::WideX(0x1a9, neg::WIDE_RIGHT), (short)(m->f_4ec + 0x1b3));	// port: Bill's UI
+			else DrawText(neg::WideX(0x20d, neg::WIDE_RIGHT), (short)(m->f_4ec + 0x1c2), 'MED', "%6.0d", g_score);	// port: WideX
 			return 0;
 		}
 		if (g_story_time < 7.0f) return 0;
-		DrawText(0x1a9, (short)(m->f_4ec + 0x1b3), 'BIG', "%6.0d", g_score);
+		if (neg::BillsUi()) neg::BillsScore(dt, neg::WideX(0x1a9, neg::WIDE_RIGHT), (short)(m->f_4ec + 0x1b3));	// port: Bill's UI
+		else DrawText(neg::WideX(0x1a9, neg::WIDE_RIGHT), (short)(m->f_4ec + 0x1b3), 'BIG', "%6.0d", g_score);	// port: WideX
 		return 0;
 	}
 

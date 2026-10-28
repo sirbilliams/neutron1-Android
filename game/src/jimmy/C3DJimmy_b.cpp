@@ -3,6 +3,7 @@
     See C3DJimmy.h. Reconstructed from Neutron.exe (every function read against the decompile).   */
 #include "JimmyBG.h"
 #include "../C3DAI.h"
+#include "../port/Widescreen.h"
 
 using namespace neg;
 using namespace jimmybg;
@@ -1097,14 +1098,16 @@ void C3DJimmy::ScorePopup(float dt)							// 0x424d10
 			return;
 		}
 		const double t = 0.2 - g_score_popup_time;			// flies away to the score
-		DrawText((short)(int)(t * 1500.0 + 300.0), (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
+		DrawText((short)((int)(t * 1500.0 + 300.0) + (int)(neg::WideMargin() * (t / 0.2))),	// port: widescreen, on to the score at the right edge
+				 (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
 		return;
 	}
 	if (g_score_popup_time > 0.2)
 	{
-		DrawText(0x1c2, 0xd2, 'BIG', "%d", g_score_popup);
+		DrawText(neg::WideX(0x1c2, neg::WIDE_RIGHT), 0xd2, 'BIG', "%d", g_score_popup);	// port: WideX
 		return;
 	}
 	const double t = 0.2 - g_score_popup_time;
-	DrawText((short)(int)(t * 400.0 + 450.0), (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
+	DrawText((short)((int)(t * 400.0 + 450.0) + (int)neg::WideMargin()),	// port: widescreen, anchored right throughout the flight
+			 (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
 }

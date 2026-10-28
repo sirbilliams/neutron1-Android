@@ -1,6 +1,7 @@
 /*  C3DCheckPoint - see C3DCheckPoint.h. Reconstructed from Neutron.exe 0x414190..0x414c20. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
+#include "../port/Widescreen.h"
 #include "C3DCheckPoint.h"
 #include "../friends/C3DNick.h"
 #include "../C2DInGameMenu.h"
@@ -117,8 +118,8 @@ void C3DCheckPoint::Process(float dt)						// 0x414410
 	if (g_4eefc8 > 0.0f)									// the stopwatch runs
 	{
 		ShowLoadingPicture(true);							// 0x4073b0
-		DrawText(0x212, 0x39, 'MED', "%d", m_count_b / 2);	// 0x468660
-		DrawText(0x212, 0x58, 'MED', "%d", m_count_a / 2);
+		DrawText(neg::WideX(0x212, neg::WIDE_RIGHT), 0x39, 'MED', "%d", m_count_b / 2);	// 0x468660
+		DrawText(neg::WideX(0x212, neg::WIDE_RIGHT), 0x58, 'MED', "%d", m_count_a / 2);
 		return;
 	}
 	ShowLoadingPicture(false);
