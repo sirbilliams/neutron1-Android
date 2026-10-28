@@ -5,8 +5,7 @@
     decide what a click does. Pages: C2DInGameMenu.h.
 
     Element offsets as in the original object (this = the element; its CGameObject part at
-    +0xc0). Keys: g_keys[] Windows virtual keys.                                              
-    Reconstructed from Neutron.exe  */
+    +0xc0). Keys: g_keys[] Windows virtual keys.                                              */
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMT headers)

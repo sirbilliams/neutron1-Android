@@ -1,7 +1,6 @@
 /*  C3DJimmy part B: Jimmy's own element slots (Neutron.exe 93..130 but the PDA menu's): the
     gadgets, water, shocks and hits, the shadow, the trail, the shrink ray, the score pop-up.
-    See C3DJimmy.h.                                                                              
-    Reconstructed from Neutron.exe  */
+    See C3DJimmy.h.                                                                              */
 #include "JimmyBG.h"
 #include "../C3DAI.h"
 
