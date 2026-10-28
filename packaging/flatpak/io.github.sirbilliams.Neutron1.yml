@@ -1,0 +1,30 @@
+# Desktop Flatpak of the Boy Genius port. The game's own files are NOT in the package: copy your
+# game folder (the one with omt/, gam/, Neutron.exe) to
+# ~/.var/app/io.github.sirbilliams.Neutron1/data/game (saves and omt-log.txt go there too).
+# Build + install:  flatpak run org.flatpak.Builder --user --install --force-clean build-flatpak packaging/flatpak/io.github.sirbilliams.Neutron1.yml
+app-id: io.github.sirbilliams.Neutron1
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: neutron1
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=all          # gamepads
+  - --device=dri
+modules:
+  - name: neutron1
+    buildsystem: simple
+    build-commands:
+      - cmake -S engine -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - make -C build -j$FLATPAK_BUILDER_N_JOBS negatron
+      - install -Dm755 build/negatron /app/bin/negatron
+      - install -Dm755 packaging/flatpak/neutron1.sh /app/bin/neutron1
+      - install -Dm644 packaging/flatpak/io.github.sirbilliams.Neutron1.desktop /app/share/applications/io.github.sirbilliams.Neutron1.desktop
+      - install -Dm644 packaging/flatpak/icon-256.png /app/share/icons/hicolor/256x256/apps/io.github.sirbilliams.Neutron1.png
+    sources:
+      - type: git
+        path: ../..
+        branch: main

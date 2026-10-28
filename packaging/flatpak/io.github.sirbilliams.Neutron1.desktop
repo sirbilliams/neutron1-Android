@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Jimmy Neutron: Boy Genius
+Comment=Boy Genius on the OMT engine port
+Exec=neutron1
+Icon=io.github.sirbilliams.Neutron1
+Categories=Game;ActionGame;
+Terminal=false
