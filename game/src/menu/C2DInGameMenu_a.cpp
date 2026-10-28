@@ -1,4 +1,4 @@
-/*  C2DInGameMenu part a: constructor 0x401430, destructor 0x4029c0, UnInitObject (slot 8), the
+/*  Reconstructed from Neutron.exe (all functions verified line by line). C2DInGameMenu part a: constructor 0x401430, destructor 0x4029c0, UnInitObject (slot 8), the
     sprite helpers (275..278), the HUD bars and pictures, the menu pages (279, 280, 293..300,
     309, 310) and the story message lines (304..307). See C2DInGameMenu.h.
 
@@ -7,7 +7,7 @@
       show:   `if (+0x70) { +0x70 = 1; hide(false); }`  = OMT 2.5's force_show();
       delete: hide(true), delete its canvas (+ reset), delete the element  = FreeElt below.
     Constants: 0x48d40c = 1/640, 0x48d408 = 1/480, 0x48d910 = 27, 0x48d918 = 1.044 (double),
-    0x48d924 = 1, 0x48d954 = 2, 0x48d400 = 50, 0x48d404 = 30.                                */
+    0x48d924 = 1, 0x48d954 = 2, 0x48d950 = 5, 0x48d400 = 50, 0x48d404 = 30.                                */
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMT headers)
@@ -108,7 +108,7 @@ void C2DInGameMenu::HudPic::Show(void)
 	if (canvas_id != -1)
 	{
 		c = Canvas(canvas_id);
-		if (c) elt->set_size((float)c->get_width() * sy, (float)c->get_height() * sx);	// sic: x size by the y scale and back
+		if (c) elt->set_size((float)c->get_width() * sx, (float)c->get_height() * sy);	// (0x403596: width by sx, height by sy)
 	}
 	elt->set_canvas(c);
 	elt->set_canvas_flags(omcanef_FreeWorldSize);
@@ -196,7 +196,7 @@ C2DInGameMenu::C2DInGameMenu()
 		p.db = f_4b4;
 		p.canvas_id = kGadgetPics[i];
 		p.x = 0;
-		p.y = 0x19b;
+		p.y = 0x19a + (windowed ? 1 : 0);					// 0x4018d9
 		p.src_blend = 6;
 		p.dst_blend = 7;
 	}
@@ -206,7 +206,7 @@ C2DInGameMenu::C2DInGameMenu()
 	for (int i = 0; i < 8; i++)
 	{
 		g_gadget_icons[i] = NewElt();
-		v276(g_gadget_icons[i], 0.0f, 410.0f, kGadgetIcons[i], 1.0f, true);
+		v276(g_gadget_icons[i], 0.0f, (float)(0x19a + (windowed ? 1 : 0)), kGadgetIcons[i], 1.0f, true);
 		Hide(g_gadget_icons[i]);
 	}
 	for (int i = 0; i < 8; i++)
@@ -215,7 +215,7 @@ C2DInGameMenu::C2DInGameMenu()
 	s_msg_arrow.db = f_4b4;
 	s_msg_arrow.canvas_id = 0x75;
 	s_msg_arrow.x = 0x189;
-	s_msg_arrow.y = 0x19b;
+	s_msg_arrow.y = 0x19a + (windowed ? 1 : 0);			// (0x401ee4: still the gadget pictures' y)
 	s_msg_arrow.src_blend = 6;
 	s_msg_arrow.dst_blend = 7;
 	s_pic_4f7c98.db = f_4b4;
@@ -294,11 +294,11 @@ C2DInGameMenu::C2DInGameMenu()
 
 	// the fade quad (full screen)
 	g_fade_quad = NewElt();
-	v276(g_fade_quad, 0.0f, -1.0f, 0xfc, 1.0f, true);
+	v276(g_fade_quad, 0.0f, (float)((windowed ? 1 : 0) - 1), 0xfc, 1.0f, true);
 	g_fade_quad->set_blend(omblendfc_Src_Alpha, omblendfc_Inv_Src_Alpha);
 	Hide(g_fade_quad);
 	s_fade_pic.db = f_4b4;
-	s_fade_pic.y = 0;
+	s_fade_pic.y = (windowed ? 1 : 0) - 1;					// 0x40264e
 	s_fade_pic.canvas_id = 0xf7;
 	s_fade_pic.x = 0;
 	s_fade_pic.src_blend = 6;
@@ -318,7 +318,7 @@ C2DInGameMenu::C2DInGameMenu()
 	v306(0, kLines[0]);
 	Hide(g_story_lines[0]);
 	for (int i = 1; i < 44; i++) v306(i, kLines[i]);
-	for (int i = 0; i < 44; i++) g_story_flags[i] = 0;
+	// (the original does not clear the story flags here: they stay as they were, 0x4f7d00)
 
 	v107(0);												// (BG's slot 108 setter: not saved in a .gam)
 	v36(0);
@@ -478,7 +478,7 @@ void C2DInGameMenu::v282(float health)									// 0x403980 the health bar
 {
 	if (!g_health_bar) return;
 	const float sy = ScaleY();
-	g_health_bar->set_size(ScaleX() * 27.0f, sy * health * (float)1.044);	// 0x48d910, 0x48d918
+	g_health_bar->set_size(ScaleX() * 27.0f, (float)((double)(sy * health) * 1.044));	// 0x48d910, 0x48d918
 }
 
 void C2DInGameMenu::v284()												// 0x4039e0
@@ -704,7 +704,7 @@ void C2DInGameMenu::v295(MenuPage *page)
 		if (page == Page(MENU_PICKUPS) && g_pickup_counts[i * 2] != 0)
 		{
 			const MenuItem &it = page->items[i];
-			DrawText((short)(int)it.x, (short)(int)it.y, 'MED', "%d", g_pickup_counts[i * 2]);	// 0x468660
+			DrawText((short)(int)it.x, (short)(int)(it.y + 5.0f), 'MED', "%d", g_pickup_counts[i * 2]);	// 0x468660
 		}
 		const MenuItem &it = page->items[i];
 		if (it.type != 0 && it.type != 4)

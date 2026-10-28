@@ -1,4 +1,4 @@
-/*  C2DInGameMenu part b: Process (slot 241, 0x404080: the pad cursor, the pickup pop-up, the HUD
+/*  Reconstructed from Neutron.exe (all functions verified line by line). C2DInGameMenu part b: Process (slot 241, 0x404080: the pad cursor, the pickup pop-up, the HUD
     and the yes/no boxes with their actions), the level-start slot (259), the story message
     panel (308), the screen fade (311), the end-of-level bonus count (312), the pulse (313),
     the menu's sound (314), and the free functions of the menu code. See C2DInGameMenu.h.
@@ -701,8 +701,9 @@ void C2DInGameMenu::v312(float dt)
 
 void C2DInGameMenu::v313(float dt)										// 0x407370
 {
-	g_pulse_time = g_pulse_time + dt;
-	g_pulse = (float)sin((double)(g_pulse_time) * 5.0);		// 0x48d950
+	const double t = (double)g_pulse_time + (double)dt;		// (x87: the sum stays unrounded for the sine)
+	g_pulse_time = (float)t;
+	g_pulse = (float)sin(t * 5.0);							// 0x48d950
 }
 
 void C2DInGameMenu::v314(int sound)										// 0x407410
