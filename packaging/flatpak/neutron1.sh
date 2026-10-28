@@ -19,9 +19,14 @@ NEG_UI_HOLO=a           # gadget hologram: a, b, c or off
 NEG_LOD=2               # draw distance 1..4
 CFG
 fi
-set -a
-. "$CONF"
-set +a
+# each NAME=value line, unless NAME is already set (flatpak run --env=... wins)
+while IFS= read -r line; do
+    line=${line%%#*}
+    case "$line" in *=*) ;; *) continue ;; esac
+    name=$(printf '%s' "${line%%=*}" | tr -d ' ')
+    value=$(printf '%s' "${line#*=}" | sed 's/[[:space:]]*$//')
+    eval "[ -n \"\${$name+x}\" ]" || export "$name=$value"
+done < "$CONF"
 export OMT_DATA="$DATA"
 cd "$DATA" || exit 1
 exec /app/bin/negatron "$@"
