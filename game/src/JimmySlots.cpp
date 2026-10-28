@@ -1,4 +1,4 @@
-/*  Weak defaults of JimmySlots.h: nothing happens until C3DJimmy (agent E) defines them. */
+/*  Weak defaults of JimmySlots.h: nothing happens until C3DJimmy (agent E) defines them.  (port glue, no exe code of its own)  */
 #include "JimmySlots.h"
 
 #define WEAK __attribute__((weak))

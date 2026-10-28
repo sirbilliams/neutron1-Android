@@ -1,4 +1,5 @@
-/*  C3DJetpackFire - see C3DJetpackFire.h. */
+/*  C3DJetpackFire - see C3DJetpackFire.h. 
+    Reconstructed from Neutron.exe  */
 #include "C3DJetpackFire.h"
 #include "Game.h"
 #include "Bridge.h"

@@ -1,5 +1,7 @@
 /*  C3DJimmy part A: the CGameObject-family overrides (touching, Process, the control slot, pause /
-    resume) and C3DPlayer's slots. See C3DJimmy.h.                                               */
+    resume) and C3DPlayer's slots. See C3DJimmy.h.                                               
+    Reconstructed from Neutron.exe; TODO(BG) 0x422e60 (touching a C3DSUB) and 0x423030 (a C3DTANK): neither class is placed
+    in any of the game's .gam levels (checked by NEG_DUMP_OBJECTS over all of them), so the branches are never taken.  */
 #include "JimmyBG.h"
 #include "../C3DAI.h"
 #include "../yokian/C3DYokian.h"

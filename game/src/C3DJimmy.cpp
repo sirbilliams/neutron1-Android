@@ -1,6 +1,7 @@
 /*  C3DJimmy - see C3DJimmy.h. This file: construction, destruction, the factory entry,
     InitObject / UnInitObject and the level start (PostLoad). The other slots are in
-    jimmy/C3DJimmy_a.cpp (CGameObject family, C3DPlayer's slots) and _b.cpp (Jimmy's own).       */
+    jimmy/C3DJimmy_a.cpp (CGameObject family, C3DPlayer's slots) and _b.cpp (Jimmy's own).       
+    Reconstructed from Neutron.exe  */
 #include "jimmy/JimmyBG.h"
 #include "objects/C3DStartPoint.h"
 #include "JimmySlots.h"
