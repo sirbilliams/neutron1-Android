@@ -3,6 +3,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 /** Desktop shim (tools/companion): a size and onDraw. */
 public class View {
+    public static final int LAYER_TYPE_SOFTWARE = 1;
+    // Java2D is already a software renderer.
+    public void setLayerType(int layerType, android.graphics.Paint paint) {}
     private int mW, mH;
     public View(Context c) {}
     public void setTestSize(int w, int h) { mW = w; mH = h; }
