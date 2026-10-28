@@ -1,4 +1,6 @@
-/*  CLocalGameObject - hand-written parts. See CLocalGameObject.h. */
+/*  CLocalGameObject - hand-written parts. See CLocalGameObject.h.
+    Reconstructed from Neutron.exe (0x4586f0..0x458f90); every slot of the vtable 0x4d07ac was checked.
+    Slots 8 and 257 (0x458810, 0x458940) are in gen/CLocalGameObject_gen.cpp. */
 #include "CLocalGameObject.h"
 #include "Game.h"
 #include "Bridge.h"
@@ -30,8 +32,6 @@ CLocalGameObject::CLocalGameObject()						// 0x4586f0
 	m_db_stream = NULL;
 	CGameObject::v26(1);
 	f_4bc = 0;
-	m_show_on_radar = 0;									// (Negatron-only)
-	f_4c4 = 0;
 }
 
 CLocalGameObject::~CLocalGameObject() {}					// 0x4587e0
@@ -62,7 +62,7 @@ void CLocalGameObject::InitPhysics(void)					// 0x458910: only once
 
 void CLocalGameObject::UnInitDatabases(void)				// 0x458c50
 {
-	if (f_4bc) CloseObjectDatabase();						// vtable +0x444 (tail call)
+	if (f_4bc) CloseObjectDatabase();						// vtable +0x430 = CloseObjectDatabase (tail call)
 }
 
 unsigned char CLocalGameObject::v133(void)					// 0x458960 (BG slot 134): on the floor, or +0x4a0

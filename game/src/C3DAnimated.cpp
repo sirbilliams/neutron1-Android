@@ -1,4 +1,4 @@
-/*  C3DAnimated - see C3DAnimated.h. */
+/*  C3DAnimated - see C3DAnimated.h. Reconstructed from Neutron.exe (0x40d110..0x40e870); every function checked against raw/C3DAnimated.c. */
 #include "C3DAnimated.h"
 #include "Game.h"
 #include "Bridge.h"
@@ -57,7 +57,6 @@ C3DAnimated::C3DAnimated()									// 0x40d110
 	strcpy(f_5fc, g_4f81a8);
 	f_598 = 0;
 	for (int i = 0; i < 10; i++) { f_5ac[i] = NULL; f_5d4[i] = NULL; }
-	f_63c = 0;
 	f_648 = 1;
 	f_649 = 1;
 	f_64c = -1;												// RequiredLevel
@@ -101,7 +100,7 @@ void C3DAnimated::UnInitObject(void)						// 0x40e670
 		sh->set_modified(false);							// +8
 	}
 	C3DObject::UnInitObject();								// 0x462390
-	if (f_63c)												// InitAnim done (+0x570)
+	if (f_4bc)												// InitAnim done: the object database is open (CLocalGameObject +0x4b0 = obj +0x570)
 	{
 		set_anim_def(NULL);									// element +0xc0
 		// (debug log)
@@ -128,7 +127,7 @@ void C3DAnimated::UnInitObject(void)						// 0x40e670
 		// (the destructors here call it again after CheckLoadLevel did) frees the list twice.
 		f_5a4 = NULL;
 		f_640 = NULL;
-		f_63c = 0;
+		// (f_4bc stays set, as in the original: CLocalGameObject::UnInitDatabases then closes the database)
 	}
 }
 
@@ -146,7 +145,7 @@ void C3DAnimated::Process(float dt)							// 0x40e050
 			const int idx = PickupItemIndex(item);			// item +0x5f4
 			if (idx >= 0 && g_object_states[idx] != 0)		// 0x4f8438; port: idx < 0 = not known yet
 			{
-				HideAgain();								// element +0x58
+				hide(true);									// element +0x58
 				v232();
 				v132(0);
 			}
@@ -169,14 +168,14 @@ void C3DAnimated::Process(float dt)							// 0x40e050
 void C3DAnimated::v242(float t)								// 0x40d3a0: while editing, always shown
 {
 	(void)t;
-	ShowAgain();											// hide count 1, hide(false)
+	force_show();											// if (hide_count) { hide_count = 1; hide(false); }
 }
 
 void C3DAnimated::v260(void)								// 0x40e7b0
 {
 	// (debug log)
-	if (f_65c == 0) HideAgain();							// InitiallyVisible
-	else if (f_65c == 1) ShowAgain();
+	if (f_65c == 0) hide(true);								// InitiallyVisible
+	else if (f_65c == 1) force_show();
 	if (f_664 == 1) AlphaSecondPass();						// SecondPass: element +0x118
 }
 
@@ -207,12 +206,12 @@ void C3DAnimated::v268(int state)							// 0x40e1f0
 	if (state == 1)
 	{
 		if (f_658 != 0) v234();
-		ShowAgain();
+		force_show();
 	}
 	else if (state == 0)
 	{
 		v232();
-		HideAgain();
+		hide(true);
 	}
 }
 
@@ -401,7 +400,7 @@ char *C3DAnimated::ev66(void) { return f_5fc; }				// 0x40df80
 void C3DAnimated::InitAnim(void)							// 0x40e270
 {
 	if (m_db) return;
-	OpenObjectDatabase();									// CGameObject vtable +0x448
+	OpenObjectDatabase();									// vtable +0x434 (slot 269)
 	OMediaDataBase::register_object(OMediaCanvas::db_type, OMediaCanvas::db_builder);
 	OMediaDataBase::register_object(OMedia3DShape::db_type, OMedia3DShape::db_builder);
 	OMediaDataBase::register_object(OMedia3DMaterial::db_type, OMedia3DMaterial::db_builder);
@@ -413,7 +412,7 @@ void C3DAnimated::InitAnim(void)							// 0x40e270
 	set_morph_flags(ommorf_InterpolateVertices | ommorf_InterpolateVNormals);	// element +0xb8 = 3
 	sh->set_modified(false);								// +8
 	f_590->db_unlock();										// +0x14
-	f_63c = 1;
+	f_4bc = 1;												// (obj +0x570: CLocalGameObject's "database open" flag)
 	ev69();
 }
 
@@ -421,12 +420,12 @@ void C3DAnimated::ev70(unsigned char show)					// 0x40e3e0
 {
 	if (!show)
 	{
-		HideAgain();
+		hide(true);
 		if (f_658 != -1) { v232(); v132(0); }
 		return;
 	}
 	ev69();
-	ShowAgain();
+	force_show();
 	if (f_658 == -1) return;
 	if (f_658 != 0) { v234(); v132(1); }
 	else { v232(); v132(0); }
