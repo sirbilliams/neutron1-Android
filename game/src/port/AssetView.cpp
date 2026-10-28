@@ -297,7 +297,7 @@ void Load(int i)
 			o->ResetObject();
 			o->v260();
 			o->place(kStage[0], kStage[1], kStage[2]);
-			o->ShowAgain();
+			o->force_show();
 			shape = o->get_shape();
 			o->hide(true);										// port: its own element does not draw on this stage; the shape is shown on ours
 			ShowShape(shape);

@@ -380,7 +380,7 @@ void C3DJimmy::v260(void)									// 0x423610
 	}
 	if (f_a30)
 	{
-		f_a30->HideAgain();									// C3DVehicle slot 54 (+0xd8, 0x464f00): hide with the wheels (not C3DObject's)
+		f_a30->HideAll();									// C3DVehicle slot 54 (+0xd8, 0x464f00): hide vehicle and wheels
 		GO(f_a30)->v52(0);									// +0xd0
 		GO(f_a30)->v46(0);									// +0xb8
 	}

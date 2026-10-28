@@ -103,6 +103,3 @@ class C3DAnimated : public C3DObject
 	char				f_669[100];		// 0x655  "PickupLink" ("none"): hidden once that pickup is taken
 	unsigned char		f_6cd;			// 0x6b9  PickupLink checked
 };
-
-// Neutron.exe +0x570 is CLocalGameObject's byte at 0x4b0 (f_4bc): InitAnim sets it, UnInitObject tests it. Older files call it f_63c.
-#define f_63c f_4bc

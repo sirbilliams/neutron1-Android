@@ -15,7 +15,7 @@ C3DGraplingHook::C3DGraplingHook()							// 0x41eeb0
 	v107(0);
 	v36(0);
 	v52(0);
-	hide(true);												// element +0x58 (BG; C3DObject::HideAgain only after a ShowAgain)
+	hide(true);												// element +0x58
 	C3DObject::InitPhysics();								// 0x4623d0
 	// (then a call to the empty 0x472970)
 }

@@ -35,7 +35,7 @@ void C3DSparkWire::InitObject(void)							// 0x441440
 	C3DAnimated::InitObject();								// 0x40d3c0
 	RegisterProperty("ItemActive", &f_6c4, PROP_LONG, 0);
 	InitAnim();												// element +0x108
-	f_63c = 0;												// (BG +0x570) InitAnim done: cleared again
+	f_4bc = 0;												// (BG +0x570) InitAnim done: cleared again
 	CreateAnim((char *)"HIWALK", (char *)"powerline.ase");		// +0xd8
 	CreateAnim((char *)"HISTOP", (char *)"powerlinestop.ase");
 	CreateTexture((char *)"powerline01.png", 0);			// +0xf0

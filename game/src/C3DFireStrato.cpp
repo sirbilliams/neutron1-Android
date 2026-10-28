@@ -28,5 +28,5 @@ C3DFireStrato::~C3DFireStrato()								// 0x419480
 void C3DFireStrato::ResetObject(void)						// 0x4194d0
 {
 	CLocalGameObject::ResetObject();						// 0x4587f0
-	HideAgain();											// element +0xdc
+	hide(true);											// element +0x58
 }

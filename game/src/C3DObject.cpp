@@ -25,7 +25,6 @@ C3DObject::C3DObject()										// 0x462040
 	Log("C3DObject()");
 	SetObjectID('3OBJ');									// 0x462220 (direct call): element +0x78, CGameObject +0x404
 	f_574 = 0;
-	f_589 = 1;												// port: see the header
 }
 
 C3DObject::~C3DObject()										// 0x462170
@@ -81,22 +80,6 @@ void C3DObject::ev53(void)									// 0x4627b0: scale from the shape's height
 		float minx, miny, minz, maxx, maxy, maxz;
 		get_shape()->find_cube(minx, miny, minz, maxx, maxy, maxz);
 		v64(fabsf(miny) / get_shape()->get_radius());		// CGameObject +0x100
-	}
-}
-
-// port: ShowAgain / HideAgain are not in Neutron.exe (see the header); Negatron's code, kept for its callers.
-void C3DObject::ShowAgain(void)
-{
-	f_589 = 1;
-	force_show();											// hide_count = 1; hide(false)
-}
-
-void C3DObject::HideAgain(void)
-{
-	if (f_589)
-	{
-		f_589 = 0;
-		hide(true);
 	}
 }
 

@@ -34,7 +34,7 @@ class C3DVehicle : public C3DObject
 	virtual ~C3DVehicle();													// 0x464e20
 
 	// ---- element-family slots
-	virtual void HideAgain(void);											// ESLOT 54  0x464f00 (slot 54, +0xd8) hide, with the wheels (port: the name C3DJimmy calls)
+	virtual void HideAll(void);											// ESLOT 54  0x464f00 (slot 54, +0xd8) hide vehicle and wheels
 	virtual void ShowAll(void);												// slot 55 0x464f30 (+0xdc) hide(false), with the wheels
 	virtual void ev107(float power);										// ESLOT 107 0x464f60 (slot 56) power: accel, brake, top speed
 	virtual void ev108(float d);											// ESLOT 108 0x464fd0 (slot 57) power += d

@@ -49,7 +49,7 @@ void C3DValve::InitObject(void)								// 0x448a30
 	C3DAnimated::InitObject();								// 0x40d3c0
 	RegisterProperty("SteamPeriod", &m_steam_period, PROP_FLOAT, 0);
 	InitAnim();												// element +0x108
-	f_63c = 0;												// (BG +0x570) InitAnim done: cleared again
+	f_4bc = 0;												// (BG +0x570) InitAnim done: cleared again
 	v67(80.0f);												// +0x110: radius
 	ev58((char *)"DEFAULT", 1);								// +0xe0
 }

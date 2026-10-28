@@ -122,10 +122,9 @@ CGameObject *New_C3DVehicle(void) { return new C3DVehicle; }	// '3VEH' (0x670 by
 
 // --------------------------------------------------------------------------- element slots
 
-void C3DVehicle::HideAgain(void)							// 0x464f00: element slot 54 (port: the name C3DJimmy calls)
+void C3DVehicle::HideAll(void)							// 0x464f00: element slot 54 hide vehicle and wheels
 {
-	f_589 = 0;												// (port: C3DObject's "shown" flag)
-	hide(true);												// always (C3DObject::HideAgain only after a ShowAgain)
+	hide(true);												// element +0x58
 	for (int i = 0; i < 6; i++)								// the wheels (+0x578..)
 		if (f_960[i]) f_960[i]->hide(true);					// +0x58
 }

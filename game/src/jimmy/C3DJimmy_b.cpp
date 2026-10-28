@@ -288,7 +288,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 					g_4eefc8 = -1.0f;						// 0x42ae90
 					g_4eefcc = -1.0f;
 					Unlink(GO(f_a30));						// +0x3b0
-					f_a30->HideAgain();						// C3DVehicle slot 54 (+0xd8, 0x464f00): hide with the wheels (not C3DObject's)
+					f_a30->HideAll();						// C3DVehicle slot 54 (+0xd8, 0x464f00): hide vehicle and wheels
 					GO(f_a30)->v52(0);
 					GO(f_a30)->v132(0);
 					f_a30->ev140();									// its element +0x164 (0x467f70: delete the +0x664 object; C3DVehicle::ev140)

@@ -54,10 +54,10 @@ void C3DJetpackFire::Process(float dt)						// 0x421fb0
 	f_928 -= dt;
 	if (f_928 > 0)
 	{
-		ShowAgain();
+		force_show();
 		JimmyAddEnergy(-dt * 0.5f);							// 0x42a920
 	}
-	else HideAgain();
+	else hide(true);
 	float p[4];
 	f_924->v195(p);											// +0x310
 	v196(p[0], p[1], p[2], p[3]);							// +0x314

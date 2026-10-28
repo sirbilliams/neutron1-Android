@@ -101,7 +101,7 @@ void C3DCar::ev110(float dt)								// 0x4130a0
 				break;
 			case 6:											// in it
 				g_viewport->place(P.x, P.y + 100.0f, P.z);
-				if (getvisible()) HideAgain();				// element +0xd8
+				if (getvisible()) HideAll();				// element +0xd8
 				break;
 			case 7:											// just above it
 				g_viewport->place(P.x, P.y + 30.0f, P.z);	// 0x48d404

@@ -25,11 +25,6 @@ class C3DObject : public OMedia3DMorphAnim, public CLocalGameObject
 	virtual void ev51(void);												// ESLOT 51 0x4626f0 texture filtering on
 	virtual void ev52(void);												// ESLOT 52 0x462750 texture filtering off
 	virtual void ev53(void);												// ESLOT 53 0x4627b0 v64(|shape min y| / radius)
-	// port: Neutron.exe's element vtable ends at slot 53 (54 slots): there is no ShowAgain/HideAgain.
-	// These two are Negatron's, kept as plain methods (no slot) for the callers still to be ported:
-	// Physics.cpp HideMarkers, CLevel03Games, C3DRocketShip, C3DVehicle/C3DJeep/C3DAnimated (f_589).
-	void ShowAgain(void);
-	void HideAgain(void);
 
 	// ---- CGameObject-family overrides
 	virtual void InitObject(void);											// SLOT 7  0x462340
@@ -47,7 +42,6 @@ class C3DObject : public OMedia3DMorphAnim, public CLocalGameObject
 #include "gen/C3DObject_slots.inc"
 #include "gen/C3DObject_fields.inc"
 	unsigned char	f_574;													// 0x574: set to 0 by the constructor, never read
-	unsigned char	f_589;													// port: Negatron's "shown" flag (1), see ShowAgain
 };
 
 namespace neg {
