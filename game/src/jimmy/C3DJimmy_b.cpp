@@ -1,6 +1,6 @@
 /*  C3DJimmy part B: Jimmy's own element slots (Neutron.exe 93..130 but the PDA menu's): the
     gadgets, water, shocks and hits, the shadow, the trail, the shrink ray, the score pop-up.
-    See C3DJimmy.h.                                                                              */
+    See C3DJimmy.h. Reconstructed from Neutron.exe (every function read against the decompile).   */
 #include "JimmyBG.h"
 #include "../C3DAI.h"
 
@@ -201,7 +201,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 	switch ((unsigned short)g_4f0588)
 	{
 		case 0:												// the bubble: pops
-			if (!f_a14) return;
+			if (!f_a14) break;							// (the original still sets g_4f0588 = -1 below)
 			f_a20 = 0.5f;
 			f_7c4 = 0;
 			f_6c4 = 650.0f;
@@ -303,7 +303,7 @@ void C3DJimmy::DeactivateGadget(void)						// 0x427ff0
 						g_4f8182 = 0;
 						g_gametype->SetCamera(static_cast<CGameObject *>(this));
 						OMedia3DVector q = Pos(this);
-						v197(q.x, q.y + 100.0f, q.z);		// +0x318 (0x49fad4)
+						v197(q.x, q.y + 40.0f, q.z);		// +0x318 (0x49fad4 = 40.0)
 						v157(0, 0, 0);
 						v176(0, 0, 0);
 						ev58((char *)"RUN", 1);
@@ -388,7 +388,9 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 		}
 		return;
 	}
-	if (g_keys[0x50] || (g_keys[0x43] && g_keys[0x10]))		// P, C + Shift
+	if (g_keys[0x50] || (g_keys[0x43] && g_keys[0x10]))		// P, C + Shift: nothing (the original returns without touching f_1e00)
+		return;
+	if (g_keys[0x09] || g_keys[0x20] || g_joy_button2)		// Tab, Space, button 2: the gadgets page
 	{
 		if (!f_1e00)
 		{
@@ -410,7 +412,7 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 		}
 		return;
 	}
-	if (g_keys[0x09] || g_keys[0x20] || g_joy_button2)		// Tab, Space, button 2
+	if (g_keys[0x48] || g_keys[0x70] || g_joy_button9)		// H, F1, button 9: the gadget timer
 	{
 		if (!f_1e00)
 		{
@@ -424,28 +426,6 @@ void C3DJimmy::GadgetKeys(void)								// 0x425870
 					return;
 				}
 				f_1e34 = 20.0f;
-			}
-		}
-		return;
-	}
-	if (g_keys[0x48] || g_keys[0x70] || g_joy_button9)		// H, F1, button 9
-	{
-		if (!f_1e00)
-		{
-			f_1e00 = 1;
-			if (m && !g_509834 && !g_50993a && !g_joy_button1 && !g_joy_button0 && g_4ec494)
-			{
-				if (g_4f8181)
-				{
-					if (g_4f0588 == 5) MenuGoddardMode(m, true);
-					MenuDeactivate(this);
-					return;
-				}
-				f_1e4c = -1;
-				if (g_4f0588 == 5) MenuGoddardMode(m, false);
-				MenuActivate(this, 2);
-				f_1e24 = 0;
-				g_4f8182 = 1;
 			}
 		}
 		return;
@@ -707,9 +687,9 @@ void C3DJimmy::Trail(float dt)								// 0x425490
 			f_1ddc -= 0.3f;
 		}
 	}
-	else if (f_1ddc > 0.1f)									// 0x495334: walking the trail back
+	else if (f_1ddc > 0.05f)								// 0x495334 (float 0.05): walking the trail back
 	{
-		f_1ddc -= 0.1f;
+		f_1ddc -= 0.05f;
 		if (--f_1de0 > 0)
 		{
 			const OMedia3DPoint &q = f_b1c[f_1de0];
@@ -815,7 +795,8 @@ void C3DJimmy::ShrinkRay(float dt)							// 0x426e40
 		Shrunk(o);											// element +0x1dc
 		if (o->NameContains((char *)"C3DHUMPHREY"))
 		{
-			if (C3DAnimated *h = dynamic_cast<C3DAnimated *>(o)) h->ev58((char *)"RUNSHRUNK", 1);	// (and its +0x760 name)
+			if (C3DAI *h = dynamic_cast<C3DAI *>(o)) strcpy(h->m_anim_run, "RUNSHRUNK");	// its run animation name (BG +0x820)
+			if (C3DAnimated *h = dynamic_cast<C3DAnimated *>(o)) h->ev58((char *)"RUNSHRUNK", 1);
 		}
 		PlayGameSound3D(this, -1, std::string("zap"), false);	// 0x458a40
 		if (f_a1c && f_a1c->v133())
@@ -855,7 +836,7 @@ void C3DJimmy::Shrunk(CGameObject *o)						// 0x42ac10
 		}
 		return;
 	}
-	if (strcasecmp(o->m_tag, "DINO") == 0)					// (0x4ee208)
+	if (strcasecmp(o->m_tag, "C3DDINO") == 0)				// (0x4ee208: the tag, not the task name)
 	{
 		if (GetTaskState("DINO") < 10)
 		{
@@ -1112,18 +1093,18 @@ void C3DJimmy::ScorePopup(float dt)							// 0x424d10
 	{
 		if (g_score_popup_time > 0.2)
 		{
-			DrawText(0x12c, 0xd2, 'GIB', "%d", g_score_popup);	// 0x468660
+			DrawText(0x12c, 0xd2, 'BIG', "%d", g_score_popup);	// 0x468660
 			return;
 		}
 		const double t = 0.2 - g_score_popup_time;			// flies away to the score
-		DrawText((short)(int)(t * 1500.0 + 300.0), (short)(int)(t * 1000.0 + 210.0), 'GIB', "%d", g_score_popup);
+		DrawText((short)(int)(t * 1500.0 + 300.0), (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
 		return;
 	}
 	if (g_score_popup_time > 0.2)
 	{
-		DrawText(0x1c2, 0xd2, 'GIB', "%d", g_score_popup);
+		DrawText(0x1c2, 0xd2, 'BIG', "%d", g_score_popup);
 		return;
 	}
 	const double t = 0.2 - g_score_popup_time;
-	DrawText((short)(int)(t * 400.0 + 450.0), (short)(int)(t * 1000.0 + 210.0), 'GIB', "%d", g_score_popup);
+	DrawText((short)(int)(t * 400.0 + 450.0), (short)(int)(t * 1000.0 + 210.0), 'BIG', "%d", g_score_popup);
 }

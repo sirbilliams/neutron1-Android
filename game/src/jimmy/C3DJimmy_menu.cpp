@@ -4,6 +4,8 @@
     and the phone booth trips (0x4289a0). The menu draws and hit-tests (C2DInGameMenu); these
     decide what a click does. Pages: C2DInGameMenu.h.
 
+    Reconstructed from Neutron.exe (every function read against the decompile).
+
     Element offsets as in the original object (this = the element; its CGameObject part at
     +0xc0). Keys: g_keys[] Windows virtual keys.                                              */
 

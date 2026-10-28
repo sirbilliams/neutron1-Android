@@ -1,6 +1,7 @@
 /*  C3DJimmy part A: the CGameObject-family overrides (touching, Process, the control slot, pause /
     resume) and C3DPlayer's slots. See C3DJimmy.h.                                               
-    Not yet verified line by line against Neutron.exe. TODO(BG) 0x422e60 (touching a C3DSUB) and 0x423030 (a C3DTANK): neither class is placed
+    Reconstructed from Neutron.exe (every function read against decomp1/raw/C3DJimmy.c).
+    TODO(BG) 0x422e60 (touching a C3DSUB) and 0x423030 (a C3DTANK): neither class is placed
     in any of the game's .gam levels (checked by NEG_DUMP_OBJECTS over all of them), so the branches are never taken.  */
 #include "JimmyBG.h"
 #include "../C3DAI.h"
@@ -206,7 +207,7 @@ void C3DJimmy::Process(float dt)							// 0x424600
 		}
 		else v152(60.0f);
 	}
-	if (f_1e50) DrawText(0x14, 0xf0, 'DEM', "%d", GetTaskState("SCENE"));	// (debug: the SCENE task)
+	if (f_1e50) DrawText(0x14, 0xf0, 'MED', "%d", GetTaskState("SCENE"));	// (debug: the SCENE task)
 	if (f_a18 && g_4f8181)
 	{
 		// the PDA is open
@@ -225,7 +226,7 @@ void C3DJimmy::Process(float dt)							// 0x424600
 			PauseAnim(0);										// element +0x11c
 			if (f_a1c) f_a1c->PauseAnim(0);
 			DeactivateGadget();								// element +0x178
-			DrawText(0x3c, 0x39, 'GIB', "%6.0d", g_score);	// (0x4ec714)
+			DrawText(0x3c, 0x39, 'BIG', "%6.0d", g_score);	// (0x4ec714)
 			neg::RequestTask("RestartLevel.tsk");				// 0x460e70
 			if (f_a18) MenuGadgetBarHide(f_a18);			// +0x488
 			return;
