@@ -354,6 +354,14 @@ def main():
     if a.names:
         for k, v in json.load(open(a.names)).items():
             if v.get('name'): names[('go', int(k))] = v['name']
+    # Keep the public port API stable across BG's inserted/deleted slots.
+    # These names are keyed by BG slot, not by the numeric suffix of the C++ name.
+    slot_map = json.load(open(os.path.join(os.path.dirname(__file__), 'go_bg2n2.json')))
+    for bg, n2 in slot_map.items():
+        names[('go', int(bg))] = f'v{n2}' if n2 is not None else f'bg_v{bg}'
+    port_names = json.load(open(os.path.join(os.path.dirname(__file__), 'go_port_slots.json')))
+    for k, v in port_names.items():
+        names[('go', int(k))] = v['name']
     hand_files = sorted(set(glob.glob(f'{a.src}/**/{a.cls}.cpp', recursive=True) + glob.glob(f'{a.src}/**/{a.cls}.h', recursive=True)
                             + glob.glob(f'{a.src}/**/{a.cls}_*.*', recursive=True)) - set(glob.glob(f'{a.out}/*')))
     hand_slots, hand_fields = set(), []
@@ -368,7 +376,7 @@ def main():
             if os.path.exists(fn) and not fn.startswith(a.out) or fn == f'{a.out}/{b}_slots.inc' and os.path.exists(fn):
                 base_decl.update(parse_decls(open(fn).read()))
     for k, d in base_decl.items():
-        names.setdefault(k, d['name'])
+        names[k] = d['name']
     g = Gen(a.cls, classes, funcs, abi, names, go_off, num(a.el_slots), base_size)
     g.base_decl = base_decl
     g.collect_evidence(fieldrows)
@@ -380,7 +388,7 @@ def main():
         else: g.uf.ev[g.uf.f(key)] = {'P'}; g.ftype_override[num(o)] = t
     own_decl = parse_decls(hdrtext)
     for k, d in own_decl.items():
-        names.setdefault(k, d['name'])
+        names[k] = d['name']
     for k, d in list(base_decl.items()) + list(own_decl.items()):      # declared types are authoritative
         kind, si = k
         if d['ret'] in TK: g.uf.ev[g.uf.f(('R', kind, si))] = {TK[d['ret']]}
@@ -472,7 +480,8 @@ def main():
             fh.write('}\n\n')
     pending = sorted((k for k in todo if k not in hand_slots), key=lambda x: (x[0] != 'go', x[1]))
     with open(f'{a.out}/{a.cls}_todo.cpp', 'w') as fh:
-        fh.write(hdr + f'// Stubs for slots not reconstructed yet: each logs its original address once.\n#include "../{a.cls}.h"\n#include "../Todo.h"\n\n')
+        fh.write(hdr + f'// Stubs for slots not reconstructed yet: each logs its original address once.\n#include "../{a.cls}.h"\n#include "../Todo.h"\n')
+        if pending: fh.write('\n')
         for k in pending:
             r = todo[k]
             ret, ps = g.sig(r['fam'], k[1], r['n'], r['void'], r['ptrs'])

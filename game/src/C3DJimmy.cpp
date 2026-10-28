@@ -1,9 +1,10 @@
 /*  C3DJimmy - see C3DJimmy.h. This file: construction, destruction, the factory entry,
     InitObject / UnInitObject and the level start (PostLoad). The other slots are in
     jimmy/C3DJimmy_a.cpp (CGameObject family, C3DPlayer's slots) and _b.cpp (Jimmy's own).
-    InitObject, UnInitObject and PostLoad (v260) were read against Neutron.exe. NOT verified:
-    the constructor 0x422160 and destructor 0x4229e0 (not in decomp1/raw/C3DJimmy.c)
-    TODO(BG) 0x422160 / 0x4229e0.       */
+    Reconstructed from Neutron.exe: InitObject, UnInitObject and PostLoad were checked
+    against raw/C3DJimmy.c; constructor 0x422160 and destructor 0x4229e0 were checked
+    instruction by instruction in the executable (absent from the raw decompilation).
+    The destructor only logs before C3DPlayer's destructor; it does not delete helpers. */
 #include "jimmy/JimmyBG.h"
 #include "objects/C3DStartPoint.h"
 #include "JimmySlots.h"
@@ -62,10 +63,11 @@ C3DJimmy *neg::Jimmy(void)
 
 C3DJimmy::C3DJimmy()										// 0x422160
 {
-	for (int i = 0; i < 300; i++) f_b1c[i].set(0, 0, 0);	// (w = 1)
-	f_1df0 = OMedia3DVector(0, 0, 0, 0);
-	f_1e0c.set(0, 0, 0);
-	f_1e38.set(0, 0, 0);
+	// 0x4221be: point constructors only initialize w, not x/y/z.
+	for (int i = 0; i < 300; i++) f_b1c[i].w = 1.0f;
+	f_1df0.w = 0;
+	f_1e0c.w = 1.0f;
+	f_1e38.w = 1.0f;
 	SetName((char *)"C3DJIMMY");
 	Log("C3DJimmy()");
 	C3DJimmy::InitObject();									// 0x422ac0 (called directly)
@@ -153,7 +155,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	f_1e24 = 0;
 	f_b0c = new C3DGraplingHook;							// 0x41eeb0 (0x6c4 bytes)
 	{
-		// the rope's material: diffuse (1, 0.3, 0.3, 1) (element +0x5c0, its first material +0x4c)
+		// the rope's material: diffuse RGBA (1, 0.3, 0.3, 1) (element +0x5c0, its first material +0x4c)
 		OMedia3DMaterial *m = f_b0c->f_5d4[0];
 		if (m) m->set_diffuse(OMediaFARGBColor(1.0f, 1.0f, 0.3f, 0.3f));	// (BG +0x5c0 = our f_5d4, C3DAnimated -0x14)
 	}
@@ -181,7 +183,6 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	f_880 = 1;
 	f_1e60 = 0;
 	g_4eefd4 = 6;
-	g_4f83d8 = static_cast<CGameObject *>(this);
 	f_1e4c = -1;
 	f_1e50 = 0;
 	f_1e51 = 0;
@@ -194,6 +195,7 @@ C3DJimmy::C3DJimmy()										// 0x422160
 	f_1e6c = 0;
 	f_1e70 = 0;
 	g_4f83dc = 0;
+	g_4f83d8 = static_cast<CGameObject *>(this);
 	// port: not set by the original (left as the allocation had them)
 	f_1e48 = 0;
 	f_55d = 0;

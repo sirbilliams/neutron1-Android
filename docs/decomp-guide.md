@@ -106,6 +106,25 @@ cd <your game install> && DISPLAY=:99 OMT_WINDOW_SIZE=640x480 OMT_FRAMES=30 \
     OMT_SCREENSHOT=/tmp/shot.bmp timeout 20 <your build dir>/negatron
 ```
 
+For this checkout, the private input directory is `~/Projects/neutron1-private/decomp1`
+and the executable is `.game/Neutron.exe`. Regenerate the base object with:
+
+```
+python3 tools/decomp/gen_class.py --class CGameObject \
+    --raw ~/Projects/neutron1-private/decomp1/raw \
+    --classes ~/Projects/neutron1-private/decomp1/classes.json \
+    --abi ~/Projects/neutron1-private/decomp1/abi.json \
+    --src game/src --out game/src/gen \
+    --names ~/Projects/neutron1-private/decomp1/go_slots.json
+python3 tools/decomp/globals.py ~/Projects/neutron1-private/decomp1/raw .game/Neutron.exe game/src
+```
+
+The generator keeps the port's CGameObject-family names using `go_bg2n2.json` and
+`go_port_slots.json` in `tools/decomp`. BG slot numbers and C++ name suffixes differ:
+BG slot 67 is `bg_v67()` and slot 68 is `v67(float)`. Handwritten declarations take
+precedence over inferred names, including for generated forwarding calls. Do not
+rename callers by treating a C++ suffix as a BG slot number.
+
 The `--base-size` values in this guide are Negatron's; Boy Genius's objects all have other sizes
 (`decomp1/factory.json`, `classes.json`).
 

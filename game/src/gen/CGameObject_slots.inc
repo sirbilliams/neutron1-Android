@@ -4,7 +4,6 @@
 	virtual void UnInitPhysics();	// slot 12 0x470a20 gen
 	virtual void UnInitDatabases();	// slot 13 0x472970 gen
 	virtual void InitCollision();	// slot 14 0x470a40 gen
-	virtual void v20(unsigned int *a2, unsigned int a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7);	// slot 20 0x470c50 TODO
 	virtual void v22(unsigned int a2);	// slot 22 0x4732a0 gen
 	virtual unsigned char v25();	// slot 25 0x470e70 gen
 	virtual void v26(unsigned char a2);	// slot 26 0x470e80 gen
@@ -191,12 +190,6 @@
 	virtual void v216(int a2);	// slot 217 0x472620 gen
 	virtual void v218(float a2, float a3, float a4);	// slot 219 0x472660 gen
 	virtual void v222();	// slot 223 0x472970 gen
-	virtual unsigned int v223(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6);	// slot 224 0x472ad0 TODO
-	virtual unsigned int v225(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6);	// slot 226 0x472c10 TODO
-	virtual void v227(float a2, unsigned int a3);	// slot 228 0x472c50 TODO
-	virtual unsigned int v228(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8, unsigned int a9, unsigned int a10);	// slot 229 0x472f30 TODO
-	virtual unsigned int v229(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8, unsigned int a9);	// slot 230 0x472ee0 TODO
-	virtual void v230(float a2, float a3, float a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8);	// slot 231 0x472d80 TODO
 	virtual void v232();	// slot 233 0x473030 gen
 	virtual void v234();	// slot 235 0x4730e0 gen
 	virtual void Simulate(unsigned char a2);	// slot 239 0x4731d0 gen
@@ -205,10 +198,8 @@
 	virtual void v244(unsigned int a2);	// slot 244 0x4732a0 gen
 	virtual void v247();	// slot 247 0x472970 gen
 	virtual void v249(short a2, short a3, short a4);	// slot 249 0x4735e0 gen
-	virtual void v250(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5);	// slot 250 0x473840 gen
-	virtual void v251(unsigned int a2, unsigned int a3, unsigned int a4);	// slot 251 0x4737b0 TODO
-	virtual void v252(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5);	// slot 252 0x4738f0 gen
-	virtual void v253(unsigned int a2, unsigned int a3, unsigned int a4);	// slot 253 0x473860 TODO
+	virtual void v250(float a2, float a3, float a4, unsigned int a5);	// slot 250 0x473840 gen
+	virtual void v252(float a2, float a3, float a4, unsigned int a5);	// slot 252 0x4738f0 gen
 	virtual void v258();	// slot 257 0x472970 gen
 	virtual void v260();	// slot 259 0x472970 gen
 	virtual void v261();	// slot 260 0x472970 gen

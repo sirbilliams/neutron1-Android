@@ -2,13 +2,3 @@
 // Stubs for slots not reconstructed yet: each logs its original address once.
 #include "../CGameObject.h"
 #include "../Todo.h"
-
-void CGameObject::v20(unsigned int *a2, unsigned int a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7)	{ NEG_TODO(0x470c50, "CGameObject slot 20"); }
-unsigned int CGameObject::v223(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6)	{ NEG_TODO(0x472ad0, "CGameObject slot 224"); return (unsigned int)0; }
-unsigned int CGameObject::v225(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6)	{ NEG_TODO(0x472c10, "CGameObject slot 226"); return (unsigned int)0; }
-void CGameObject::v227(float a2, unsigned int a3)	{ NEG_TODO(0x472c50, "CGameObject slot 228"); }
-unsigned int CGameObject::v228(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8, unsigned int a9, unsigned int a10)	{ NEG_TODO(0x472f30, "CGameObject slot 229"); return (unsigned int)0; }
-unsigned int CGameObject::v229(unsigned int a2, unsigned int *a3, unsigned int a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8, unsigned int a9)	{ NEG_TODO(0x472ee0, "CGameObject slot 230"); return (unsigned int)0; }
-void CGameObject::v230(float a2, float a3, float a4, unsigned int a5, unsigned int a6, unsigned int a7, unsigned int a8)	{ NEG_TODO(0x472d80, "CGameObject slot 231"); }
-void CGameObject::v251(unsigned int a2, unsigned int a3, unsigned int a4)	{ NEG_TODO(0x4737b0, "CGameObject slot 251"); }
-void CGameObject::v253(unsigned int a2, unsigned int a3, unsigned int a4)	{ NEG_TODO(0x473860, "CGameObject slot 253"); }

@@ -1,15 +1,5 @@
 {
- "todo": [
-  "0x470c50:slot20",
-  "0x472ad0:slot224",
-  "0x472c10:slot226",
-  "0x472c50:slot228",
-  "0x472f30:slot229",
-  "0x472ee0:slot230",
-  "0x472d80:slot231",
-  "0x4737b0:slot251",
-  "0x473860:slot253"
- ],
+ "todo": [],
  "generated": [
   "slot9",
   "slot11",

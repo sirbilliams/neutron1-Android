@@ -1202,12 +1202,12 @@ void CGameObject::v249(short a2, short a3, short a4)	// 0x4735e0
 {
 }
 
-void CGameObject::v250(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5)	// 0x473840
+void CGameObject::v250(float a2, float a3, float a4, unsigned int a5)	// 0x473840
 {
 	v251(a2, a3, a4);
 }
 
-void CGameObject::v252(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5)	// 0x4738f0
+void CGameObject::v252(float a2, float a3, float a4, unsigned int a5)	// 0x4738f0
 {
 	v253(a2, a3, a4);
 }
