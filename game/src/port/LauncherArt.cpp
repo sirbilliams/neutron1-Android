@@ -11,8 +11,9 @@
       loading.png   252 "loadscreen"
       inventory.png 53 "menucollectedItems2" credits.png 246 "Credits"
     Negatron wrote level-<gam>.png (each exit's "LoadScreen" picture); Boy Genius's CLoadLevel
-    has no LoadScreen field (its .gam files have none) and it has no dat\menu.dat: it shows the one
-    loading picture, canvas 0xf4 (C2DInGameMenu::ShowLoadingPicture 0x4073b0), so instead the game takes a
+    has no LoadScreen field (its .gam files have none) and it has no dat\menu.dat: it shows one
+    full-screen loading picture (its "loadscreen" canvas 252 is saved as loading.png; the in-game
+    "loading" icon, ShowLoadingPicture 0x4073b0, is only a small bottom-right picture), so instead the game takes a
     picture of each level as the player first plays it (LauncherArtLevelLoaded: level-<gam>.bmp, at most
     640 wide, from the player's own run; none is shipped), and there is nothing
     to scan (ScanExits) and the main menu background is the PDA page's canvas (MainMenuBackground). */
