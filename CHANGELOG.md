@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased — release candidate
+## v1.0-rc1
+
+Release candidate: every part of the game's own code is reconstructed and checked against `Neutron.exe`. Install over earlier builds is possible from this version on (one uninstall of a development build first: they were signed with a throwaway key).
 
 - Boy Genius story levels load, including the late-story exit sequence and ending.
 - Corrected gadget keys, shrink ray behaviour, player camera, animation timing and level fog.
@@ -8,3 +10,6 @@
 - Adapted the companion panel and gadget UI to Boy Genius; added Retroville, Yokian and Auto themes.
 - Added .ase models to the Asset Viewer, BG HD texture pack support and adjustable draw distance.
 - Loading pictures now come from the player's own game; improved transparent-object ordering.
+- Stability: every level and VR01-08 run clean under AddressSanitizer / UBSan; unaligned reads in the engine's file and image readers fixed (they can crash on some ARM devices).
+- Every story exit checked to load the right level in order; Yokian turret missiles hit and drain energy as in the original.
+- Signed with a permanent key: later updates install in place and keep your saves.
