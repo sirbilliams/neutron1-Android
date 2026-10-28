@@ -1,11 +1,10 @@
 package android.graphics;
 /** Desktop shim (tools/companion). */
 public class RadialGradient extends Shader {
-    public RadialGradient(float cx, float cy, float r, int[] colors, float[] pos, TileMode m) {
-        float[] f = pos;
-        if (f == null) { f = new float[colors.length]; for (int i = 0; i < f.length; i++) f[i] = (float) i / (f.length - 1); }
-        java.awt.Color[] c = new java.awt.Color[colors.length];
-        for (int i = 0; i < c.length; i++) c[i] = new java.awt.Color(colors[i], true);
-        awt = new java.awt.RadialGradientPaint(cx, cy, r, f, c);
+    public RadialGradient(float cx, float cy, float radius, int centerColor, int edgeColor, TileMode mode) {
+        this(cx, cy, radius, new int[] {centerColor, edgeColor}, null, mode);
+    }
+    public RadialGradient(float cx, float cy, float radius, int[] colors, float[] positions, TileMode mode) {
+        awt = new java.awt.RadialGradientPaint(cx, cy, radius, stops(colors, positions), colors(colors));
     }
 }

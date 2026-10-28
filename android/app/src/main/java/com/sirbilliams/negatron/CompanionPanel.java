@@ -22,6 +22,7 @@ import android.view.WindowManager;
 final class CompanionPanel implements DisplayManager.DisplayListener {
     static final String PREFS = "negatron";
     static final String KEY_ON = "bottom_panel";
+    static final String KEY_THEME = "bottom_panel_theme";
     static final String KEY_FAR = "bottom_panel_zoom_far";
 
     private final Activity mActivity;
@@ -37,6 +38,7 @@ final class CompanionPanel implements DisplayManager.DisplayListener {
         public void run() {
             if (mPresentation == null) return;
             if (mPresentation.view != null) {
+                mPresentation.view.setThemeChoice(mPrefs.getString(KEY_THEME, "auto"));
                 mPresentation.view.setSnapshot(Companion.snapshot());
                 mPresentation.view.tick();
             }
@@ -162,6 +164,8 @@ final class CompanionPanel implements DisplayManager.DisplayListener {
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                     | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             view = new CompanionView(getContext());
+            view.setThemeChoice(getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .getString(KEY_THEME, "auto"));
             view.setZoomFar(mFar);
             view.setSource(new CompanionView.Source() {
                 @Override public int[] map() { return Companion.map(); }

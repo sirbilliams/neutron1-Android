@@ -328,7 +328,7 @@ public class SetupActivity extends Activity {
         return hdItems(LauncherPages.settings(p.getBoolean(PREF_WIDESCREEN, true), p.getBoolean(PREF_BILLS_UI, true),
                 p.getString(PREF_ENERGY, "a"), p.getString(PREF_HOLO, "a"), CompanionPanel.wanted(p, second), second,
                 boxArtFile().isFile(),
-                backgroundFile().isFile(), p.getString(PREF_LOD, "2")));
+                backgroundFile().isFile(), p.getString(PREF_LOD, "2"), p.getString(CompanionPanel.KEY_THEME, "auto")));
     }
 
     // ------------------------------------------------------------------ port: the HD texture pack (HdPack)
@@ -411,6 +411,10 @@ public class SetupActivity extends Activity {
             mMenu.replace(settingsPage());
         } else if (id.equals("ui")) {
             p.edit().putBoolean(PREF_BILLS_UI, !p.getBoolean(PREF_BILLS_UI, true)).commit();
+            mMenu.replace(settingsPage());
+        } else if (id.equals("panel_theme")) {
+            p.edit().putString(CompanionPanel.KEY_THEME,
+                    LauncherPages.panelThemeStep(p.getString(CompanionPanel.KEY_THEME, "auto"), mStepDir)).commit();
             mMenu.replace(settingsPage());
         } else if (id.equals("panel")) {
             boolean second = CompanionPanel.findDisplay(this, displays()) != null;

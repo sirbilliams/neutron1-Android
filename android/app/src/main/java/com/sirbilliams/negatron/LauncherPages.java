@@ -350,6 +350,18 @@ final class LauncherPages {
 
     static LauncherModel.Page settings(boolean wide, boolean billsUi, String energy, String holo, boolean panel,
             boolean secondScreen, boolean boxArt, boolean background, String lod) {
+        return settings(wide, billsUi, energy, holo, panel, secondScreen, boxArt, background, lod, "auto");
+    }
+
+    static String panelThemeStep(String id, int dir) {
+        String[] choices = { "retroville", "yokian", "auto" };
+        int at = 2;
+        for (int i = 0; i < choices.length; i++) if (choices[i].equals(id)) at = i;
+        return choices[(at + dir + choices.length) % choices.length];
+    }
+
+    static LauncherModel.Page settings(boolean wide, boolean billsUi, String energy, String holo, boolean panel,
+            boolean secondScreen, boolean boxArt, boolean background, String lod, String panelTheme) {
         LauncherModel.Page p = new LauncherModel.Page("settings", "Settings");
         p.pic = "settings";
         LauncherModel.Item i = p.add("wide", "Widescreen 16:9", "Fill a 16:9 screen; the HUD moves to the edges. Off: the original 4:3.");
@@ -374,6 +386,9 @@ final class LauncherPages {
                 + "The bottom screen shows the level map, the tasks and the gadgets while you play "
                 + "(on by default when there is a second screen). Also in game: hold Back.");
         i.value = panel ? "ON" : "OFF";
+        i = p.add("panel_theme", "Panel theme", "Retroville or Yokian. Auto follows the current level: "
+                + "Yokian for alien levels, Retroville elsewhere.");
+        i.value = "retroville".equals(panelTheme) ? "Retroville" : "yokian".equals(panelTheme) ? "Yokian" : "Auto";
         i = p.add("boxart", "Box art: choose image...", "A picture of the game's box (your own photo or "
                 + "scan) for the bottom screen while the main menu is up. It is copied into the app."
                 + (boxArt ? " Now: your picture." : " Now: a picture from the game."));

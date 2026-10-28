@@ -21,6 +21,12 @@ public final class RenderPanel {
         final File dir = new File(a[2]);
         final int gen = new org.json.JSONObject(json).optJSONObject("map").optInt("gen", 0);
         CompanionView v = new CompanionView(new Context());
+        String theme = System.getenv("NEG_PANEL_THEME");
+        if (theme != null) {
+            if (!theme.equals("auto") && !theme.equals("retroville") && !theme.equals("yokian"))
+                throw new IllegalArgumentException("NEG_PANEL_THEME must be retroville, yokian, or auto");
+            v.setThemeChoice(theme);
+        }
         v.setSource(new CompanionView.Source() {
             @Override public int[] map() { return load(mapFile, gen, true); }
             @Override public int[] icon(int id) { return load(new File(dir, "icon_" + id + ".png"), 0, false); }
