@@ -1,5 +1,38 @@
 /*  CGameObject - hand-written parts. See CGameObject.h.
-    The accessor slots are in gen/CGameObject_gen.cpp.                                        */
+    The accessor slots are in gen/CGameObject_gen.cpp.
+    Verification incomplete (2026-10-27): handwritten bodies were compared function by
+    function with raw/CGameObject.c; constructor/destructor and ambiguous decompilation
+    were also checked in Neutron.exe disassembly. Port changes are identified below.
+    Remaining full-class verification addresses (generated bodies, including TODO stubs;
+    0x472630 is missing from the generated interface). Do not certify the class until these
+    are checked/fixed. The brief prohibits editing gen/* in this task:
+    0x470520, 0x470a00, 0x470a20, 0x470a40, 0x470c50, 0x470e70, 0x470e80, 0x470ea0,
+    0x470eb0, 0x470ed0, 0x470ee0, 0x470f00, 0x470f10, 0x470f30, 0x470f40, 0x470f60,
+    0x470f70, 0x470f90, 0x470fa0, 0x470fc0, 0x470fd0, 0x470ff0, 0x471000, 0x471020,
+    0x471030, 0x471050, 0x471060, 0x471080, 0x471090, 0x4710b0, 0x4710c0, 0x4710e0,
+    0x4710f0, 0x471110, 0x471120, 0x471140, 0x471150, 0x471170, 0x471180, 0x4711a0,
+    0x4711b0, 0x4711d0, 0x4711e0, 0x471200, 0x471210, 0x471230, 0x471240, 0x471260,
+    0x471270, 0x471290, 0x4712b0, 0x4712e0, 0x471300, 0x471330, 0x471350, 0x471380,
+    0x4713a0, 0x4713d0, 0x471400, 0x471440, 0x471470, 0x4714b0, 0x4714e0, 0x471520,
+    0x471550, 0x471590, 0x4715c0, 0x471600, 0x471630, 0x471680, 0x4716a0, 0x4716d0,
+    0x471720, 0x471730, 0x471770, 0x471780, 0x4717d0, 0x4717e0, 0x471800, 0x471810,
+    0x471830, 0x471840, 0x471860, 0x471870, 0x471880, 0x4718a0, 0x4718b0, 0x4718c0,
+    0x4718d0, 0x4718e0, 0x4718f0, 0x471900, 0x471910, 0x471920, 0x471930, 0x471940,
+    0x471950, 0x471960, 0x471970, 0x471980, 0x471990, 0x4719a0, 0x4719b0, 0x4719c0,
+    0x4719d0, 0x4719e0, 0x4719f0, 0x471a00, 0x471a20, 0x471a30, 0x471a40, 0x471a50,
+    0x471a60, 0x471a70, 0x471a80, 0x471a90, 0x471aa0, 0x471ab0, 0x471ac0, 0x471ad0,
+    0x471ae0, 0x471af0, 0x471b00, 0x471b10, 0x471b20, 0x471b30, 0x471b40, 0x471b50,
+    0x471b60, 0x471b70, 0x471ba0, 0x471bd0, 0x471c00, 0x471c40, 0x471c60, 0x471c90,
+    0x471cc0, 0x471cf0, 0x471d30, 0x471d50, 0x471d80, 0x471db0, 0x471de0, 0x471e20,
+    0x471e40, 0x471e70, 0x471ea0, 0x471ed0, 0x471f10, 0x471f40, 0x471f70, 0x471fa0,
+    0x471fe0, 0x472000, 0x472030, 0x472060, 0x472090, 0x4720c0, 0x4720f0, 0x472120,
+    0x472150, 0x472180, 0x4721b0, 0x4721e0, 0x472210, 0x472240, 0x472270, 0x4722a0,
+    0x4722d0, 0x472300, 0x472330, 0x472360, 0x472390, 0x4723d0, 0x4723f0, 0x472420,
+    0x472450, 0x472590, 0x4725a0, 0x4725d0, 0x4725e0, 0x4725f0, 0x472600, 0x472610,
+    0x472620, 0x472630, 0x472640, 0x472650, 0x472660, 0x472970, 0x472ad0, 0x472c10,
+    0x472c50, 0x472d80, 0x472ee0, 0x472f30, 0x473030, 0x4730e0, 0x4731d0, 0x473200,
+    0x4732a0, 0x4735e0, 0x4737b0, 0x473840, 0x473860, 0x4738f0.
+*/
 
 #include "CGameObject.h"
 #include "Game.h"
@@ -14,7 +47,9 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <math.h>
+#include <string>
 #include "Bridge.h"
+#include "gen/globals.h"
 #include "OMediaTrigo.h"
 #include "OMedia3DVector.h"
 
@@ -33,56 +68,24 @@ CGameObject::CGameObject()
 	f_170 = 0; f_180 = 0; f_190 = 0; f_1a0 = 0; f_1b0 = 0;
 	f_1c0 = 1.0f; f_1d0 = 1.0f; f_1e0 = 1.0f; f_1f0 = 1.0f; f_200 = 1.0f; f_210 = 1.0f; f_220 = 1.0f; f_230 = 1.0f;
 	f_280 = 1.0f; f_290 = 1.0f;
+	// port: initialize identity storage, as with the zeroed object allocation.
 	m_name[0] = 0; m_tag[0] = 0; m_object_id = 0;
 
 	strcpy(m_name, "CGAMEOBJECT");
 	Log("CGameObject()");
 
-	// Each attribute: the "initial" copy, then the current value through its setter.
-	f_00c = 0;  v124(0);
-	f_00d = 1;  v126(1);
-	f_00e = 1;  v110(1);
-	f_00f = 0;  v120(0);
-	f_010 = 1;  v122(1);
-	f_011 = 1;  v128(1);
-	f_012 = 0;  v130(0);
-	f_013 = 1;  v114(1);
-	f_014 = 1;  v116(1);
-	f_015 = 1;  v118(1);
-	f_016 = 1;  v132(1);
-	f_017 = 0;  v134(0);
-	f_018 = 1;  v136(1);
-	f_019 = 0;  v138(0);
-	f_01c = 0.5f;	v140(0.5f);
-	f_020 = 100.0f;	v142(100.0f);
-	f_024 = 0.2f;	v144(0.2f);
-	f_028 = 0.9f;	v146(0.9f);
-	f_02c = 1.0f;	v148(1.0f);
-	f_030 = 1.0f;	v150(1.0f);
-	f_034 = 0;		v152(0);
-	f_038 = 0;		v154(0);
-	v157(0, 0, 0);
-	v162(0, 0, 0);
-	v167(0, 0, 0);
-	v172(0, 0, 0);
-	v176(0, 0, 0);
-	v181(0, 0, 0);
-	v188(0, 0, 0);
-	v191(0, 0, 0);
-	v194(0, 0, 0);
-	v197(0, 0, 0);
-	v247();
-	v203(0, 0, 0);
-	v248();
-	f_124 = 1;
-	f_10c = 0;  v206(0);
-	f_110 = 0;  v208(0);
-	f_114 = 0;  v210(0);
-	f_118 = 0;  v212(0);
-	f_11c = 0;  v214(0);
-	f_120 = 0;  v216(0);
-	f_01a = 1;  v111(1);
-	f_00b = 1;
+	// The executable calls the initial setters, which also update current values.
+	v26(0); v30(1); v32(1); v34(0); v50(1);
+	v36(1); v38(0); v40(1); v42(1); v44(1);
+	v46(1); v48(0); v52(1); v54(0);
+	v56(0.5f); v58(100.0f); v60(0.2f); v62(0.9f);
+	v64(1.0f); v66(1.0f); v67(0); v69(0);
+	v71(0, 0, 0); v73(0, 0, 0); v75(0, 0, 0); v77(0, 0, 0);
+	v79(0, 0, 0); v81(0, 0, 0); v83(0, 0, 0); v85(0, 0, 0);
+	v87(0, 0, 0); v90(0, 0, 0); v92(0, 0, 0);
+	v94(1);
+	v96(0); v98(0); v100(0); v102(0); v104(0); v106(0);
+	v28(1); v107(1);
 	CGameObject::ResetObject();
 	f_294 = 0;
 	f_29c = 1.0f;
@@ -95,6 +98,7 @@ CGameObject::CGameObject()
 	m_debug_cube = NULL; m_debug_sphere = NULL;
 	f_007 = 1; f_008 = 0; f_009 = 0;
 	f_42c = 0;
+	// port: compatibility fields used by the Negatron animation/savegame code.
 	f_430 = 1.0f;
 	f_438 = 0;
 }
@@ -105,8 +109,10 @@ CGameObject::~CGameObject()
 {
 	Log("~CGameObject()");
 	StopObjectSounds(this);									// 0x47dc20
-	if (m_debug_cube)   delete m_debug_cube;				// (+0xc0)->vtable +0x364: delete via the element
-	if (m_debug_sphere) delete m_debug_sphere;
+	// port: express the original slot 218 deferred deletion flag directly;
+	// CEditor's deletion pass performs the deletion on its next pass.
+	if (m_debug_cube) m_debug_cube->f_006 = 1;
+	if (m_debug_sphere) m_debug_sphere->f_006 = 1;
 	DeleteAllProperties();
 	g_objects.remove(this);
 	PhysicsRemoveObject(this);								// 0x478fa0
@@ -126,7 +132,7 @@ void CGameObject::RegisterProperty(const char *name, void *data, int type, int f
 	m_properties.push_back(p);
 }
 
-CProperty *CGameObject::FindProperty(const char *name)		// 0x473eb0: exact, case-sensitive match
+CProperty *CGameObject::FindProperty(const char *name)		// 0x473eb0: equal length, case-insensitive match
 {
 	for (std::list<CProperty *>::iterator i = m_properties.begin(); i != m_properties.end(); i++)
 		if (strlen((*i)->name) == strlen(name) && strcasecmp((*i)->name, name) == 0)	// _stricmp
@@ -161,7 +167,7 @@ void CGameObject::ReadProperties(OMediaStreamOperators &s)	// 0x473b30
 	int count; s >> count;
 	if (count != m_num_properties)
 		;	// "WARNING: Num properties in file does not match current NumProperties" (debug log)
-	int sum = 0;
+	unsigned int sum = 0; // port: defined 32-bit checksum wraparound.
 	for (int n = 0; n < count; n++)
 	{
 		char name[64]; s >> name;
@@ -190,7 +196,7 @@ void CGameObject::ReadProperties(OMediaStreamOperators &s)	// 0x473b30
 		{
 			// "WARNING: Could not find variable %s in object %s" (debug log); skip the value
 			s >> type; s >> size;
-			char tmp[128]; int v; float f;
+			char tmp[132]; int v; float f;
 			switch (type)
 			{
 				case PROP_NONE: if (size) ErrorLog("ERROR: bad EDIT_NONE for %s during load of %s", name, m_name); break;
@@ -216,12 +222,12 @@ void CGameObject::ReadProperties(OMediaStreamOperators &s)	// 0x473b30
 		}
 	}
 	int file_sum; s >> file_sum;
-	if (file_sum != sum) ErrorLog("ERROR: Cheat warning: Invalid FILE checksum");
+	if ((unsigned int)file_sum != sum) ErrorLog("ERROR: Cheat warning: Invalid FILE checksum");
 }
 
 void CGameObject::WriteProperties(OMediaStreamOperators &s)	// 0x473960
 {
-	int sum = 0;
+	unsigned int sum = 0; // port: defined 32-bit checksum wraparound.
 	for (std::list<CProperty *>::iterator i = m_properties.begin(); i != m_properties.end(); i++)
 	{
 		CProperty *p = *i;
@@ -247,33 +253,40 @@ void CGameObject::WriteProperties(OMediaStreamOperators &s)	// 0x473960
 
 // --------------------------------------------------------------------------- identity
 
-// The original upper-cases its argument in place (_strupr). Callers pass string literals, which
+// port: The original upper-cases its argument in place (_strupr). Callers pass string literals, which
 // MSVC 6 placed in writable memory; here they are read-only, so the upper-casing works on a copy.
 // The only difference: the caller's string is not modified.
 void CGameObject::SetName(char *tag_in)						// 0x4702d0
 {
-	char tag[100];
-	strncpy(tag, tag_in, sizeof tag - 1); tag[sizeof tag - 1] = 0;
-	for (char *c = tag; *c; c++) *c = (char)toupper(*c);	// _strupr
+	std::string tag(tag_in);
+	for (std::string::size_type i = 0; i < tag.size(); ++i)
+		tag[i] = (char)toupper((unsigned char)tag[i]);	// _strupr
 	strcat(m_name, "_");								// 0x4f5fdc
-	strcat(m_name, tag);
-	strcpy(m_tag, tag);
+	strcat(m_name, tag.c_str());
+	strcpy(m_tag, tag.c_str());
 }
 
 bool CGameObject::NameContains(char *s_in)					// 0x470380 (same note as SetName)
 {
-	char s[256];
-	strncpy(s, s_in, sizeof s - 1); s[sizeof s - 1] = 0;
-	for (char *c = s; *c; c++) *c = (char)toupper(*c);
-	return strstr(m_name, s) != NULL;
+	std::string s(s_in);
+	for (std::string::size_type i = 0; i < s.size(); ++i)
+		s[i] = (char)toupper((unsigned char)s[i]);
+	return strstr(m_name, s.c_str()) != NULL;
 }
 
 void CGameObject::Log(const char *fmt, ...)					// 0x473910 (writes "+%s->%s" to the debug log)
 {
-	(void)fmt;
-	// The shipped build's debug log is empty; uncomment to trace object calls.
-	// char buf[256]; va_list ap; va_start(ap, fmt); vsnprintf(buf, sizeof buf, fmt, ap); va_end(ap);
-	// SDL_Log("+%s->%s", m_name, buf);
+	char buf[256];
+	va_list ap;
+	va_start(ap, fmt);
+	// port: bound the original vsprintf to the size of its stack buffer.
+	vsnprintf(buf, sizeof buf, fmt, ap);
+	va_end(ap);
+	// 0x472970 consumes no output, but Log still increments this 16-bit counter.
+	unsigned short calls;
+	memcpy(&calls, &neg::g_data[0x509af0 - neg::DATA_BASE], sizeof calls);
+	calls = (unsigned short)(calls + 1);
+	memcpy(&neg::g_data[0x509af0 - neg::DATA_BASE], &calls, sizeof calls);
 }
 
 // --------------------------------------------------------------------------- lifecycle
@@ -301,7 +314,7 @@ void CGameObject::ResetObject(void)							// 0x470540: current values = initial 
 	v128(v35());   v130(v37());   v116(v41());   v118(v43());   v114(v39());
 	v132(v45());   v136(v51());   v138(v53());
 	v140(v55());   v144(v59());   v146(v61());   v148(v63());   v150(v65());	// (no v142: as shipped)
-	v152(f_034);   v154(v68());
+	v152(bg_v67());   v154(v68());
 	float t[4];
 	v70(t);  v156(t[0], t[1], t[2], t[3]);
 	v72(t);  v161(t[0], t[1], t[2], t[3]);
@@ -549,16 +562,14 @@ void CGameObject::RotateToDest(float dt)					// 0x473320: turn towards f_274.. a
 void CGameObject::v248(void)
 {
 	float r[4];
-	v201(r);												// vtable +0x324 (called once per angle)
+	v201(r);												// vtable +0x328 (once for all three angles)
 	const short az = (short)((int)(fmod((double)r[2], 360.0) * 45.51111111111111) & 0x3fff);	// 0x4d6410, 0x4d6408
-	v201(r);
 	const short ay = (short)((int)(fmod((double)r[1], 360.0) * 45.51111111111111) & 0x3fff);
-	v201(r);
 	const short ax = (short)((int)(fmod((double)r[0], 360.0) * 45.51111111111111) & 0x3fff);
 	v249(ax, ay, az);										// vtable +0x3e4
 }
 
-// --------------------------------------------------------------------------- not reconstructed yet
+// --------------------------------------------------------------------------- sphere response
 
 // 0x4740c0: touching `other` (centre distance `dist`): pushed away by it, unless it is a C3DWHEEL.
 // (The original pushes `dist` for slot 263 before it calls slot 151, which takes no argument.)
@@ -585,7 +596,7 @@ void CGameObject::v263(CGameObject *other, OMedia3DVector pos, float r_other, fl
 	float me[4];
 	v195(me);
 	OMedia3DVector n(me[0] - pos.x, me[1] - pos.y, me[2] - pos.z, 0.0f);
-	if (n.quick_magnitude() == 0.0f) return;				// 0x48d914 (an unordered result returns too)
+	if (!(n.quick_magnitude() > 0.0f)) return;				// 0x48d914 (an unordered result returns too)
 	float inv = 1.0f / n.quick_magnitude();					// 0x48d924
 	n.x = inv * n.x; n.y = inv * n.y; n.z = inv * n.z;
 	const OMedia3DVector normal = n;
