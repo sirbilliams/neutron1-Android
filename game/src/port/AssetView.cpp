@@ -345,7 +345,7 @@ void ModelsStart(void)
 	if (g_layer_world) g_layer_world->*LayerFogAccess::Enabled() = false;
 	if (g_layer_clear)
 	{
-		g_layer_clear->set_clear_color(OMediaFARGBColor(1.0f, 0.05f, 0.08f, 0.06f));
+		g_layer_clear->set_clear_color(OMediaFARGBColor(1.0f, 0.32f, 0.36f, 0.40f));	// (mid grey-blue: the game font has dark outlines)
 		g_layer_clear->set_flags(g_layer_clear->get_flags() | omlayerf_ClearColor);
 	}
 	// a light of our own (the level's are far away): a directional key light and a strong ambient

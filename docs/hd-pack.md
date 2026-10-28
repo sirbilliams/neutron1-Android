@@ -27,7 +27,7 @@ works (all colour types and bit depths, palette transparency, interlaced).
 
 The zip may have `omt/ png/` (and `grn/` for Negatron) at its top or inside one folder; other files (README,
 manifest.tsv) are left out. `neg_hdtool extract <game dir> <out> [db.omt ...]` writes the omt canvases
-with these names (plus manifest.tsv) for upscaling.
+with these names (plus manifest.tsv) for upscaling; with no database named it takes every `.omt` in `omt/` (Boy Genius: about 1600 canvases, 34 MB) and the `alpha.omt` next to the exe. The loose `png/` textures and the two font pictures are plain PNGs: copy and upscale them yourself into `png/`.
 
 ## How it works (engine/sdl/OMediaHDPack.cpp)
 

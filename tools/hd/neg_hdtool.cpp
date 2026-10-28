@@ -22,17 +22,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 #include <string>
 #include <vector>
 
 using std::string;
 using std::vector;
 
-// The databases the HD pack covers (docs/hd-pack.md lists who loads what).
-static const char *kHDDatabases[] = { "screens.omt", "alpha.omt", "Editor.omt", "RetainedSprites.omt", NULL };
-
 static string lower(string s) { for (size_t i = 0; i < s.size(); i++) s[i] = (char)tolower((unsigned char)s[i]); return s; }
 static void mkdirs(const string &p) { string cur; for (size_t i = 0; i <= p.size(); i++) { if (i == p.size() || p[i] == '/') { if (!cur.empty()) mkdir(cur.c_str(), 0755); } if (i < p.size()) cur += p[i]; } }
+
+// Boy Genius: every database in <game>/omt/ (menus, HUD, sprites, the levels' and skies' textures), plus
+// alpha.omt, which sits next to Neutron.exe ("../alpha.omt" from omt/). Negatron's fixed list (Editor.omt
+// ...) is gone. Sorted, so the extract is repeatable.
+static void default_databases(const string &game, vector<string> &dbs)
+{
+	if (DIR *d = opendir((game + "/omt").c_str()))
+	{
+		while (struct dirent *e = readdir(d))
+		{
+			const string n = e->d_name;
+			if (n.size() > 4 && lower(n.substr(n.size() - 4)) == ".omt") dbs.push_back(n);
+		}
+		closedir(d);
+	}
+	std::sort(dbs.begin(), dbs.end());
+	if (FILE *f = fopen((game + "/alpha.omt").c_str(), "rb")) { fclose(f); dbs.push_back("../alpha.omt"); }
+}
 
 // The base name of a database file, lower case, without ".omt": the folder name in hd/.
 static string db_key(const string &file)
@@ -49,7 +65,7 @@ static int run(const string &mode, const string &game, const string &out, vector
 {
 	OMediaDataBase::set_cache_size(0);
 	omd_REGISTERCLASS(OMediaCanvas);
-	if (dbs.empty()) for (const char **d = kHDDatabases; *d; d++) dbs.push_back(*d);
+	if (dbs.empty()) default_databases(game, dbs);
 	FILE *manifest = NULL;
 	if (mode == "extract")
 	{

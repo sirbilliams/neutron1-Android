@@ -427,7 +427,7 @@ final class LauncherPages {
         p.add("explore", "Explore a level", "Fly freely through any level with a noclip camera: "
                 + "nothing moves, no story, no enemies, nothing is saved.");
         LauncherModel.Item m = p.add("models", "Model viewer", null);
-        m.detail = new String[] { "Models: the shapes of the .omt files", "Up/down model  L1/R1 jump 10  Sticks turn",
+        m.detail = new String[] { "Models: .ase files, .omt shapes", "Up/down model  L1/R1 jump 10  Sticks turn",
             "L2/R2 zoom  A auto-turn  B leave" };
         p.add("back", "Back", "Back to the main menu.");
         return p;
