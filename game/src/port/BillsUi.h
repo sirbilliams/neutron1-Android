@@ -24,6 +24,7 @@ void BillsScore(float dt, short x, short y);	// DrawScoreHud: the score, countin
 void BillsHealthBar(float dt, float health);	// instead of SetHealthBar: smooth, glow, flash, flicker
 void BillsMirror(void *viewport);	// C3DVehicle::ev139: the rear-view mirror (an OMediaViewPort) is up
 void BillsMirrorGone(void *viewport);	// C3DVehicle::ev140: it is about to be deleted
+bool BillsEnergyWidget(void);		// Bill's UI is on with a widget energy meter (the original bar pieces stay hidden)
 void BillsUiFrame(float dt);		// C2DInGameMenu::Process, at its end: shows / hides our pieces
 void BillsUiShutdown(void);			// C2DInGameMenu's destructor: frees them
 

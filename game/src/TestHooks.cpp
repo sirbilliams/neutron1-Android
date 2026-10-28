@@ -110,6 +110,7 @@ void neg::TestPlayHook(const char *level)
 		}
 	}
 	if (const char *lv = getenv("NEG_TEST_LIVES")) g_lives = (short)atoi(lv);		// the lives (red neutrons) found
+	if (const char *sc = getenv("NEG_TEST_SCORE")) g_score = atoi(sc);			// the score (screenshots of the score counter)
 	if (const char *gad = getenv("NEG_TEST_GADGETS"))
 	{
 		for (const char *p = gad; *p; p++)

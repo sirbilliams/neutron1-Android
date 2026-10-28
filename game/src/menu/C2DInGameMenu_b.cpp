@@ -27,6 +27,7 @@
 #include "../InterfaceElement.h"
 #include "../Todo.h"
 #include "../port/BillsUi.h"
+#include "../port/Widescreen.h"
 #include "../JimmySlots.h"
 #include "OMediaCanvasElement.h"
 #include "OMediaViewPort.h"
@@ -246,7 +247,7 @@ void C2DInGameMenu::Process(float dt)
 	{
 		g_popup_time = g_popup_time - dt;
 		if (g_keys['I'] || g_joy_button3) g_popup_time = 0;
-		if (g_hud_on) DrawText(540, 15, 'MED', "%d", g_pickup_counts[g_popup_pic * 2]);	// 0x468660
+		if (g_hud_on) DrawText(WideX(540, WIDE_RIGHT), 15, 'MED', "%d", g_pickup_counts[g_popup_pic * 2]);	// port: WideX	// 0x468660
 		MenuPage *pk = Page(MENU_PICKUPS);
 		if (g_popup_next != -1)
 		{
@@ -260,7 +261,7 @@ void C2DInGameMenu::Process(float dt)
 		if (g_popup_pic != -1)
 		{
 			MenuItem &it = pk->items[g_popup_pic];
-			v275(it.active, 540.0f, 10.0f);
+			v275(it.active, 540.0f + WideMargin(), 10.0f);			// port: widescreen, top right
 			Show(it.active);
 			if (g_popup_time <= 0)
 			{
@@ -295,9 +296,18 @@ void C2DInGameMenu::Process(float dt)
 		}
 		else if (!g_4f8430)
 		{
-			Show(g_health_bar);
-			Show(g_hud_lives);
-			Show(g_health_frame);
+			if (neg::BillsEnergyWidget())					// port: Bill's UI draws its own energy meter instead
+			{
+				Hide(g_health_bar);
+				Hide(g_hud_lives);
+				Hide(g_health_frame);
+			}
+			else
+			{
+				Show(g_health_bar);
+				Show(g_hud_lives);
+				Show(g_health_frame);
+			}
 		}
 	}
 

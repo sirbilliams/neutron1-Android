@@ -522,6 +522,7 @@ static float s_hb = -1.0f, s_hb_last, s_hb_flash, s_hb_hurt, s_hb_t;
 static float s_hb_col[3] = { 0.0f, 1.0f, 0.0f };
 static unsigned s_hb_frame, s_energy_frame;
 static Deco s_hb_halo;
+static const float kBarW = 27.0f;	// port (BG): the health fill's width (C2DInGameMenu::v282), 640x480 units
 
 // --- the energy meter designs (a setting: NEG_UI_ENERGY=a|b|c - TUBE / ORBIT / DIAL, default a;
 // the launcher's Settings and the port menu set it; "bar" = the original bar with the animation
@@ -544,10 +545,13 @@ static int EnergyDesign(void)
 	return d;
 }
 
+bool BillsEnergyWidget(void) { return BillsUi() && EnergyDesign() != 0; }
+
 static bool s_orig_hidden;
 static void ShowOriginalBar(bool show)
 {
-	OMediaCanvasElement *const kPieces[3] = { g_4f80fc, g_4f8028, g_4f7cb0 };	// atom picture, frame, fill
+	// port (Boy Genius): atom picture, frame, fill (g_4f8028 is BG's gadget power bar, not the frame)
+	OMediaCanvasElement *const kPieces[3] = { g_hud_lives, g_health_frame, g_health_bar };
 	if (!show)						// (every frame: the game shows them again on entering play)
 	{
 		for (int i = 0; i < 3; i++)
@@ -900,7 +904,7 @@ void BillsHealthBar(float dt, float health)
 	s_energy_bottom = 122.0f;
 	const float sx = g_screen_w * (1.0f / 640.0f), sy = g_screen_h * (1.0f / 480.0f);
 	bar->set_diffuse(OMediaFARGBColor(1.0f, r, g, b));
-	bar->set_size(sx * 20.0f, (float)((double)(sy * s_hb) * 1.044));
+	bar->set_size(sx * kBarW, (float)((double)(sy * s_hb) * 1.044));		// port (BG): the fill is 27 wide
 
 	// the glow, around the fill (the sprite's place is its bottom left corner)
 	if (!s_hb_halo.elt)
@@ -928,7 +932,7 @@ void BillsHealthBar(float dt, float health)
 		float glow = 0.30f + 0.12f * sinf(s_hb_t * 2.2f) + 0.6f * s_hb_flash + 0.6f * s_hb_hurt;
 		if (s_hb < 30.0f) glow += 0.35f * k;
 		s_hb_halo.elt->set_diffuse(OMediaFARGBColor(glow > 1 ? 1.0f : glow, r, g, b + 0.2f * g));
-		DecoPlace(s_hb_halo, x0 - 8.0f, bottom - fh - 8.0f, 36.0f, fh + 16.0f);
+		DecoPlace(s_hb_halo, x0 - 8.0f, bottom - fh - 8.0f, kBarW + 16.0f, fh + 16.0f);
 		s_hb_frame = s_frame;
 	}
 }
