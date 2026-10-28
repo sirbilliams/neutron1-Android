@@ -85,12 +85,37 @@ public class NegatronActivity extends SDLActivity {
         // port: the bottom-screen companion panel, for the game only (docs/controls.md)
         String lib = getIntent() != null ? getIntent().getStringExtra(EXTRA_LIB) : null;
         if ("negatron".equals(lib)) mPanel = new CompanionPanel(this);
+        prefer60Hz();
         // port: the game runs on the default (top) display, so casting mirrors it (docs/controls.md
         // "Casting / TV"; the launcher opens it there). The log says where it really is.
         android.view.Display on = getWindowManager().getDefaultDisplay();
         int id = on != null ? on.getDisplayId() : -1;
         BottomScreen.log(this, "game on display " + id
                 + (id == android.view.Display.DEFAULT_DISPLAY ? " (the top screen)" : " - NOT the top screen"));
+    }
+
+    // port: the game is paced at 60 fps (engine/sdl OMediaSDLVideo.cpp omf_SDLFramePace); on a
+    // 90/120/144 Hz panel ask for the same-size 60 Hz mode (or the nearest one that divides evenly)
+    // so frames land on vsync without judder.
+    private void prefer60Hz() {
+        android.view.Display d = getWindowManager().getDefaultDisplay();
+        if (d == null) return;
+        android.view.Display.Mode cur = d.getMode(), best = null;
+        StringBuilder all = new StringBuilder();
+        for (android.view.Display.Mode m : d.getSupportedModes()) {
+            all.append(' ').append(Math.round(m.getRefreshRate()));
+            if (m.getPhysicalWidth() != cur.getPhysicalWidth() || m.getPhysicalHeight() != cur.getPhysicalHeight()) continue;
+            float r = m.getRefreshRate(), k = r / 60f;
+            if (r < 59f || Math.abs(k - Math.round(k)) > 0.02f) continue;    // 60, 120, 180 ...
+            if (best == null || r < best.getRefreshRate()) best = m;
+        }
+        if (best != null) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.preferredDisplayModeId = best.getModeId();
+            getWindow().setAttributes(lp);
+        }
+        BottomScreen.log(this, "display " + Math.round(cur.getRefreshRate()) + " Hz, modes:" + all
+                + (best != null ? ", asked for " + Math.round(best.getRefreshRate()) + " Hz" : ", none at 60 Hz"));
     }
 
     // ------------------------------------------------------------------ port: companion panel

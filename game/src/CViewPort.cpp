@@ -83,6 +83,9 @@ float CViewPort::GetFrameTime(void)											// 0x47e490 (returns the time in s
 	double dt = (double)(long long)(now - g_perf_counter) / (double)(long long)g_perf_frequency;
 	if (dt != 0.0) g_perf_counter = now;
 	// (the Negatron build clamped dt to 0.2 s here; Neutron.exe returns the raw time and render_viewport skips frames >= 1 s)
+	// port: a hitch (asset load, app switch, GC on the device) gave the physics one step of up to a
+	// second, so objects tunnelled through floors and walls; clamp to 0.1 s (the game slows down instead).
+	if (dt > 0.1 && dt < 1.0) dt = 0.1;
 	return (float)dt;
 }
 
@@ -96,6 +99,23 @@ void CViewPort::render_viewport(OMediaRendererInterface *rdr_i)				// 0x47e4f0
 		if (s_n < 5 || (skip && (s_skipped++ % 60) == 0))
 			SDL_Log("frame %d: dt %f%s", s_n, (double)g_frame_time, skip ? " (no update)" : "");
 		s_n++;
+		// port: frame timing for device logs, every 5 s: average / worst frame and hitches (> 50 ms)
+		static int t_n = 0, t_hitch = 0;
+		static float t_sum = 0, t_min = 1e9f, t_max = 0;
+		if (g_frame_time > 0.0f)
+		{
+			t_n++; t_sum += g_frame_time;
+			if (g_frame_time < t_min) t_min = g_frame_time;
+			if (g_frame_time > t_max) t_max = g_frame_time;
+			if (g_frame_time > 0.05f) t_hitch++;
+			if (getenv("NEG_DT_TRACE")) SDL_Log("dt %.2f", 1000.0f * g_frame_time);
+			if (t_sum >= 5.0f)
+			{
+				SDL_Log("timing: %.0f fps, frame %.1f ms avg, %.1f min, %.1f max, %d hitches", t_n / t_sum,
+					1000.0f * t_sum / t_n, 1000.0f * t_min, 1000.0f * t_max, t_hitch);
+				t_n = t_hitch = 0; t_sum = t_max = 0; t_min = 1e9f;
+			}
+		}
 	}
 	if (g_frame_time > 0.0f && g_frame_time < 1.0f)
 	{

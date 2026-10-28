@@ -681,6 +681,7 @@ void OMediaGLRenderTarget::set_context(void)
 
 void omf_SDLFrameHook(SDL_Window *win);
 void omf_SDLClearBars(SDL_Window *w);
+void omf_SDLFramePace(void);
 
 void OMediaGLRenderTarget::flip_buffers(void)
 {
@@ -688,7 +689,35 @@ void OMediaGLRenderTarget::flip_buffers(void)
 	if (!rtg->context) return;
 	omf_SDLFrameHook(omf_SDLWindowOf(rtg->window));
 	SDL_GL_SwapWindow(omf_SDLWindowOf(rtg->window));
+	omf_SDLFramePace();
 	omf_SDLClearBars(omf_SDLWindowOf(rtg->window));
+}
+
+// port: frame pacing. The original flipped full-screen Direct3D pages with vsync on 60 Hz-era
+// monitors, and much of the game logic steps once per frame (Jimmy's acceleration, friction and
+// turning add fixed amounts per frame), so on a 90/120/144 Hz panel the game sped up and its
+// physics changed. Cap at 60 fps (OMT_FPS_CAP=<fps> overrides, 0 = uncapped).
+void omf_SDLFramePace(void)
+{
+	static double period = -1;
+	static Uint64 next = 0;
+	if (period < 0)
+	{
+		const char *e = getenv("OMT_FPS_CAP");
+		int fps = e && *e ? atoi(e) : 60;
+		period = fps > 0 ? (double)SDL_GetPerformanceFrequency() / fps : 0;
+		SDL_Log("OMT: frame cap %d fps", fps > 0 ? fps : 0);
+	}
+	if (period <= 0) return;
+	const Uint64 freq = SDL_GetPerformanceFrequency();
+	Uint64 now = SDL_GetPerformanceCounter();
+	if (next == 0 || now > next + (Uint64)period) next = now;	// first frame, or fell behind: no catch-up burst
+	next += (Uint64)period;
+	if (now >= next) return;
+	const Uint64 left = next - now;
+	const Uint32 ms = (Uint32)(left * 1000 / freq);
+	if (ms > 1) SDL_Delay(ms - 1);								// sleep most of it, spin the last ms
+	while (SDL_GetPerformanceCounter() < next) {}
 }
 
 // ---------------------------------------------------------------------------
