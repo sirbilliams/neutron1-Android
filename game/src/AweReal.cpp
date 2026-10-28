@@ -235,6 +235,11 @@ void omt_main(void)
 			return;
 		}
 	}
+	// The exe's static initialiser 0x47cf30 (run by the CRT before main): g_695f80 = g_music_volume
+	// (10 in the data section). g_695f80 is the saved music volume that Jimmy's init and the
+	// LoadLevel trigger copy back into g_music_volume; left at its bss 0 the music plays silent.
+	g_695f80 = g_music_volume;								// port: static initialisers are not run
+
 	// (Windows: refuses to start twice - FindWindow("OMT SingleWindow"), "A game is already in progress")
 	try
 	{
