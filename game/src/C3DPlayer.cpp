@@ -1,4 +1,5 @@
-/*  C3DPlayer - see C3DPlayer.h. */
+/*  C3DPlayer - see C3DPlayer.h.  Reconstructed from Neutron.exe: every function read against
+    decomp1/raw/C3DPlayer.c (+ RelPos from C3DFlyingObject.c, ctor/dtor from _free.c). */
 #include "C3DPlayer.h"
 #include "Mouse.h"
 #include "Game.h"
@@ -420,7 +421,6 @@ void C3DPlayer::v220(float a, float b, float c, float d, OMedia3DPolygon *poly)	
 		if (id >= 0x78 && id <= 0x81) TouchedShock(OMedia3DVector(a, b, c, d));	// element +0x160
 		if (id >= 0x6e && id <= 0x77) TouchedHurt();		// element +0x164
 	}
-	else if (poly) id = 0;
 	if (f_7c4 != 0) return;
 	if (!((id >= 0x3c && id <= 0x45) || id == 0xb4)) return;
 	omt_Angle ax, ay;
@@ -624,7 +624,7 @@ void C3DPlayer::MoveWalk(float dt)							// 0x437c40
 		f_9b8 = 0;
 	}
 	if (!v133() || !v205()) return;							// on a floor polygon (+0x338)
-	// (the original works out the floor's tilt here - v224(0, 0, 1), the polygon's normal,
+	// port: (the original works out the floor's tilt here - v224(0, 0, 1), the polygon's normal,
 	// OMedia3DVector::angles and 0x476ff0 - into values it never reads; left out)
 	vel = Velocity(this);
 	v176(vel.x, vel.y - 250.0f, vel.z);						// pressed onto the floor
@@ -952,7 +952,6 @@ void C3DPlayer::ControlWalk(float dt)						// 0x438bc0
 				f_6c8 = f_6c4;
 				f_828 = 1;
 				const float ry = Rotation(this).y;
-				mdx = 0;
 				turn = 0;
 				f_710 = ry + 180.0f;
 			}
@@ -1232,9 +1231,9 @@ void C3DPlayer::ResetCamera(void)							// 0x437740
 {
 	f_7c8.set(0, 200.0f, -350.0f);
 	f_7d8.set(0, 80.0f, 0);
-	f_854.x = 1.4f;
+	f_854.x = 1.6f;
 	f_854.y = 1.0f;
-	f_854.z = 1.4f;
+	f_854.z = 1.6f;
 }
 
 // "PlayerLoadLevel": go to <game> at <start>; <ret_game> / <ret_start> are where the phone booth
