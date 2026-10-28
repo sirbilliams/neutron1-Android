@@ -171,9 +171,8 @@ void OMediaEventManager::osevent_to_omtevent(void *localevent, OMediaEvent *ev)
 //   leftshoulder   R       (shows / hides the HUD panel)
 //   righttrigger   Y       (yes, in the confirmation boxes)
 //   lefttrigger    N       (no)
-//   a              Space   (A is also button 0, the action; Space is Key_Action in keys.txt, so in
-//                           play it does the same, and "press any key" screens - the score
-//                           screen - take A)
+//   (a is NOT mapped to a key: Space opens the gadgets page in play (GadgetKeys 0x425870), so
+//    A = button 0 only, the action / fire; X = button 2 opens the gadgets page)
 //   right stick    moves the mouse pointer. The menus follow the pointer, and in play the game
 //                  turns the camera by how far the pointer moved since it re-centred it (mouse
 //                  look, 0x4a3990). Speed: up to 3/4 of the window width per second, on a square
@@ -240,7 +239,6 @@ static omt_PadKey omg_pad_keys[] = {
 	{ SDL_CONTROLLER_BUTTON_LEFTSTICK,    -1, SDL_SCANCODE_L,      false },	// port: L3 = key L (the mini sub's headlight, keyboard only in the original)
 	{ -1, SDL_CONTROLLER_AXIS_TRIGGERRIGHT,   SDL_SCANCODE_Y,      false },
 	{ -1, SDL_CONTROLLER_AXIS_TRIGGERLEFT,    SDL_SCANCODE_N,      false },
-	{ SDL_CONTROLLER_BUTTON_A,            -1, SDL_SCANCODE_SPACE,  false },
 };
 
 static SDL_Window *omf_game_window(OMediaWindow **ow);

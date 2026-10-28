@@ -34,7 +34,7 @@ MenuInput (0x427370) handles the open page; Enter / Ctrl / pad 0 clicks.
 | Thor control | The game sees | What it does in level 1 |
 |---|---|---|
 | Left stick / d-pad | X / Y axes | Move forward and back, turn left and right; moves the pointer in menus |
-| A | button 0 + key Space (port) | Action / fire, skip cut scene, click a menu item; the port also sends Space (gadgets page) |
+| A | button 0 only | Action / fire, skip cut scene, click a menu item. No key is sent: Space would also open the gadgets page |
 | B | button 1 | Jump, speed |
 | X | button 2 | Gadgets page (Tab / Space); brake in vehicles |
 | Y | button 3 | Page 2: inventory / pickups (I) |
