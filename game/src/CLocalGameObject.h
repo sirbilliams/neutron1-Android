@@ -65,8 +65,5 @@ class CLocalGameObject : public CGameObject
 	OMediaStream		*m_db_stream;		// 0x4ac
 	// FIELD 0x4b0 1
 	unsigned char		f_4bc;				// 0x4b0  0 (the private database is open)
-	// (Negatron-only, not in Neutron.exe's object: "ShowOnRadar" and the byte at +0x4c4)
-	int					m_show_on_radar;
-	unsigned char		f_4c4;
 #include "gen/CLocalGameObject_fields.inc"
 };

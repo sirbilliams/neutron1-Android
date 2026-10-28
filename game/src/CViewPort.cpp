@@ -1,4 +1,5 @@
 /*  CViewPort and the per-frame object passes (0x473740..0x473770). See CViewPort.h.
+    Reconstructed from Neutron.exe (0x47e310..0x47e9d0). TODO(BG) 0x477cb0: frame-rate average / debug overlay.
     The original uses QueryPerformanceCounter/Frequency; SDL's performance counter replaces them. */
 
 #include "CViewPort.h"
@@ -76,12 +77,12 @@ void CViewPort::update_logic(float millisecs_elapsed)						// 0x47e450
 	g_logic_updates++;
 }
 
-float CViewPort::GetFrameTime(void)											// 0x47e490
+float CViewPort::GetFrameTime(void)											// 0x47e490 (returns the time in st0, unclamped)
 {
 	unsigned long long now = SDL_GetPerformanceCounter();
 	double dt = (double)(long long)(now - g_perf_counter) / (double)(long long)g_perf_frequency;
 	if (dt != 0.0) g_perf_counter = now;
-	if (dt > 0.2) return 0.2f;
+	// (the Negatron build clamped dt to 0.2 s here; Neutron.exe returns the raw time and render_viewport skips frames >= 1 s)
 	return (float)dt;
 }
 

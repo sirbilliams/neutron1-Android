@@ -89,7 +89,6 @@ class C3DAnimated : public C3DObject
 	OMediaCanvas		*f_5ac[10];		// 0x598  textures (CreateTexture)
 	OMedia3DMaterial	*f_5d4[10];		// 0x5c0  their materials
 	char				f_5fc[64];		// 0x5e8  name of the animation last asked for (ev58)
-	unsigned char		f_63c;			// 0x570  InitAnim done (0x628 is only zeroed by the constructor)
 	AnimList			*f_640;			// 0x62c  current animation
 	unsigned char		f_648;			// 0x634  1: animations on
 	unsigned char		f_649;			// 0x635  1: animations loaded (C3DCindy & co: 0 until their first ev69)
@@ -104,3 +103,6 @@ class C3DAnimated : public C3DObject
 	char				f_669[100];		// 0x655  "PickupLink" ("none"): hidden once that pickup is taken
 	unsigned char		f_6cd;			// 0x6b9  PickupLink checked
 };
+
+// Neutron.exe +0x570 is CLocalGameObject's byte at 0x4b0 (f_4bc): InitAnim sets it, UnInitObject tests it. Older files call it f_63c.
+#define f_63c f_4bc
