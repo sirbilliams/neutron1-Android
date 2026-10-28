@@ -78,6 +78,7 @@ void CTaskList::v242(float t)							// 0x460e40
 }
 
 void CTaskList::v260()									// 0x4601a0
+// (verified: BG also calls the empty CGameObject slot 13, 0x472970, first)
 {
 	f_4b5 = 0;
 }
