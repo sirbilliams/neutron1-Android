@@ -1,8 +1,8 @@
-/*  C3DPermanentSprite - see C3DPermanentSprite.h. */
+/*  C3DPermanentSprite - see C3DPermanentSprite.h. Reconstructed from Neutron.exe. */
 #include "C3DPermanentSprite.h"
 #include <string.h>
 
-C3DPermanentSprite::C3DPermanentSprite()					// 0x441980
+C3DPermanentSprite::C3DPermanentSprite()					// 0x435300
 {
 	strcpy(m_sprite_db, "permanenticons.omt");
 	set_canvas_flags((omt_CanvasElementFlags)(get_canvas_flags() | 2));	// +0xc4 |= 2 (an OMT 2002 flag 2.5 does not have)

@@ -1,4 +1,4 @@
-/*  C3DTriggerType - see C3DTriggerType.h. */
+/*  C3DTriggerType - see C3DTriggerType.h. Reconstructed from Neutron.exe. */
 #include "DatabaseCache.h"
 #include "C3DTriggerType.h"
 #include "Fade.h"
@@ -121,8 +121,8 @@ C3DTriggerType::C3DTriggerType()							// 0x4478c0
 	strcpy(m_toggle_object, "none");
 	strcpy(m_next_trigger, "none");
 	g_cutscene_skipped = 0;									// 0x4f83e4
-	m_fade_type = -1;
-	m_fade_time = 1.0f;
+	m_fade_type = 0;										// port: the exe constructor leaves 0x6b4/0x6b8 unset (nothing reads them; a
+	m_fade_time = 0.0f;										// CLoadLevel keeps its own FadeType at 0x6e4)
 }
 
 C3DTriggerType::~C3DTriggerType() {}						// 0x447a30

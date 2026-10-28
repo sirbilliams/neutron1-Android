@@ -1,4 +1,4 @@
-/*  C3DSky - see C3DSky.h. */
+/*  C3DSky - see C3DSky.h. Reconstructed from Neutron.exe. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DSky.h"

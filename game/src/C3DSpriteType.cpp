@@ -1,4 +1,4 @@
-/*  C3DSpriteType - see C3DSpriteType.h. */
+/*  C3DSpriteType - see C3DSpriteType.h. Reconstructed from Neutron.exe. */
 #include "C3DSpriteType.h"
 #include "gen/globals.h"
 #include "OMediaLayer.h"

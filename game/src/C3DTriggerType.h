@@ -29,7 +29,7 @@ class C3DTriggerType : public C3DSprite
 	char			m_toggle_object[100];	// 0x5e8 "ToggleObject" (= "none")
 	int				m_toggle;				// 0x64c "Toggle" (= -1)
 	char			m_next_trigger[100];	// 0x650 "NextTrigger" (= "none"; "DEFAULT": back to the player)
-	int				m_fade_type;			// 0x6b4 "FadeType" (= -1)
-	float			m_fade_time;			// 0x6b8 "FadeTime" (= 1.0)
+	int				m_fade_type;			// 0x6b4 "FadeType" (unset by the ctor)
+	float			m_fade_time;			// 0x6b8 "FadeTime" (unset by the ctor)
 #include "gen/C3DTriggerType_fields.inc"
 };

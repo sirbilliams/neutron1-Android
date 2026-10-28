@@ -1,4 +1,4 @@
-/*  C3DPointCursor - see C3DPointCursor.h. */
+/*  C3DPointCursor - see C3DPointCursor.h. Reconstructed from Neutron.exe. */
 #include "C3DPointCursor.h"
 #include "Game.h"
 

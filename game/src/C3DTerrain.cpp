@@ -1,4 +1,4 @@
-/*  C3DTerrain - see C3DTerrain.h. */
+/*  C3DTerrain - see C3DTerrain.h. Reconstructed from Neutron.exe. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
 #include "C3DTerrain.h"
@@ -44,9 +44,9 @@ void C3DTerrain::InitPhysics(void)							// 0x464b00
 	// (debug log)
 }
 
-void C3DTerrain::Process(float dt)							// 0x4732a0 (shared empty function)
+void C3DTerrain::Process(float dt)							// 0x4682e0: a thunk to C3DObject's (0x462520)
 {
-	(void)dt;												// a terrain does nothing per frame
+	C3DObject::Process(dt);
 }
 
 namespace neg {

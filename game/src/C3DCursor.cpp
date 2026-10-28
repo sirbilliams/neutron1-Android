@@ -1,11 +1,11 @@
-/*  C3DCursor - see C3DCursor.h. */
+/*  C3DCursor - see C3DCursor.h. Reconstructed from Neutron.exe. */
 #include "C3DCursor.h"
 #include "Game.h"
 #include "OMedia3DShape.h"
 
 using namespace neg;
 
-C3DCursor::C3DCursor()										// 0x41eeb0
+C3DCursor::C3DCursor()										// 0x415770
 {
 	SetName((char *)"C3DCURSOR");
 	Log("C3DCURSOR()");
@@ -32,7 +32,6 @@ void C3DCursor::InitObject(void)							// 0x415900
 	CreateTexture((char *)"3darrow.png", 0);				// +0xfc
 	ev65(0, 6, 1);											// +0x104: blend Src_Alpha, One
 	ApplyTexture(f_590, 0);									// +0x100
-	f_590->scale(5.0f, 5.0f, 5.0f);							// shape vtable +0x34
 	v67(40.0f);												// +0x10c
 	ev58((char *)"ARROW", 1);								// +0xe8
 	// (then a call to the empty 0x472970)

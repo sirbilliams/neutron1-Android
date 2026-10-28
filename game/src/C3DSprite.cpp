@@ -1,4 +1,4 @@
-/*  C3DSprite - see C3DSprite.h. Also the sprite canvas loaders 0x477630 / 0x477780. */
+/*  C3DSprite - see C3DSprite.h. Reconstructed from Neutron.exe. Also the sprite canvas loaders 0x477630 / 0x477780. */
 #include "DatabaseCache.h"
 #include "C3DSprite.h"
 #include "Game.h"

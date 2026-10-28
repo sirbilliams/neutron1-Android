@@ -1,4 +1,4 @@
-/*  CMainMenu and the level-load helper next to it in Neutron.exe (0x44d0e0), and the waypoint list
+/*  Reconstructed from Neutron.exe. CMainMenu and the level-load helper next to it in Neutron.exe (0x44d0e0), and the waypoint list
     reset (0x47ec30). See CMainMenu.h.                                                          */
 
 #include "CMainMenu.h"
@@ -26,7 +26,7 @@ CMainMenu::CMainMenu()														// 0x459110
 	Log("CMainMenu()");
 	CGameType::InitObject();					// (direct call) -> InitGame
 	CGameType::SetID('MAIN');
-	v129();
+	v128(0);									// 0x4719c0: byte +0x139 = 0
 	// (debug log, empty in the shipped build)
 }
 
