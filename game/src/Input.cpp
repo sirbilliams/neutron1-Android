@@ -1,5 +1,8 @@
 /*  The input module of Neutron.exe (0x478140..0x4788f8): CInput, FindDevice and the per-frame
-    joystick poll. Reconstructed from the machine code.
+    joystick poll. Reconstructed from Neutron.exe. Every function here (0x478140..0x478530, the
+    mouse helpers 0x476d70..0x476df0 and 0x46a400 / 0x46a460) was read against its disassembly,
+    including the three jump tables of UpdateInput (no raw decompile exists). Port only:
+    LogJoyChanges, the widescreen margin, SDL's mouse position.
 
     The keyboard and the mouse do not go through here: they arrive as window messages
     (CAweReal::listen_to_message fills g_keys[]). This module only reads one OMT HID device - the
@@ -304,7 +307,7 @@ void omf_SDLSetMousePosition(short x, short y);		// engine/sdl/OMediaSDLInput.cp
 // 0x476d70: the world's input engine (vtable +0x38), its get_mouse_position (+0x20).
 void neg::GetMousePos(short *x, short *y)
 {
-	*x = *y = 0;
+	*x = *y = 0;								// port: (the original leaves them as they are without an engine)
 	if (g_input_engine) g_input_engine->get_mouse_position(*x, *y);
 	*x = (short)(*x - (int)WideMargin());		// port: widescreen, window -> the 4:3 area
 }

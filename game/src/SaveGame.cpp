@@ -2,7 +2,13 @@
     helpers 0x42aff0..0x42b180. See SaveGame.h for the .tsk format.
 
     The original's debug-log calls (0x472970, compiled empty in the shipped build) are kept as
-    Trace(): silent unless NEG_SAVE_TRACE is set in the environment.                        */
+    Trace(): silent unless NEG_SAVE_TRACE is set in the environment.
+
+    Reconstructed from Neutron.exe. Every function was read against its disassembly (no raw
+    decompile exists for it): 0x42aff0, 0x42b0b0, 0x42b180, 0x45f4c0, 0x45f510, 0x45f610,
+    0x45f8f0, 0x45f990 (the SCENE message table and the level-id table of 0x4603f0 were
+    checked entry by entry), 0x45fea0, 0x45fee0, 0x460210, 0x4603f0, 0x460e70.
+    Port only: WriteSaveSlotList, the Asset Viewer check, ReadSaveSlots (C3DJimmy 0x428870).  */
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
@@ -321,10 +327,7 @@ bool neg::TaskGameLoad(const char *name)
 		if (p)
 		{
 			p->f_9a8.x = x; p->f_9a8.y = y; p->f_9a8.z = z;	// +0x9a8..
-			char g[STR_MAX], st[STR_MAX];
-			strcpy(g, g_editor->m_level_name);
-			strcpy(st, p->f_724);
-			p->PlayerLoadLevel(g, st, g_editor->m_level_name, p->f_724);	// element slot 90 (+0x168)
+			p->PlayerLoadLevel(g_editor->m_level_name, p->f_724, g_editor->m_level_name, p->f_724);	// element slot 90 (+0x168)
 		}
 	}
 	for (int i = 0; i < 9; i++)
@@ -370,7 +373,7 @@ bool neg::TaskGameLoad(const char *name)
 			if (*it) Local(*it)->v266();						// slot 264 (+0x420)
 	}
 	fs.close();
-	return false;											// (eax is never set on this path)
+	return true;											// (0x460dc9: al = 1)
 }
 
 // --------------------------------------------------------------------------- 0x460e70
