@@ -9,8 +9,18 @@ It is built on the engine, launcher and tools of its sequel's port,
 [Neutron vs Negatron](https://github.com/sirbilliams/neutron2-android) (*Jimmy Neutron vs. Jimmy
 Negatron*, 2002, which was made from Boy Genius's code). The two apps install side by side.
 
-**Status: early development (v0.1).** The game code is being ported from the Negatron
-reconstruction to Boy Genius; levels don't play through yet. See [docs/HANDOFF.md](docs/HANDOFF.md).
+**Status: in progress.** Every class of the game exists and all 35 levels load and play to their
+exits on desktop; the APK runs on the Thor. About two thirds of the code is verified function by
+function against `Neutron.exe`; the rest, the late story levels and the Thor extras are being
+finished. See [docs/HANDOFF.md](docs/HANDOFF.md).
+
+| | |
+|---|---|
+| ![Jimmy's lab](docs/screenshots/lab.jpg) | ![The neighborhood](docs/screenshots/neighborhood.jpg) |
+| ![School](docs/screenshots/school.jpg) | ![Retroland](docs/screenshots/retroland.jpg) |
+| ![Downtown](docs/screenshots/downtown.jpg) | ![The desert](docs/screenshots/desert.jpg) |
+
+*Screenshots of this reconstruction running (desktop build, from the author's own copy of the game).*
 
 **You need your own copy of the game.** Nothing of the game is included in this app or this
 repository: you install it from the game's CD (an `.iso` image of the disc). The reconstructed code
