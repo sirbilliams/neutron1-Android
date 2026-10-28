@@ -21,6 +21,8 @@
     NEG_TEST_WATCH=<tag>       With NEG_TEST_POSLOG: also log where the object tagged <tag> is ("WATCH ..."); the camera's
                                object is logged as "CAM ..." when it is not Jimmy.
     NEG_TEST_TASK=<name>=<n>,...  When the level is loaded, set those task states.
+    NEG_TEST_TOUCH=<tag>[#n]    Supplement a GOTO test with a direct Jimmy touch, avoiding overlapping exits.
+    NEG_TEST_GOTO_STOP=1       Clear velocity on teleport (separate projectile damage from long-fall damage).
     NEG_DUMP_OBJECTS=1         When the level is loaded, log every object: class, tag, position and
                                its registered properties (name=value), for tracing trigger chains.
     NEG_TEST_LIVES=<n>         When the level is loaded, set the lives (red neutrons found) to n.
@@ -45,6 +47,8 @@
 #include "gadgets/C3DBaseball.h"
 #include "level4/C3DVRTrophy.h"
 #include "SaveGame.h"
+#include "gen/globals.h"
+#include "yokian/C3DMissile.h"
 #include <stdio.h>
 #include <typeinfo>
 #include <SDL.h>
@@ -191,6 +195,17 @@ void neg::TestPlayHook(const char *level)
 	if (const char *eq = getenv("NEG_TEST_EQUIP"))	// NEG_TEST_EQUIP=<g>: Jimmy holds gadget g (as picked on the PDA)
 		if (*eq) { jim->DeactivateGadget(); jim->ActivateGadget((short)atoi(eq)); }
 	SDL_Log("NEG_TEST_PLAY: %s without its start trigger, Jimmy playing", level);
+	if (const char *touch = getenv("NEG_TEST_TOUCH"))
+	{
+		char tag[100];
+		strncpy(tag, touch, sizeof tag - 1); tag[sizeof tag - 1] = 0;
+		if (CGameObject *dest = TestFindTag(tag))
+		{
+			SDL_Log("NEG_TEST_TOUCH: %s", touch);
+			dest->AddTouching(jim);
+		}
+		else SDL_Log("NEG_TEST_TOUCH: no object %s", touch);
+	}
 }
 
 // "TAG" or "TAG#n": the first (n-th, from 1) object tagged TAG
@@ -239,6 +254,7 @@ static void TestGoto(CGameObject *o, float dt)
 				float d[4];
 				dest->v195(d);
 				mover->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
+				if (getenv("NEG_TEST_GOTO_STOP")) mover->v176(0, 0, 0);
 				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(mover))			// riding the scooter: it goes too
 					if (jm->f_a30 && jm->f_a30->f_a84 == jm) jm->f_a30->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(mover))			// flying the rocket ship (level5a/5b/6): it goes too
@@ -286,6 +302,10 @@ void neg::TestPosLog(CGameObject *o, float dt)
 		}
 	SDL_Log("POS %.1f %.1f %.1f rot %.1f %.1f %.1f vel %.1f %.1f %.1f anim %s t %.2f", p[0], p[1], p[2], r[0], r[1], r[2], v[0], v[1], v[2],
 		a ? a->GetAnim() : "-", a ? a->f_598 : 0.0f);
+	SDL_Log("TEST STATE level=%s energy=%.1f scene=%d", neg::g_editor->m_level_name, g_4f83d4, GetTaskState("SCENE"));
+	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i)
+		if (C3DMissile *m = dynamic_cast<C3DMissile *>(*i))
+			if (m->m_hit) SDL_Log("TEST MISSILE hit target=%s", m->m_target ? m->m_target->m_tag : "none");
 	if (const char *w = getenv("NEG_TEST_WATCH"))		// NEG_TEST_WATCH=<tag>: where those objects are (all with that tag)
 	{
 		int k = 0;
