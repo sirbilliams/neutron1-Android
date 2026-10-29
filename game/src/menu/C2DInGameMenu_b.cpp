@@ -621,6 +621,10 @@ void C2DInGameMenu::v311(float dt)
 // RestartLevel.tsk.
 void C2DInGameMenu::v312(float dt)
 {
+	// port: track A even outside the bonus screen so a gameplay hold cannot skip it.
+	static bool previous_pad_a = true;
+	const bool pad_a_pressed = g_joy_button0 && !previous_pad_a;
+	previous_pad_a = g_joy_button0 != 0;
 	if (!f_4f0) return;
 	g_story_time = (float)g_4ec498 + 1.7f;
 	if (f_508 == 0)
@@ -650,7 +654,7 @@ void C2DInGameMenu::v312(float dt)
 		{
 			const float u = f_4f8;
 			f_4f8 = u - dt;
-			if (u - dt < 0 || g_mouse_down || g_keys[0x1b] || g_keys[0x20] || g_keys[0x0d])
+			if (u - dt < 0 || g_mouse_down || g_keys[0x1b] || g_keys[0x20] || g_keys[0x0d] || pad_a_pressed) // port: the pad A button (no Space key since 25b307b)
 			{
 				f_4f8 = 1.3f;
 				f_4fc = f_4fc - 1;
@@ -676,7 +680,7 @@ void C2DInGameMenu::v312(float dt)
 		if (!(0 < f_4f8)) return;
 		const float t = f_4f8;
 		f_4f8 = t - dt;
-		if (!(t - dt <= 0 || g_mouse_down || g_keys[0x1b] || g_keys[0x20] || g_keys[0x0d])) return;
+		if (!(t - dt <= 0 || g_mouse_down || g_keys[0x1b] || g_keys[0x20] || g_keys[0x0d] || pad_a_pressed)) return; // port: the pad A button (no Space key since 25b307b)
 		g_menu_input_lock = 1;
 		if (f_508 <= 9)
 		{
