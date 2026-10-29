@@ -14,7 +14,6 @@
 #include "../CGameType.h"
 #include "../gen/globals.h"
 #pragma GCC diagnostic pop
-#include "../port/Seamless.h" // port: seamless
 #include <string.h>
 #include <strings.h>
 
@@ -208,11 +207,10 @@ void CLoadLevel::AddTouching(CGameObject *other)
 			neg::JimmyElementSlot94(other);					// element +0x178
 			break;
 	}
-	const bool seamless = neg::SeamlessExit(m_level_name, m_start_point); // port: seamless, after the original gate
 	ev54();													// element +0xd8
 	JimmyLoadLevel(p, m_level_name, m_start_point, p->f_955, p->f_724);
 	if (m_sound_index != -1) SetChannelVolume((short)PlaySoundIndex(-1, m_sound_index, false), g_sfx_volume);
-	if (m_fade_type != -1 && !seamless) // port: seamless
+	if (m_fade_type != -1)
 	{
 		g_editor->m_load_pending = 0;						// the fade loads the level when it is out
 		neg::StartFade(m_fade_type, m_fade_time);			// 0x403c10

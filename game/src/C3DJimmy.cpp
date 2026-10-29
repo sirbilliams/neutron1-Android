@@ -1,4 +1,3 @@
-#include "PortLoadTiming.h" // port: load timing
 /*  C3DJimmy - see C3DJimmy.h. This file: construction, destruction, the factory entry,
     InitObject / UnInitObject and the level start (PostLoad). The other slots are in
     jimmy/C3DJimmy_a.cpp (CGameObject family, C3DPlayer's slots) and _b.cpp (Jimmy's own).
@@ -316,8 +315,6 @@ void C3DJimmy::v260(void)									// 0x423610
 	if (f_a18 && MenuMarked(f_a18)) MenuUnmark(f_a18);		// +0x4be, +0x474
 	C3DAnimated::v260();									// 0x418950 (jmp to C3DAnimated's)
 
-	{ // port: load timing
-	PortLoadTiming::Phase load_start("player-start"); // port: load timing
 	// the start point: "StartPoint", or the one PlayerLoadLevel asked for (f_774)
 	if (strcasecmp(f_774, "none") != 0) strcpy(f_724, f_774);
 	strcpy(f_774, "none");
@@ -371,7 +368,6 @@ void C3DJimmy::v260(void)									// 0x423610
 			}
 		}
 	}
-	} // port: load timing
 	OMedia3DVector cam = v224(0, 200.0f, -300.0f);			// +0x384
 	g_viewport->place(cam.x, cam.y, cam.z);
 

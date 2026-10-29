@@ -1,4 +1,3 @@
-#include "PortLoadTiming.h" // port: load timing
 /*  CPhysics - see Physics.h. Reconstructed from Neutron.exe 0x478fa0..0x47ced0 and the geometry
     helpers it uses (0x469500..0x469b70, 0x477dd0). Static initialisers (0x478d20, 0x478d50)
     set the w components of g_phys_ray and g_gravity.
@@ -330,7 +329,6 @@ static void PolygonBoundingSphere(OMedia3DShape *shape, OMedia3DPolygon *poly, O
 
 void neg::PhysicsAddTerrain(OMedia3DShape *shape)			// 0x479140 "Add3DTerrain()"
 {
-	PortLoadTiming::Phase load_phase("terrain-build"); // port: load timing
 	if (!shape) return;
 	std::vector<OMedia3DPolygon> &polys = *shape->get_polygons();
 	s_terrain_poly_count += (int)polys.size();

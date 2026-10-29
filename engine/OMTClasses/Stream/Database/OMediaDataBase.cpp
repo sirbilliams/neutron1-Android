@@ -1,4 +1,3 @@
-#include "PortLoadTiming.h" // port: load timing
 /*****************************************************************
 
         O P E N      M E D I A     T O O L K I T              V2.5    
@@ -206,7 +205,6 @@ OMediaDBObject *OMediaDataBase::get_object(omt_ChunkType type, omt_FSChunkID id)
 
 OMediaDBObject *OMediaDataBase::get_object_ck(omt_ChunkType type, OMediaFSChunk *chunk)
 {
-	PortLoadTiming::Read load_read(this); // port: load timing
 	OMediaDBObject 		*dbo;
 	omt_DBObjectBuilder	builder;
 	

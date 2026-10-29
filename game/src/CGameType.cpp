@@ -1,4 +1,3 @@
-#include "PortLoadTiming.h" // port: load timing
 /*  CGameType - see CGameType.h. Reconstructed from Neutron.exe (0x4745a0..0x475d90 and the shape
     helpers 0x477490..0x477ba0 it uses).                                                        */
 
@@ -155,7 +154,6 @@ void CGameType::InitObject(void)											// 0x4749a0
 	// Quirk: CLocalGameObject::InitObject is not called, so a game type registers no properties.
 	ResetParticles();						// 0x462960
 	ResetTextureAnims();					// 0x468d50
-	PortLoadTiming::Phase load_phase("game-init"); // port: load timing
 	InitGame();								// element vtable +0xb4
 }
 

@@ -1,4 +1,3 @@
-#include "PortLoadTiming.h" // port: load timing
 /*****************************************************************
 
         O P E N      M E D I A     T O O L K I T              V2.5    
@@ -193,7 +192,6 @@ GLuint OMediaGLCanvas::find_internal_format(omt_PixelFormat pix_fmt)
 
 void OMediaGLCanvas::create_texture(bool new_texture, omt_CanvasSlaveKeyFlags key_flags)
 {
-	PortLoadTiming::GL load_gl; // port: load timing
 	int					w,nw,h,nh;
 	OMediaCanvas			*master_canv;	
 	OMediaMipmapGenerator	*mm_gen;
@@ -423,7 +421,6 @@ void OMediaGLCanvas::check_texture_subsize(OMediaCanvas *master, int w, int h, i
 
 void OMediaGLCanvas::create_subimage(OMediaCanvas *canv, int w, int h, bool new_texture, int nw, int nh)
 {
-	PortLoadTiming::GL load_gl; // port: load timing
 	check_texture_subsize(canv, w, h, nw, nh);
 
 	slave_key_long = omcskf_SubDivided;	

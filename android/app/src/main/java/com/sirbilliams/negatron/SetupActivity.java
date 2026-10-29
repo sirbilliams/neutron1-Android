@@ -325,13 +325,10 @@ public class SetupActivity extends Activity {
     private LauncherModel.Page settingsPage() {
         android.content.SharedPreferences p = prefs();
         boolean second = CompanionPanel.findDisplay(this, displays()) != null;
-        LauncherModel.Page page = hdItems(LauncherPages.settings(p.getBoolean(PREF_WIDESCREEN, true), p.getBoolean(PREF_BILLS_UI, true),
+        return hdItems(LauncherPages.settings(p.getBoolean(PREF_WIDESCREEN, true), p.getBoolean(PREF_BILLS_UI, true),
                 p.getString(PREF_ENERGY, "a"), p.getString(PREF_HOLO, "a"), CompanionPanel.wanted(p, second), second,
                 boxArtFile().isFile(),
                 backgroundFile().isFile(), p.getString(PREF_LOD, "2"), p.getString(CompanionPanel.KEY_THEME, "auto")));
-        // port: seamless
-        page.add("seamless", "Seamless transitions (beta)", "Cross-dissolve between Neighborhood and School.").value = p.getBoolean("seamless", false) ? "ON" : "OFF";
-        return page;
     }
 
     // ------------------------------------------------------------------ port: the HD texture pack (HdPack)
@@ -400,11 +397,6 @@ public class SetupActivity extends Activity {
         else if (id.equals("settings")) mMenu.push(settingsPage());
         else if (id.equals("test")) mMenu.push(LauncherPages.test());
         else if (id.equals("quit")) finish();
-        // port: seamless
-        else if (id.equals("seamless")) {
-            p.edit().putBoolean("seamless", !p.getBoolean("seamless", false)).commit();
-            mMenu.replace(settingsPage());
-        }
         else if (id.equals("wide")) {
             p.edit().putBoolean(PREF_WIDESCREEN, !p.getBoolean(PREF_WIDESCREEN, true)).commit();
             mMenu.replace(settingsPage());
@@ -717,7 +709,7 @@ public class SetupActivity extends Activity {
         else if (repeat) return true;
         else if (act == 3) {                                    // left / right flip a setting
             LauncherModel.Item it = mMenu.selected();
-            if (it != null && (it.id.equals("seamless") || it.id.equals("wide") || it.id.equals("lod") || it.id.equals("ui") || it.id.equals("energy") || it.id.equals("holo")
+            if (it != null && (it.id.equals("wide") || it.id.equals("lod") || it.id.equals("ui") || it.id.equals("energy") || it.id.equals("holo")
                     || it.id.equals("panel"))) {
                 mStepDir = k == android.view.KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1;
                 choose();

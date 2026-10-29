@@ -1,4 +1,3 @@
-#include "../../../sdl/PortSeamless.h" // port: seamless
 /*****************************************************************
 
         O P E N      M E D I A     T O O L K I T              V2.5    
@@ -167,8 +166,6 @@ void OMediaLayer::render(OMediaRendererInterface *rdr_i,
 						 OMediaMatrix_4x4 &aviewmatrix)
 {
 	if (!(flags&omlayerf_Visible)) return;
-	// port: seamless draw before the new level HUD; never during picking.
-	if (PortSeamless::enabled() && PortSeamless::state().hud==this && !rdr_i->get_pick_mode()) omf_SeamlessOverlay();
 
 	// Set projection matrix
 

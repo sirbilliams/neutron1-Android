@@ -16,7 +16,6 @@ NEG_WIDESCREEN=1        # 1 = fill a widescreen display, 0 = original 4:3
 NEG_UI=bills            # bills = Bill's UI, vanilla = the original HUD
 NEG_UI_ENERGY=a         # Bill's UI energy meter: a tube, b orbit, c dial, bar = the original bar
 NEG_UI_HOLO=a           # gadget hologram: a, b, c or off
-NEG_SEAMLESS=0  # 1 = seamless Neighborhood <-> School (beta)
 NEG_LOD=2               # draw distance 1..4
 CFG
 fi
