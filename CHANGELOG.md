@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0-rc5
+
+First step towards a seamless Retroville.
+
+- New launcher setting **Seamless transitions (beta)**, off by default: walking between the Neighborhood and the School no longer shows a fade or loading picture. The School loads in the background while you walk up the road and the view dissolves into it in a third of a second (about 0.1 s of real loading on a PC instead of 1.1 s). Story gates, roadblocks and saves are unchanged.
+
 ## v1.0-rc4
 
 The bottom-screen map from Negatron 1.0.3-1.0.5, in both panel themes.
