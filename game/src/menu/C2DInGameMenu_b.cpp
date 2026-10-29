@@ -1,3 +1,4 @@
+#include "../../../engine/sdl/PortSeamless.h" // port: seamless
 #include "PortLoadTiming.h" // port: load timing
 /*  Reconstructed from Neutron.exe (all functions verified line by line). C2DInGameMenu part b: Process (slot 241, 0x404080: the pad cursor, the pickup pop-up, the HUD
     and the yes/no boxes with their actions), the level-start slot (259), the story message
@@ -460,6 +461,8 @@ void C2DInGameMenu::v260()												// 0x4072d0
 		v308();
 		Show(g_story_lines[0]);
 	}
+	// port: seamless keep story setup above, omit only the arrival loading fade.
+	if (PortSeamless::enabled() && PortSeamless::state().pending) { Hide(g_fade_quad); return; }
 	if (g_hud_on)
 	{
 		if (g_fade_mode == 4) { StartFade(5, 1.0f); return; }

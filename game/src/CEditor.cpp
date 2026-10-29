@@ -1,3 +1,4 @@
+#include "port/Seamless.h" // port: seamless
 #include "PortLoadTiming.h" // port: load timing
 /*  CEditor - level loader/saver and developer editor.  Reconstructed from Neutron.exe.
     See CEditor.h for the overview. Each function names its original address.
@@ -524,6 +525,7 @@ void CEditor::UpdateGame(float dt)
 			}
 		}
 	}
+	neg::SeamlessApproach(); // port: seamless
 	neg::FadeTick(dt);										// port: see Fade.h (agent F's menu runs it in the original)
 	if (m_load_pending) CheckLoadLevel();					// vtable +0x104
 	neg::StartModeFrame();									// port: NEG_START=menu opens the Main Menu
@@ -534,6 +536,7 @@ void CEditor::UpdateGame(float dt)
 void CEditor::CheckLoadLevel(void)
 {
 	if (!m_load_pending) return;
+	if (PortSeamless::state().pending) PortSeamless::state().dissolve=true; // port: seamless
 	PortLoadTiming::begin(m_level_name); // port: load timing
 	SDL_Log("load: request-wait %.3f", PortLoadTiming::now()-PortLoadTiming::state().start); // port: load timing
 	double load_phase = PortLoadTiming::now();

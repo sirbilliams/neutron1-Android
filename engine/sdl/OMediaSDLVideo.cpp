@@ -1,3 +1,4 @@
+#include "PortSeamless.h" // port: seamless
 #include "PortLoadTiming.h" // port: load timing
 #define OMD_SDL_NO_GL_WRAP
 /*  OMT SDL platform layer - video engine, engine factory, windows, OpenGL context, offscreen buffers.
@@ -684,10 +685,43 @@ void omf_SDLFrameHook(SDL_Window *win);
 void omf_SDLClearBars(SDL_Window *w);
 void omf_SDLFramePace(void);
 
+// port: seamless HUD-less scene capture and dissolve, followed by the live HUD.
+void omf_SeamlessOverlay()
+{
+	// port: seamless retain the last complete framebuffer; fixed-function calls also run via gl4es.
+	if (PortSeamless::enabled()) {
+		PortSeamless::State &s=PortSeamless::state();
+		double now=PortSeamless::now();
+		GLint viewport[4]; glGetIntegerv(GL_VIEWPORT,viewport);
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+		if(s.dissolve && s.texture) {
+			if(!s.start) s.start=now;
+			float alpha=1.0f-(float)((now-s.start)/300.0);
+			if(alpha>0) {
+				glViewport(0,0,s.width,s.height); glDisable(GL_DEPTH_TEST); glDisable(GL_LIGHTING); glDisable(GL_FOG); glDisable(GL_ALPHA_TEST);
+				glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,s.texture); glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+				glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+				glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity(); glColor4f(1,1,1,alpha);
+				glBegin(GL_QUADS); glTexCoord2f(0,0); glVertex2f(-1,-1); glTexCoord2f(1,0); glVertex2f(1,-1); glTexCoord2f(1,1); glVertex2f(1,1); glTexCoord2f(0,1); glVertex2f(-1,1); glEnd();
+				glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW);
+			} else { s.dissolve=false; s.pending=false; s.start=0; }
+		}
+		if(!s.pending && !s.dissolve && s.armed) {	// only near an open seamless exit: a full-frame copy costs on the device
+			if(!s.texture) glGenTextures(1,&s.texture);
+			glBindTexture(GL_TEXTURE_2D,s.texture); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+			s.width=viewport[2]; s.height=viewport[3]; glCopyTexImage2D(GL_TEXTURE_2D,0,GL_RGB,0,0,s.width,s.height,0);
+		}
+		glPopAttrib();
+	}
+}
+
 void OMediaGLRenderTarget::flip_buffers(void)
 {
 	OMediaSDLGLRtgRenderTarget *rtg = (OMediaSDLGLRtgRenderTarget*)retarget;
 	if (!rtg->context) return;
+	// port: seamless opt-in comparison timing
+	if(getenv("NEG_SEAMLESS_TIMING")) { static double previous=0; double n=PortSeamless::now(); SDL_Log("seamless: timing %.3f %.3f",n,previous?n-previous:0); previous=n; }
 	omf_SDLFrameHook(omf_SDLWindowOf(rtg->window));
 	SDL_GL_SwapWindow(omf_SDLWindowOf(rtg->window));
 	PortLoadTiming::presented(); // port: load timing

@@ -1,3 +1,4 @@
+#include "../../engine/sdl/PortSeamless.h" // port: seamless
 /*  CGfx - display, world, layers, viewport.  Reconstructed from Neutron.exe.
     0x475ee0 CGfx::CGfx            0x4762b0 InitDisplay/InitWorld   0x4767c0 InitLayers
     0x476490 InitViewPort          0x476950 SetDisplayMode                                   */
@@ -71,6 +72,7 @@ void CGfx::InitWorld(void)
 		*order[i] = new OMediaLayer;
 		(*order[i])->link(g_world);
 	}
+	if (PortSeamless::enabled()) PortSeamless::state().hud=g_layer_hud2d; // port: seamless
 	InitLayers();
 }
 

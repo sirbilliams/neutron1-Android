@@ -1,3 +1,4 @@
+#include "port/Seamless.h" // port: seamless
 /*  C3DTriggerType - see C3DTriggerType.h. Reconstructed from Neutron.exe. */
 #include "DatabaseCache.h"
 #include "C3DTriggerType.h"
@@ -85,8 +86,9 @@ static void LoadLevelHandOver(CGameObject *loadlevel, CGameObject *jim)
 	CLoadLevel *ll = static_cast<CLoadLevel *>(loadlevel);
 	C3DPlayer *p = PlayerOf(jim);
 	if (!p) return;										// port: a JIM1 that is no player (the original has no check)
+	const bool seamless = neg::SeamlessExit(ll->m_level_name,ll->m_start_point); // port: seamless
 	p->PlayerLoadLevel(ll->m_level_name, ll->m_start_point, p->f_88c, p->f_8f0);	// element +0x168 (slot 90)
-	if (ll->m_fade_type != -1)
+	if (ll->m_fade_type != -1 && !seamless) // port: seamless
 	{
 		g_editor->m_load_pending = 0;					// the fade loads the level when it ends
 		g_view_restore = 1;								// 0x4f8430
