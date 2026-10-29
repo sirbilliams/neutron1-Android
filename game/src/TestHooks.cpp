@@ -33,6 +33,9 @@
     NEG_TEST_GADGETS=<i>,<i>,...  When the level is loaded, make those items of the PDA's
                                gadget page (0 bubble, 6 baseball, 7 grappler...) available.   */
 #include "TestHooks.h"
+#include "C3DTerrain.h"
+#include "OMedia3DMaterial.h"
+#include "OMediaLayer.h"
 #include "C3DJimmy.h"
 #include "level1/C3DJeep.h"
 #include "C3DAI.h"
@@ -84,6 +87,47 @@ static void DumpObjects(void)
 		}
 		SDL_Log("%s", line);
 	}
+}
+
+// port: opt-in alignment measurement; exports loaded terrain polygons, no gameplay changes.
+struct AlignmentLayer : OMediaLayer {
+ static void Dump(OMediaLayer *l) {
+ OMediaFARGBColor c=l->*Color();
+ SDL_Log("ALIGN fog %g %g %g range %g %g enabled %d",c.red,c.green,c.blue,l->*Start(),l->*End(),(int)(l->*Enabled()));
+ }
+ static OMediaFARGBColor OMediaLayer::*Color() {return &AlignmentLayer::fog_color;}
+ static float OMediaLayer::*Start() {return &AlignmentLayer::fog_start;}
+ static float OMediaLayer::*End() {return &AlignmentLayer::fog_end;}
+ static bool OMediaLayer::*Enabled() {return &AlignmentLayer::fog_enabled;}
+};
+static void DumpAlignment(const char *level)
+{
+ const char *dir = getenv("NEG_TEST_ALIGNMENT");
+ if (!dir) return;
+ char path[512]; snprintf(path, sizeof path, "%s/%s.mesh", dir, level);
+ FILE *f = fopen(path, "w"); if (!f) return;
+ OMediaFARGBColor c; neg::g_layer_world->get_light_global_ambient(c);
+ SDL_Log("ALIGN ambient %g %g %g", c.red, c.green, c.blue);
+ AlignmentLayer::Dump(neg::g_layer_world);
+ for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); ++i) {
+  CGameObject *o = *i; float p[4], r[4]; o->v195(p); o->v201(r);
+  if (dynamic_cast<CLoadLevel *>(o) || dynamic_cast<C3DStartPoint *>(o))
+   SDL_Log("ALIGN %s pos %.3f %.3f %.3f rot %.3f %.3f %.3f", o->m_tag,p[0],p[1],p[2],r[0],r[1],r[2]);
+  C3DTerrain *t = dynamic_cast<C3DTerrain *>(o); if (!t || !t->get_shape()) continue;
+  OMedia3DShape *sh = t->get_shape(); std::string name; sh->get_chunk_name(name);
+  std::vector<OMedia3DPolygon> &polys = *sh->get_polygons();
+  for (size_t j=0;j<polys.size();++j) {
+   OMedia3DPolygon &poly=polys[j]; std::string mat="none";
+   if(poly.get_material()) poly.get_material()->get_chunk_name(mat);
+   fprintf(f,"%s %s",name.c_str(),mat.c_str());
+   for(int k=0;k<poly.get_num_points();++k) {
+    const OMedia3DPoint &v=(*sh->get_vertices())[poly.get_point(k)];
+    fprintf(f," %.5f %.5f %.5f",v.x,v.y,v.z);
+   }
+   fprintf(f,"\n");
+  }
+ }
+ fclose(f);
 }
 
 static CGameObject *TestFindTag(char *tag);
@@ -162,6 +206,7 @@ void neg::TestPlayHook(const char *level)
 				SDL_Log("EXIT %s -> %s @%s needs %s >= %d exact %d", e->m_tag, e->m_level_name, e->m_start_point,
 						e->m_required_task, e->m_required_level, e->m_exact_level);
 	if (getenv("NEG_DUMP_OBJECTS")) DumpObjects();
+ DumpAlignment(level);
 	if (const char *fire = getenv("NEG_TEST_FIRE"))		// NEG_TEST_FIRE=<tag>: calls that trigger as a StartPoint does at the level's start
 	{
 		char tag[100];
@@ -254,6 +299,7 @@ static void TestGoto(CGameObject *o, float dt)
 			{
 				float d[4];
 				dest->v195(d);
+				if (const char *yaw = getenv("NEG_TEST_GOTO_YAW")) mover->v202(0, (float)atof(yaw), 0, 1); // port: screenshot facing
 				mover->v196(d[0] + dx, d[1] + 60.0f, d[2] + dz, 1.0f);
 				if (getenv("NEG_TEST_GOTO_STOP")) mover->v176(0, 0, 0);
 				if (C3DJimmy *jm = dynamic_cast<C3DJimmy *>(mover))			// riding the scooter: it goes too
