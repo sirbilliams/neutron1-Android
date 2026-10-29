@@ -9,6 +9,7 @@ public class RectF {
     public static boolean intersects(RectF a, RectF b) {
         return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
     }
+    public boolean contains(float x, float y) { return x >= left && x < right && y >= top && y < bottom; }
     public float width() { return right - left; }
     public float height() { return bottom - top; }
     public float centerX() { return (left + right) / 2; }

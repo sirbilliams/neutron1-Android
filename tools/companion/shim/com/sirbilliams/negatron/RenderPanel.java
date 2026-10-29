@@ -31,12 +31,28 @@ public final class RenderPanel {
             @Override public int[] map() { return load(mapFile, gen, true); }
             @Override public int[] icon(int id) { return load(new File(dir, "icon_" + id + ".png"), 0, false); }
         });
-        v.setZoomFar(a.length > 4 && a[4].equals("far"));
+        java.util.List<String> opt = java.util.Arrays.asList(a);
+        v.setZoomFar(opt.contains("far"));
         v.setSnapshot(json);
         v.setTestSize(1240, 1080);
+        // "expanded": tap EXPAND MAP > (the real hit test); "zoom": a 1.6x pinch; "filter": tap ENEMIES
+        if (opt.contains("expanded")) tap(v, 1060, 135);
+        if (opt.contains("zoom")) {
+            java.lang.reflect.Field z = CompanionView.class.getDeclaredField("mExploreZoom");
+            java.lang.reflect.Field px = CompanionView.class.getDeclaredField("mPanX");
+            java.lang.reflect.Field py = CompanionView.class.getDeclaredField("mPanY");
+            z.setAccessible(true); px.setAccessible(true); py.setAccessible(true);
+            z.setFloat(v, z.getFloat(v) * 1.6f); px.setFloat(v, px.getFloat(v) * 1.6f); py.setFloat(v, py.getFloat(v) * 1.6f);
+        }
+        if (opt.contains("filter")) tap(v, 480, 200);
         Bitmap out = Bitmap.createBitmap(1240, 1080, Bitmap.Config.ARGB_8888);
         v.drawForTest(new Canvas(out));
         ImageIO.write(out.img, "png", new File(a[3]));
+    }
+
+    static void tap(CompanionView v, float x, float y) {
+        v.onTouchEvent(new android.view.MotionEvent(android.view.MotionEvent.ACTION_DOWN, x, y));
+        v.onTouchEvent(new android.view.MotionEvent(android.view.MotionEvent.ACTION_UP, x, y));
     }
 
     static int[] load(File f, int gen, boolean map) {
