@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  CEditor - level loader/saver and developer editor.  Reconstructed from Neutron.exe.
     See CEditor.h for the overview. Each function names its original address.
 
@@ -533,6 +534,9 @@ void CEditor::UpdateGame(float dt)
 void CEditor::CheckLoadLevel(void)
 {
 	if (!m_load_pending) return;
+	PortLoadTiming::begin(m_level_name); // port: load timing
+	SDL_Log("load: request-wait %.3f", PortLoadTiming::now()-PortLoadTiming::state().start); // port: load timing
+	double load_phase = PortLoadTiming::now();
 
 	Trace("before gcu");
 	ListObjects();
@@ -554,6 +558,7 @@ void CEditor::CheckLoadLevel(void)
 	CloseAllDatabases();									// 0x46b000
 	for (std::list<CGameObject *>::iterator i = g_objects.begin(); i != g_objects.end(); i++)
 		if (*i) static_cast<CLocalGameObject *>(*i)->f_4aa = 0;	// +0x49e
+	SDL_Log("load: unload %.3f", PortLoadTiming::now()-load_phase); // port: load timing
 	LoadGame(m_level_name);									// vtable +0xfc
 	m_load_pending = 0;
 }
@@ -588,6 +593,8 @@ static CGameObject *PortPlaceholder(int id)
 
 void CEditor::LoadGame(char *name)
 {
+	PortLoadTiming::begin(name); // port: load timing
+	double load_phase = PortLoadTiming::now();
 	strcpy(m_game_name, name);
 	strcpy(neg::g_game_file, name);							// port: the level's name for the Bill's UI / companion
 	if (strcasecmp(name, "level1d.gam") == 0)
@@ -631,6 +638,8 @@ void CEditor::LoadGame(char *name)
 		return;
 	}
 
+	SDL_Log("load: gam-open %.3f", PortLoadTiming::now()-load_phase); // port: load timing
+	load_phase = PortLoadTiming::now();
 	int level_id;
 	fs >> level_id;											// the game type's 4cc
 	CGameObject *gt = neg::CreateObject(level_id);
@@ -693,13 +702,17 @@ void CEditor::LoadGame(char *name)
 		}
 	}
 	fs.close();
+	SDL_Log("load: objects-properties %.3f", PortLoadTiming::now()-load_phase); // port: load timing
+	load_phase = PortLoadTiming::now();
 	Trace("File closed, Calling ResetLevel 1");
 	ResetLevel();											// vtable +0x128
+	SDL_Log("load: reset-init %.3f", PortLoadTiming::now()-load_phase); // port: load timing
 	Trace("File closed, Calling ResetLevel 2");
 	g_splash->hide(true);
 	TestPlayHook(name);										// port: test-only (NEG_TEST_PLAY)
 	neg::AssetViewLevelLoaded(name);						// port: Asset Viewer (NEG_ASSET_VIEW)
 	neg::StartModeLevelLoaded();							// port: NEG_START
+	PortLoadTiming::ready(); // port: load timing
 	neg::LauncherArtLevelLoaded(name);						// port: the launcher's picture of this level
 }
 
@@ -764,6 +777,7 @@ void CEditor::MakeBackupName(char *name)
 
 void CEditor::LoadLevelNow(char *name)						// slot 64 0x46df70: load at the next frame
 {
+	PortLoadTiming::begin(name); // port: load timing
 	m_load_pending = 1;
 	strcpy(m_level_name, name);
 }

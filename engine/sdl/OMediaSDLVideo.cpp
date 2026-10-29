@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 #define OMD_SDL_NO_GL_WRAP
 /*  OMT SDL platform layer - video engine, engine factory, windows, OpenGL context, offscreen buffers.
     Port of OS/MSWindows (GDI/WGL path) to SDL2.  LGPL. */
@@ -689,6 +690,7 @@ void OMediaGLRenderTarget::flip_buffers(void)
 	if (!rtg->context) return;
 	omf_SDLFrameHook(omf_SDLWindowOf(rtg->window));
 	SDL_GL_SwapWindow(omf_SDLWindowOf(rtg->window));
+	PortLoadTiming::presented(); // port: load timing
 	omf_SDLFramePace();
 	omf_SDLClearBars(omf_SDLWindowOf(rtg->window));
 }

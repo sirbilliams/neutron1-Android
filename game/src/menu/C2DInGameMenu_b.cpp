@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  Reconstructed from Neutron.exe (all functions verified line by line). C2DInGameMenu part b: Process (slot 241, 0x404080: the pad cursor, the pickup pop-up, the HUD
     and the yes/no boxes with their actions), the level-start slot (259), the story message
     panel (308), the screen fade (311), the end-of-level bonus count (312), the pulse (313),
@@ -205,6 +206,7 @@ float neg::MenuPulse(void)												// 0x4073a0
 
 void neg::ShowLoadingPicture(bool show)									// 0x4073b0
 {
+	PortLoadTiming::Phase load_phase("loading-picture"); // port: load timing
 	if (!show) C2DInGameMenu::s_loading_pic.Delete();
 	else C2DInGameMenu::s_loading_pic.Show();
 }
@@ -518,6 +520,7 @@ slide_in:
 
 void C2DInGameMenu::v311(float dt)
 {
+	PortLoadTiming::Phase load_draw("loading-fade-cpu"); // port: load timing
 	if (g_hud_on) return;
 	if (g_4f8430)											// the view is held at its saved position
 	{

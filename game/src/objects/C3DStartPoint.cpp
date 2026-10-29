@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  C3DStartPoint - see C3DStartPoint.h. Reconstructed from Neutron.exe 0x4422d0..0x4428f0. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-conversion"		// (double constants in OMedia3DShape.h)
@@ -129,6 +130,7 @@ void C3DStartPoint::v258(void)								// 0x442700
 // not when he came back by a "RETURN" exit, which only clears that flag.
 void C3DStartPoint::v260(void)
 {
+	PortLoadTiming::Phase load_phase("start-point"); // port: load timing
 	C3DSprite::v260();										// 0x464810
 	if (strcasecmp(m_start_trigger, "none") != 0)
 	{

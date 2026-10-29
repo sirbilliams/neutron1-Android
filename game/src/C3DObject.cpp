@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  C3DObject - see C3DObject.h. Reconstructed from Neutron.exe. */
 #include "C3DObject.h"
 #include "Game.h"
@@ -101,6 +102,7 @@ void C3DObject::UnInitObject(void)							// 0x462390
 
 void C3DObject::InitPhysics(void)							// 0x4623d0
 {
+	PortLoadTiming::Phase load_physics("object-physics"); // port: load timing
 	Log("InitPhysics()");
 	CLocalGameObject::InitPhysics();
 	v90(x, y, z);											// position from the element (+0x44..)

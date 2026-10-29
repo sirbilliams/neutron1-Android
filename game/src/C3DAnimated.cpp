@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  C3DAnimated - see C3DAnimated.h. Reconstructed from Neutron.exe (0x40d110..0x40e870); every function checked against raw/C3DAnimated.c. */
 #include "C3DAnimated.h"
 #include "Game.h"
@@ -257,6 +258,7 @@ void C3DAnimated::CreateAnim(char *name, char *file)		// 0x40d4a0
 		return;
 	}
 	fs.open(omcfp_Read, false, false);
+	PortLoadTiming::Asset load_asset(path, fs.getsize()); // port: load timing
 	// first animation: a new morph definition, the next ones add a sequence to it
 	OMedia3DShapeConverter::set_anim_conv_mode_mode(first ? omc3danconv_AlwaysCreateNewMorphAnimDef : omc3danconv_AddSequence);
 	OMedia3DShapeConverter::set_object_convert_mode(omc3doconv_OneShapePerGroup);
@@ -373,7 +375,8 @@ void C3DAnimated::CreateTexture(char *file, short index)	// 0x40db20
 	OMediaFilePath fp(std::string(path), 'null', 'null');
 	OMediaFileStream fs;
 	fs.setpath(&fp);
-	fs.open(omcfp_Read, false, false);						// (no fileexists test: OMT throws)
+	fs.open(omcfp_Read, false, false);
+	PortLoadTiming::Asset load_asset(path, fs.getsize()); // port: load timing						// (no fileexists test: OMT throws)
 	OMediaCanvas *c = new OMediaCanvas;
 	f_5ac[index] = c;										// (debug log "OMediaCanvas 2 " + tag, empty)
 	fs >> (OMediaClassStreamer *)c;

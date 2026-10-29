@@ -1,3 +1,4 @@
+#include "PortLoadTiming.h" // port: load timing
 /*  Database helpers and the "alpha" (bitmap font) sprite pool.  Reconstructed from Neutron.exe.
     0x476170 InitFileStream   0x476000 InitDatabase   0x477890 LoadCanvasID
     0x476080 / 0x476290 UnInitDatabase / UnInitFileStream
@@ -43,6 +44,7 @@ OMediaFileStream *neg::InitFileStream(const char *name)		// 0x476170
 {
 	SDL_Log("InitFileStream(%s)", name ? name : "");
 	if (!name) return NULL;
+	double load_start = PortLoadTiming::now(); // port: load timing
 	OMediaFileStream *fs = new OMediaFileStream;
 	try
 	{
@@ -56,6 +58,7 @@ OMediaFileStream *neg::InitFileStream(const char *name)		// 0x476170
 		delete fs;
 		return NULL;
 	}
+	PortLoadTiming::opened(fs, name, PortLoadTiming::now()-load_start); // port: load timing
 	return fs;
 }
 
@@ -63,10 +66,17 @@ OMediaDataBase *neg::InitDatabase(OMediaFileStream *fs)		// 0x476000
 {
 	SDL_Log("InitDatabase()");
 	if (!fs) return NULL;
-	return new OMediaDataBase(fs);
+	double start = PortLoadTiming::now(); // port: load timing
+	OMediaDataBase *db = new OMediaDataBase(fs);
+	PortLoadTiming::State &s = PortLoadTiming::state();
+	PortLoadTiming::DB d = s.live[fs];
+	d.bytes = fs->getsize(); // port: load timing; resolved case-insensitive path size
+	s.live[db] = d; s.live.erase(fs);
+	if(s.active) { s.totals[d.name].bytes=d.bytes; s.totals[d.name].ms += PortLoadTiming::now()-start; }
+	return db;
 }
 
-void neg::UnInitDatabase(OMediaDataBase *db)	{ delete db; }				// 0x476080
+void neg::UnInitDatabase(OMediaDataBase *db)	{ PortLoadTiming::closed(db); delete db; } // port: load timing				// 0x476080
 void neg::UnInitFileStream(OMediaFileStream *fs) { delete fs; }			// 0x476290
 
 OMediaCanvas *neg::LoadCanvasID(OMediaDataBase *db, int id)				// 0x477890
