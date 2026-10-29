@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0-rc4
+
+The bottom-screen map from Negatron 1.0.3-1.0.5, in both panel themes.
+
+- Companion map: tap EXPAND MAP for a full-screen, whole-level map with touch pan, pinch zoom, RECENTER, FIT LEVEL and item / enemy / checkpoint / exit filters; tap DASHBOARD to slide back.
+- Exit labels use friendly level names, one label per exit, kept clear of Jimmy, the toolbar and the compass.
+- Score screen: the A button skips the count-up again.
+- Desktop: a Flatpak build (packaging/flatpak).
+
 ## v1.0-rc3
 
 Fixes from the second Thor play-test.
