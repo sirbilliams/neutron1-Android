@@ -3,6 +3,7 @@ package android.graphics;
 public class RectF {
     public float left, top, right, bottom;
     public RectF() {}
+    public RectF(RectF r) { set(r); }
     public RectF(float l, float t, float r, float b) { set(l, t, r, b); }
     public void set(float l, float t, float r, float b) { left = l; top = t; right = r; bottom = b; }
     public void set(RectF src) { set(src.left, src.top, src.right, src.bottom); }

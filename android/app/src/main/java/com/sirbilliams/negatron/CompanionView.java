@@ -217,6 +217,12 @@ final class CompanionView extends View {
         return mBtn;
     }
 
+    /** North marker: top centre on the dashboard, top right (clear of both toolbar rows) when expanded. */
+    private float compassX() {
+        RectF crt = mapRect();
+        return crt.centerX() + (crt.right - 70 - crt.centerX()) * mExpansion;
+    }
+
     private boolean hit(int id, float x, float y) { return btn(id).contains(x, y); }
 
     private void toolButton(Canvas c, int id, String label, int colour) {
@@ -729,7 +735,12 @@ final class CompanionView extends View {
         for (float y=crt.top; y<crt.bottom; y+=64) c.drawLine(crt.left,y,crt.right,y,mStroke);
         mLabels.clear();
         mLabelBounds.set(crt.left+24, crt.top+90, crt.right-24, crt.bottom-70);
+        float jx = cx + (mExplore ? mPanX : 0), jy = cy + (mExplore ? mPanY : 0);
         mLabels.add(new RectF(crt.left, crt.top, crt.left+280, crt.top+90));
+        // the toolbar rows (expanded) or the EXPAND button, and the compass: no map label under them
+        if (mExplore && mPickName.length == 0) mLabels.add(new RectF(crt.left, crt.top, crt.right, crt.top + TOOL_H));
+        else if (mPickName.length == 0) mLabels.add(new RectF(btn(B_TOGGLE)));
+        mLabels.add(new RectF(compassX() - 30, crt.top + 14, compassX() + 30, crt.top + 62));
         if (mCaption.length > 0) mLabels.add(new RectF(crt.left, crt.bottom-190, crt.right, crt.bottom));
         if (mMap == null || !mJimmy) {
             lcdText(c, mHave ? "NO SIGNAL" : "", cx - 95, cy, 30, theme.muted);
@@ -743,14 +754,37 @@ final class CompanionView extends View {
                 mBmp.setAlpha(255);
             }
             float iconScale = mFar ? 0.7f : 1f;
+            reserveJimmy(jx, jy);
+            // exits leading to the same place, close together on screen, become one marker at their centre
+            int np = mPtKind.length;
+            boolean[] merged = new boolean[np];
+            float[] mx = new float[np], my = new float[np];
+            for (int i = 0; i < np; i++) { mx[i] = left + mPtX[i] * k; my[i] = top + mPtY[i] * k; }
+            for (int i = 0; i < np; i++) {
+                if ((mPtKind[i] != 'x' && mPtKind[i] != 'X') || merged[i] || mPtLabel[i] == null || !showMarker(mPtKind[i])) continue;
+                float sx = mx[i], sy = my[i];
+                int cnt = 1;
+                for (int j = i + 1; j < np; j++) {
+                    if (merged[j] || mPtKind[j] != mPtKind[i] || !mPtLabel[i].equals(mPtLabel[j])) continue;
+                    if (Math.hypot(mx[j] - mx[i], my[j] - my[i]) > 90) continue;
+                    merged[j] = true; sx += mx[j]; sy += my[j]; cnt++;
+                }
+                mx[i] = sx / cnt; my[i] = sy / cnt;
+            }
+            // pickup, neutron and checkpoint pictures are drawn over the exit labels: keep labels off them
+            for (int i = 0; i < np; i++) {
+                char kd = mPtKind[i];
+                if (kd != 'p' && kd != 'n' && kd != 'c' && kd != 'r' || !showMarker(kd)) continue;
+                mLabels.add(new RectF(mx[i] - 30, my[i] - 30, mx[i] + 30, my[i] + 30));
+            }
             // points, then Jimmy on top
             for (int priority = 0; priority < 3; priority++) {
             for (int i = 0; i < mPtKind.length; i++) {
                 int rank = mPtKind[i] == 'x' ? 0 : mPtKind[i] == 'o' ? 1 : 2;
                 if (rank != priority) continue;
-                float px = left + mPtX[i] * k, py = top + mPtY[i] * k;
+                float px = mx[i], py = my[i];
                 char kind = mPtKind[i];
-                if (!showMarker(kind)) continue;
+                if (merged[i] || !showMarker(kind)) continue;
                 float margin = (kind == 'o' || kind == 'x' || kind == 'X') ? -12 : 40;   // marked on the edge when out
                 boolean in = px > crt.left - margin && px < crt.right + margin && py > crt.top - margin && py < crt.bottom + margin;
                 if (!in) {
@@ -787,12 +821,13 @@ final class CompanionView extends View {
             c.drawLine(crt.left+12,yy,crt.left+(i%4==0?29:20),yy,mStroke);
         }
         // compass, zoom and scale bar on the glass
-        lcdText(c, "N", cx - 9, crt.top + 51, 30, theme.accent);
+        float nx = compassX();
+        lcdText(c, "N", nx - 9, crt.top + 51, 30, theme.accent);
         mFill.setColor(theme.accent);
         mPath.reset();
-        mPath.moveTo(cx, crt.top + 19);
-        mPath.lineTo(cx - 8, crt.top + 27);
-        mPath.lineTo(cx + 8, crt.top + 27);
+        mPath.moveTo(nx, crt.top + 19);
+        mPath.lineTo(nx - 8, crt.top + 27);
+        mPath.lineTo(nx + 8, crt.top + 27);
         mPath.close();
         c.drawPath(mPath, mFill);
         lcdText(c, mFar ? "ZOOM FAR" : "ZOOM NEAR", crt.left + 46, crt.bottom - 31, 28, theme.accent);
@@ -1044,6 +1079,9 @@ final class CompanionView extends View {
         }
         lcdText(c, out, x, y, fittedSize, color);
     }
+
+    /** Labels keep clear of Jimmy's marker (it is drawn last, over them). */
+    private void reserveJimmy(float x, float y) { mLabels.add(new RectF(x - 48, y - 48, x + 48, y + 48)); }
 
     private void mapLabel(Canvas c, String label, float x, float y, int color) {
         mText.setTypeface(theme.font); mText.setTextSize(theme.small);

@@ -712,7 +712,26 @@ const char *LevelNameOf(int id)
 	};
 	for (size_t i = 0; i < sizeof kNames / sizeof kNames[0]; i++)
 		if (id && kNames[i].id == id) return kNames[i].name;
-	return NULL;
+	// port: the exe names only those places. The panel still needs a readable label for every other
+	// level (exit markers, header), so name it after its area: LV<d><x> -> "<area of d> <X>",
+	// VRnn -> "VR room n", LEV7 -> "Level 7".
+	static std::map<int, std::string> s_made;				// game thread
+	if (!id) return NULL;
+	std::map<int, std::string>::iterator it = s_made.find(id);
+	if (it == s_made.end())
+	{
+		static const char *const kArea[] = { "", "Neighborhood", "School", "Retroland", "Downtown", "Area 51", "Yokian Ship" };
+		const int c0 = (id >> 24) & 0xff, c1 = (id >> 16) & 0xff, c2 = (id >> 8) & 0xff, c3 = id & 0xff;
+		std::string n;
+		if (c0 == 'L' && c1 == 'V' && c2 >= '1' && c2 <= '6' && isalpha(c3))
+			n = std::string(kArea[c2 - '0']) + " " + (char)toupper(c3);
+		else if (c0 == 'V' && c1 == 'R' && isdigit(c2) && isdigit(c3))
+			n = std::string("VR room ") + (c2 == '0' ? std::string() : std::string(1, (char)c2)) + (char)c3;
+		else if (c0 == 'L' && c1 == 'E' && c2 == 'V' && isdigit(c3))
+			n = std::string("Level ") + (char)c3;
+		it = s_made.insert(std::make_pair(id, n)).first;
+	}
+	return it->second.empty() ? NULL : it->second.c_str();
 }
 
 const char *LevelNameOfFile(const char *file)
