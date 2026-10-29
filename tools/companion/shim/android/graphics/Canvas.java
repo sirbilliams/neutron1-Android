@@ -30,6 +30,7 @@ public class Canvas {
         g.clip(path.p);
         return !g.getClip().getBounds2D().isEmpty();
     }
+    public boolean clipRect(float l, float t, float r, float b) { return clipRect(new RectF(l,t,r,b)); }
     private void use(Paint p) {
         g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER,
                 p.shader == null ? 1f : p.alpha / 255f));

@@ -159,10 +159,34 @@ quick taps (within 0.35 s), to open a small menu over the game (the game pauses 
   Bill's UI; desktop: the environment variable). See "Bill's UI" below.
 
 A single back tap still reaches the game as Esc, a third of a second late (the menu needs to tell
-a tap from a hold or a double tap). The panel never takes the focus or touches, and only reads
-the game state (game/src/port/Companion.h); on the desktop `NEG_COMPANION_LOG=1` logs the same
+a tap from a hold or a double tap). The panel never takes controller focus (touch only operates
+the map, below), and only reads the game state (game/src/port/Companion.h); on the desktop `NEG_COMPANION_LOG=1` logs the same
 snapshot once a second, and `NEG_COMPANION_DUMP=<dir>` writes the map, the snapshot and the icons
-there; `tools/companion/render.sh <dir> <Level> out.png` then draws the panel from them.
+there; `tools/companion/render.sh <dir> <Level> out.png [far] [expanded] [zoom] [filter]` then draws the
+panel from them (`NEG_PANEL_THEME=retroville|yokian`; `expanded` taps EXPAND MAP, `zoom` is a 1.6x
+pinch, `filter` taps ENEMIES).
+
+### Expanding the map (touch)
+
+Tap **EXPAND MAP >** on the bottom screen's map. The dashboard (the brand plate, energy dial, level
+sheet and inventory) slides off to the left in 250 ms and the map plate widens over its space; it is
+painted in the current panel theme (Retroville cream and teal, or Yokian purple and green). Only the
+expanded map has the exploration controls:
+
+- Drag below the toolbar to pan; pinch to zoom (down to the whole-level fit, up to 4 times the
+  saved Near/Far scale).
+- **RECENTER** restores the default zoom with Jimmy at the middle; **FIT LEVEL** fits the whole
+  level in the window (expanding starts like this).
+- **ITEMS**, **ENEMIES**, **CHECKPOINTS** and **EXITS** show or hide those markers (exits includes
+  doors; objectives, friends and Goddard always show). Filters only apply to the expanded map and
+  last for this panel instance.
+- **< DASHBOARD** slides the dashboard back and returns to the normal following map.
+
+Exploring changes only the view, never the game state, and the game keeps running. The map image now
+covers all the level terrain the game has loaded, up to 1536 pixels on its longest side; a large
+level (Area 51, the neighbourhood) uses a coarser scale instead of a moving crop, so the
+dashboard's following map is softer there. It is rebuilt only when Jimmy's height changes. A new
+level resets pan and zoom. The Vox world cards temporarily replace the map controls.
 
 ## Casting / TV (port)
 

@@ -12,6 +12,9 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.os.SystemClock;
 import android.view.View;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.animation.ValueAnimator;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,6 +50,7 @@ final class CompanionView extends View {
         theme = next;
         setBackgroundColor(theme.bg);
         if (mChrome != null) { mChrome.recycle(); mChrome = null; }
+        if (mMapChrome != null) { mMapChrome.recycle(); mMapChrome = null; }
         // Refresh the raster tint even if the snapshot has not changed.
         mMapGen = -1;
         if (mHave) fetchMapFromLast();
@@ -69,8 +73,9 @@ final class CompanionView extends View {
     private static final RectF R_GAUGE = new RectF(20, 116, 424, 326);
     private static final RectF R_LEVEL = new RectF(20, 338, 424, 570);
     private static final RectF R_SHEET = new RectF(20, 582, 424, 1060);
-    private static final RectF R_MAP = new RectF(440, 20, 1220, 1060);
-    private static final float BEZEL = 22;
+    private final RectF R_MAP = new RectF(440, 20, 1220, 1060);
+    private static final float BEZEL = 22, CHROME_PAD = 16;     // pad: room for the plate's glow
+    private static final float R_MAP_W_EXPANDED = 1200;        // R_MAP when the dashboard has slid away
 
     private final Paint mFill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -81,12 +86,172 @@ final class CompanionView extends View {
     private final RectF mRect2 = new RectF();
 
     private Source mSource;
+    private Bitmap mMapChrome;
+    private int mMapChromeWidth;
+    private Bitmap mCase;                   // full brushed case behind the moving panels
     private Bitmap mChrome;                 // the static plates, drawn once per size
     private int mChromeW, mChromeH;
     private Bitmap mMap;                    // the level map in its original colors
-    private int mMapGen;
+    private int mMapGen, mWantedMapGen;
     private final HashMap<Integer, Bitmap> mIcons = new HashMap<>();
     private boolean mFar;
+    private boolean mExplore;
+    private float mExpansion, mPanX, mPanY, mTouchX, mTouchY, mDownX, mDownY;
+    private float mExploreZoom = 1;
+    private boolean mMoved;
+    private final boolean[] mFilters = {true, true, true, true};
+    private final String[] mFilterNames = {"ITEMS", "ENEMIES", "CHECKPOINTS", "EXITS"};
+    private final ScaleGestureDetector mPinch;
+    private ValueAnimator mSlide;
+
+    private void explore(boolean on) {
+        mExplore = on;
+        mPanX = mPanY = 0;
+        mExploreZoom = 1;
+        if (on) fitMap();
+        if (mSlide != null) mSlide.cancel();
+        mSlide = ValueAnimator.ofFloat(mExpansion, on ? 1 : 0);
+        mSlide.setDuration(250);
+        mSlide.addUpdateListener(a -> {
+            mExpansion = (Float) a.getAnimatedValue();
+            invalidate();
+        });
+        mSlide.start();
+    }
+
+    private float fitZoom() {
+        if (mMapW <= 0 || mMapH <= 0 || mMapS <= 0) return 1;
+        // the expanded window (R_MAP at its widest) less a margin, and the part below the toolbar
+        float pixelsPerMapPixel = Math.min((R_MAP_W_EXPANDED - 2 * BEZEL - 48) / mMapW, (R_MAP.height() - 172 - TOOL_H - 40) / mMapH);
+        return Math.max(0.0001f, Math.min(4f, pixelsPerMapPixel * (mFar ? ZOOM_FAR : ZOOM_NEAR) / mMapS));
+    }
+
+    private void fitMap() {
+        mExploreZoom = fitZoom();
+        float k = mMapS / (mFar ? ZOOM_FAR : ZOOM_NEAR) * mExploreZoom;
+        mPanX = (mJx - mMapW / 2f) * k;
+        // Leave room above the map for the exploration toolbar.
+        mPanY = (mJy - mMapH / 2f) * k + TOOL_H / 2;
+        invalidate();
+    }
+
+    private float layoutScale() { return Math.min(getWidth() / LW, getHeight() / LH); }
+    private float layoutX(float x) { float u = layoutScale(); return (x - (getWidth() - LW * u) / 2) / u; }
+    private float layoutY(float y) { float u = layoutScale(); return (y - (getHeight() - LH * u) / 2) / u; }
+
+    @Override public boolean onTouchEvent(MotionEvent e) {
+        if (layoutScale() <= 0) return false;
+        mPinch.onTouchEvent(e);
+        float x = layoutX(e.getX()), y = layoutY(e.getY());
+        switch (e.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                mDownX = mTouchX = x; mDownY = mTouchY = y; mMoved = false;
+                return true;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mMoved = true;
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                if (Math.hypot(x - mDownX, y - mDownY) > 12) mMoved = true;
+                if (mExplore && mPickName.length == 0 && e.getPointerCount() == 1
+                        && !mPinch.isInProgress() && mDownY > mapRect().top + TOOL_H) {
+                    mPanX += x - mTouchX; mPanY += y - mTouchY;
+                    invalidate();
+                }
+                mTouchX = x; mTouchY = y;
+                return true;
+            case MotionEvent.ACTION_POINTER_UP:
+                mMoved = true;
+                int remaining = e.getActionIndex() == 0 ? 1 : 0;
+                mTouchX = layoutX(e.getX(remaining)); mTouchY = layoutY(e.getY(remaining));
+                return true;
+            case MotionEvent.ACTION_UP:
+                if (!mMoved && mPickName.length == 0) {
+                    if (hit(B_TOGGLE, x, y)) explore(!mExplore);
+                    else if (mExplore && hit(B_RECENTER, x, y)) {
+                        mPanX = mPanY = 0; mExploreZoom = 1; invalidate();
+                    } else if (mExplore && hit(B_FIT, x, y)) {
+                        fitMap();
+                    } else if (mExplore) {
+                        for (int i = 0; i < mFilters.length; i++)
+                            if (hit(B_FILTER + i, x, y)) { mFilters[i] = !mFilters[i]; invalidate(); }
+                    }
+                    performClick();
+                }
+                return true;
+            case MotionEvent.ACTION_CANCEL: mMoved = true; return true;
+            default: return true;
+        }
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        if (mSlide != null) mSlide.cancel();
+        super.onDetachedFromWindow();
+    }
+
+    @Override public boolean performClick() { super.performClick(); return true; }
+
+    private boolean showMarker(char kind) {
+        if (!mExplore) return true;
+        if (kind == 'p' || kind == 'n' || kind == 'r') return mFilters[0];
+        if (kind == 'e') return mFilters[1];
+        if (kind == 'c') return mFilters[2];
+        if (kind == 'd' || kind == 'x' || kind == 'X') return mFilters[3];
+        return true;
+    }
+
+    // Toolbar geometry, in layout px relative to the map window. Collapsed: only the toggle, at the
+    // window's top right; expanded: toggle, RECENTER, FIT LEVEL on one row, the four filters under it.
+    private static final int B_TOGGLE = 0, B_RECENTER = 1, B_FIT = 2, B_FILTER = 3;
+    private static final float TOOL_H = 150;         // toolbar depth below the window's top edge
+    private final RectF mBtn = new RectF();
+
+    private RectF btn(int id) {
+        RectF crt = mapRect();
+        float x0 = crt.left + 12;
+        if (id == B_TOGGLE) {
+            float x = x0 + (crt.right - 12 - 280 - x0) * (1 - mExpansion);
+            mBtn.set(x, crt.top + 14, x + 280, crt.top + 74);
+        } else if (id == B_RECENTER) mBtn.set(x0 + 300, crt.top + 14, x0 + 560, crt.top + 74);
+        else if (id == B_FIT) mBtn.set(x0 + 580, crt.top + 14, x0 + 840, crt.top + 74);
+        else mBtn.set(x0 + (id - B_FILTER) * 285, crt.top + 84, x0 + (id - B_FILTER) * 285 + 275, crt.top + 138);
+        return mBtn;
+    }
+
+    /** North marker: top centre on the dashboard, top right (clear of both toolbar rows) when expanded. */
+    private float compassX() {
+        RectF crt = mapRect();
+        return crt.centerX() + (crt.right - 70 - crt.centerX()) * mExpansion;
+    }
+
+    private boolean hit(int id, float x, float y) { return btn(id).contains(x, y); }
+
+    private void toolButton(Canvas c, int id, String label, int colour) {
+        RectF r = btn(id);
+        float x = r.left, y = r.top, w = r.width(), h = r.height();
+        screenBox(c, x, y, w, h);
+        mText.setTypeface(theme.font); mText.setTextSize(theme.small); mText.setColor(colour);
+        mText.setTextAlign(Paint.Align.CENTER);
+        c.drawText(label, x + w / 2, y + h / 2 + theme.small * 0.35f, mText);
+        mText.setTextAlign(Paint.Align.LEFT);
+    }
+
+    private void mapControls(Canvas c) {
+        if (mPickName.length > 0) return;
+        toolButton(c, B_TOGGLE, mExplore ? "< DASHBOARD" : "EXPAND MAP >", theme.accent);
+        if (!mExplore) return;
+        toolButton(c, B_RECENTER, "RECENTER", theme.accent);
+        toolButton(c, B_FIT, "FIT LEVEL", theme.accent);
+        for (int i = 0; i < mFilters.length; i++) {
+            RectF r = btn(B_FILTER + i);
+            float x = r.left, y = r.top, h = r.height();
+            screenBox(c, x, y, r.width(), h);
+            led(c, x + 32, y + h / 2, 9, mFilters[i] ? 2 : 0, theme.accent);
+            // a touch under the usual label size so CHECKPOINTS fits its pill
+            mText.setTypeface(theme.font); mText.setTextSize(theme.small - 4); mText.setColor(mFilters[i] ? theme.white : theme.muted);
+            c.drawText(mFilterNames[i], x + 52, y + h / 2 + (theme.small - 4) * 0.35f, mText);
+        }
+    }
+
     private String mLast;
 
     // --- the parsed snapshot (setSnapshot), read by onDraw
@@ -129,6 +294,19 @@ final class CompanionView extends View {
         setBackgroundColor(theme.bg);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         mStroke.setStyle(Paint.Style.STROKE);
+        setContentDescription("Companion map. Expand map for touch pan, zoom and marker filters.");
+        mPinch = new ScaleGestureDetector(c, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override public boolean onScale(ScaleGestureDetector detector) {
+                if (!mExplore || mPickName.length > 0) return false;
+                mMoved = true;
+                float old = mExploreZoom;
+                mExploreZoom = Math.max(Math.min(0.35f, fitZoom()), Math.min(4f, old * detector.getScaleFactor()));
+                float ratio = mExploreZoom / old;
+                mPanX *= ratio; mPanY *= ratio;
+                invalidate();
+                return true;
+            }
+        });
     }
 
     void setSource(Source s) { mSource = s; }
@@ -143,10 +321,14 @@ final class CompanionView extends View {
 
     /** New snapshot (JSON) from the poll; parsed only when it changed. */
     void setSnapshot(String json) {
-        if (json == null || json.isEmpty() || json.equals(mLast)) return;
-        mLast = json;
+        if (json == null || json.isEmpty()) return;
+        if (json.equals(mLast)) {
+            if (mWantedMapGen != mMapGen) fetchMap(mWantedMapGen);
+            return;
+        }
         try {
             parse(new JSONObject(json));
+            mLast = json;
         } catch (Exception e) {
             return;
         }
@@ -158,6 +340,7 @@ final class CompanionView extends View {
     private void parse(JSONObject d) {
         mHave = true;
         String level = d.optString("level", "");
+        if (!level.equals(mLevelFile)) { mPanX = mPanY = 0; mExploreZoom = 1; }   // a new level: back to the default view
         mLevelFile = level;
         updateTheme();
         int dot = level.lastIndexOf('.');
@@ -259,12 +442,16 @@ final class CompanionView extends View {
         mCaption = cap.isEmpty() ? new String[0] : cap.split("\n");
 
         JSONObject map = d.optJSONObject("map");
+        int previousGen = mWantedMapGen;
         int gen = map != null ? map.optInt("gen", 0) : 0;
         mMapW = map != null ? map.optInt("w", 0) : 0;
         mMapH = map != null ? map.optInt("h", 0) : 0;
         mMapS = map != null ? (float) map.optDouble("s", 1) : 1;
+        mWantedMapGen = gen;
         if (gen != mMapGen) fetchMap(gen);
 
+        float previousX = mJx, previousY = mJy;
+        boolean hadJimmy = mJimmy;
         JSONArray j = d.optJSONArray("jimmy");
         mJimmy = j != null && j.length() >= 4;
         if (mJimmy) {
@@ -272,6 +459,13 @@ final class CompanionView extends View {
             mJy = (float) j.optDouble(1, 0);
             mHx = (float) j.optDouble(2, 0);
             mHy = (float) j.optDouble(3, -1);
+            if (mExplore && hadJimmy && previousGen == gen) {
+                float pixelsPerMapUnit = mMapS / (mFar ? ZOOM_FAR : ZOOM_NEAR) * mExploreZoom;
+                mPanX += (mJx - previousX) * pixelsPerMapUnit;
+                mPanY += (mJy - previousY) * pixelsPerMapUnit;
+            } else if (previousGen != gen) {
+                mPanX = mPanY = 0;
+            }
         }
 
         JSONArray p = d.optJSONArray("pts");
@@ -361,12 +555,20 @@ final class CompanionView extends View {
         if (w <= 0 || h <= 0) return;
         float u = Math.min(w / LW, h / LH);
         float ox = (w - LW * u) / 2, oy = (h - LH * u) / 2;
+        R_MAP.left = 440;
         if (mChrome == null || mChromeW != w || mChromeH != h) buildChrome(w, h, u, ox, oy);
-        c.drawBitmap(mChrome, 0, 0, null);
+        c.drawBitmap(mCase, 0, 0, null);
+        c.save();
+        c.clipRect(ox, oy, ox + (440 - 440 * mExpansion) * u, oy + LH * u);
+        c.drawBitmap(mChrome, -440 * mExpansion * u, 0, null);
+        c.restore();
         c.save();
         c.translate(ox, oy);
         c.scale(u, u);
-        drawHeader(c);
+        c.save();
+        c.clipRect(0, 0, 440 - 440 * mExpansion, LH);
+        c.translate(-440 * mExpansion, 0);
+        drawBrand(c);
         if (!mHave) {
             lcdText(c, "WAITING FOR THE GAME", 500, 550, theme.small, theme.accent);
         } else {
@@ -374,22 +576,45 @@ final class CompanionView extends View {
             drawLevel(c);
             drawSheet(c);
         }
+        c.restore();
+        R_MAP.left = 440 - 420 * mExpansion;
+        // Cache at the current width; redraw only while resizing, then reuse without stretching.
+        int mapWidth = Math.round(R_MAP.width());
+        if (mMapChrome == null || mMapChromeWidth != mapWidth) {
+            if (mMapChrome != null) mMapChrome.recycle();
+            mMapChromeWidth = mapWidth;
+            mMapChrome = Bitmap.createBitmap(mapWidth + 2 * (int) CHROME_PAD, 1040 + 2 * (int) CHROME_PAD, Bitmap.Config.ARGB_8888);
+            Canvas chrome = new Canvas(mMapChrome);
+            chrome.translate(CHROME_PAD - R_MAP.left, CHROME_PAD - R_MAP.top);
+            plate(chrome, R_MAP);
+            drawMapRecess(chrome);
+        }
+        mRect.set(R_MAP.left - CHROME_PAD, R_MAP.top - CHROME_PAD, R_MAP.right + CHROME_PAD, R_MAP.bottom + CHROME_PAD);
+        c.drawBitmap(mMapChrome, null, mRect, mBmp);
+        drawMapTitle(c);
         if (mPickName.length > 0) drawPicker(c);
         else drawMap(c);
+        mapControls(c);
         c.restore();
     }
 
-    private void drawHeader(Canvas c) {
+    /** The brand plate on the dashboard side. */
+    private void drawBrand(Canvas c) {
         lcdText(c, "JIMMY NEUTRON", 102, 56, theme.body, theme.ink);
         lcdText(c, theme.alien ? "YOKIAN INTERFACE" : "RETROVILLE LABS", 102, 88, theme.small, theme.muted);
-        fittedText(c, mLevel, 476, 69, 560, theme.title, theme.ink);
+    }
+
+    /** The map plate's title row and footer; they follow the plate as it slides over the dashboard. */
+    private void drawMapTitle(Canvas c) {
+        float l = R_MAP.left, r = R_MAP.right;
+        fittedText(c, mLevel, l + 36, 69, R_MAP.width() - 220, theme.title, theme.ink);
         mText.setTextAlign(Paint.Align.RIGHT);
         mText.setTypeface(theme.font); mText.setTextSize(theme.body); mText.setColor(theme.muted);
-        c.drawText(mTime, 1181, 69, mText); mText.setTextAlign(Paint.Align.LEFT);
-        led(c, 486, 1005, 7, 2, mCut ? theme.hot : theme.accent);
-        lcdText(c, mCut ? "CUT SCENE" : mMode, 506, 1016, theme.small, theme.ink);
+        c.drawText(mTime, r - 39, 69, mText); mText.setTextAlign(Paint.Align.LEFT);
+        led(c, l + 46, 1005, 7, 2, mCut ? theme.hot : theme.accent);
+        lcdText(c, mCut ? "CUT SCENE" : mMode, l + 66, 1016, theme.small, theme.ink);
         mText.setTextAlign(Paint.Align.RIGHT); mText.setColor(theme.muted);
-        c.drawText(theme.alien ? "YOKIAN TELEMETRY" : "ATOMIC FIELD MONITOR", 1181, 1050, mText);
+        c.drawText(theme.alien ? "YOKIAN TELEMETRY" : "ATOMIC FIELD MONITOR", r - 39, 1050, mText);
         mText.setTextAlign(Paint.Align.LEFT);
     }
 
@@ -510,13 +735,18 @@ final class CompanionView extends View {
         for (float y=crt.top; y<crt.bottom; y+=64) c.drawLine(crt.left,y,crt.right,y,mStroke);
         mLabels.clear();
         mLabelBounds.set(crt.left+24, crt.top+90, crt.right-24, crt.bottom-70);
+        float jx = cx + (mExplore ? mPanX : 0), jy = cy + (mExplore ? mPanY : 0);
         mLabels.add(new RectF(crt.left, crt.top, crt.left+280, crt.top+90));
+        // the toolbar rows (expanded) or the EXPAND button, and the compass: no map label under them
+        if (mExplore && mPickName.length == 0) mLabels.add(new RectF(crt.left, crt.top, crt.right, crt.top + TOOL_H));
+        else if (mPickName.length == 0) mLabels.add(new RectF(btn(B_TOGGLE)));
+        mLabels.add(new RectF(compassX() - 30, crt.top + 14, compassX() + 30, crt.top + 62));
         if (mCaption.length > 0) mLabels.add(new RectF(crt.left, crt.bottom-190, crt.right, crt.bottom));
         if (mMap == null || !mJimmy) {
             lcdText(c, mHave ? "NO SIGNAL" : "", cx - 95, cy, 30, theme.muted);
         } else {
-            float k = mMapS / (mFar ? ZOOM_FAR : ZOOM_NEAR);     // layout px per map px
-            float left = cx - mJx * k, top = cy - mJy * k;
+            float k = mMapS / (mFar ? ZOOM_FAR : ZOOM_NEAR) * (mExplore ? mExploreZoom : 1);     // layout px per map px
+            float left = cx - mJx * k + (mExplore ? mPanX : 0), top = cy - mJy * k + (mExplore ? mPanY : 0);
             if (mMapW == mMap.getWidth() && mMapH == mMap.getHeight()) {
                 mRect.set(left, top, left + mMapW * k, top + mMapH * k);
                 mBmp.setAlpha(theme.alien ? 196 : 222);
@@ -524,13 +754,37 @@ final class CompanionView extends View {
                 mBmp.setAlpha(255);
             }
             float iconScale = mFar ? 0.7f : 1f;
+            reserveJimmy(jx, jy);
+            // exits leading to the same place, close together on screen, become one marker at their centre
+            int np = mPtKind.length;
+            boolean[] merged = new boolean[np];
+            float[] mx = new float[np], my = new float[np];
+            for (int i = 0; i < np; i++) { mx[i] = left + mPtX[i] * k; my[i] = top + mPtY[i] * k; }
+            for (int i = 0; i < np; i++) {
+                if ((mPtKind[i] != 'x' && mPtKind[i] != 'X') || merged[i] || mPtLabel[i] == null || !showMarker(mPtKind[i])) continue;
+                float sx = mx[i], sy = my[i];
+                int cnt = 1;
+                for (int j = i + 1; j < np; j++) {
+                    if (merged[j] || mPtKind[j] != mPtKind[i] || !mPtLabel[i].equals(mPtLabel[j])) continue;
+                    if (Math.hypot(mx[j] - mx[i], my[j] - my[i]) > 90) continue;
+                    merged[j] = true; sx += mx[j]; sy += my[j]; cnt++;
+                }
+                mx[i] = sx / cnt; my[i] = sy / cnt;
+            }
+            // pickup, neutron and checkpoint pictures are drawn over the exit labels: keep labels off them
+            for (int i = 0; i < np; i++) {
+                char kd = mPtKind[i];
+                if (kd != 'p' && kd != 'n' && kd != 'c' && kd != 'r' || !showMarker(kd)) continue;
+                mLabels.add(new RectF(mx[i] - 30, my[i] - 30, mx[i] + 30, my[i] + 30));
+            }
             // points, then Jimmy on top
             for (int priority = 0; priority < 3; priority++) {
             for (int i = 0; i < mPtKind.length; i++) {
                 int rank = mPtKind[i] == 'x' ? 0 : mPtKind[i] == 'o' ? 1 : 2;
                 if (rank != priority) continue;
-                float px = left + mPtX[i] * k, py = top + mPtY[i] * k;
+                float px = mx[i], py = my[i];
                 char kind = mPtKind[i];
+                if (merged[i] || !showMarker(kind)) continue;
                 float margin = (kind == 'o' || kind == 'x' || kind == 'X') ? -12 : 40;   // marked on the edge when out
                 boolean in = px > crt.left - margin && px < crt.right + margin && py > crt.top - margin && py < crt.bottom + margin;
                 if (!in) {
@@ -540,7 +794,7 @@ final class CompanionView extends View {
                 drawPoint(c, kind, px, py, mPtIcon[i], mPtLabel[i], iconScale);
             }
             }
-            jimmy(c, cx, cy);
+            jimmy(c, cx + (mExplore ? mPanX : 0), cy + (mExplore ? mPanY : 0));
         }
         // scanlines and the sweep
         mStroke.setShader(null);
@@ -567,23 +821,24 @@ final class CompanionView extends View {
             c.drawLine(crt.left+12,yy,crt.left+(i%4==0?29:20),yy,mStroke);
         }
         // compass, zoom and scale bar on the glass
-        lcdText(c, "N", cx - 9, crt.top + 51, 30, theme.accent);
+        float nx = compassX();
+        lcdText(c, "N", nx - 9, crt.top + 51, 30, theme.accent);
         mFill.setColor(theme.accent);
         mPath.reset();
-        mPath.moveTo(cx, crt.top + 19);
-        mPath.lineTo(cx - 8, crt.top + 27);
-        mPath.lineTo(cx + 8, crt.top + 27);
+        mPath.moveTo(nx, crt.top + 19);
+        mPath.lineTo(nx - 8, crt.top + 27);
+        mPath.lineTo(nx + 8, crt.top + 27);
         mPath.close();
         c.drawPath(mPath, mFill);
         lcdText(c, mFar ? "ZOOM FAR" : "ZOOM NEAR", crt.left + 46, crt.bottom - 31, 28, theme.accent);
-        float bar = 1000f / (mFar ? ZOOM_FAR : ZOOM_NEAR);             // 1000 world units
+        float bar = 1000f / (mFar ? ZOOM_FAR : ZOOM_NEAR) * (mExplore ? mExploreZoom : 1);             // 1000 world units
         mStroke.setColor(theme.accent);
         mStroke.setStrokeWidth(theme.stroke);
         float bx = crt.right - 24 - bar, by = crt.bottom - 36;
         c.drawLine(bx, by, bx + bar, by, mStroke);
         c.drawLine(bx, by - 8, bx, by + 8, mStroke);
         c.drawLine(bx + bar, by - 8, bx + bar, by + 8, mStroke);
-        lcdText(c, "1000", bx + bar / 2 - 24, by - 12, 18, theme.accent);
+        lcdText(c, "1000", Math.min(bx + bar / 2 - 24, crt.right - 100), by - 12, 18, theme.accent);
 
         // the nearest open exit: an arrow towards it and the level it leads to (top left)
         int ex = -1;
@@ -594,7 +849,7 @@ final class CompanionView extends View {
             if (d2 < best) { best = d2; ex = i; }
         }
         if (ex >= 0) {
-            float lx = crt.left + 16, ly = crt.top + 27;
+            float lx = crt.left + 16, ly = crt.top + 27 + 123 * mExpansion;   // below the toolbar when expanded
             screenBox(c, lx, ly, 270, 76);
             float ax = lx + 28, ay = ly + 26;
             float dx = mPtX[ex] - mJx, dy = mPtY[ex] - mJy, len = (float) Math.sqrt(best);
@@ -825,6 +1080,9 @@ final class CompanionView extends View {
         lcdText(c, out, x, y, fittedSize, color);
     }
 
+    /** Labels keep clear of Jimmy's marker (it is drawn last, over them). */
+    private void reserveJimmy(float x, float y) { mLabels.add(new RectF(x - 48, y - 48, x + 48, y + 48)); }
+
     private void mapLabel(Canvas c, String label, float x, float y, int color) {
         mText.setTypeface(theme.font); mText.setTextSize(theme.small);
         float width = mText.measureText(label);
@@ -876,7 +1134,10 @@ final class CompanionView extends View {
         if (mChrome != null) mChrome.recycle();
         mChrome = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         mChromeW = w; mChromeH = h;
-        Canvas c = new Canvas(mChrome);
+        // the case: the themed backdrop, full screen, under both the dashboard and the sliding map
+        if (mCase != null) mCase.recycle();
+        mCase = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(mCase);
         mFill.setAlpha(255);
         mFill.setShader(new LinearGradient(0, 0, w, h, theme.bg, theme.bg2, Shader.TileMode.CLAMP));
         c.drawRect(0, 0, w, h, mFill);
@@ -890,9 +1151,18 @@ final class CompanionView extends View {
                 c.drawPath(mPath, mStroke);
             } else star(c, 430, 90 + i * 120, 20, alpha(theme.white, 38));
         }
-        for (RectF r : new RectF[] {R_HEAD, R_GAUGE, R_LEVEL, R_SHEET, R_MAP}) plate(c, r);
+        c.restore();
+        // the dashboard plates: transparent, drawn over the case and slid away with the dashboard
+        c = new Canvas(mChrome);
+        c.save(); c.translate(ox, oy); c.scale(u, u);
+        for (RectF r : new RectF[] {R_HEAD, R_GAUGE, R_LEVEL, R_SHEET}) plate(c, r);
         atom(c, 61, 61, 27, theme.accent);
         star(c, 391, 363, 17, theme.hot);
+        c.restore();
+    }
+
+    /** The map window's recess (bezel and screen), drawn into the map plate's cached bitmap. */
+    private void drawMapRecess(Canvas c) {
         RectF crt = mapRect();
         mRect.set(crt.left - 5, crt.top - 5, crt.right + 5, crt.bottom + 5);
         mFill.setAlpha(255);
@@ -904,7 +1174,6 @@ final class CompanionView extends View {
         mFill.setShader(null);
         mStroke.setColor(theme.accent); mStroke.setStrokeWidth(theme.stroke);
         c.drawRoundRect(crt, theme.tvRadius - 5, theme.tvRadius - 5, mStroke);
-        c.restore();
     }
 
     private RectF mapRect() {

@@ -71,8 +71,6 @@ std::string			s_snapshot;				// guarded by s_mutex
 // --------------------------------------------------------------------------- the map image
 
 enum { kMapMax = 1536 };					// longest side in pixels
-const float kMapScale = 6.0f;				// world units per pixel at most; a bigger level gets a
-											// window of the map around Jimmy, moved as he goes
 const float kFloorY = 0.7f;					// physics: |normal.y| below this is a wall (Physics.cpp kSteep)
 const float kNoHeight = -1e30f;
 const float kCutAbove = 350.0f;				// floors this far above Jimmy's feet are left out (roofs,
@@ -444,15 +442,15 @@ MapGeom MapWindow(const Geo &geo, bool have_jimmy, float cx, float cy, float cz)
 {
 	MapGeom g;
 	g.gen = s_map.gen + 1;
+	// port: fit all copied terrain within the pixel budget (from Neutron2's expand-map work). A moving
+	// crop could not show the rest of the level when the expanded map is zoomed out or panned.
 	const float ext = std::max(geo.maxx - geo.minx, geo.maxz - geo.minz);
-	g.s = std::max(2.0f, std::min(kMapScale, ext / (float)(kMapMax - 4)));
-	const float half = 0.5f * (float)kMapMax * g.s, m = 2 * g.s;
-	if (!have_jimmy) { cx = 0.5f * (geo.minx + geo.maxx); cz = 0.5f * (geo.minz + geo.maxz); }
-	// the level's box, cut to a window of kMapMax pixels around the centre
-	g.x0 = std::max(geo.minx - m, std::min(cx - half, geo.maxx + m - 2 * half));
-	g.z1 = std::min(geo.maxz + m, std::max(cz + half, geo.minz - m + 2 * half));
-	g.w = std::max(1, std::min((int)kMapMax, (int)ceilf((geo.maxx + m - g.x0) / g.s)));
-	g.h = std::max(1, std::min((int)kMapMax, (int)ceilf((g.z1 - (geo.minz - m)) / g.s)));
+	g.s = std::max(2.0f, ext / (float)(kMapMax - 4));
+	const float margin = 2 * g.s;
+	g.x0 = geo.minx - margin;
+	g.z1 = geo.maxz + margin;
+	g.w = std::max(1, std::min((int)kMapMax, (int)ceilf((geo.maxx - geo.minx) / g.s) + 4));
+	g.h = std::max(1, std::min((int)kMapMax, (int)ceilf((geo.maxz - geo.minz) / g.s) + 4));
 	g.cut = have_jimmy;
 	g.cut_y = cy + kCutAbove;
 	return g;
@@ -517,13 +515,8 @@ void MapTick()
 		if (have_jimmy != s_map.cut) want = true;
 		else if (have_jimmy)
 		{
-			float mx, my;
-			WorldToMap(jp[0], jp[2], mx, my);
-			const float edge = 0.2f * (float)kMapMax;
-			const bool cut_x = s_map.w >= kMapMax, cut_y = s_map.h >= kMapMax;
-			want = (cut_x && (mx < edge || mx > (float)s_map.w - edge))
-				|| (cut_y && (my < edge || my > (float)s_map.h - edge))
-				|| fabsf(jp[1] + kCutAbove - s_map.cut_y) > kCutMove;
+			// the complete level no longer needs rebuilding as Jimmy nears its edges
+			want = fabsf(jp[1] + kCutAbove - s_map.cut_y) > kCutMove;
 		}
 	}
 	else if (!want && s_map.w == 0) want = true;
@@ -719,7 +712,26 @@ const char *LevelNameOf(int id)
 	};
 	for (size_t i = 0; i < sizeof kNames / sizeof kNames[0]; i++)
 		if (id && kNames[i].id == id) return kNames[i].name;
-	return NULL;
+	// port: the exe names only those places. The panel still needs a readable label for every other
+	// level (exit markers, header), so name it after its area: LV<d><x> -> "<area of d> <X>",
+	// VRnn -> "VR room n", LEV7 -> "Level 7".
+	static std::map<int, std::string> s_made;				// game thread
+	if (!id) return NULL;
+	std::map<int, std::string>::iterator it = s_made.find(id);
+	if (it == s_made.end())
+	{
+		static const char *const kArea[] = { "", "Neighborhood", "School", "Retroland", "Downtown", "Area 51", "Yokian Ship" };
+		const int c0 = (id >> 24) & 0xff, c1 = (id >> 16) & 0xff, c2 = (id >> 8) & 0xff, c3 = id & 0xff;
+		std::string n;
+		if (c0 == 'L' && c1 == 'V' && c2 >= '1' && c2 <= '6' && isalpha(c3))
+			n = std::string(kArea[c2 - '0']) + " " + (char)toupper(c3);
+		else if (c0 == 'V' && c1 == 'R' && isdigit(c2) && isdigit(c3))
+			n = std::string("VR room ") + (c2 == '0' ? std::string() : std::string(1, (char)c2)) + (char)c3;
+		else if (c0 == 'L' && c1 == 'E' && c2 == 'V' && isdigit(c3))
+			n = std::string("Level ") + (char)c3;
+		it = s_made.insert(std::make_pair(id, n)).first;
+	}
+	return it->second.empty() ? NULL : it->second.c_str();
 }
 
 const char *LevelNameOfFile(const char *file)
