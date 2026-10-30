@@ -5,14 +5,18 @@ being rebuilt as a faithful C++ reconstruction of its original code (`Neutron.ex
 on Android. Made for the **AYN Thor** (both screens, its gamepad, its lid); it runs on other arm64
 Android devices with a gamepad or touch screen.
 
+## Status
+
+**Status: release candidate, about 95%.**
+- All 35 levels load and play.
+- Logic reconstructed; verified against Neutron.exe.
+- 60 fps pacing, music, and widescreen support added.
+- Bottom-screen panel is display-only for now.
+- Next: Thor test of rc4, then v1.0.
+
 It is built on the engine, launcher and tools of its sequel's port,
 [Neutron vs Negatron](https://github.com/sirbilliams/neutron2-android) (*Jimmy Neutron vs. Jimmy
 Negatron*, 2002, which was made from Boy Genius's code). The two apps install side by side.
-
-**Status: in progress.** Every class of the game exists and all 35 levels load and play to their
-exits on desktop; the APK runs on the Thor. About two thirds of the code is verified function by
-function against `Neutron.exe`; the rest, the late story levels and the Thor extras are being
-finished. See [docs/HANDOFF.md](docs/HANDOFF.md).
 
 | | |
 |---|---|
